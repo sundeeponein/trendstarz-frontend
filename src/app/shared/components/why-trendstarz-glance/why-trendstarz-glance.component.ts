@@ -21,7 +21,7 @@ export interface TrendstarzGlanceCounter {
   styleUrls: ['./why-trendstarz-glance.component.scss'],
 })
 export class WhyTrendstarzGlanceComponent {
-  @Input() heading = 'Why Trendstarz';
+  @Input() heading = 'Why TrendStarz';
   @Input() subheading = "Built for India's growing creator economy, providing institutional-grade tools for modern collaborations.";
   @Input() learnMoreRoute = '/why-trendstarz';
 
@@ -33,7 +33,7 @@ export class WhyTrendstarzGlanceComponent {
   @Input() growingLabel = 'Growing daily';
   @Input() growingSub = 'Join the elite network of Indian creators.';
 
-  @Input() glanceHeading = 'Trendstarz at a Glance';
+  @Input() glanceHeading = 'TrendStarz at a Glance';
   /** Real counts only — the counters block stays hidden while this is empty. */
   @Input() counters: TrendstarzGlanceCounter[] = [];
 

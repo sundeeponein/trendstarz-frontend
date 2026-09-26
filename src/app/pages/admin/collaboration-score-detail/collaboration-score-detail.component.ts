@@ -21,7 +21,7 @@ import { ScoreRingComponent } from '../../../shared/collaboration-score/score-ri
 export class CollaborationScoreDetailComponent implements OnInit {
   userId = '';
   role = 'influencer';
-  /** TrendStarZ admin-verification flag — passed through from the admin user table's link (selectedUser.verifiedByTrendStarz), not re-fetched here. */
+  /** TrendStarz admin-verification flag — passed through from the admin user table's link (selectedUser.verifiedByTrendStarz), not re-fetched here. */
   verified = false;
   /** Passed through from the admin user table's link (selectedUser.username) — same identifier the public profile view uses. */
   username = '';
@@ -155,7 +155,7 @@ export class CollaborationScoreDetailComponent implements OnInit {
     return this.subScores.length > 0;
   }
 
-  // Split so the template can show "based on your TrendStarZ profile" vs.
+  // Split so the template can show "based on your TrendStarz profile" vs.
   // "based on your connected platforms" as two clearly separate groups,
   // instead of one flat list a reader has to mentally sort themselves.
   get profileSubScores(): SubScoreRow[] {

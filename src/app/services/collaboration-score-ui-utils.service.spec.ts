@@ -23,9 +23,9 @@ describe('CollaborationScoreUiUtilsService — tier labels follow the badge thre
     expect(service.scoreTierClass(75)).toBe('bg-primary-subtle text-primary-emphasis');
   });
 
-  it('80+ is "TrendStarZ Recommended ⭐" (green/success)', () => {
-    expect(service.scoreTierLabel(80)).toBe('TrendStarZ Recommended ⭐');
-    expect(service.scoreTierLabel(100)).toBe('TrendStarZ Recommended ⭐');
+  it('80+ is "TrendStarz Recommended ⭐" (green/success)', () => {
+    expect(service.scoreTierLabel(80)).toBe('TrendStarz Recommended ⭐');
+    expect(service.scoreTierLabel(100)).toBe('TrendStarz Recommended ⭐');
     expect(service.scoreTierClass(95)).toBe('bg-success-subtle text-success-emphasis');
   });
 
@@ -33,7 +33,7 @@ describe('CollaborationScoreUiUtilsService — tier labels follow the badge thre
     const s = new CollaborationScoreUiUtilsService();
     s.setThresholds({ trendstarzRecommendedMinScore: 90, campaignReadyMinScore: 75, partiallyReadyMinScore: -5 });
     expect(s.scoreTierLabel(85)).toBe('Campaign Ready');
-    expect(s.scoreTierLabel(90)).toBe('TrendStarZ Recommended ⭐');
+    expect(s.scoreTierLabel(90)).toBe('TrendStarz Recommended ⭐');
     expect(s.scoreTierLabel(39)).toBe('Needs Improvement'); // partiallyReady stayed at 40
   });
 });
@@ -146,7 +146,7 @@ describe('CollaborationScoreUiUtilsService — scoreConfidence', () => {
 
     expect(result?.level).toBe('High');
     expect(result?.basedOn).toEqual([
-      { met: true, label: 'TrendStarZ Profile', absentLabel: 'TrendStarZ Profile' },
+      { met: true, label: 'TrendStarz Profile', absentLabel: 'TrendStarz Profile' },
       { met: true, label: 'YouTube', absentLabel: 'YouTube not added' },
       { met: false, label: 'Instagram', absentLabel: 'Instagram not connected' },
       { met: false, label: 'Facebook', absentLabel: 'Facebook not connected' },
@@ -195,6 +195,6 @@ describe('CollaborationScoreUiUtilsService — scoreConfidence', () => {
     const result = service.scoreConfidence(audit);
 
     expect(result?.level).toBe('Low');
-    expect(result?.basedOn.every((item) => item.label === 'TrendStarZ Profile' || !item.met)).toBe(true);
+    expect(result?.basedOn.every((item) => item.label === 'TrendStarz Profile' || !item.met)).toBe(true);
   });
 });

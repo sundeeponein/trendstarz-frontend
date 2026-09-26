@@ -288,12 +288,12 @@ export class TrendstarzScoreComponent implements OnInit, AfterViewInit, OnDestro
     {
       question: "Why can't Instagram be checked using only a profile URL?",
       answer:
-        "Instagram's official API does not support looking up another account's public data without that account's own authorization. Connecting your account gives TrendStarZ permission to read the data needed for an accurate score.",
+        "Instagram's official API does not support looking up another account's public data without that account's own authorization. Connecting your account gives TrendStarz permission to read the data needed for an accurate score.",
     },
     {
       question: 'Do brands see my detailed report?',
       answer:
-        'No. Brands only see whether you are TrendStarZ Recommended, Campaign Ready, verified, and your overall score — never your improvement recommendations or full report.',
+        'No. Brands only see whether you are TrendStarz Recommended, Campaign Ready, verified, and your overall score — never your improvement recommendations or full report.',
     },
     {
       question: 'Do I need to connect all my accounts?',

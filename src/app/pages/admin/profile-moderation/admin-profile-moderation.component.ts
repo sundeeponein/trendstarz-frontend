@@ -228,7 +228,7 @@ import { copyTextToClipboard } from '../../../shared/referral-link.util';
             <h6 class="verify-section-title">Profile Visibility & Discovery</h6>
             <div class="visibility-unset-banner" *ngIf="!detail.profileVisibilityIsSet">
               <i class="bi bi-exclamation-triangle-fill"></i>
-              This user hasn't been asked yet — ask "Who can view your TrendStarZ profile?" during this call and set it below.
+              This user hasn't been asked yet — ask "Who can view your TrendStarz profile?" during this call and set it below.
             </div>
 
             <div class="discovery-card" [ngClass]="modDiscoveryStatus(detail).tone">

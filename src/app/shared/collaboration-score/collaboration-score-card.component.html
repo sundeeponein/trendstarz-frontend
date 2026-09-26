@@ -96,15 +96,15 @@
               Campaign Ready: {{ audit.campaignReadiness === 'Campaign Ready' ? 'YES' : 'NO' }}
             </span>
             <span class="badge rounded-pill badge--recommended" *ngIf="audit.trendstarzRecommended">
-              <i class="bi bi-award-fill"></i> TrendStarZ Recommended
+              <i class="bi bi-award-fill"></i> TrendStarz Recommended
             </span>
           </div>
 
           <h2 class="cs-card__heading">TrendScore</h2>
           <p class="cs-card__copy" *ngIf="audit.profileCompletenessScore != null">
             Your profile completion is at <strong>{{ audit.profileCompletenessScore }}%</strong>.
-            <ng-container *ngIf="pointsToRecommended != null"> Need +{{ pointsToRecommended }} points to reach TrendStarZ Recommended.</ng-container>
-            <ng-container *ngIf="audit.trendstarzRecommended"> You've reached TrendStarZ Recommended status.</ng-container>
+            <ng-container *ngIf="pointsToRecommended != null"> Need +{{ pointsToRecommended }} points to reach TrendStarz Recommended.</ng-container>
+            <ng-container *ngIf="audit.trendstarzRecommended"> You've reached TrendStarz Recommended status.</ng-container>
           </p>
 
           <div class="cs-card__status-row">
@@ -167,7 +167,7 @@
          that's visible without scrolling into the full breakdown below. -->
     <div class="cs-card__score-summary" *ngIf="hasSubScoreBreakdown">
       <div class="cs-card__score-summary-item">
-        <span class="cs-card__score-summary-label">TrendStarZ Profile</span>
+        <span class="cs-card__score-summary-label">TrendStarz Profile</span>
         <span class="cs-card__score-summary-value">{{ profileScoreSummary.earned }} / {{ profileScoreSummary.max }}</span>
       </div>
       <div class="cs-card__score-summary-item">
@@ -187,7 +187,7 @@
       </div>
 
       <div class="cs-card__breakdown-group">
-        <div class="cs-card__breakdown-group-title">TrendStarZ Profile Score</div>
+        <div class="cs-card__breakdown-group-title">TrendStarz Profile Score</div>
         <p class="text-muted small mb-2">Based on your profile — not affected by connected platforms.</p>
         <div class="cs-card__breakdown-grid">
           <div class="cs-card__bar-row" *ngFor="let sub of profileSubScores">

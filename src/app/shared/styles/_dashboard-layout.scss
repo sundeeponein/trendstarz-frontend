@@ -1,123 +1,207 @@
-// Shared user dashboard layout, cards, performance overview, alert cards, empty states
+// Shared user dashboard layout (brand / influencer / photo-videographer).
+// One design for every role: soft lavender page, white rounded cards, pill
+// badges and round empty-state icons. Class names are shared by all three
+// dashboard templates — change the look here, not per role.
+// Used ONLY by the three dashboard components (component-scoped). The global
+// styles.scss loads _dashboard-layout-legacy.scss for other pages; the
+// "reset" rules below stop those legacy globals leaking into the dashboards.
 
-$dash-bg: #d6d8dc;
-$dash-surface: #f7f8fb;
+$dash-bg: #f7f7fd;
 $dash-card: #ffffff;
-$dash-text: #252a31;
-$dash-muted: #777f8c;
-$dash-border: #e6e8ed;
-$dash-orange: #b24b10;
-$dash-blue: #0069a8;
-$dash-purple: #7460a7;
-$dash-green: #19a56d;
+$dash-text: #0b1220;
+$dash-muted: rgba(11, 18, 32, 0.62);
+$dash-border: #eceef6;
+$dash-orange: #ea580c;
+$dash-orange-deep: #c2410c;
+$dash-blue: #4f46e5;
+$dash-purple: #7c3aed;
+$dash-green: #16a34a;
+$dash-teal: #0891b2;
+$dash-shadow: 0 8px 24px rgba(20, 24, 60, 0.05);
 
 .cm-page {
-  // background: $dash-bg;
-  border-radius: 0;
-  box-shadow: none;
   min-height: 100%;
+  background: $dash-bg;
+  border-radius: 16px;
+  color: $dash-text;
 }
 
+// ── Welcome ────────────────────────────────────────
 .dashboard-welcome-bar {
+  display: flex;
   align-items: flex-start;
-  gap: 1rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+}
+
+.dashboard-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0.6rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.1);
+  color: #312e81;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  .dot { width: 7px; height: 7px; background: $dash-teal; }
 }
 
 .welcome-title {
-  font-size: clamp(1.55rem, 2vw, 2.05rem);
-  line-height: 1.1;
+  margin: 0;
+  font-size: clamp(1.7rem, 2.8vw, 2.4rem);
   font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   color: $dash-text;
-  letter-spacing: 0;
+}
+
+.welcome-name {
+  background: linear-gradient(90deg, #ff7a00, #e0400a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .welcome-subtitle {
   max-width: 720px;
-  font-size: 0.9rem;
-  line-height: 1.45;
-  color: #3f454e;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: $dash-muted;
 }
 
 .account-meta-card {
-  background: transparent;
-  color: #1f242b;
-  font-size: 0.68rem;
-  line-height: 1.35;
-  gap: 0.1rem;
-  text-align: right;
-  padding-top: 0.15rem;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.3rem 1.25rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 12px;
+  background: $dash-card;
+  box-shadow: $dash-shadow;
+  font-size: 0.82rem;
+  color: $dash-text;
+
+  // "Label: value" rows render as two grid cells
+  > div { display: contents; }
+  strong {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(11, 18, 32, 0.55);
+  }
 }
 
+// ── Info notice (registration notice) ─────────────
+.dashboard-notice {
+  display: block;
+
+  ::ng-deep .reg-notice {
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: #eef0fd !important;
+  }
+}
+
+// ── Verification / profile cards ──────────────────
 .alert-card {
-  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.3rem 1.1rem;
+  border-radius: 16px;
   background: $dash-card;
-  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06);
-  padding: 1rem 1rem 0.9rem;
-  border: 1px solid $dash-border;
-  min-height: 158px;
+  border: 1px solid transparent;
+  box-shadow: $dash-shadow;
+  min-height: 190px;
 
-  &--email {
-    border-color: $dash-border;
-    background: $dash-card;
-
-    .alert-card-icon {
-      background: #e4f1fc;
-      color: $dash-blue;
-    }
+  // soft corner glow, as in the design
+  &::after {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.06);
+    pointer-events: none;
   }
 
-  &--mobile {
-    border-color: $dash-border;
-    background: $dash-card;
+  &--email .alert-card-icon { background: #e7f4fd; color: #0284c7; }
+  &--mobile .alert-card-icon { background: #eceefd; color: $dash-blue; }
+  &--profile .alert-card-icon { background: #fff1e6; color: $dash-orange; }
+  &--email::after { background: rgba(8, 145, 178, 0.07); }
+  &--profile::after { background: rgba(234, 88, 12, 0.07); }
+}
 
-    .alert-card-icon {
-      background: #fff1e8;
-      color: $dash-orange;
-    }
-  }
-
-  &--profile {
-    border-color: $dash-border;
-    background: $dash-card;
-
-    .alert-card-icon {
-      background: #eee8fb;
-      color: $dash-purple;
-    }
-  }
+.alert-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .alert-card-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 3px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 32px;
-  font-size: 0.95rem;
+  flex: 0 0 40px;
+  font-size: 1.05rem;
+}
+
+.alert-card-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #fff4e5;
+  color: #b45309;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &.is-ok { background: #e6f7ee; color: #15803d; }
 }
 
 .alert-card-title {
-  color: #595c61;
-  font-size: 1.02rem;
-  font-weight: 800;
-  margin: 0.35rem 0 0.8rem;
+  margin: 0 0 0.4rem;
+  color: $dash-text;
+  font-size: 1.1rem;
+  font-weight: 700;
 }
 
 .alert-card-desc {
-  color: #2f353d;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  font-weight: 600;
+  color: $dash-muted;
+  font-size: 0.86rem;
+  line-height: 1.5;
 }
 
 .alert-card-link {
-  color: $dash-orange;
-  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 0.9rem;
+  color: $dash-orange-deep;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
   text-decoration: none;
-  font-size: 0.72rem;
+
+  &:hover { text-decoration: underline; }
 }
 
 .btn-dismiss-banner {
@@ -131,215 +215,333 @@ $dash-green: #19a56d;
   padding: 2px 4px;
   border-radius: 4px;
 
-  &:hover { color: #374151; background: rgba(0,0,0,0.06); }
+  &:hover { color: #374151; background: rgba(0, 0, 0, 0.06); }
 }
 
+// ── Needs attention banner ─────────────────────────
+.attention-banner {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 1.1rem 1.3rem;
+  border-radius: 16px;
+  background: $dash-card;
+  border-left: 5px solid #ff7a00;
+  box-shadow: $dash-shadow;
+  color: inherit;
+  text-decoration: none;
+
+  & + & { margin-top: 0.75rem; }
+
+  &--warn { border-left-color: #f59e0b; }
+  &--danger { border-left-color: #dc2626; }
+  &--info { border-left-color: $dash-blue; }
+}
+
+.attention-banner__count {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: #fff1e6;
+  color: $dash-orange-deep;
+  font-size: 1.6rem;
+  font-weight: 800;
+
+  .attention-banner--warn & { background: #fef6e0; color: #b45309; }
+  .attention-banner--danger & { background: #fdecea; color: #b91c1c; }
+  .attention-banner--info & { background: #eceefd; color: $dash-blue; }
+}
+
+.attention-banner__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.attention-banner__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: $dash-orange-deep;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  &::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+}
+
+.attention-banner__title {
+  margin: 0.15rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: $dash-text;
+}
+
+.attention-banner__desc {
+  margin: 0.1rem 0 0;
+  font-size: 0.85rem;
+  color: $dash-muted;
+}
+
+.attention-banner__cta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff7a00, #ff4d1a);
+  box-shadow: 0 10px 22px rgba(255, 90, 31, 0.28);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+
+  &:hover { color: #fff; filter: brightness(1.05); }
+}
+
+// ── Performance overview ───────────────────────────
 .performance-overview {
   background: transparent;
-  border-radius: 0;
-  box-shadow: none;
   padding: 0;
 }
 
 .performance-title {
-  font-size: 0.98rem;
-  font-weight: 800;
-  color: #2c2d32;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: $dash-text;
+}
+
+.performance-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: $dash-muted;
 }
 
 .performance-range {
-  font-size: 0.64rem;
-  color: #2c2d32;
-  background: #fff;
-  border-radius: 2px;
-  padding: 0.26rem 0.55rem;
-  font-weight: 900;
-  letter-spacing: 0;
-}
-
-.performance-overview .card,
-.needs-attention .card {
-  border-radius: 5px;
-  min-height: 78px;
-  background: $dash-card;
-}
-
-.performance-overview .card-body,
-.needs-attention .card-body {
-  padding: 0.78rem 0.6rem !important;
-}
-
-.performance-overview .display-6,
-.needs-attention .display-6 {
-  font-size: 1.65rem;
-  line-height: 1;
-  color: #252a31;
-}
-
-.performance-overview .text-muted,
-.needs-attention .text-muted {
-  color: $dash-text;
-  font-size: 0.62rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.performance-overview .badge,
-.needs-attention .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
   border-radius: 999px;
-  padding: 0.15rem 0.55rem;
-  font-size: 0.56rem;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.perf-card {
-  background: #f8f9fb;
-  border-radius: 0.8rem;
-  padding: 1.2rem 0.5rem;
-  box-shadow: 0 1px 4px #0001;
-}
-
-.perf-value {
-  font-size: 2rem;
+  background: #eceefd;
+  color: #312e81;
+  font-size: 0.7rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
-.perf-label {
-  font-size: 1rem;
-  color: #555;
-  font-weight: 500;
-}
-
-.perf-sub {
-  font-size: 0.9rem;
-  color: #aaa;
-}
-
-.section-card {
+.stat-card {
+  height: 100%;
+  padding: 1.1rem 1.2rem 1rem;
+  border-radius: 16px;
   background: $dash-card;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.05);
-  border: 1px solid $dash-border;
-  padding: 0;
-  overflow: hidden;
+  box-shadow: $dash-shadow;
+}
+
+.stat-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+
+  .bi { font-size: 1.05rem; color: rgba(11, 18, 32, 0.5); }
+}
+
+.stat-card__pill {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+
+  &--indigo { background: #eceefd; color: #4338ca; }
+  &--green { background: #e6f7ee; color: #15803d; }
+  &--amber { background: #fef6e0; color: #b45309; }
+  &--teal { background: #e0f6fa; color: #0e7490; }
+  &--dark { background: #111827; color: #fff; }
+}
+
+.stat-card__value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: $dash-text;
+}
+
+.stat-card__label {
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(11, 18, 32, 0.72);
+}
+
+.stat-card__sub {
+  margin-top: 0.7rem;
+  font-size: 0.8rem;
+  color: $dash-muted;
+}
+
+// Legacy Bootstrap-card stats still used inside some sections (e.g. influencer dual-role summary)
+.performance-overview .card,
+.needs-attention .card,
+.section-card .card {
+  border-radius: 14px;
+  background: $dash-card;
+  box-shadow: $dash-shadow !important;
+}
+
+.section-card .display-6 {
+  font-size: 1.9rem;
+  font-weight: 800;
+}
+
+// ── Section cards ──────────────────────────────────
+.section-card {
+  padding: 1.35rem 1.4rem;
+  border-radius: 16px;
+  background: $dash-card;
+  border: 1px solid transparent;
+  box-shadow: $dash-shadow;
 }
 
 .section-title {
-  font-size: 0.78rem;
-  font-weight: 900;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem !important;
+  font-size: 1.15rem;
+  font-weight: 600;
   color: $dash-text;
-  min-height: 36px;
-  background: $dash-surface;
-  border-bottom: 1px solid #eff1f4;
-  padding: 0 0.95rem;
-  margin: 0 !important;
-}
-
-.section-card > :not(.section-title):not(.txn-see-all) {
-  margin-left: 1rem;
-  margin-right: 1rem;
-}
-
-.section-card > .section-empty {
-  margin: 4.2rem auto;
-  max-width: 430px;
 }
 
 .section-count {
-  font-size: 0.58rem;
-  color: #5e626a;
-  background: transparent;
-  border-radius: 0;
-  padding: 0;
-  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: #eceefd;
+  color: #312e81;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   display: inline-block;
   flex-shrink: 0;
 
-  &--orange { background: $dash-orange; }
+  &--orange { background: #ff5a1f; }
   &--blue { background: $dash-blue; }
   &--purple { background: $dash-purple; }
 }
 
 .section-empty {
+  padding: 1.5rem 0.5rem;
   text-align: center;
-  color: #a5abb4;
 }
 
 .section-empty-icon {
-  font-size: 2.55rem;
-  margin-bottom: 0.5rem;
-  color: #e3e6eb;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 0.9rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #eceefd;
+  color: #6366f1;
+  font-size: 1.6rem;
 }
 
 .section-empty-title {
-  font-weight: 900;
-  color: #1f242b;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: $dash-text;
 }
 
 .section-empty-desc {
-  color: #3f454e;
-  font-size: 0.76rem;
-  line-height: 1.35;
+  max-width: 340px;
+  margin: 0.3rem auto 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: $dash-muted;
+}
+
+.section-empty-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 0.9rem;
+  color: $dash-orange-deep;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
+.section-card .form-select {
+  border-color: transparent;
+  border-radius: 10px;
+  background-color: #f4f5fb;
+  font-size: 0.9rem;
+}
+
+.section-card .btn-primary {
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff7a00, #ff4d1a);
+  box-shadow: 0 10px 22px rgba(255, 90, 31, 0.25);
   font-weight: 600;
 }
 
 .source-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.12rem 0.42rem;
+  padding: 1px 9px;
   border-radius: 999px;
-  font-size: 0.55rem;
-  font-weight: 900;
-  border: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
 
-  &--brand {
-    color: $dash-orange;
-    background: #fff1e8;
-  }
-
-  &--collab {
-    color: $dash-purple;
-    background: #eee8fb;
-  }
+  &--brand { color: $dash-orange-deep; background: #fff1e6; }
+  &--collab { color: $dash-purple; background: #f1ecfe; }
 }
 
 .txn-see-all {
-  margin: 0;
-  padding: 0.85rem 1rem 1.05rem;
-  border-top: 0;
+  margin-top: 0.75rem;
   text-align: center;
 
   &__link {
-    font-size: 0.75rem;
-    color: $dash-blue;
-    text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    font-weight: 800;
+    color: $dash-orange-deep;
+    font-size: 0.86rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
 
     &:hover { text-decoration: underline; }
   }
 }
 
+// ── Profile traffic (currently hidden) ─────────────
 .profile-traffic-card {
-  border-left: 3px solid $dash-orange;
-
-  .section-title {
-    min-height: 0;
-    background: transparent;
-    border: 0;
-    color: $dash-text;
-    padding: 0;
-  }
+  border-left: 4px solid $dash-orange;
 }
 
 .profile-traffic-grid,
@@ -350,66 +552,68 @@ $dash-green: #19a56d;
   gap: 1rem;
 }
 
-.traffic-stat-box {
-  border: 0;
-  border-radius: 0;
-  padding: 0;
-  background: transparent;
-}
-
 .traffic-stat-label {
-  font-size: 0.62rem;
-  color: #3f454e;
-  text-transform: none;
-  letter-spacing: 0;
+  font-size: 0.72rem;
+  color: $dash-muted;
   font-weight: 700;
 }
 
 .traffic-stat-value {
-  font-size: 0.85rem;
-  font-weight: 900;
-  color: #1f242b;
+  font-size: 1rem;
+  font-weight: 800;
+  color: $dash-text;
 }
 
 .traffic-stat-meta {
-  grid-column: auto;
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 0.75rem;
-  color: #4d535d;
-  font-size: 0.68rem;
+  color: $dash-muted;
+  font-size: 0.75rem;
 }
 
 .traffic-locked-state {
-  color: #4b5563;
-  font-size: 0.75rem;
+  color: $dash-muted;
+  font-size: 0.8rem;
 
-  i {
-    color: $dash-orange;
-  }
+  i { color: $dash-orange; }
 }
 
 .dashboard-action-panel {
-  background: #f2f4f7;
-  border-radius: 6px;
+  background: #f4f5fb;
+  border-radius: 12px;
   padding: 0.95rem 1rem;
+}
+
+// ── Daily usage strip ──────────────────────────────
+.dashboard-usage {
+  display: block;
+  padding: 1rem 1.3rem;
+  border-radius: 14px;
+  background: #eef0fd;
 }
 
 @media (max-width: 767px) {
   .cm-page {
     padding: 1rem !important;
+    border-radius: 0;
   }
 
   .account-meta-card {
-    text-align: left;
+    width: 100%;
   }
 
   .alert-card {
     min-height: 0;
   }
 
-  .section-card > .section-empty {
-    margin: 2.6rem 1rem;
+  .attention-banner {
+    flex-wrap: wrap;
+  }
+
+  .attention-banner__cta {
+    width: 100%;
+    justify-content: center;
   }
 
   .profile-traffic-grid,
@@ -417,3 +621,23 @@ $dash-green: #19a56d;
     grid-template-columns: 1fr;
   }
 }
+
+// ── Resets for legacy global rules (see _dashboard-layout-legacy.scss) ──
+.account-meta-card { text-align: left; }
+.alert-card-desc,
+.section-empty-desc { font-weight: 400; }
+.section-title {
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border-bottom: 0;
+}
+.section-card > :not(.section-title):not(.txn-see-all):not(.x-reset) {
+  margin-left: 0;
+  margin-right: 0;
+}
+.section-card > .section-empty {
+  margin: 0 auto;
+  max-width: none;
+}
+.txn-see-all { padding: 0; border-top: 0; }

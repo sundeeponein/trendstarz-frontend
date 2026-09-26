@@ -201,7 +201,7 @@ export class CampaignInviteCardComponent {
   get showPaymentAwaited(): boolean {
     return this.status === 'accepted' && this.campaignTypeKey === 'paid_collab';
   }
-  /** Payment has been confirmed by TrendStarZ */
+  /** Payment has been confirmed by TrendStarz */
   get showPaymentConfirmed(): boolean {
     return this.status === 'payment_confirmed';
   }

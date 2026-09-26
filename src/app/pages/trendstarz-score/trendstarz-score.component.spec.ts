@@ -122,10 +122,10 @@ describe('TrendstarzScoreComponent', () => {
     sessionSpy.getUser.and.returnValue(null);
     const { component } = createComponent();
 
-    component.onFaqToggled({ index: 0, question: 'What is TrendStarZ Score?' });
+    component.onFaqToggled({ index: 0, question: 'What is TrendStarz Score?' });
 
     expect(analyticsSpy.trackTrendstarzScoreFaqExpanded).toHaveBeenCalledWith({
-      question: 'What is TrendStarZ Score?',
+      question: 'What is TrendStarz Score?',
     });
   });
 

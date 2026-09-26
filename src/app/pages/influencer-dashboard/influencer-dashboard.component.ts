@@ -478,6 +478,27 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Stat card pill colour + icon per stage (display only). */
+  statPillClass(label: string): string {
+    const map: Record<string, string> = {
+      Invited: 'stat-card__pill--indigo',
+      Working: 'stat-card__pill--teal',
+      'Under Review': 'stat-card__pill--amber',
+      Completed: 'stat-card__pill--dark',
+    };
+    return map[label] || 'stat-card__pill--indigo';
+  }
+
+  statIcon(label: string): string {
+    const map: Record<string, string> = {
+      Invited: 'bi-envelope-open',
+      Working: 'bi-lightning-charge',
+      'Under Review': 'bi-hourglass-split',
+      Completed: 'bi-check2-circle',
+    };
+    return map[label] || 'bi-bar-chart';
+  }
+
   openCampaignManagement(tab: 'campaigns' | 'collaborations' = 'campaigns') {
     this.router.navigate(['/campaigns'], { queryParams: { tab } });
   }

@@ -21,7 +21,7 @@ import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-insta
   styleUrl: './app.scss'
 })
 export class App implements OnInit {
-  protected readonly title = signal('Trend Starz');
+  protected readonly title = signal('TrendStarz');
   private readonly injector = inject(Injector);
   private lastPushSubscriptionKey: string | null = null;
   private lastSessionOpenedPing = 0;

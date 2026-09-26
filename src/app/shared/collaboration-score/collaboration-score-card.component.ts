@@ -24,7 +24,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
   @Input() audit: CollaborationAudit | null = null;
   @Input() loading = false;
   @Input() reAnalyzing = false;
-  /** TrendStarZ admin-verification flag (profile.verifiedByTrendStarz) — real data, not derived from the audit. */
+  /** TrendStarz admin-verification flag (profile.verifiedByTrendStarz) — real data, not derived from the audit. */
   @Input() verified = false;
   /**
    * Optional — lets a parent that already fetched connections (e.g.
@@ -211,7 +211,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
     return this.subScores.length > 0;
   }
 
-  // Split so the template can show "based on your TrendStarZ profile" vs.
+  // Split so the template can show "based on your TrendStarz profile" vs.
   // "based on your connected platforms" as two clearly separate groups,
   // instead of one flat list a reader has to mentally sort themselves.
   get profileSubScores(): SubScoreRow[] {
@@ -382,7 +382,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
           key: order.keyId,
           amount: order.amount,
           currency: order.currency || 'INR',
-          name: 'TrendStarZ',
+          name: 'TrendStarz',
           description: 'TrendScore re-analysis',
           order_id: order.orderId,
           handler: async (resp: any) => {

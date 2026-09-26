@@ -241,7 +241,7 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
-   * TrendStarZ Score landing page (/trendstarz-score) — "Check My Score" CTA click.
+   * TrendStarz Score landing page (/trendstarz-score) — "Check My Score" CTA click.
    */
   trackTrendstarzScoreCheckClicked(context: { loggedIn: boolean; destination: string }): void {
     const eventData = { loggedIn: context.loggedIn, destination: context.destination };
@@ -251,7 +251,7 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
-   * TrendStarZ Score landing page — an FAQ item was expanded.
+   * TrendStarz Score landing page — an FAQ item was expanded.
    */
   trackTrendstarzScoreFaqExpanded(context: { question: string }): void {
     const eventData = { question: context.question };
@@ -261,7 +261,7 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
-   * TrendStarZ Score landing page — the Supported Platforms section scrolled into view.
+   * TrendStarz Score landing page — the Supported Platforms section scrolled into view.
    */
   trackTrendstarzScorePlatformSectionViewed(): void {
     this.logEvent('trendstarz_score_platform_section_viewed');
@@ -270,7 +270,7 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
-   * TrendStarZ Score Center — "Sync Latest Profile" clicked.
+   * TrendStarz Score Center — "Sync Latest Profile" clicked.
    */
   trackCollabSyncStarted(): void {
     this.logEvent('collab_sync_started');
@@ -279,7 +279,7 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
-   * TrendStarZ Score Center — a Sync call finished (success or failure).
+   * TrendStarz Score Center — a Sync call finished (success or failure).
    */
   trackCollabSyncCompleted(context: { success: boolean }): void {
     const eventData = { success: context.success };
@@ -289,7 +289,7 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
-   * TrendStarZ Score Center — a Sync found at least one changed platform.
+   * TrendStarz Score Center — a Sync found at least one changed platform.
    */
   trackCollabSyncChangesDetected(context: { platforms: string[] }): void {
     const eventData = { platforms: context.platforms };
@@ -299,7 +299,7 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
-   * TrendStarZ Score Center — a Sync found nothing changed.
+   * TrendStarz Score Center — a Sync found nothing changed.
    */
   trackCollabSyncNoChanges(): void {
     this.logEvent('collab_sync_no_changes');
@@ -308,7 +308,7 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
-   * TrendStarZ Score Center — the paid "Re-Analyze" button was clicked
+   * TrendStarz Score Center — the paid "Re-Analyze" button was clicked
    * (only reachable once Sync has detected a change).
    */
   trackCollabReanalyzeClicked(): void {
@@ -318,7 +318,7 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
-   * TrendStarZ Score Center — the ₹49 re-analysis Razorpay checkout opened.
+   * TrendStarz Score Center — the ₹49 re-analysis Razorpay checkout opened.
    */
   trackCollabPaymentStarted(): void {
     this.logEvent('collab_payment_started');
@@ -327,7 +327,7 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
-   * TrendStarZ Score Center — the re-analysis payment was verified and a new audit ran.
+   * TrendStarz Score Center — the re-analysis payment was verified and a new audit ran.
    */
   trackCollabPaymentSuccess(): void {
     this.logEvent('collab_payment_success');
@@ -336,7 +336,7 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
-   * TrendStarZ Score Center — the re-analysis payment failed or was cancelled.
+   * TrendStarz Score Center — the re-analysis payment failed or was cancelled.
    */
   trackCollabPaymentFailed(context: { reason?: string }): void {
     const eventData = { reason: context.reason || null };

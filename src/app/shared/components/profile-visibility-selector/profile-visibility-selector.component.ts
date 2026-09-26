@@ -40,14 +40,14 @@ export class ProfileVisibilitySelectorComponent {
       icon: '🔒',
       label: 'Logged-in Users Only',
       description:
-        'Only registered TrendStarZ users can view your profile. Hidden from guests and search engines, but still findable in search by logged-in users.',
+        'Only registered TrendStarz users can view your profile. Hidden from guests and search engines, but still findable in search by logged-in users.',
     },
     {
       value: 'PRIVATE',
       icon: '👤',
       label: 'Private',
       description:
-        'Hidden from everyone except you and TrendStarZ admins. Not shown in search, listings, or the homepage.',
+        'Hidden from everyone except you and TrendStarz admins. Not shown in search, listings, or the homepage.',
     },
   ];
 

@@ -39,7 +39,7 @@ export function payoutReleasedMessage(params: {
 }): string {
   const dateLine = params.paidOnLabel ? `\nPaid on: ${params.paidOnLabel}` : '';
   return [
-    `Hi, your TrendStarZ payout for "${params.campaignTitle}" has been released.`,
+    `Hi, your TrendStarz payout for "${params.campaignTitle}" has been released.`,
     `Amount: ${params.amount}`,
     `${params.payoutRefLabel}: ${params.payoutRefValue}${dateLine}`,
     'Thank you for completing the campaign.',
@@ -51,13 +51,13 @@ export function emailVerificationReminderMessage(params: {
   email: string;
 }): string {
   return [
-    `Hi ${params.name}, your TrendStarZ email (${params.email}) is still not verified.`,
+    `Hi ${params.name}, your TrendStarz email (${params.email}) is still not verified.`,
     '',
     'Please check your inbox (and spam/promotions folder) for our verification email and tap the link inside to verify.',
     '',
-    'If you can\'t find it, log in to TrendStarZ and tap "Resend verification email" to get a new link. It stays valid for 1 hour.',
+    'If you can\'t find it, log in to TrendStarz and tap "Resend verification email" to get a new link. It stays valid for 1 hour.',
     '',
-    'Thank you for joining TrendStarZ!',
+    'Thank you for joining TrendStarz!',
     '',
     'www.trendstarz.in',
   ].join('\n');
@@ -69,7 +69,7 @@ export function mobileVerificationReminderMessage(params: {
   return [
     `Hi! ${params.name},`,
     '',
-    'Your TrendStarZ registration is almost complete.',
+    'Your TrendStarz registration is almost complete.',
     '',
     'Please log in to your account and complete your mobile verification to activate your profile and start receiving brand campaign invites.',
     '',
@@ -81,11 +81,11 @@ export function mobileVerificationCallbackRequestMessage(params: {
   name: string;
 }): string {
   return [
-    `Hi ${params.name}, we tried to verify your TrendStarZ mobile number but it's still pending.`,
+    `Hi ${params.name}, we tried to verify your TrendStarz mobile number but it's still pending.`,
     '',
     'Reply YES to this message and our team will call you shortly to complete your mobile verification.',
     '',
-    'Thank you for joining TrendStarZ!',
+    'Thank you for joining TrendStarz!',
   ].join('\n');
 }
 
@@ -95,14 +95,14 @@ export function premiumGrantedMessage(params: {
   expiryDateLabel: string;
 }): string {
   return [
-    `Hi ${params.name}, great news! Your TrendStarZ profile has been upgraded to Premium by our team.`,
+    `Hi ${params.name}, great news! Your TrendStarz profile has been upgraded to Premium by our team.`,
     '',
     `Plan: ${params.durationLabel}`,
     `Valid till: ${params.expiryDateLabel}`,
     '',
-    'Log in to TrendStarZ to see your Premium badge and enjoy the added benefits on your profile.',
+    'Log in to TrendStarz to see your Premium badge and enjoy the added benefits on your profile.',
     '',
-    'Thank you for being part of TrendStarZ!',
+    'Thank you for being part of TrendStarz!',
     '',
     'www.trendstarz.in',
   ].join('\n');
@@ -112,11 +112,11 @@ export function creatorTierVerificationReminderMessage(params: {
   name: string;
 }): string {
   return [
-    `Hi ${params.name}, your TrendStarZ social profile and creator tier verification is still pending.`,
+    `Hi ${params.name}, your TrendStarz social profile and creator tier verification is still pending.`,
     '',
     'Please update/confirm your social media handle and creator tier details in your profile so we can complete your verification.',
     '',
-    'Thank you for joining TrendStarZ!',
+    'Thank you for joining TrendStarz!',
     '',
     'www.trendstarz.in',
   ].join('\n');

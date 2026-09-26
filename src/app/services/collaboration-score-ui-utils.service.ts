@@ -40,7 +40,7 @@ export interface SubScoreRow {
    * genuine 0 from confidenceWeightedAverage([]), but that reads as "your
    * content is bad" when the real story is "no data exists yet." */
   noData?: boolean;
-  /** 'Profile' = computed from the TrendStarZ profile itself, unaffected by
+  /** 'Profile' = computed from the TrendStarz profile itself, unaffected by
    * connected platforms. 'Platform' = computed only from connected social
    * platform data (confidenceWeightedAverage over collectedPlatforms) — lets
    * the UI group the breakdown into "your profile" vs. "your platforms" so
@@ -105,7 +105,7 @@ export class CollaborationScoreUiUtilsService {
   }
 
   scoreTierLabel(score: number): string {
-    return ['Needs Improvement', 'Growing', 'Campaign Ready', 'TrendStarZ Recommended ⭐'][this.tier(score)];
+    return ['Needs Improvement', 'Growing', 'Campaign Ready', 'TrendStarz Recommended ⭐'][this.tier(score)];
   }
 
   scoreTierClass(score: number): string {
@@ -210,7 +210,7 @@ export class CollaborationScoreUiUtilsService {
     // section, which correctly calls it out as unavailable.
     const hasPlatform = (name: string) => platforms.some((p) => p.platform === name && (p.confidence || 0) > 0);
     const basedOn: ScoreConfidenceBasedOnItem[] = [
-      { met: true, label: 'TrendStarZ Profile', absentLabel: 'TrendStarZ Profile' },
+      { met: true, label: 'TrendStarz Profile', absentLabel: 'TrendStarz Profile' },
       { met: hasPlatform('YouTube'), label: 'YouTube', absentLabel: 'YouTube not added' },
       { met: hasPlatform('Instagram'), label: 'Instagram', absentLabel: 'Instagram not connected' },
       { met: hasPlatform('Facebook'), label: 'Facebook', absentLabel: 'Facebook not connected' },

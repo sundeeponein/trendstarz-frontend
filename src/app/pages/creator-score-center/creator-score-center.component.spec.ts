@@ -230,7 +230,7 @@ describe('CreatorScoreCenterComponent', () => {
 
       expect(component.scoreConfidence?.level).toBe('High');
       expect(component.scoreConfidence?.basedOn).toEqual([
-        { met: true, label: 'TrendStarZ Profile', absentLabel: 'TrendStarZ Profile' },
+        { met: true, label: 'TrendStarz Profile', absentLabel: 'TrendStarz Profile' },
         { met: true, label: 'YouTube', absentLabel: 'YouTube not added' },
         { met: false, label: 'Instagram', absentLabel: 'Instagram not connected' },
         { met: false, label: 'Facebook', absentLabel: 'Facebook not connected' },
@@ -275,7 +275,7 @@ describe('CreatorScoreCenterComponent', () => {
       fixture.detectChanges();
 
       expect(component.scoreConfidence?.level).toBe('Low');
-      expect(component.scoreConfidence?.basedOn.every((item) => item.label === 'TrendStarZ Profile' || !item.met)).toBe(true);
+      expect(component.scoreConfidence?.basedOn.every((item) => item.label === 'TrendStarz Profile' || !item.met)).toBe(true);
     });
   });
 

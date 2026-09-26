@@ -73,7 +73,7 @@ export class CreatorScoreCenterComponent implements OnInit {
     return this.ui.scoreConfidence(this.audit);
   }
 
-  /** TrendStarZ admin-verification flag — fetched alongside platform status (see setPlatformStatus). */
+  /** TrendStarz admin-verification flag — fetched alongside platform status (see setPlatformStatus). */
   verified = false;
 
   syncing = false;

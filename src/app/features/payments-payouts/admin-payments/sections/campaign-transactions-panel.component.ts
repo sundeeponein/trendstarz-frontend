@@ -742,7 +742,7 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
     if (!pa) return '#';
     const pn = encodeURIComponent(recipient?.payoutName || recipient?.name || 'Influencer');
     const am = this.selectedTx ? (this.selectedTx.recipientPayout / 100).toFixed(2) : '0';
-    const tn = encodeURIComponent('TrendStarZ Influencer Payout');
+    const tn = encodeURIComponent('TrendStarz Influencer Payout');
     return `upi://pay?pa=${encodeURIComponent(pa)}&pn=${pn}&am=${am}&cu=INR&tn=${tn}`;
   }
 

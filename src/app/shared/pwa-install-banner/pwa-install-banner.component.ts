@@ -19,12 +19,12 @@ const DISMISSED_KEY = 'pwa_install_dismissed';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgIf],
   template: `
-    <div *ngIf="visible()" class="pwa-banner" role="complementary" aria-label="Install TrendStarZ app">
+    <div *ngIf="visible()" class="pwa-banner" role="complementary" aria-label="Install TrendStarz app">
 
       <!-- iOS instruction -->
       <ng-container *ngIf="isIos; else promptBanner">
         <div class="pwa-inner">
-          <img src="/favicon.ico" class="pwa-icon" alt="TrendStarZ" />
+          <img src="/favicon.ico" class="pwa-icon" alt="TrendStarz" />
           <div class="pwa-text">
             <strong>iPhone Safari/Chrome</strong>
             <span>Tap <span class="share-icon">⎙</span> then <em>Add to Home Screen</em></span>
@@ -37,10 +37,10 @@ const DISMISSED_KEY = 'pwa_install_dismissed';
       <!-- Chrome / Android prompt -->
       <ng-template #promptBanner>
         <div class="pwa-inner">
-          <img src="/favicon.ico" class="pwa-icon" alt="TrendStarZ" />
+          <img src="/favicon.ico" class="pwa-icon" alt="TrendStarz" />
           <div class="pwa-text">
             <strong>Android Chrome</strong>
-            <span>Install TrendStarZ for a faster experience</span>
+            <span>Install TrendStarz for a faster experience</span>
           </div>
           <button class="pwa-install-btn" (click)="install()">Install app</button>
           <button class="pwa-dismiss" (click)="dismiss()" aria-label="Dismiss">✕</button>
@@ -197,7 +197,7 @@ export class PwaInstallBannerComponent implements OnInit, OnDestroy {
   async install(): Promise<void> {
     if (this.isIos) {
       if (isPlatformBrowser(this.platformId)) {
-        this.toast.info('To install TrendStarZ on iPhone: tap the Share button in Safari or Chrome, then choose Add to Home Screen.');
+        this.toast.info('To install TrendStarz on iPhone: tap the Share button in Safari or Chrome, then choose Add to Home Screen.');
       }
       return;
     }

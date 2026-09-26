@@ -7,19 +7,19 @@
   </app-founder-offer-modal>
   <div class="dashboard-welcome-bar mb-4">
     <div class="dashboard-welcome-left">
-      <h1 class="welcome-title mb-1">Welcome, {{ photographer?.name || 'Photographer' }}</h1>
-      <div class="welcome-subtitle">Your portfolio, trust signals, and discovery stats live here.</div>
+      <span class="dashboard-kicker"><span class="dot"></span> Photo/Videographer dashboard</span>
+      <h1 class="welcome-title">Welcome, <span class="welcome-name">{{ photographer?.name || 'Photographer' }}</span></h1>
+      <div class="welcome-subtitle">Your portfolio, trust signals, brand invites and earnings live here.</div>
     </div>
     <div class="dashboard-welcome-right account-meta-card" *ngIf="photographer">
-      <div><strong>Registered on:</strong> {{ (photographer.firstRegisteredAt || photographer.createdAt) ? ((photographer.firstRegisteredAt || photographer.createdAt) | date:'medium') : '-' }}</div>
-      <div><strong>Last Login:</strong> {{ photographer.lastLoginAt ? (photographer.lastLoginAt | date:'medium') : '-' }}</div>
-      <div><strong>Last Opened:</strong> {{ photographer.lastOpenedAt ? (photographer.lastOpenedAt | date:'medium') : '-' }}</div>
-      <!-- <app-usage-summary [usageSummary]="usageSummary"></app-usage-summary> -->
+      <div><strong>Registered on</strong> <span>{{ (photographer.firstRegisteredAt || photographer.createdAt) ? ((photographer.firstRegisteredAt || photographer.createdAt) | date:'medium') : '-' }}</span></div>
+      <div><strong>Last login</strong> <span>{{ photographer.lastLoginAt ? (photographer.lastLoginAt | date:'medium') : '-' }}</span></div>
+      <div><strong>Last opened</strong> <span>{{ photographer.lastOpenedAt ? (photographer.lastOpenedAt | date:'medium') : '-' }}</span></div>
     </div>
   </div>
 
   <!-- No-guarantee notice -->
-  <app-registration-notice role="photographer" [showRoleNotice]="true" class="d-block mb-4"></app-registration-notice>
+  <app-registration-notice role="photographer" [showRoleNotice]="true" class="dashboard-notice mb-4"></app-registration-notice>
 
   <div *ngIf="loading" class="text-center py-5">
     <div class="spinner-border text-warning" role="status"></div>
@@ -29,66 +29,71 @@
   <div *ngIf="!loading && error" class="alert alert-danger">{{ error }}</div>
 
   <ng-container *ngIf="!loading && !error && photographer">
-    <div class="row mb-4 gx-3">
-      <div class="col-md-3 mb-3 mb-md-0">
-        <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
-          <div class="d-flex align-items-start">
-            <span class="alert-card-icon me-3"><i class="bi bi-person-badge-fill"></i></span>
-            <div>
-              <div class="alert-card-title fw-bold">{{ photographer.status === 'accepted' ? 'Profile Approved' : 'Profile Review Pending' }}</div>
-              <div class="alert-card-desc">{{ photographer.status === 'accepted' ? 'Your profile is visible in discovery and search.' : 'Complete your details and wait for approval to appear in discovery.' }}</div>
-            </div>
+    <div class="row mb-4 g-3">
+      <div class="col-md-6 col-xl-3">
+        <div class="alert-card alert-card--profile h-100">
+          <div class="alert-card-top">
+            <span class="alert-card-icon"><i class="bi bi-person-badge"></i></span>
+            <span class="alert-card-status" [class.is-ok]="photographer.status === 'accepted'">
+              <i class="bi" [ngClass]="photographer.status === 'accepted' ? 'bi-patch-check' : 'bi-hourglass-split'"></i>
+              {{ photographer.status === 'accepted' ? 'Approved' : 'In review' }}
+            </span>
           </div>
-          <a *ngIf="profileIncomplete" class="alert-card-link mt-2 fw-bold" (click)="onCompleteProfile()">Complete profile</a>
-          <a *ngIf="!profileIncomplete" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Profile complete</a>
+          <div class="alert-card-title">{{ photographer.status === 'accepted' ? 'Profile Approved' : 'Profile Review Pending' }}</div>
+          <div class="alert-card-desc">{{ photographer.status === 'accepted' ? 'Your profile is visible in discovery and search.' : 'Complete your details and wait for approval to appear in discovery.' }}</div>
           <app-profile-review-summary
             [detail]="profileVerificationDashboard"
             [loading]="profileVerificationLoading"
             profileRoute="/photographer-profile"
             [autoOpen]="true"
           />
+          <a *ngIf="profileIncomplete" class="alert-card-link" (click)="onCompleteProfile()">Complete profile <i class="bi bi-arrow-right"></i></a>
         </div>
       </div>
 
-      <div class="col-md-3 mb-3 mb-md-0">
-        <div class="alert-card alert-card--email d-flex flex-column justify-content-between h-100">
-          <div class="d-flex align-items-start">
-            <span class="alert-card-icon me-3"><i class="bi bi-envelope-fill"></i></span>
-            <div>
-              <div class="alert-card-title fw-bold">{{ isEmailVerified ? 'Email Verified' : 'Email Verification Pending' }}</div>
-              <div class="alert-card-desc">{{ isEmailVerified ? 'Your email has been verified and is ready for campaign communication.' : 'Verify your email to unlock full platform access and start receiving brand communication.' }}</div>
-            </div>
+      <div class="col-md-6 col-xl-3">
+        <div class="alert-card alert-card--email h-100">
+          <div class="alert-card-top">
+            <span class="alert-card-icon"><i class="bi bi-envelope"></i></span>
+            <span class="alert-card-status" [class.is-ok]="isEmailVerified">
+              <i class="bi" [ngClass]="isEmailVerified ? 'bi-patch-check' : 'bi-hourglass-split'"></i>
+              {{ isEmailVerified ? 'Verified' : 'Pending' }}
+            </span>
           </div>
-          <span *ngIf="isEmailVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
-          <a *ngIf="!isEmailVerified" class="alert-card-link mt-2 fw-bold" (click)="onVerifyEmail()">Resend verification</a>
+          <div class="alert-card-title">{{ isEmailVerified ? 'Email Verified' : 'Email Verification Pending' }}</div>
+          <div class="alert-card-desc">{{ isEmailVerified ? 'Your email has been verified and is ready for campaign communication.' : 'Verify your email to unlock full platform access and start receiving brand communication.' }}</div>
+          <a *ngIf="!isEmailVerified" class="alert-card-link" (click)="onVerifyEmail()">Resend verification <i class="bi bi-arrow-right"></i></a>
         </div>
       </div>
 
-      <div class="col-md-3 mb-3 mb-md-0">
-        <div class="alert-card alert-card--mobile d-flex flex-column justify-content-between h-100">
-          <div class="d-flex align-items-start">
-            <span class="alert-card-icon me-3"><i class="bi bi-telephone-fill"></i></span>
-            <div>
-              <div class="alert-card-title fw-bold">{{ isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
-              <div class="alert-card-desc">{{ isMobileVerified ? 'Your mobile number has been verified by the TrendStarz team.' : 'Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.' }}</div>
-              <div *ngIf="verificationCallNumber && !isMobileVerified" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
-            </div>
+      <div class="col-md-6 col-xl-3">
+        <div class="alert-card alert-card--mobile h-100">
+          <div class="alert-card-top">
+            <span class="alert-card-icon"><i class="bi bi-phone"></i></span>
+            <span class="alert-card-status" [class.is-ok]="isMobileVerified">
+              <i class="bi" [ngClass]="isMobileVerified ? 'bi-patch-check' : 'bi-hourglass-split'"></i>
+              {{ isMobileVerified ? 'Verified' : 'Pending' }}
+            </span>
           </div>
-          <span *ngIf="isMobileVerified" class="alert-card-link mt-2 text-success fw-bold"><i class="bi bi-check-circle"></i> Verified</span>
-          <a *ngIf="!isMobileVerified" class="alert-card-link mt-2 fw-bold" (click)="onMobileVerificationHelp()">How mobile verification works</a>
+          <div class="alert-card-title">{{ isMobileVerified ? 'Mobile Verified' : 'Mobile Verification Pending' }}</div>
+          <div class="alert-card-desc">{{ isMobileVerified ? 'Your mobile number has been verified by the TrendStarz team.' : 'Mobile verification is manually reviewed within 24-48 hours. Please ensure your mobile number is valid and reachable.' }}</div>
+          <div *ngIf="verificationCallNumber && !isMobileVerified" class="small mt-1">Call-from number: {{ verificationCallNumber }}</div>
+          <a *ngIf="!isMobileVerified" class="alert-card-link" (click)="onMobileVerificationHelp()">How mobile verification works <i class="bi bi-arrow-right"></i></a>
         </div>
       </div>
 
-      <div class="col-md-3">
-        <div class="alert-card alert-card--profile d-flex flex-column justify-content-between h-100">
-          <div class="d-flex align-items-start">
-            <span class="alert-card-icon me-3"><i class="bi bi-geo-alt-fill"></i></span>
-            <div>
-              <div class="alert-card-title fw-bold">{{ photographer.location?.state || 'Location missing' }}</div>
-              <div class="alert-card-desc">{{ photographer.location?.district || 'Add district to improve discovery ranking.' }}</div>
-            </div>
+      <div class="col-md-6 col-xl-3">
+        <div class="alert-card alert-card--profile h-100">
+          <div class="alert-card-top">
+            <span class="alert-card-icon"><i class="bi bi-geo-alt"></i></span>
+            <span class="alert-card-status" [class.is-ok]="!!photographer.location?.district">
+              <i class="bi" [ngClass]="photographer.location?.district ? 'bi-patch-check' : 'bi-pencil'"></i>
+              {{ photographer.location?.district ? 'Location set' : 'Add district' }}
+            </span>
           </div>
-          <a class="alert-card-link mt-2 fw-bold" (click)="onSearch()">Search opportunities</a>
+          <div class="alert-card-title">{{ photographer.location?.state || 'Location missing' }}</div>
+          <div class="alert-card-desc">{{ photographer.location?.district || 'Add district to improve discovery ranking.' }}</div>
+          <a class="alert-card-link" (click)="onSearch()">Search opportunities <i class="bi bi-arrow-right"></i></a>
         </div>
       </div>
     </div>
@@ -101,45 +106,39 @@
     ></app-whatsapp-community-card>
 
     <div class="performance-overview mb-4">
-      <div class="d-flex align-items-center justify-content-between mb-2">
-        <div class="performance-title">Performance Overview</div>
-        <span class="performance-range">LAST 30 DAYS</span>
+      <div class="d-flex align-items-end justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+          <div class="performance-title">Profile Overview</div>
+          <p class="performance-subtitle">What brands see when they discover your profile</p>
+        </div>
       </div>
-      <div class="row gx-3">
-        <div class="col-6 col-md-3 mb-3 mb-md-0">
-          <div class="card text-center shadow-sm border-0">
-            <div class="card-body py-3">
-              <div class="display-6 fw-bold mb-1">{{ skillsCount }}</div>
-              <div class="text-muted">Skills</div>
-              <span class="badge rounded-pill bg-primary">Discovery</span>
-            </div>
+      <div class="row g-3">
+        <div class="col-6 col-md-3">
+          <div class="stat-card">
+            <div class="stat-card__top"><span class="stat-card__pill stat-card__pill--indigo">Discovery</span><i class="bi bi-stars"></i></div>
+            <div class="stat-card__value">{{ skillsCount }}</div>
+            <div class="stat-card__label">Skills</div>
           </div>
         </div>
-        <div class="col-6 col-md-3 mb-3 mb-md-0">
-          <div class="card text-center shadow-sm border-0">
-            <div class="card-body py-3">
-              <div class="display-6 fw-bold mb-1">{{ pricingCount }}</div>
-              <div class="text-muted">Pricing options</div>
-              <span class="badge rounded-pill bg-info text-dark">Offers</span>
-            </div>
+        <div class="col-6 col-md-3">
+          <div class="stat-card">
+            <div class="stat-card__top"><span class="stat-card__pill stat-card__pill--teal">Offers</span><i class="bi bi-tag"></i></div>
+            <div class="stat-card__value">{{ pricingCount }}</div>
+            <div class="stat-card__label">Pricing options</div>
           </div>
         </div>
-        <div class="col-6 col-md-3 mb-3 mb-md-0">
-          <div class="card text-center shadow-sm border-0">
-            <div class="card-body py-3">
-              <div class="display-6 fw-bold mb-1">{{ platformsCount }}</div>
-              <div class="text-muted">Platforms</div>
-              <span class="badge rounded-pill bg-success">Trust</span>
-            </div>
+        <div class="col-6 col-md-3">
+          <div class="stat-card">
+            <div class="stat-card__top"><span class="stat-card__pill stat-card__pill--green">Trust</span><i class="bi bi-share"></i></div>
+            <div class="stat-card__value">{{ platformsCount }}</div>
+            <div class="stat-card__label">Platforms</div>
           </div>
         </div>
-        <div class="col-6 col-md-3 mb-3 mb-md-0">
-          <div class="card text-center shadow-sm border-0">
-            <div class="card-body py-3">
-              <div class="display-6 fw-bold mb-1">{{ equipmentCount }}</div>
-              <div class="text-muted">Equipment</div>
-              <span class="badge rounded-pill bg-dark">Gear</span>
-            </div>
+        <div class="col-6 col-md-3">
+          <div class="stat-card">
+            <div class="stat-card__top"><span class="stat-card__pill stat-card__pill--dark">Gear</span><i class="bi bi-camera"></i></div>
+            <div class="stat-card__value">{{ equipmentCount }}</div>
+            <div class="stat-card__label">Equipment</div>
           </div>
         </div>
       </div>
@@ -432,7 +431,7 @@
       </div>
     </div>
 
-  <app-usage-summary [usageSummary]="usageSummary" class="text-black"></app-usage-summary>
+  <app-usage-summary *ngIf="usageSummary" [usageSummary]="usageSummary" class="dashboard-usage text-black"></app-usage-summary>
 </div>
 
 <app-campaign-detail-modal
