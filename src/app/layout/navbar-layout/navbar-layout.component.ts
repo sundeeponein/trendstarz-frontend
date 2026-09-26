@@ -87,8 +87,7 @@ export class NavbarLayoutComponent implements OnDestroy {
   }
 
   get searchLabel(): string {
-    if (this.user?.role === 'influencer') return 'Search';
-    return 'Search';
+    return this.user ? 'Search' : 'Discover';
   }
 
   get isAdminUser(): boolean {
@@ -117,6 +116,22 @@ export class NavbarLayoutComponent implements OnDestroy {
 
   get showRegisterPhotographerLink(): boolean {
     return this.showRegisterLinks && this.appLinkVisibility.showRegisterPhotographerLink;
+  }
+
+  /** Guests: one "Get Started" button with a role menu instead of three Join links. */
+  get showGetStarted(): boolean {
+    return this.showRegisterBrandLink || this.showRegisterInfluencerLink || this.showRegisterPhotographerLink;
+  }
+
+  getStartedOpen = false;
+
+  toggleGetStarted(): void {
+    this.getStartedOpen = !this.getStartedOpen;
+  }
+
+  startAs(role: 'brand' | 'influencer' | 'photographer'): void {
+    this.getStartedOpen = false;
+    this.regConfirm.open(role);
   }
 
   get searchTooltip(): string {
@@ -296,6 +311,9 @@ export class NavbarLayoutComponent implements OnDestroy {
     const target = event.target as HTMLElement | null;
     if (!target?.closest('.profile-dropdown')) {
       this.dropdownOpen = false;
+    }
+    if (!target?.closest('.get-started')) {
+      this.getStartedOpen = false;
     }
   }
 

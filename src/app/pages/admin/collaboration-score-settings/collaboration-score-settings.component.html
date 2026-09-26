@@ -1,7 +1,7 @@
 <div class="container-fluid py-4">
-  <h1 class="h4 fw-bold mb-1 text-black">Collaboration Score Settings</h1>
+  <h1 class="h4 fw-bold mb-1 text-black">TrendScore Settings</h1>
   <p class="text-muted mb-4">
-    Control the AI layer, scoring thresholds, and rollout for the TrendStarz Collaboration Score.
+    Control the AI layer, scoring thresholds, and rollout for the TrendStarz Score.
   </p>
   <p *ngIf="settings" class="text-muted small font-monospace" style="word-break: break-all;">
     DEBUG server instance = {{ settings._serverInstanceId }} · doc _id = {{ settings._id }} · updatedAt = {{ settings.updatedAt }}
@@ -121,7 +121,7 @@
       <div class="card-body">
         <h2 class="h6 fw-bold mb-3">Score Weights</h2>
         <p class="text-muted small">
-          How much each criterion contributes to the overall Collaboration Score. Must sum to exactly 100.
+          How much each criterion contributes to the overall TrendStarz Score. Must sum to exactly 100.
         </p>
         <div class="row g-3">
           <div class="col-6 col-md-2">

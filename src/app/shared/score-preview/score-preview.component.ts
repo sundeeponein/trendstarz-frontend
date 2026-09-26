@@ -184,7 +184,7 @@ export class ScorePreviewComponent implements OnInit, OnDestroy {
     'Analyzing Profile...',
     'Checking profile quality...',
     'Checking completeness...',
-    'Calculating Collaboration Score...',
+    'Calculating TrendStarz Score...',
   ];
   loadingMessageIndex = 0;
   private loadingMessageTimer: ReturnType<typeof setInterval> | null = null;

@@ -2,7 +2,7 @@
   <div class="cs-card__header">
     <div class="cs-card__title">
       <i class="bi bi-graph-up-arrow"></i>
-      Collaboration Score
+      TrendScore
     </div>
     <button
       type="button"
@@ -32,12 +32,12 @@
 
   <div class="cs-card__loading" *ngIf="loading">
     <div class="spinner-border spinner-border-sm text-primary"></div>
-    <span>Loading your Collaboration Score…</span>
+    <span>Loading your TrendScore…</span>
   </div>
 
   <div class="cs-card__empty" *ngIf="!loading && !audit">
     <p class="cs-card__empty-eyebrow">🎉 New Feature</p>
-    <p class="cs-card__empty-title">Your FREE Collaboration Score is ready.</p>
+    <p class="cs-card__empty-title">Your FREE TrendScore is ready.</p>
     <p class="text-muted">See how brands evaluate your public profile.</p>
     <button type="button" class="cs-card__reanalyze" (click)="onReAnalyzeClick()">Generate Free Score</button>
     <div class="cs-card__empty-connect" *ngIf="!isConnected('instagram') || !isConnected('facebook')">
@@ -100,7 +100,7 @@
             </span>
           </div>
 
-          <h2 class="cs-card__heading">Collaboration Score</h2>
+          <h2 class="cs-card__heading">TrendScore</h2>
           <p class="cs-card__copy" *ngIf="audit.profileCompletenessScore != null">
             Your profile completion is at <strong>{{ audit.profileCompletenessScore }}%</strong>.
             <ng-container *ngIf="pointsToRecommended != null"> Need +{{ pointsToRecommended }} points to reach TrendStarZ Recommended.</ng-container>
@@ -239,7 +239,7 @@
             >
               {{ p.confidence }}% {{ ui.confidenceLabel(p.confidence) }}
             </div>
-            <div class="cs-card__platform-pill-score text-muted" *ngIf="p.miniScore != null" [title]="'Content Quality + Posting Consistency for ' + p.platform + ' alone — not the full Collaboration Score.'">
+            <div class="cs-card__platform-pill-score text-muted" *ngIf="p.miniScore != null" [title]="'Content Quality + Posting Consistency for ' + p.platform + ' alone — not the full TrendStarz Score.'">
               Platform Quality: <strong>{{ p.miniScore }}/100</strong>
             </div>
           </div>

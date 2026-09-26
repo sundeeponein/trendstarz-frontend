@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, Inject, PLATFORM_ID, NgZone, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Meta, Title } from '@angular/platform-browser';
+import { Meta, MetaDefinition, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../shared/config.service';
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { BuiltForAudiencesComponent, BuiltForAudienceItem } from '../../shared/components/built-for-audiences/built-for-audiences.component';
@@ -11,7 +11,7 @@ import { FaqAccordionComponent, FaqAccordionItem, FaqCtaButton } from '../../sha
 import { HOME_FAQ_ITEMS } from '../../shared/components/faq-accordion/faq-content.constants';
 import { environment } from '../../../environments/environment';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
-import { HeroBannerComponent, HeroStat, HeroAction, HeroAudience } from '../../shared/hero-banner/hero-banner.component';
+import { HeroBannerComponent, HeroStat, HeroAction, HeroAudience, HeroShowcaseCard, DEFAULT_HERO_CARDS } from '../../shared/hero-banner/hero-banner.component';
 import { AnalyticsService } from '../../core/analytics.service';
 import { SessionService } from '../../core/session.service';
 import { HeroSliderBannerComponent, HeroSliderBannerSlide } from '../../shared/hero-slider-banner/hero-slider-banner.component';
@@ -43,6 +43,9 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   private static readonly DEFAULT_HERO_IMAGE = 'assets/banner-trendstarz-1600.jpg';
   private readonly analytics = inject(AnalyticsService);
   private readonly session = inject(SessionService);
+
+  /** Default marketing cards only — the showcase never shows real users' data (logged in or out). */
+  readonly heroCards: HeroShowcaseCard[] = DEFAULT_HERO_CARDS;
 
   /** Logged-in users get role-specific actions instead of the "I'm a …" audience CTAs. */
   heroActions: HeroAction[] = [];
@@ -175,22 +178,14 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   readonly minPublicBrands = environment.marketplacePublicMinBrands;
   readonly minPublicPhotographers = environment.marketplacePublicMinPhotographers;
 
-  glanceCounters: TrendstarzGlanceCounter[] = [
-    { label: 'Verified Influencers', value: '108+', emphasis: true },
-    { label: 'Creator Profiles', value: '200+', emphasis: true },
-    { label: 'Growing Network of', value: 'BRANDS', emphasis: true },
-    { label: 'Photographers', value: 'Growing the count', emphasis: false },
-  ];
+  /** Empty until real platform stats load — never show placeholder numbers. */
+  glanceCounters: TrendstarzGlanceCounter[] = [];
 
   /** Hero stats strip — empty until platform stats load; zero-value items are omitted. */
   heroStats: HeroStat[] = [];
+  heroStatsLoading = false;
 
-  statsStripItems: PlatformStatItem[] = [
-    { icon: 'bi-people-fill', value: '100+', label: 'Verified Creators' },
-    { icon: 'bi-briefcase-fill', value: '50+', label: 'Active Brands' },
-    { icon: 'bi-camera-fill', value: '20+', label: 'Photo/VideoGraphers' },
-    { icon: 'bi-patch-check-fill', value: '500+', label: 'Campaigns Created' },
-  ];
+  statsStripItems: PlatformStatItem[] = [];
 
   readonly placeholderCategories: string[] = [
     'Fashion',
@@ -305,19 +300,23 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.title.setTitle('Welcome to TrendStarz Marketplace | Connect Influencers & Brands');
-    this.meta.addTags([
-      { name: 'description', content: 'TrendStarz Marketplace connects influencers and brands. Discover, collaborate, and grow together!' },
-      { name: 'keywords', content: 'influencer, brand, marketplace, collaboration, social media, discover, grow' },
-      { property: 'og:title', content: 'Welcome to TrendStarz Marketplace' },
-      { property: 'og:description', content: 'Connect influencers and brands. Discover, collaborate, and grow together!' },
+    const pageTitle = 'TrendStarz | Where Brands Meet Creators & Photographers';
+    const description = 'Brands find verified influencers and photo/videographers across India. Creators get discovered, check their free TrendScore and get hired for campaigns.';
+    this.title.setTitle(pageTitle);
+    // updateTag (not addTags) so returning to the home page doesn't stack duplicate tags.
+    const tags: MetaDefinition[] = [
+      { name: 'description', content: description },
+      { name: 'keywords', content: 'influencer marketing India, hire influencers, photographers for brands, creator marketplace, TrendScore, brand collaborations' },
+      { property: 'og:title', content: pageTitle },
+      { property: 'og:description', content: description },
       { property: 'og:image', content: 'logo-trendstarz-logo-text.png' },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:title', content: 'Welcome to TrendStarz Marketplace' },
-      { name: 'twitter:description', content: 'Connect influencers and brands. Discover, collaborate, and grow together!' },
-      { name: 'twitter:image', content: 'logo-trendstarz-logo-text.png' }
-    ]);
+      { name: 'twitter:title', content: pageTitle },
+      { name: 'twitter:description', content: description },
+      { name: 'twitter:image', content: 'logo-trendstarz-logo-text.png' },
+    ];
+    tags.forEach((tag) => this.meta.updateTag(tag));
     if (!this.isBrowser) return;
     this.heroActions = this.buildHeroActions();
     this.loadPlatformStats();
@@ -419,10 +418,15 @@ export class WelcomeComponent implements OnInit, OnDestroy {
   }
 
   private loadPlatformStats(): void {
+    this.heroStatsLoading = true;
     this.config.getPlatformStats().subscribe((stats) => {
       this.platformStats = stats;
+      this.heroStatsLoading = false;
       const hasData = (stats?.totalInfluencers || 0) > 0 || (stats?.totalPhotographers || 0) > 0;
-      if (!hasData) return;
+      if (!hasData) {
+        this.cd.detectChanges();
+        return;
+      }
       const formatCount = (count: number) => (Number.isFinite(count) ? String(count) : '0');
       const brandsStat = formatBrandsStat(stats);
       const photographersStat = formatPhotographersStat(stats);

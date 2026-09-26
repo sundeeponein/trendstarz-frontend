@@ -2,6 +2,8 @@
   <app-hero-banner
     [actions]="heroActions"
     [stats]="heroStats"
+    [statsLoading]="heroStatsLoading"
+    [cards]="heroCards"
     (audienceClick)="onHeroAudienceClick($event)"
   ></app-hero-banner>
   <app-registration-confirm-modal></app-registration-confirm-modal>

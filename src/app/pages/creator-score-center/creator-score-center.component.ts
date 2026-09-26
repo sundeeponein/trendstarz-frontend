@@ -303,7 +303,7 @@ export class CreatorScoreCenterComponent implements OnInit {
       error: () => {
         this.ngZone.run(() => {
           this.reAnalyzing = false;
-          this.toast.error('Could not refresh your Collaboration Score. Please try again.');
+          this.toast.error('Could not refresh your TrendStarz Score. Please try again.');
           this.cdr.detectChanges();
         });
       },

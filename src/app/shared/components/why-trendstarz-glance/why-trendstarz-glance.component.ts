@@ -34,12 +34,8 @@ export class WhyTrendstarzGlanceComponent {
   @Input() growingSub = 'Join the elite network of Indian creators.';
 
   @Input() glanceHeading = 'Trendstarz at a Glance';
-  @Input() counters: TrendstarzGlanceCounter[] = [
-    { label: 'Verified Influencers', value: '108+', emphasis: true },
-    { label: 'Creator Profiles', value: '200+', emphasis: true },
-    { label: 'Growing Network of', value: 'BRANDS', emphasis: true },
-    { label: 'Photographers', value: 'Across India', emphasis: false },
-  ];
+  /** Real counts only — the counters block stays hidden while this is empty. */
+  @Input() counters: TrendstarzGlanceCounter[] = [];
 
   @Input() categoriesLabel = 'Top Creator Categories';
   @Input() categories: string[] = ['Fashion', 'Beauty', 'Tech', 'Travel', 'Food', 'Fitness'];

@@ -333,7 +333,7 @@
       Showing <strong>{{ getVisibleRangeStart() }} – {{ getVisibleRangeEnd() }}</strong> of
       <strong>{{ getTotalActiveResults() }}</strong> {{ resultsNoun }}
     </p>
-    <div class="results-pagination__actions" *ngIf="getTotalPages() > 1">
+    <div class="results-pagination__actions" *ngIf="getTotalPages() > 1 || (isInfluencerMode && hasMoreInfluencers)">
       <button type="button" class="page-btn page-btn--nav" (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()" aria-label="Previous page">
         <i class="bi bi-chevron-left" aria-hidden="true"></i>
       </button>
@@ -348,9 +348,17 @@
           [attr.aria-label]="'Page ' + n"
           (click)="goToPage(+n)">{{ n }}</button>
       </ng-container>
-      <button type="button" class="page-btn page-btn--nav" (click)="goToNextPage()" [disabled]="!hasNextPage()" aria-label="Next page">
+      <button type="button" class="page-btn page-btn--nav" (click)="goToNextPage()" [disabled]="!canGoNext || influencersLoadingMore" aria-label="Next page">
         <i class="bi bi-chevron-right" aria-hidden="true"></i>
       </button>
+    </div>
+    <div class="results-pagination__more" *ngIf="isInfluencerMode && hasMoreInfluencers">
+      <button type="button" class="btn-load-more" (click)="loadMoreInfluencers()" [disabled]="influencersLoadingMore">
+        <span *ngIf="influencersLoadingMore" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        {{ influencersLoadingMore ? 'Loading…' : 'Load ' + (remainingInfluencers > 120 ? 120 : remainingInfluencers) + ' more creators' }}
+      </button>
+      <small *ngIf="loadMoreUsesSearch">Uses 1 search from today's limit</small>
+      <small class="text-danger" *ngIf="loadMoreError" role="alert">{{ loadMoreError }}</small>
     </div>
   </nav>
 

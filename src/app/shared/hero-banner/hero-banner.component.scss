@@ -163,6 +163,20 @@
     .label { font-size: 0.9rem; color: rgba(11, 18, 32, 0.65); }
   }
 
+  .hero-stats--loading .skeleton {
+    display: block;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #eef0f6 25%, #f6f7fb 50%, #eef0f6 75%);
+    background-size: 200% 100%;
+    animation: hero-skeleton 1.2s ease-in-out infinite;
+  }
+  .hero-stats--loading .skeleton--value { width: 72px; height: 1.9rem; margin-bottom: 0.35rem; }
+  .hero-stats--loading .skeleton--label { width: 96px; height: 0.9rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-stats--loading .skeleton { animation: none; }
+  }
+
   // ── Marketplace showcase card ─────────────────────────────────────────────
   .hero-showcase {
     background: #fff;
@@ -187,14 +201,6 @@
       text-transform: uppercase;
       color: #ea580c;
     }
-    .example-tag {
-      padding: 2px 10px;
-      border-radius: 999px;
-      background: #f1f2fb;
-      color: rgba(11, 18, 32, 0.6);
-      font-size: 0.72rem;
-      font-weight: 700;
-    }
   }
 
   .showcase-media,
@@ -204,7 +210,7 @@
     aspect-ratio: 16 / 9;
   }
 
-  .showcase-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .showcase-img { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; display: block; }
 
   .showcase-art {
     display: grid;
@@ -241,6 +247,7 @@
     .stat-label { font-size: 0.78rem; font-weight: 600; color: rgba(11, 18, 32, 0.72); }
     .stat-value { font-size: 1.3rem; font-weight: 700; color: #0b1220; }
     .stat-value.accent { color: #f59e0b; }
+    .stat-value--text { font-size: 0.95rem; line-height: 1.3; padding-top: 0.2rem; }
   }
 
   .showcase-meta {
@@ -303,4 +310,9 @@
     .btn-hero-secondary { width: 100%; min-width: 0; }
     .hero-stats { display: grid; grid-template-columns: repeat(2, 1fr); }
   }
+}
+
+@keyframes hero-skeleton {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }

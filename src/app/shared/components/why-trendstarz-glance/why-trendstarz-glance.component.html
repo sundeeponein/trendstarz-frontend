@@ -34,13 +34,16 @@
 
       <div class="col-12 col-lg-5">
         <article class="glance-card glance-card--dark h-100">
-          <h3 class="mb-3">{{ glanceHeading }}</h3>
-          <div class="metric-list">
-            <div class="metric-item" *ngFor="let counter of counters">
-              <span>{{ counter.label }}</span>
-              <strong [class.is-muted]="!counter.emphasis">{{ counter.value }}</strong>
+          <!-- Counters only once real numbers have loaded; hidden if stats are unavailable -->
+          <ng-container *ngIf="counters.length">
+            <h3 class="mb-3">{{ glanceHeading }}</h3>
+            <div class="metric-list">
+              <div class="metric-item" *ngFor="let counter of counters">
+                <span>{{ counter.label }}</span>
+                <strong [class.is-muted]="!counter.emphasis">{{ counter.value }}</strong>
+              </div>
             </div>
-          </div>
+          </ng-container>
           <span class="glance-categories-label">{{ categoriesLabel }}</span>
           <div class="chip-row">
             <span class="chip" *ngFor="let cat of categories">{{ cat }}</span>

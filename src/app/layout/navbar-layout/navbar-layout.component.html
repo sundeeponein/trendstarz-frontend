@@ -42,23 +42,20 @@
       <a routerLink="/how-it-works" routerLinkActive="active" class="nav-tab">
         How It Works
       </a>
-      <a routerLink="/why-trendstarz" routerLinkActive="active" class="nav-tab">
+      <a *ngIf="user" routerLink="/why-trendstarz" routerLinkActive="active" class="nav-tab">
         Why TrendStarz
       </a>
       <a *ngIf="!user" routerLink="/trendstarz-score" routerLinkActive="active" class="nav-tab">
-        TrendStarZ Score ⭐
+        TrendScore ⭐
+      </a>
+      <a *ngIf="!user" routerLink="/features/brands" routerLinkActive="active" class="nav-tab">
+        For Brands
+      </a>
+      <a *ngIf="!user" routerLink="/features/influencers" routerLinkActive="active" class="nav-tab">
+        For Creators
       </a>
       <a *ngIf="user?.role === 'influencer' || user?.role === 'photographer'" routerLink="/dashboard/trendstarz-score" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
-        TrendStarZ Score ⭐
-      </a>
-      <a *ngIf="showRegisterInfluencerLink" class="nav-tab" (click)="regConfirm.open('influencer')" style="cursor:pointer;">
-        Join as Influencer
-      </a>
-      <a *ngIf="showRegisterBrandLink" class="nav-tab" (click)="regConfirm.open('brand')" style="cursor:pointer;">
-        Join as Brand
-      </a>
-      <a *ngIf="showRegisterPhotographerLink" class="nav-tab" (click)="regConfirm.open('photographer')" style="cursor:pointer;">
-        Join as Photographer
+        TrendScore ⭐
       </a>
     </div>
 
@@ -95,9 +92,27 @@
           </div>
         </div>
 
-        <a routerLink="/login" class="btn btn-sm btn-login" *ngIf="!user">
+        <a routerLink="/login" class="btn btn-sm btn-login-ghost" *ngIf="!user">
           Login
         </a>
+
+        <!-- Get Started: one entry point, role picked in a small menu (roles an admin hid are left out) -->
+        <div class="get-started" *ngIf="showGetStarted">
+          <button type="button" class="btn btn-sm btn-login" (click)="toggleGetStarted()" [attr.aria-expanded]="getStartedOpen" aria-haspopup="menu">
+            Get Started <i class="bi bi-chevron-down" aria-hidden="true"></i>
+          </button>
+          <div class="get-started-menu" *ngIf="getStartedOpen" role="menu">
+            <button *ngIf="showRegisterBrandLink" type="button" role="menuitem" (click)="startAs('brand')">
+              <i class="bi bi-briefcase" aria-hidden="true"></i><span><strong>I'm a Brand</strong><small>Find creators & photographers</small></span>
+            </button>
+            <button *ngIf="showRegisterInfluencerLink" type="button" role="menuitem" (click)="startAs('influencer')">
+              <i class="bi bi-person-video3" aria-hidden="true"></i><span><strong>I'm an Influencer</strong><small>Get discovered & earn</small></span>
+            </button>
+            <button *ngIf="showRegisterPhotographerLink" type="button" role="menuitem" (click)="startAs('photographer')">
+              <i class="bi bi-camera" aria-hidden="true"></i><span><strong>I'm a Photo/Videographer</strong><small>Get hired for campaigns</small></span>
+            </button>
+          </div>
+        </div>
 
 
         <div class="profile-dropdown d-none d-md-block" *ngIf="user">
@@ -232,12 +247,15 @@
         <a *ngIf="showSearchLink" [routerLink]="searchRoute" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>
         <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer' || user?.role === 'photographer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-receipt"></i><span>Transactions</span></a>
         <a routerLink="/how-it-works" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gear"></i><span>How It Works</span></a>
-        <a routerLink="/why-trendstarz" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-stars"></i><span>Why TrendStarz</span></a>
-        <a *ngIf="!user" routerLink="/trendstarz-score" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>TrendStarZ Score ⭐</span></a>
-        <a *ngIf="user?.role === 'influencer' || user?.role === 'photographer'" routerLink="/dashboard/trendstarz-score" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>TrendStarZ Score ⭐</span></a>
-        <a *ngIf="showRegisterInfluencerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('influencer')" style="cursor:pointer;"><i class="bi bi-person-plus"></i><span>Register as Influencer</span></a>
-        <a *ngIf="showRegisterBrandLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('brand')" style="cursor:pointer;"><i class="bi bi-building"></i><span>Register as Brand</span></a>
-        <a *ngIf="showRegisterPhotographerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('photographer')" style="cursor:pointer;"><i class="bi bi-camera"></i><span>Register as Photographer</span></a>
+        <a *ngIf="user" routerLink="/why-trendstarz" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-stars"></i><span>Why TrendStarz</span></a>
+        <a *ngIf="!user" routerLink="/trendstarz-score" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>TrendScore ⭐</span></a>
+        <a *ngIf="!user" routerLink="/features/brands" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-briefcase"></i><span>For Brands</span></a>
+        <a *ngIf="!user" routerLink="/features/influencers" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-video3"></i><span>For Creators</span></a>
+        <p *ngIf="showGetStarted" class="mobile-link-heading">Get started as</p>
+        <a *ngIf="user?.role === 'influencer' || user?.role === 'photographer'" routerLink="/dashboard/trendstarz-score" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>TrendScore ⭐</span></a>
+        <a *ngIf="showRegisterInfluencerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('influencer')" style="cursor:pointer;"><i class="bi bi-person-plus"></i><span>Influencer</span></a>
+        <a *ngIf="showRegisterBrandLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('brand')" style="cursor:pointer;"><i class="bi bi-building"></i><span>Brand</span></a>
+        <a *ngIf="showRegisterPhotographerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('photographer')" style="cursor:pointer;"><i class="bi bi-camera"></i><span>Photo/Videographer</span></a>
       </div>
 
       <div class="mobile-upgrade" *ngIf="user && !user?.isPremium">

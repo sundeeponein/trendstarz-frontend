@@ -1,5 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnChanges, OnDestroy, Inject, PLATFORM_ID, NgZone, ChangeDetectorRef } from '@angular/core';
-import { CommonModule, NgOptimizedImage, isPlatformBrowser } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
 export type HeroAudience = 'brand' | 'influencer' | 'photographer';
@@ -29,8 +29,6 @@ export interface HeroStat {
 }
 
 interface HeroCardBase {
-  /** Sample content until real marketplace data loads — labelled so it never passes as a real profile. */
-  example?: boolean;
   verified?: boolean;
   ctaLabel: string;
   ctaRoute: string;
@@ -42,8 +40,9 @@ export interface HeroCreatorCard extends HeroCardBase {
   category?: string;
   imageUrl?: string;
   followers?: string;
-  engagement?: string;
-  trendScore?: number;
+  platform?: string;
+  location?: string;
+  trendScore?: number | null;
 }
 
 export interface HeroPhotographerCard extends HeroCardBase {
@@ -52,53 +51,50 @@ export interface HeroPhotographerCard extends HeroCardBase {
   specialties?: string;
   location?: string;
   imageUrl?: string;
-  trendScore?: number;
+  trendScore?: number | null;
 }
 
 export interface HeroCampaignCard extends HeroCardBase {
   type: 'campaign';
   title: string;
+  imageUrl?: string;
   lookingFor?: string;
   locations?: string;
 }
 
 /**
- * Right-side marketplace card. Only real stored fields go in here — an empty
- * field is simply not rendered. No private deal amounts or brand-confidential data.
+ * Right-side marketplace card — TrendStarz's own marketing images and copy
+ * only (see DEFAULT_HERO_CARDS), never real users' data. Empty fields aren't rendered.
  */
 export type HeroShowcaseCard = HeroCreatorCard | HeroPhotographerCard | HeroCampaignCard;
 
-/** Rendered immediately (SSR/prerender) and kept if live data is unavailable. */
-export const EXAMPLE_HERO_CARDS: HeroShowcaseCard[] = [
+/**
+ * Rendered immediately (SSR/prerender) and kept when no live profiles are
+ * available. Generic marketplace copy only — no invented names or numbers.
+ * Replace with real images/content when ready.
+ */
+export const DEFAULT_HERO_CARDS: HeroShowcaseCard[] = [
   {
     type: 'creator',
-    example: true,
-    name: 'Fashion & Beauty Creator',
-    category: 'Instagram • Reels',
+    name: 'Fashion & Beauty Creators',
+    category: 'Instagram • YouTube • Reels',
     imageUrl: 'assets/banner-trendstarz-1600.jpg',
-    followers: '128K',
-    engagement: '6.4%',
-    trendScore: 92,
-    verified: true,
     ctaLabel: 'Discover Creators',
     ctaRoute: '/search',
   },
   {
     type: 'photographer',
-    example: true,
     name: 'Product & Lifestyle Shoots',
     specialties: 'Fashion • Product • Lifestyle',
-    location: 'Hyderabad, Telangana',
-    verified: true,
+    imageUrl: 'assets/banner-videoproduction.jpg',
     ctaLabel: 'Find Photo/Videographers',
-    ctaRoute: '/search',
+    ctaRoute: '/search?tab=photographers',
   },
   {
     type: 'campaign',
-    example: true,
-    title: 'Skincare Launch Campaign',
-    lookingFor: 'Beauty creators & product photographers',
-    locations: 'Mumbai • Delhi • Bengaluru',
+    title: 'Launch your next campaign',
+    imageUrl: 'assets/banner-brands-creators-campaign.png',
+    lookingFor: 'Creators & photo/videographers across India',
     ctaLabel: 'How Campaigns Work',
     ctaRoute: '/how-it-works',
   },
@@ -107,7 +103,7 @@ export const EXAMPLE_HERO_CARDS: HeroShowcaseCard[] = [
 @Component({
   selector: 'app-hero-banner',
   standalone: true,
-  imports: [CommonModule, RouterModule, NgOptimizedImage],
+  imports: [CommonModule, RouterModule],
   templateUrl: './hero-banner.component.html',
   styleUrls: ['./hero-banner.component.scss']
 })
@@ -128,7 +124,9 @@ export class HeroBannerComponent implements OnChanges, OnDestroy {
   @Input() trustItems: string[] = ['Verified profiles', 'Direct collaboration', 'Secure payments'];
   /** Live platform counts; the strip is hidden until at least one is available. */
   @Input() stats: HeroStat[] = [];
-  @Input() cards: HeroShowcaseCard[] = EXAMPLE_HERO_CARDS;
+  /** True while stats are loading — placeholder tiles hold the row's space so nothing jumps. */
+  @Input() statsLoading = false;
+  @Input() cards: HeroShowcaseCard[] = DEFAULT_HERO_CARDS;
   @Output() audienceClick = new EventEmitter<HeroAudience>();
 
   activeIndex = 0;

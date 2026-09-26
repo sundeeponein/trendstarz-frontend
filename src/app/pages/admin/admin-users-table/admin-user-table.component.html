@@ -346,7 +346,7 @@
         <div class="collab-score-summary mb-3" *ngIf="!selectedUserCollabScoreLoading">
           <ng-container *ngIf="selectedUserCollabScore; else noCollabScore">
             <div class="collab-score-summary__row">
-              <span>Collaboration Score</span>
+              <span>TrendScore</span>
               <strong>{{ selectedUserCollabScore.collaborationScore }}/100</strong>
             </div>
             <div class="collab-score-summary__row">
@@ -359,7 +359,7 @@
             </div>
           </ng-container>
           <ng-template #noCollabScore>
-            <div class="collab-score-summary__row text-muted">No Collaboration Score yet.</div>
+            <div class="collab-score-summary__row text-muted">No TrendScore yet.</div>
           </ng-template>
           <button
             type="button"

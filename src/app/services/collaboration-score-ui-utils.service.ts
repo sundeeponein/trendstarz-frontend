@@ -1,7 +1,16 @@
 import { Injectable } from '@angular/core';
-import { CollaborationAudit, CollaborationScoreThresholds } from './collaboration-score-api.service';
+import { CollaborationAudit, CollaborationScoreThresholds, CollaborationScoreWeights } from './collaboration-score-api.service';
 
 /** Mirrors the backend defaults (collaboration-score-settings.default.json → thresholds). */
+/** Mirrors the backend defaults (collaboration-score-settings.default.json → scoreWeights). */
+export const DEFAULT_SCORE_WEIGHTS: CollaborationScoreWeights = {
+  profileCompletion: 15,
+  contentQuality: 25,
+  postingConsistency: 20,
+  professionalBranding: 20,
+  campaignReadiness: 20,
+};
+
 export const DEFAULT_SCORE_THRESHOLDS: CollaborationScoreThresholds = {
   trendstarzRecommendedMinScore: 80,
   campaignReadyMinScore: 70,
@@ -69,6 +78,24 @@ export class CollaborationScoreUiUtilsService {
     return this.thresholds;
   }
 
+  // Live admin weights (Collaboration Score Settings → Score Weights), so the
+  // breakdown's Weight/Contribution columns match how the score is computed.
+  private weights: CollaborationScoreWeights = { ...DEFAULT_SCORE_WEIGHTS };
+
+  setWeights(w: Partial<CollaborationScoreWeights> | null | undefined): void {
+    if (!w) return;
+    const next = { ...this.weights };
+    (Object.keys(next) as Array<keyof CollaborationScoreWeights>).forEach((k) => {
+      const v = Number(w[k]);
+      if (Number.isFinite(v) && v >= 0 && v <= 100) next[k] = v;
+    });
+    this.weights = next;
+  }
+
+  get scoreWeights(): CollaborationScoreWeights {
+    return this.weights;
+  }
+
   private tier(score: number): 0 | 1 | 2 | 3 {
     const t = this.thresholds;
     if (score >= t.trendstarzRecommendedMinScore && score >= t.campaignReadyMinScore) return 3;
@@ -111,21 +138,21 @@ export class CollaborationScoreUiUtilsService {
    * The 5 weighted criteria behind a single collaborationScore total, each
    * with its point Contribution (weight × score ÷ 100) — single source of
    * truth shared by the creator's own Score Center and the admin detail
-   * page, so both always show identical numbers. Weight percentages mirror
-   * the default admin-configurable scoreWeights (Collaboration Score
-   * Settings → Score Weights) — not persisted per-audit, so Contribution
-   * reflects the current defaults rather than whatever was actually
-   * configured at the moment a given audit ran.
+   * page, so both always show identical numbers. Weight percentages are the
+   * live admin scoreWeights (setWeights, loaded at app start) — not persisted
+   * per-audit, so Contribution reflects the current settings rather than
+   * whatever was configured at the moment a given audit ran.
    */
   subScores(audit: CollaborationAudit | null): SubScoreRow[] {
     if (!audit || audit.profileCompletenessScore == null) return [];
     const hasPlatforms = (audit.platformsCollected?.length ?? 0) > 0;
+    const w = this.weights;
     const rows = [
-      { label: 'Profile Completeness', value: audit.profileCompletenessScore ?? 0, weightPercent: 15, noData: false, group: 'Profile' as const },
-      { label: 'Content Quality', value: audit.contentQualityScore ?? 0, weightPercent: 25, noData: !hasPlatforms, group: 'Platform' as const },
-      { label: 'Posting Consistency', value: audit.postingConsistencyScore ?? 0, weightPercent: 20, noData: !hasPlatforms, group: 'Platform' as const },
-      { label: 'Professional Branding', value: audit.professionalBrandingScore ?? 0, weightPercent: 20, noData: false, group: 'Profile' as const },
-      { label: 'Campaign Readiness', value: audit.campaignReadinessScore ?? 0, weightPercent: 20, noData: false, group: 'Profile' as const },
+      { label: 'Profile Completeness', value: audit.profileCompletenessScore ?? 0, weightPercent: w.profileCompletion, noData: false, group: 'Profile' as const },
+      { label: 'Content Quality', value: audit.contentQualityScore ?? 0, weightPercent: w.contentQuality, noData: !hasPlatforms, group: 'Platform' as const },
+      { label: 'Posting Consistency', value: audit.postingConsistencyScore ?? 0, weightPercent: w.postingConsistency, noData: !hasPlatforms, group: 'Platform' as const },
+      { label: 'Professional Branding', value: audit.professionalBrandingScore ?? 0, weightPercent: w.professionalBranding, noData: false, group: 'Profile' as const },
+      { label: 'Campaign Readiness', value: audit.campaignReadinessScore ?? 0, weightPercent: w.campaignReadiness, noData: false, group: 'Profile' as const },
     ];
     return rows.map((r) => ({
       label: r.label,

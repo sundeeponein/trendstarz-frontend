@@ -38,6 +38,13 @@
           <li *ngFor="let t of trustItems"><i class="bi bi-check-circle-fill"></i> {{ t }}</li>
         </ul>
 
+        <div class="hero-stats hero-stats--loading mt-4" *ngIf="statsLoading && !stats.length" aria-hidden="true">
+          <div class="hero-stat" *ngFor="let _ of [1, 2, 3]">
+            <span class="skeleton skeleton--value"></span>
+            <span class="skeleton skeleton--label"></span>
+          </div>
+        </div>
+
         <div class="hero-stats mt-4" *ngIf="stats.length">
           <div class="hero-stat" *ngFor="let st of stats">
             <span class="value" [class.accent]="st.accent">
@@ -65,13 +72,12 @@
                 <ng-container *ngSwitchCase="'campaign'"><i class="bi bi-megaphone"></i> Campaign</ng-container>
               </ng-container>
             </span>
-            <span *ngIf="card.example" class="example-tag">Example</span>
           </div>
 
           <!-- Creator -->
           <ng-container *ngIf="card.type === 'creator'">
             <div class="showcase-media" *ngIf="card.imageUrl">
-              <img class="showcase-img" [ngSrc]="card.imageUrl" [alt]="card.name" width="1600" height="900" priority />
+              <img class="showcase-img" [src]="card.imageUrl" [alt]="card.name" width="1600" height="900" [attr.loading]="activeIndex === 0 ? 'eager' : 'lazy'" decoding="async" />
             </div>
             <div class="showcase-head">
               <h2 class="showcase-title">{{ card.name }}
@@ -79,17 +85,17 @@
               </h2>
               <p class="showcase-sub" *ngIf="card.category">{{ card.category }}</p>
             </div>
-            <div class="showcase-stats" *ngIf="card.followers || card.engagement || card.trendScore">
-              <div class="stat" *ngIf="card.followers"><span class="stat-label">Followers</span><span class="stat-value">{{ card.followers }}</span></div>
-              <div class="stat" *ngIf="card.engagement"><span class="stat-label">Engagement</span><span class="stat-value">{{ card.engagement }}</span></div>
+            <div class="showcase-stats" *ngIf="card.followers || card.trendScore || card.location">
+              <div class="stat" *ngIf="card.followers"><span class="stat-label">{{ card.platform || 'Followers' }}</span><span class="stat-value">{{ card.followers }}</span></div>
               <div class="stat" *ngIf="card.trendScore"><span class="stat-label">TrendScore</span><span class="stat-value accent">{{ card.trendScore }}</span></div>
+              <div class="stat" *ngIf="card.location"><span class="stat-label">Location</span><span class="stat-value stat-value--text">{{ card.location }}</span></div>
             </div>
           </ng-container>
 
           <!-- Photo/Videographer -->
           <ng-container *ngIf="card.type === 'photographer'">
             <div class="showcase-media" *ngIf="card.imageUrl; else photoArt">
-              <img class="showcase-img" [ngSrc]="card.imageUrl" [alt]="card.name" width="1600" height="900" />
+              <img class="showcase-img" [src]="card.imageUrl" [alt]="card.name" width="1600" height="900" loading="lazy" decoding="async" />
             </div>
             <ng-template #photoArt><div class="showcase-art art-photo"><i class="bi bi-camera"></i></div></ng-template>
             <div class="showcase-head">
@@ -106,7 +112,10 @@
 
           <!-- Campaign -->
           <ng-container *ngIf="card.type === 'campaign'">
-            <div class="showcase-art art-campaign"><i class="bi bi-megaphone"></i></div>
+            <div class="showcase-media" *ngIf="card.imageUrl; else campaignArt">
+              <img class="showcase-img" [src]="card.imageUrl" [alt]="card.title" width="1600" height="900" loading="lazy" decoding="async" />
+            </div>
+            <ng-template #campaignArt><div class="showcase-art art-campaign"><i class="bi bi-megaphone"></i></div></ng-template>
             <div class="showcase-head">
               <h2 class="showcase-title">{{ card.title }}</h2>
               <p class="showcase-sub" *ngIf="card.lookingFor">Looking for: {{ card.lookingFor }}</p>

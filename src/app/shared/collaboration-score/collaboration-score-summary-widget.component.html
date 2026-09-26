@@ -1,7 +1,7 @@
 <div class="cssw-card text-black">
   <div class="cssw-header">
     <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
-    TrendStarZ Score
+    TrendScore
   </div>
 
   <div class="cssw-loading" *ngIf="loading" role="status" aria-live="polite">
@@ -12,7 +12,7 @@
   <ng-container *ngIf="!loading">
     <div class="cssw-empty" *ngIf="!audit">
       <p class="cssw-empty-title">No Audit Yet</p>
-      <p class="cssw-empty-copy">Generate your FREE TrendStarZ Score to see how brands view your profile.</p>
+      <p class="cssw-empty-copy">Generate your FREE TrendScore to see how brands view your profile.</p>
       <button type="button" class="btn btn-primary btn-sm" [disabled]="generating" (click)="generateScore.emit()">
         {{ generating ? 'Generating…' : 'Generate FREE Score' }}
       </button>
@@ -23,7 +23,7 @@
         class="cssw-score-badge"
         [ngClass]="ui.scoreTierClass(audit.collaborationScore)"
         role="img"
-        [attr.aria-label]="'TrendStarZ Score: ' + audit.collaborationScore + ' out of 100'"
+        [attr.aria-label]="'TrendScore: ' + audit.collaborationScore + ' out of 100'"
       >
         {{ audit.collaborationScore }}<span class="cssw-score-max" aria-hidden="true">/100</span>
       </div>

@@ -183,14 +183,11 @@ export class TrendstarzScoreComponent implements OnInit, AfterViewInit, OnDestro
     },
   ];
 
-  /** Defaults from collaboration-score-settings.default.json; replaced by the live admin settings when they load. */
-  scoreWeights: CollaborationScoreWeights = {
-    profileCompletion: 15,
-    contentQuality: 25,
-    postingConsistency: 20,
-    professionalBranding: 20,
-    campaignReadiness: 20,
-  };
+  /** Shared with Score Center / admin breakdowns — live admin weights, defaults until loaded. */
+  get scoreWeights(): CollaborationScoreWeights {
+    return this.scoreUi.scoreWeights;
+  }
+
 
   /**
    * Level bands come from the admin badge thresholds (Collaboration Score
@@ -338,7 +335,7 @@ export class TrendstarzScoreComponent implements OnInit, AfterViewInit, OnDestro
     if (this.isBrowser) {
       this.scoreApi.getPlatformFlags().subscribe({
         next: (flags) => {
-          if (flags?.scoreWeights) this.scoreWeights = flags.scoreWeights;
+          this.scoreUi.setWeights(flags?.scoreWeights);
           if (flags?.platformsEnabled) this.platformsEnabled = { ...this.platformsEnabled, ...flags.platformsEnabled };
           this.metaConfigured = flags?.metaConfigured === true;
           this.scoreUi.setThresholds(flags?.scoreThresholds);

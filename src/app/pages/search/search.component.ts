@@ -41,6 +41,12 @@ export class SearchComponent implements OnInit {
 
   // Raw data
   allInfluencers: any[] = [];
+  /** Server-side total for the current query; results arrive in batches of SEARCH_BATCH. */
+  influencersServerTotal = 0;
+  private influencersLoadedBatches = 0;
+  influencersLoadingMore = false;
+  loadMoreError = '';
+  private static readonly SEARCH_BATCH = 120;
   allBrands: any[] = [];
   allPhotographers: any[] = [];
 
@@ -239,10 +245,11 @@ export class SearchComponent implements OnInit {
   get pageSubtitle(): string {
     if (this.isInfluencerMode) {
       const count = this.filteredInfluencers.length;
+      const more = this.hasMoreInfluencers ? ` (${this.allInfluencers.length} of ${this.influencersServerTotal} loaded)` : '';
       if (this.isInfluencerSmartDiscoveryActive) {
-        return `Recommended creators near ${this.viewerLocationLabel} · ${count} results`;
+        return `Recommended creators near ${this.viewerLocationLabel} · ${count} results${more}`;
       }
-      return `Showing ${count} creators matching your criteria`;
+      return `Showing ${count} creators matching your criteria${more}`;
     }
     if (this.isPhotographerMode) {
       if (this.isPhotographerSmartDiscoveryActive) {
@@ -608,7 +615,7 @@ export class SearchComponent implements OnInit {
       .getInfluencersSearchResponse({
         lite: true,
         page: typeof options?.page === 'number' ? options.page : 1,
-        limit: typeof options?.limit === 'number' ? options.limit : 120,
+        limit: typeof options?.limit === 'number' ? options.limit : SearchComponent.SEARCH_BATCH,
         viewerState: this.currentUser?.location?.state || '',
         viewerDistrict: this.currentUser?.location?.district || '',
         viewerCountry: this.currentUser?.location?.country || '',
@@ -623,6 +630,9 @@ export class SearchComponent implements OnInit {
         const arr = Array.isArray(data) ? data : (data?.data ?? []);
         this.mergeSearchUsage(data?.usage);
         this.allInfluencers = arr;
+        this.influencersServerTotal = Number(data?.total) || arr.length;
+        this.influencersLoadedBatches = 1;
+        this.loadMoreError = '';
         this.buildInfluencerOptions(arr);
         this.applyInfluencerFilters();
         this.trackSmartDiscoveryIfApplicable('influencer', this.filteredInfluencers.length);
@@ -634,6 +644,69 @@ export class SearchComponent implements OnInit {
         this.influencersLoading = false;
         setTimeout(() => this.cd.detectChanges(), 0);
       }
+      });
+  }
+
+  get hasMoreInfluencers(): boolean {
+    return this.allInfluencers.length < this.influencersServerTotal;
+  }
+
+  get remainingInfluencers(): number {
+    return Math.max(0, this.influencersServerTotal - this.allInfluencers.length);
+  }
+
+  /** Browsing past the first batch counts as one search for logged-in users (backend rule). */
+  get loadMoreUsesSearch(): boolean {
+    return !this.isAdminUser && !this.isGuestUser;
+  }
+
+  /**
+   * Fetches the next server batch and appends it, keeping the current filters.
+   * Only runs when the visitor asks (Load more / next page past the loaded set),
+   * so nobody's daily search quota is spent in the background.
+   */
+  loadMoreInfluencers(thenGoToNextPage = false): void {
+    if (!this.hasMoreInfluencers || this.influencersLoadingMore) return;
+    this.influencersLoadingMore = true;
+    this.loadMoreError = '';
+    const nextBatch = this.influencersLoadedBatches + 1;
+    this.config
+      .getInfluencersSearchResponse({
+        lite: true,
+        page: nextBatch,
+        limit: SearchComponent.SEARCH_BATCH,
+        viewerState: this.currentUser?.location?.state || '',
+        viewerDistrict: this.currentUser?.location?.district || '',
+        viewerCountry: this.currentUser?.location?.country || '',
+        smartLocationPriority: !this.infFilters.location,
+        category: this.infFilters.category || undefined,
+        countSearch: this.loadMoreUsesSearch,
+        countReason: 'pagination',
+      })
+      .subscribe({
+        next: (data: any) => {
+          const arr = Array.isArray(data) ? data : (data?.data ?? []);
+          this.mergeSearchUsage(data?.usage);
+          const seen = new Set(this.allInfluencers.map((u) => String(u?._id || u?.id || '')));
+          const fresh = arr.filter((u: any) => !seen.has(String(u?._id || u?.id || '')));
+          this.allInfluencers = [...this.allInfluencers, ...fresh];
+          this.influencersServerTotal = Number(data?.total) || this.influencersServerTotal;
+          // Nothing new came back — stop offering more rather than looping.
+          if (!fresh.length) this.influencersServerTotal = this.allInfluencers.length;
+          this.influencersLoadedBatches = nextBatch;
+          const keepPage = this.influencersPage;
+          this.buildInfluencerOptions(this.allInfluencers);
+          this.applyInfluencerFilters();
+          this.influencersPage = keepPage;
+          this.influencersLoadingMore = false;
+          if (thenGoToNextPage && this.hasNextPage()) this.goToPage(this.influencersPage + 1);
+          setTimeout(() => this.cd.detectChanges(), 0);
+        },
+        error: (err: any) => {
+          this.influencersLoadingMore = false;
+          this.loadMoreError = err?.error?.message || 'Could not load more creators. Please try again.';
+          setTimeout(() => this.cd.detectChanges(), 0);
+        },
       });
   }
 
@@ -1070,8 +1143,16 @@ export class SearchComponent implements OnInit {
   }
 
   goToNextPage(): void {
-    if (!this.hasNextPage()) return;
+    if (!this.hasNextPage()) {
+      // Last loaded page, but the server has more: fetch the next batch, then move on.
+      if (this.isInfluencerMode && this.hasMoreInfluencers) this.loadMoreInfluencers(true);
+      return;
+    }
     this.goToPage(this.getCurrentPage() + 1);
+  }
+
+  get canGoNext(): boolean {
+    return this.hasNextPage() || (this.isInfluencerMode && this.hasMoreInfluencers);
   }
 
   get currentPage(): number {

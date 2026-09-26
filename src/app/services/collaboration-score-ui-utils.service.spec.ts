@@ -38,6 +38,19 @@ describe('CollaborationScoreUiUtilsService — tier labels follow the badge thre
   });
 });
 
+describe('CollaborationScoreUiUtilsService — breakdown follows live admin weights', () => {
+  it('uses setWeights values for Weight and Contribution, ignoring invalid ones', () => {
+    const s = new CollaborationScoreUiUtilsService();
+    s.setWeights({ profileCompletion: 10, contentQuality: 30, postingConsistency: 20, professionalBranding: 20, campaignReadiness: 999 as any });
+    const rows = s.subScores({
+      profileCompletenessScore: 50, contentQualityScore: 100, postingConsistencyScore: 0,
+      professionalBrandingScore: 0, campaignReadinessScore: 100, platformsCollected: ['YouTube'],
+    } as any);
+    expect(rows.map((r) => r.weight)).toEqual(['10%', '30%', '20%', '20%', '20%']);
+    expect(rows[1].contribution).toBe(30);
+  });
+});
+
 describe('CollaborationScoreUiUtilsService — subScores/subScoresTotal', () => {
   const service = new CollaborationScoreUiUtilsService();
   const fakeAudit: any = {

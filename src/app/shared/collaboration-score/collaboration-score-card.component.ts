@@ -383,7 +383,7 @@ export class CollaborationScoreCardComponent implements OnInit, OnChanges {
           amount: order.amount,
           currency: order.currency || 'INR',
           name: 'TrendStarZ',
-          description: 'Collaboration Score re-analysis',
+          description: 'TrendScore re-analysis',
           order_id: order.orderId,
           handler: async (resp: any) => {
             try {

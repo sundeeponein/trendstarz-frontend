@@ -35,10 +35,10 @@ import { Component, Input } from '@angular/core';
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 1px 14px 6px px;
+      /* was "padding: 1px 14px 6px px" — invalid, so browsers never applied it; kept off to preserve the current look */
       border-radius: 30px;
-      // border: 1.5px solid #111827;
-      // background: #111827;
+      /* border: 1.5px solid #111827; */
+      /* background: #111827; */
       color: #111827;
       font-size: 0.82rem;
       font-weight: 600;

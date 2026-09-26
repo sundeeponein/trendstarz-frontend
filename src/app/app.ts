@@ -96,10 +96,13 @@ export class App implements OnInit {
     });
   }
 
-  /** Live admin badge thresholds, so every TrendScore tier label matches the badges the backend awards. */
+  /** Live admin badge thresholds + weights, so every TrendScore label and breakdown matches the backend. */
   private loadScoreThresholds(): void {
     this.scoreApi.getPlatformFlags().subscribe({
-      next: (flags) => this.scoreUi.setThresholds(flags?.scoreThresholds),
+      next: (flags) => {
+        this.scoreUi.setThresholds(flags?.scoreThresholds);
+        this.scoreUi.setWeights(flags?.scoreWeights);
+      },
       error: () => {}, // keep the defaults
     });
   }

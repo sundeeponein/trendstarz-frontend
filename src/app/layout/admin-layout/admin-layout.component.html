@@ -107,7 +107,7 @@
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" routerLink="/admin/admin-dashboard">Profile Settings</a></li>
             <!-- <li><a class="dropdown-item" routerLink="/admin/admin-management">Account Settings</a></li> -->
-            <li><a class="dropdown-item" routerLink="/admin/collaboration-score-settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }"> Collaboration Score </a></li>
+            <li><a class="dropdown-item" routerLink="/admin/collaboration-score-settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }"> TrendScore </a></li>
             <li><a class="dropdown-item" routerLink="/admin/admin-management" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" >Admin Management</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" routerLink="/admin/plans">Plans</a></li>
@@ -180,7 +180,7 @@
         <a routerLink="/admin/reviews" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-chat-left-text"></i><span>Reviews</span></a>
         <a routerLink="/admin/disputes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-exclamation-octagon"></i><span>Disputes</span><span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span></a>
         <a routerLink="/admin/link-analytics" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-link-45deg"></i><span>Link Analytics</span></a>
-        <a routerLink="/admin/collaboration-score-settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>Collaboration Score</span></a>
+        <a routerLink="/admin/collaboration-score-settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>TrendScore</span></a>
       </div>
 
       <div class="mobile-upgrade">

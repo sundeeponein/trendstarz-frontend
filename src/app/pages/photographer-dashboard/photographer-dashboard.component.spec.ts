@@ -4,7 +4,7 @@ import { PhotographerDashboardComponent } from './photographer-dashboard.compone
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../../shared/config.service';
 import { MonetizationApiService } from '../../services/monetization-api.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 describe('PhotographerDashboardComponent usage summary', () => {
   async function createComponent(options?: { includeUsage?: boolean }) {
@@ -15,6 +15,7 @@ describe('PhotographerDashboardComponent usage summary', () => {
     };
 
     const configStub = {
+      getSupportContact: () => of({ enabled: false, email: '', phone: '', whatsapp: '', message: '', verificationCallNumber: '' }),
       getPhotographerProfileById: () => of({
         _id: 'p1',
         name: 'Alex Lens',
@@ -47,9 +48,16 @@ describe('PhotographerDashboardComponent usage summary', () => {
       imports: [PhotographerDashboardComponent],
       providers: [
         { provide: SessionService, useValue: sessionStub },
-        { provide: ConfigService, useValue: configStub },
+        // Dashboard + child cards call many ConfigService methods; unlisted ones answer with an empty response.
+        {
+          provide: ConfigService,
+          useValue: new Proxy(configStub as any, {
+            get: (target, prop) => (prop in target ? target[prop] : () => of([])),
+          }),
+        },
         { provide: MonetizationApiService, useValue: monetizationStub },
         { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: () => null }, paramMap: { get: () => null } }, params: of({}), queryParams: of({}) } },
       ],
     }).compileComponents();
 

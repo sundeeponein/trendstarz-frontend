@@ -70,6 +70,7 @@ describe('InfluencerDashboardComponent usage summary', () => {
     const plansStub = {
       getMyCapabilities: () => of({}),
       getFeatureValue: () => false,
+      getActivePlans: () => of([]),
     };
 
     const collaborationScoreApiSpy = jasmine.createSpyObj<CollaborationScoreApiService>(

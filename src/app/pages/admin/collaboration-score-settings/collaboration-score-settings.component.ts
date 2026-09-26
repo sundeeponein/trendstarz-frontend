@@ -80,7 +80,7 @@ export class CollaborationScoreSettingsComponent implements OnInit {
       error: () => {
         this.ngZone.run(() => {
           this.loading = false;
-          this.toast.error('Could not load Collaboration Score settings.');
+          this.toast.error('Could not load TrendScore settings.');
           this.cdr.detectChanges();
         });
       },
@@ -132,7 +132,7 @@ export class CollaborationScoreSettingsComponent implements OnInit {
 
   resetToDefaults(): void {
     if (this.resetting) return;
-    if (!confirm('This deletes the current Collaboration Score configuration and restores the JSON defaults. Continue?')) {
+    if (!confirm('This deletes the current TrendScore configuration and restores the JSON defaults. Continue?')) {
       return;
     }
     this.resetting = true;
@@ -171,7 +171,7 @@ export class CollaborationScoreSettingsComponent implements OnInit {
           console.log(
             `[CollaborationScoreSettingsComponent] save() instance=${this.instanceId} response platformsEnabled=${JSON.stringify(settings.platformsEnabled)} reanalysisCooldownDays=${settings.reanalysisCooldownDays} reanalysisFeeRupees=${settings.reanalysisFeeRupees}`,
           );
-          this.toast.success('Collaboration Score settings saved.');
+          this.toast.success('TrendScore settings saved.');
           this.cdr.detectChanges();
         });
       },

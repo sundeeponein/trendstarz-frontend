@@ -65,6 +65,7 @@ describe('BrandDashboardComponent usage summary', () => {
     const plansStub = {
       getMyCapabilities: () => of({}),
       getFeatureValue: () => false,
+      getActivePlans: () => of([]),
     };
 
     await TestBed.configureTestingModule({
