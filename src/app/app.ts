@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, PLATFORM_ID, Inject, inject } from '@angular/core';
+import { Component, signal, OnInit, PLATFORM_ID, Inject, inject, Injector } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { NavigationEnd, RouterOutlet, Router } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
@@ -9,8 +9,6 @@ import { WarmupService } from './core/warmup.service';
 import { PushNotificationService } from './core/push-notification.service';
 import { AnalyticsService } from './core/analytics.service';
 import { ConfigService } from './shared/config.service';
-import { CollaborationScoreApiService } from './services/collaboration-score-api.service';
-import { CollaborationScoreUiUtilsService } from './services/collaboration-score-ui-utils.service';
 import { ToastHostComponent } from './shared/toast/toast-host.component';
 import { TierInfoModalComponent } from './shared/components/tier-info-modal/tier-info-modal.component';
 import { FlowHelpModalComponent } from './shared/components/flow-help-modal/flow-help-modal.component';
@@ -24,8 +22,7 @@ import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-insta
 })
 export class App implements OnInit {
   protected readonly title = signal('Trend Starz');
-  private readonly scoreApi = inject(CollaborationScoreApiService);
-  private readonly scoreUi = inject(CollaborationScoreUiUtilsService);
+  private readonly injector = inject(Injector);
   private lastPushSubscriptionKey: string | null = null;
   private lastSessionOpenedPing = 0;
 
@@ -97,14 +94,25 @@ export class App implements OnInit {
   }
 
   /** Live admin badge thresholds + weights, so every TrendScore label and breakdown matches the backend. */
-  private loadScoreThresholds(): void {
-    this.scoreApi.getPlatformFlags().subscribe({
-      next: (flags) => {
-        this.scoreUi.setThresholds(flags?.scoreThresholds);
-        this.scoreUi.setWeights(flags?.scoreWeights);
-      },
-      error: () => {}, // keep the defaults
-    });
+  // Loaded on demand (dynamic import) so the TrendScore services stay out of the initial bundle.
+  private async loadScoreThresholds(): Promise<void> {
+    try {
+      const [{ CollaborationScoreApiService }, { CollaborationScoreUiUtilsService }] = await Promise.all([
+        import('./services/collaboration-score-api.service'),
+        import('./services/collaboration-score-ui-utils.service'),
+      ]);
+      const scoreApi = this.injector.get(CollaborationScoreApiService);
+      const scoreUi = this.injector.get(CollaborationScoreUiUtilsService);
+      scoreApi.getPlatformFlags().subscribe({
+        next: (flags) => {
+          scoreUi.setThresholds(flags?.scoreThresholds);
+          scoreUi.setWeights(flags?.scoreWeights);
+        },
+        error: () => {}, // keep the defaults
+      });
+    } catch {
+      // keep the defaults
+    }
   }
 
   private markOpenedWhenVisible(): void {

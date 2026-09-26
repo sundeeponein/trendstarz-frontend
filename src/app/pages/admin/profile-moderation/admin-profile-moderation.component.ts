@@ -13,7 +13,6 @@ import { ProfileReviewPanelComponent } from '../../../shared/profile-verificatio
 import { FlagManagementDialogComponent } from './flag-management-dialog.component';
 import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
 import { ProfileVisibilitySelectorComponent } from '../../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
-import { HomepageFeatureToggleComponent } from '../../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 import { copyTextToClipboard } from '../../../shared/referral-link.util';
 
 @Component({
@@ -26,7 +25,6 @@ import { copyTextToClipboard } from '../../../shared/referral-link.util';
     FlagManagementDialogComponent,
     VerificationFieldComponent,
     ProfileVisibilitySelectorComponent,
-    HomepageFeatureToggleComponent,
   ],
   template: `
     <main class="moderation-page">
@@ -245,10 +243,6 @@ import { copyTextToClipboard } from '../../../shared/referral-link.util';
                 <button type="button" class="mini-btn mini-btn--danger" (click)="setVisibility('PRIVATE')">Make Private</button>
               </div>
               <div class="discovery-card__actions">
-                <button type="button" class="mini-btn" (click)="setHomepageFeature(true)">Enable Homepage Feature</button>
-                <button type="button" class="mini-btn mini-btn--ghost" (click)="setHomepageFeature(false)">Disable Feature</button>
-              </div>
-              <div class="discovery-card__actions">
                 <button type="button" class="mini-btn" (click)="grantPremium('1m')" [disabled]="premiumBusy()">Grant 1M Premium</button>
                 <button type="button" class="mini-btn" (click)="grantPremium('3m')" [disabled]="premiumBusy()">Grant 3M Premium</button>
                 <button type="button" class="mini-btn" (click)="grantPremium('1y')" [disabled]="premiumBusy()">Grant 1Y Premium</button>
@@ -284,17 +278,6 @@ import { copyTextToClipboard } from '../../../shared/referral-link.util';
               (valueChange)="modUpdateVisibility($event)">
             </app-profile-visibility-selector>
 
-            <app-homepage-feature-toggle
-              class="mt-3 d-block"
-              [checked]="detail.featuredInMarketing"
-              [disabled]="visibilityBusy() || detail.profileVisibility !== 'PUBLIC'"
-              [isPremium]="true"
-              [isPublicProfile]="detail.profileVisibility === 'PUBLIC'"
-              (checkedChange)="modUpdateFeatured($event)">
-            </app-homepage-feature-toggle>
-            <p class="text-muted mt-1" style="font-size:0.78rem;" *ngIf="!detail.homepageEligibility.isPremium">
-              Note: this profile is not currently Premium — the toggle above is an admin override; self-service users would see an upgrade prompt instead.
-            </p>
           </div>
 
           <div class="verify-section">
@@ -321,14 +304,10 @@ import { copyTextToClipboard } from '../../../shared/referral-link.util';
                   <td>Premium</td>
                   <td>{{ detail.homepageEligibility.isPremium ? '✅' : '❌' }}</td>
                 </tr>
-                <tr>
-                  <td>Homepage Consent</td>
-                  <td>{{ detail.homepageEligibility.homepageConsent ? '✅' : '❌' }}</td>
-                </tr>
               </tbody>
             </table>
             <div class="eligibility-result" [class.eligible]="detail.homepageEligibility.eligibleForHomepage">
-              <strong>Eligible for Homepage Hero: {{ detail.homepageEligibility.eligibleForHomepage ? '✅ Yes' : '❌ No' }}</strong>
+              <strong>Eligible for homepage Featured sections: {{ detail.homepageEligibility.eligibleForHomepage ? '✅ Yes' : '❌ No' }}</strong>
               <ul *ngIf="!detail.homepageEligibility.eligibleForHomepage" class="eligibility-reasons">
                 <li *ngFor="let reason of detail.homepageEligibility.reasons">{{ reason }}</li>
               </ul>
@@ -1148,7 +1127,7 @@ export class AdminProfileModerationComponent implements OnInit {
     });
   }
 
-  // ── Visibility / Homepage Feature (admin override) ─────────────────────────
+  // ── Visibility (admin override) ─────────────────────────────────────────────
 
   visibilityBusy = signal(false);
   premiumBusy = signal(false);
@@ -1171,22 +1150,6 @@ export class AdminProfileModerationComponent implements OnInit {
     });
   }
 
-  modUpdateFeatured(featuredInMarketing: boolean): void {
-    const row = this.selectedRow();
-    if (!row || this.visibilityBusy()) return;
-    this.visibilityBusy.set(true);
-    this.api.updateVisibility(row.userType, row.userId, { featuredInMarketing }).subscribe({
-      next: (detail) => {
-        this.selectedDetail.set(detail);
-        this.visibilityBusy.set(false);
-      },
-      error: (err) => {
-        this.error.set(err?.error?.message || 'Homepage Feature update failed.');
-        this.visibilityBusy.set(false);
-      },
-    });
-  }
-
   modDiscoveryStatus(detail: ProfileVerificationDashboard): {
     label: string;
     tone: 'discoverable' | 'limited' | 'hidden';
@@ -1201,9 +1164,9 @@ export class AdminProfileModerationComponent implements OnInit {
       return {
         label: 'Discoverable',
         tone: 'discoverable',
-        caption: 'Visible to guests and logged-in users, and eligible for homepage feature.',
-        explanation: 'This profile is public, premium-ready, and approved for public homepage placement.',
-        recommendation: 'Keep the current setup and explain that the profile is now discoverable and eligible for homepage visibility.',
+        caption: 'Visible to guests and logged-in users, and eligible for the homepage Featured sections.',
+        explanation: 'This profile is public, premium-ready, and approved, so it can appear in the homepage Featured sections.',
+        recommendation: 'Keep the current setup and explain that the profile is now discoverable and eligible for the homepage Featured sections.',
       };
     }
     if (visibility === 'MEMBERS_ONLY') {
@@ -1252,10 +1215,7 @@ export class AdminProfileModerationComponent implements OnInit {
       items.push('Approve the profile from moderation before enabling homepage discovery.');
     }
     if (!eligibility?.isPremium) {
-      items.push('Upgrade the account to Premium if the user wants homepage feature eligibility.');
-    }
-    if (!eligibility?.homepageConsent) {
-      items.push('Turn on homepage consent so the profile can be eligible for featured placement.');
+      items.push('Upgrade the account to Premium if the user wants to appear in the homepage Featured sections.');
     }
     if (detail?.profileVisibility !== 'PUBLIC') {
       items.push('Set visibility to Public if the user should be discoverable by guests and logged-in users.');
@@ -1265,10 +1225,6 @@ export class AdminProfileModerationComponent implements OnInit {
 
   setVisibility(visibility: 'PUBLIC' | 'MEMBERS_ONLY' | 'PRIVATE'): void {
     this.modUpdateVisibility(visibility);
-  }
-
-  setHomepageFeature(enabled: boolean): void {
-    this.modUpdateFeatured(enabled);
   }
 
   grantPremium(duration: '1m' | '3m' | '1y'): void {

@@ -20,7 +20,6 @@ import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
-import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -37,7 +36,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-photographer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, HomepageFeatureToggleComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './photographer-registration.component.html',
   styleUrls: ['./photographer-registration.component.scss'],
 })
@@ -234,7 +233,6 @@ export class PhotographerRegistrationComponent implements OnInit {
       }),
       paymentOption: ['free', Validators.required],
       profileVisibility: ['PUBLIC'],
-      featuredInMarketing: [false],
       skills: [[]],
       equipment: [[]],
       payout: this.fb.group({
@@ -830,7 +828,6 @@ export class PhotographerRegistrationComponent implements OnInit {
       },
       paymentOption: v.paymentOption || 'free',
       profileVisibility: v.profileVisibility || 'PUBLIC',
-      featuredInMarketing: !!v.featuredInMarketing,
       skills: v.skills || [],
       equipment: v.equipment || [],
       payout: v.payout || { upiId: '', mobile: '', accountHolderName: '' },

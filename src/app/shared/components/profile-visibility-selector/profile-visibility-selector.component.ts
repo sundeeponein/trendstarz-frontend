@@ -13,7 +13,7 @@ interface VisibilityOption {
  * Reusable "Who can view my profile?" control — used in registration,
  * edit-profile, and Settings → Privacy & Visibility. See the eligibility
  * matrix in profile-eligibility.util.ts (backend) for what each tier
- * actually gates: Guest/Logged-in visibility, Search, and Homepage Feature.
+ * actually gates: Guest/Logged-in visibility, Search, and the homepage Featured sections.
  */
 @Component({
   selector: 'app-profile-visibility-selector',
@@ -33,7 +33,7 @@ export class ProfileVisibilitySelectorComponent {
       icon: '🌍',
       label: 'Public (Guests & Logged-in Users)',
       description:
-        'Recommended for creators looking for brand collaborations. Visible to visitors, in creator/brand search, and eligible for the homepage feature (if enabled).',
+        'Recommended for creators looking for brand collaborations. Visible to visitors, in creator/brand search, and eligible for the homepage Featured sections (Premium).',
     },
     {
       value: 'MEMBERS_ONLY',

@@ -51,7 +51,6 @@ export interface ProfileVerificationDashboard {
   profileVisibility: 'PUBLIC' | 'MEMBERS_ONLY' | 'PRIVATE';
   /** False for pre-existing accounts that never explicitly chose — ask during a manual verification call. */
   profileVisibilityIsSet: boolean;
-  featuredInMarketing: boolean;
   phoneNumber?: string;
   publicProfileUrl?: string;
   referralLink?: string;
@@ -61,7 +60,6 @@ export interface ProfileVerificationDashboard {
     profilePhotoApproved: boolean;
     profileApproved: boolean;
     isPremium: boolean;
-    homepageConsent: boolean;
     profileVisibility: 'PUBLIC' | 'MEMBERS_ONLY' | 'PRIVATE';
     eligibleForHomepage: boolean;
     reasons: string[];
@@ -153,11 +151,11 @@ export class ProfileVerificationService {
       .pipe(map((res) => this.unwrap<ProfileFlag>(res)));
   }
 
-  /** Admin override for Profile Visibility / Homepage Feature. */
+  /** Admin override for Profile Visibility. */
   updateVisibility(
     userType: string,
     userId: string,
-    body: { profileVisibility?: string; featuredInMarketing?: boolean },
+    body: { profileVisibility?: string },
   ) {
     return this.http
       .patch<any>(`${this.apiUrl}/admin/profile-moderation/${userType}/${userId}/visibility`, body)

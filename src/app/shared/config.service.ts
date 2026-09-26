@@ -716,29 +716,6 @@ export class ConfigService {
     );
   }
 
-  /**
-   * Homepage hero banner + hero slider images — one eligible, explicitly
-   * opted-in image per role. Any entry may be null if no one has opted in yet.
-   */
-  getHeroShowcaseImages(options?: {
-    viewerState?: string;
-    viewerDistrict?: string;
-    viewerCountry?: string;
-  }): Observable<{
-    influencer: { url: string; alt: string } | null;
-    brand: { url: string; alt: string } | null;
-    photographer: { url: string; alt: string } | null;
-  }> {
-    const params: Record<string, string> = {};
-    if (options?.viewerState) params['viewerState'] = String(options.viewerState);
-    if (options?.viewerDistrict) params['viewerDistrict'] = String(options.viewerDistrict);
-    if (options?.viewerCountry) params['viewerCountry'] = String(options.viewerCountry);
-    return this.http.get<any>(`${this.apiUrl}/users/hero-showcase-images`, { params }).pipe(
-      map((res) => this.extractData<any>(res) || res || {}),
-      catchError(() => of({ influencer: null, brand: null, photographer: null })),
-    );
-  }
-
   getInfluencersSearchResponse(options?: {
     page?: number;
     limit?: number;
@@ -914,19 +891,6 @@ export class ConfigService {
     return this.http.patch(`${this.apiUrl}/users/${id}/images`, images);
   }
 
-  /** Current opt-in state for updateMarketingConsent — used by the settings page. */
-  getMarketingConsent(id: string): Observable<{ featuredInMarketing: boolean }> {
-    return this.http.get<any>(`${this.apiUrl}/users/${id}/marketing-consent`).pipe(
-      map((res) => this.extractData<any>(res) || res || { featuredInMarketing: false }),
-      catchError(() => of({ featuredInMarketing: false })),
-    );
-  }
-
-  /** Opt in/out of showing this user's photo/logo on public marketing surfaces (homepage hero). */
-  updateMarketingConsent(id: string, featuredInMarketing: boolean): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/users/${id}/marketing-consent`, { featuredInMarketing });
-  }
-
   /** Settings → Delete Account. Requires the current password; schedules deletion after a grace period. */
   selfDeleteAccount(id: string, password: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/users/${id}/self-delete`, { password });
@@ -957,7 +921,7 @@ export class ConfigService {
     );
   }
 
-  /** Who can view this profile — PUBLIC / MEMBERS_ONLY / PRIVATE. Setting anything but PUBLIC also disables Homepage Feature. */
+  /** Who can view this profile — PUBLIC / MEMBERS_ONLY / PRIVATE. Anything but PUBLIC also removes the profile from the homepage Featured sections. */
   updateProfileVisibility(id: string, profileVisibility: ProfileVisibility): Observable<any> {
     return this.http.patch(`${this.apiUrl}/users/${id}/profile-visibility`, { profileVisibility });
   }

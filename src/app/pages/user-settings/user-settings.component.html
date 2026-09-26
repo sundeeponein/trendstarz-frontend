@@ -107,7 +107,7 @@
   <section class="settings-section compact privacy-visibility" *ngIf="referralRole">
     <div>
       <h2>Privacy &amp; Visibility</h2>
-      <p>Control who can see your profile and whether it's eligible for the homepage hero spot.</p>
+      <p>Control who can see your profile.</p>
     </div>
 
     <app-profile-visibility-selector
@@ -116,16 +116,6 @@
       (valueChange)="onProfileVisibilityChange($event)">
     </app-profile-visibility-selector>
 
-    <app-homepage-feature-toggle
-      [checked]="featuredInMarketing"
-      [disabled]="marketingConsentBusy || profileVisibility !== 'PUBLIC'"
-      [isPremium]="isPremium"
-      [isPublicProfile]="profileVisibility === 'PUBLIC'"
-      (checkedChange)="onFeaturedInMarketingChange($event)">
-    </app-homepage-feature-toggle>
-    <p class="visibility-note" *ngIf="isPremium && profileVisibility !== 'PUBLIC'">
-      Homepage Hero Feature is only available when your profile visibility is set to Public.
-    </p>
   </section>
 
   <section class="settings-section compact">

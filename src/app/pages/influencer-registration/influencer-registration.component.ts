@@ -25,7 +25,6 @@ import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
-import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 import { SocialPlatformFieldComponent } from '../../shared/social-platform-field/social-platform-field.component';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
@@ -43,7 +42,7 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, HomepageFeatureToggleComponent, SocialPlatformFieldComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ConfirmDialogComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, SocialPlatformFieldComponent],
   templateUrl: './influencer-registration.component.html',
   styleUrls: ['./influencer-registration.component.scss']
 })
@@ -345,7 +344,6 @@ export class InfluencerRegistrationComponent implements OnInit {
       confirmPassword: ['', Validators.required],
       paymentOption: ['free', Validators.required],
       profileVisibility: ['PUBLIC'],
-      featuredInMarketing: [false],
       location: this.fb.group({ state: ['', Validators.required], district: ['', Validators.required] }),
       promotionalPrice: [''],
       languages: [[], Validators.required],

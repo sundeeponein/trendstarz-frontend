@@ -7,14 +7,13 @@ import { SessionService } from '../../core/session.service';
 import { ConfigService, ProfileVisibility } from '../../shared/config.service';
 import { ReferralTargetRole } from '../../shared/tracking-links/tracking-links-api.service';
 import { ReferralLinkCardComponent } from '../../shared/referral-link-card/referral-link-card.component';
-import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 import { PlansService } from '../../shared/plans.service';
 
 @Component({
   selector: 'app-user-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ReferralLinkCardComponent, HomepageFeatureToggleComponent, ProfileVisibilitySelectorComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ReferralLinkCardComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './user-settings.component.html',
   styleUrls: ['./user-settings.component.scss'],
 })
@@ -33,8 +32,6 @@ export class UserSettingsComponent implements OnInit {
   lastLoginAt: string | null = null;
   lastOpenedAt: string | null = null;
   referralRole: ReferralTargetRole | null = null;
-  featuredInMarketing = false;
-  marketingConsentBusy = false;
   profileVisibility: ProfileVisibility = 'PUBLIC';
   visibilityBusy = false;
   isPremium = false;
@@ -70,9 +67,6 @@ export class UserSettingsComponent implements OnInit {
       this.paymentEnabled = prefs.paymentEnabled;
     });
     if (this.userId && role !== 'admin') {
-      this.config.getMarketingConsent(this.userId).subscribe((res) => {
-        this.featuredInMarketing = !!res?.featuredInMarketing;
-      });
       this.config.getProfileVisibility(this.userId).subscribe((res) => {
         this.profileVisibility = res?.profileVisibility || 'PUBLIC';
       });
@@ -82,19 +76,6 @@ export class UserSettingsComponent implements OnInit {
     }
   }
 
-  onFeaturedInMarketingChange(next: boolean): void {
-    if (this.marketingConsentBusy || !this.userId) return;
-    this.marketingConsentBusy = true;
-    this.config.updateMarketingConsent(this.userId, next).subscribe({
-      next: () => {
-        this.featuredInMarketing = next;
-        this.marketingConsentBusy = false;
-      },
-      error: () => {
-        this.marketingConsentBusy = false;
-      },
-    });
-  }
 
   onProfileVisibilityChange(next: ProfileVisibility): void {
     if (this.visibilityBusy || !this.userId) return;
@@ -102,8 +83,6 @@ export class UserSettingsComponent implements OnInit {
     this.config.updateProfileVisibility(this.userId, next).subscribe({
       next: () => {
         this.profileVisibility = next;
-        // Setting anything but PUBLIC also disables Homepage Feature server-side.
-        if (next !== 'PUBLIC') this.featuredInMarketing = false;
         this.visibilityBusy = false;
       },
       error: () => {

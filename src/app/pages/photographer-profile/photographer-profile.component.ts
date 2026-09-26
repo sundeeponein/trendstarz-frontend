@@ -27,13 +27,12 @@ import { RegistrationNoticeComponent } from '../../shared/components/registratio
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
-import { HomepageFeatureToggleComponent } from '../../shared/components/homepage-feature-toggle/homepage-feature-toggle.component';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, HomepageFeatureToggleComponent, ProfileVisibilitySelectorComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
@@ -500,25 +499,9 @@ export class PhotographerProfileComponent implements OnInit {
     });
   }
 
-  featuredInMarketing = false;
-  marketingConsentBusy = false;
   profileVisibility: ProfileVisibility = 'PUBLIC';
   visibilityBusy = false;
 
-  onFeaturedInMarketingChange(next: boolean): void {
-    const userId = this.session.getUser()?.id;
-    if (this.marketingConsentBusy || !userId) return;
-    this.marketingConsentBusy = true;
-    this.config.updateMarketingConsent(userId, next).subscribe({
-      next: () => {
-        this.featuredInMarketing = next;
-        this.marketingConsentBusy = false;
-      },
-      error: () => {
-        this.marketingConsentBusy = false;
-      },
-    });
-  }
 
   onProfileVisibilityChange(next: ProfileVisibility): void {
     const userId = this.session.getUser()?.id;
@@ -527,7 +510,6 @@ export class PhotographerProfileComponent implements OnInit {
     this.config.updateProfileVisibility(userId, next).subscribe({
       next: () => {
         this.profileVisibility = next;
-        if (next !== 'PUBLIC') this.featuredInMarketing = false;
         this.visibilityBusy = false;
       },
       error: () => {
@@ -544,9 +526,6 @@ export class PhotographerProfileComponent implements OnInit {
     });
     const userId = this.session.getUser()?.id;
     if (userId) {
-      this.config.getMarketingConsent(userId).subscribe((res) => {
-        this.featuredInMarketing = !!res?.featuredInMarketing;
-      });
       this.config.getProfileVisibility(userId).subscribe((res) => {
         this.profileVisibility = res?.profileVisibility || 'PUBLIC';
       });
