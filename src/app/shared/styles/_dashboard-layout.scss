@@ -484,6 +484,9 @@ $dash-shadow: 0 8px 24px rgba(20, 24, 60, 0.05);
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   margin-top: 0.9rem;
   color: $dash-orange-deep;
   font-size: 0.86rem;
@@ -621,6 +624,104 @@ $dash-shadow: 0 8px 24px rgba(20, 24, 60, 0.05);
     grid-template-columns: 1fr;
   }
 }
+
+// ── Role tiles (influencer "Dual Role Summary") ────
+.role-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.role-tile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #eceef5;
+  background: #fbfbfe;
+}
+
+.role-tile__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 1.2rem;
+
+  &--indigo { background: #eef0ff; color: $dash-blue; }
+  &--green { background: #e7f8ef; color: #16a34a; }
+}
+
+.role-tile__body { flex: 1; min-width: 0; }
+.role-tile__value { font-size: 1.9rem; font-weight: 800; line-height: 1.1; color: $dash-text; }
+.role-tile__label { margin-top: 2px; font-size: 0.86rem; font-weight: 600; color: $dash-text; }
+.role-tile__meta { margin-top: 4px; font-size: 0.78rem; color: $dash-muted; }
+
+.role-tile__cta {
+  flex-basis: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #e6e8f0;
+  background: #fff;
+  color: $dash-text;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover { border-color: $dash-orange; color: $dash-orange; }
+}
+
+// ── Quick actions (photographer dashboard) ─────────
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quick-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #eceef5;
+  background: #fbfbfe;
+  color: $dash-text;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover { border-color: rgba(234, 88, 12, 0.45); background: #fff; }
+}
+
+.quick-action__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+
+  &--orange { background: #fff1ea; color: $dash-orange; }
+  &--indigo { background: #eef0ff; color: $dash-blue; }
+  &--teal { background: #e6f7f6; color: #0d9488; }
+}
+
+.quick-action__label { flex: 1; }
+.quick-action__chev { color: #a3aabb; font-size: 0.8rem; }
 
 // ── Resets for legacy global rules (see _dashboard-layout-legacy.scss) ──
 .account-meta-card { text-align: left; }

@@ -69,9 +69,9 @@ export interface HeroCampaignCard extends HeroCardBase {
 export type HeroShowcaseCard = HeroCreatorCard | HeroPhotographerCard | HeroCampaignCard;
 
 /**
- * Rendered immediately (SSR/prerender) and kept when no live profiles are
- * available. Generic marketplace copy only — no invented names or numbers.
- * Replace with real images/content when ready.
+ * The homepage showcase: static, designer-supplied images and copy that
+ * rotate every ROTATE_MS (pause on hover, dots to switch). Never real users'
+ * data. To change the banner, add images under src/assets and edit this list.
  */
 export const DEFAULT_HERO_CARDS: HeroShowcaseCard[] = [
   {

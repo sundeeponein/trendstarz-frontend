@@ -22,7 +22,7 @@ describe('CollaborationScoreSummaryWidgetComponent', () => {
     fixture.detectChanges();
 
     const emitSpy = spyOn(component.generateScore, 'emit');
-    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.cssw-empty button');
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.cssw-cta');
     expect(button.textContent).toContain('Generate FREE Score');
     button.click();
 
@@ -52,7 +52,7 @@ describe('CollaborationScoreSummaryWidgetComponent', () => {
     component.generating = true;
     fixture.detectChanges();
 
-    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.cssw-empty button');
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('.cssw-cta');
     expect(button.disabled).toBe(true);
     expect(button.textContent).toContain('Generating');
   });
@@ -64,7 +64,7 @@ describe('CollaborationScoreSummaryWidgetComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.cssw-loading')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.cssw-empty')).toBeFalsy();
-    expect(fixture.nativeElement.querySelector('.cssw-summary')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.cssw-cta')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.cssw-score-badge')).toBeFalsy();
   });
 });

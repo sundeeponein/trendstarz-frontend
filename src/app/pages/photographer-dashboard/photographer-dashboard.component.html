@@ -397,9 +397,21 @@
             <span class="dot dot--purple me-2"></span> Quick Actions
           </div>
           <div class="quick-actions">
-            <button class="btn btn-primary w-100 mb-2" (click)="onCompleteProfile()">Edit Profile</button>
-            <button class="btn btn-outline-primary w-100 mb-2" (click)="onViewPublicProfile()">View Public Profile</button>
-            <button class="btn btn-outline-secondary w-100" (click)="onSearch()">Search Discovery</button>
+            <button type="button" class="quick-action" (click)="onCompleteProfile()">
+              <span class="quick-action__icon quick-action__icon--orange" aria-hidden="true"><i class="bi bi-pencil-square"></i></span>
+              <span class="quick-action__label">Edit Profile</span>
+              <i class="bi bi-chevron-right quick-action__chev" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="quick-action" (click)="onViewPublicProfile()">
+              <span class="quick-action__icon quick-action__icon--indigo" aria-hidden="true"><i class="bi bi-person-badge"></i></span>
+              <span class="quick-action__label">View Public Profile</span>
+              <i class="bi bi-chevron-right quick-action__chev" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="quick-action" (click)="onSearch()">
+              <span class="quick-action__icon quick-action__icon--teal" aria-hidden="true"><i class="bi bi-search"></i></span>
+              <span class="quick-action__label">Search Discovery</span>
+              <i class="bi bi-chevron-right quick-action__chev" aria-hidden="true"></i>
+            </button>
           </div>
         </div>
       </div>

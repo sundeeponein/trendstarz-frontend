@@ -23,8 +23,8 @@ const STAGE_LABELS: Array<{ key: keyof FunnelStageCounts; label: string }> = [
   { key: 'mobileVerified', label: 'Mobile Verified' },
   { key: 'searchEligible', label: 'Search Eligible' },
   { key: 'adminApproved', label: 'Admin Approved' },
-  { key: 'featuredEligible', label: 'Featured Eligible' },
   { key: 'campaignEligible', label: 'Campaign Eligible' },
+  { key: 'featuredEligible', label: 'Featured Eligible (Premium + Public)' },
 ];
 
 @Component({

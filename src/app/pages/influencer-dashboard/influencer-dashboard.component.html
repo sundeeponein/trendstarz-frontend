@@ -148,32 +148,30 @@
       Dual Role Summary
       <span class="section-count ms-2">Receive + Post</span>
     </div>
-    <div class="row gx-3">
-      <div class="col-12 col-md-6 mb-3 mb-md-0">
-        <div class="card text-center shadow-sm border-0 h-100">
-          <div class="card-body py-3">
-            <div class="display-6 fw-bold mb-1 text-primary">{{ incomingInvitesCount }}</div>
-            <div class="text-muted">Campaign invites from brands</div>
-            <button class="btn btn-sm btn-outline-primary mt-2" (click)="openCampaignManagement('campaigns')">
-              View incoming invites
-            </button>
-          </div>
+    <div class="role-tiles">
+      <div class="role-tile">
+        <span class="role-tile__icon role-tile__icon--indigo" aria-hidden="true"><i class="bi bi-envelope-paper"></i></span>
+        <div class="role-tile__body">
+          <div class="role-tile__value">{{ incomingInvitesCount }}</div>
+          <div class="role-tile__label">Campaign invites from brands</div>
         </div>
+        <button type="button" class="role-tile__cta" (click)="openCampaignManagement('campaigns')">
+          View incoming invites <i class="bi bi-arrow-right"></i>
+        </button>
       </div>
-      <div class="col-12 col-md-6">
-        <div class="card text-center shadow-sm border-0 h-100">
-          <div class="card-body py-3">
-            <div class="display-6 fw-bold mb-1 text-success">{{ collaborationRequestsCount }}</div>
-            <div class="text-muted">Collaboration requests from photo/videographers</div>
-            <div class="small mt-1 text-muted">
-              Active: <strong>{{ collaborationRequestsActiveCount }}</strong>
-              · Pending review: <strong>{{ collaborationRequestsPendingReviewCount }}</strong>
-            </div>
-            <button class="btn btn-sm btn-outline-success mt-2" (click)="openCampaignManagement('collaborations')">
-              Manage collaboration requests
-            </button>
+      <div class="role-tile">
+        <span class="role-tile__icon role-tile__icon--green" aria-hidden="true"><i class="bi bi-camera"></i></span>
+        <div class="role-tile__body">
+          <div class="role-tile__value">{{ collaborationRequestsCount }}</div>
+          <div class="role-tile__label">Collaboration requests from photo/videographers</div>
+          <div class="role-tile__meta">
+            Active: <strong>{{ collaborationRequestsActiveCount }}</strong>
+            · Pending review: <strong>{{ collaborationRequestsPendingReviewCount }}</strong>
           </div>
         </div>
+        <button type="button" class="role-tile__cta" (click)="openCampaignManagement('collaborations')">
+          Manage collaboration requests <i class="bi bi-arrow-right"></i>
+        </button>
       </div>
     </div>
   </div>
@@ -296,7 +294,7 @@
       <div class="section-empty-icon"><i class="bi bi-camera-reels"></i></div>
       <div class="section-empty-title">No collaboration requests yet</div>
       <div class="section-empty-desc">When photo/videographers send collaboration requests, they will appear here.</div>
-      <button class="btn btn-sm btn-outline-primary mt-2" (click)="openCampaignManagement('collaborations')">Open Collaborations</button>
+      <button type="button" class="section-empty-action" (click)="openCampaignManagement('collaborations')"><i class="bi bi-arrow-right-circle"></i> Open Collaborations</button>
     </div>
 
     <div *ngFor="let c of collaborationRequests" class="active-camp-card" (click)="openCampaignManagement('collaborations')">

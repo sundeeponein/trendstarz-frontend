@@ -257,11 +257,12 @@ const GALLERY_FLAG_CODES = new Set([
       justify-self: start;
       border: 0;
       background: transparent;
-      color: #0d6efd;
+      color: #ea580c;
       padding: 0;
-      font-weight: 900;
-      text-decoration: underline;
+      font-weight: 700;
+      text-decoration: none;
     }
+    .summary-link:hover { color: #c2410c; text-decoration: underline; }
     /* Modal */
     .review-modal-backdrop {
       position: fixed;
