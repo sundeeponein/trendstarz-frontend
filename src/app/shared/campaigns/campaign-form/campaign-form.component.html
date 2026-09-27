@@ -5,6 +5,7 @@
       <div class="page-campaign-card">
 
         <!-- ── Breadcrumb ── -->
+        <div class="cf-topbar">
         <nav class="cf-crumbs" aria-label="Breadcrumb">
           <a routerLink="/campaigns">{{ isPhotographerCreator ? 'Collaborations' : 'Campaigns' }}</a>
           <i class="bi bi-chevron-right" aria-hidden="true"></i>
@@ -12,6 +13,10 @@
           <i class="bi bi-chevron-right" aria-hidden="true"></i>
           <span class="cf-crumbs__current">Step {{ currentStep }}: {{ currentStep === 1 ? detailsStepLabel : (currentStep === 2 ? requirementsStepLabel : inviteStepLabel) }}</span>
         </nav>
+        <span class="cf-autosave" *ngIf="localDraftSavedAt" title="Saved in this browser only. Use Save as Draft to keep it in your account.">
+          <i class="bi bi-check2-circle"></i> Draft autosaved on this device · {{ localDraftSavedAt | date:'shortTime' }}
+        </span>
+        </div>
 
         <!-- ── Header ── -->
         <div class="form-header">
@@ -34,6 +39,16 @@
               </button>
             </p>
           </div>
+          <button type="button" class="cf-template-btn" *ngIf="currentStep === 1 && campaignTemplateText && !isAcceptanceLocked" (click)="useCampaignTemplate()">
+            <i class="bi bi-file-earmark-text"></i> Use Campaign Template
+          </button>
+        </div>
+
+        <div class="cf-restore" *ngIf="localDraftOffer">
+          <i class="bi bi-clock-history" aria-hidden="true"></i>
+          <span>You have an unsaved campaign from {{ localDraftOffer.savedAt | date:'MMM d, h:mm a' }} on this device.</span>
+          <button type="button" class="cf-restore__btn" (click)="restoreLocalDraft()">Restore</button>
+          <button type="button" class="cf-restore__link" (click)="discardLocalDraft()">Discard</button>
         </div>
 
         <!-- ── Stepper (same on every step) ── -->
@@ -111,11 +126,14 @@
         </div>
 
         <div class="field-group">
-          <label class="field-label">
-            {{ isPhotographerCreator ? 'Collaboration Title' : 'Campaign title' }} <span class="required">*</span>
-            <span class="lock-badge" *ngIf="isApprovalLocked"><i class="bi bi-lock-fill"></i> Locked</span>
-          </label>
-          <input type="text" formControlName="title" class="field-input" placeholder="e.g. Summer Fashion Collection" />
+          <div class="field-label-row">
+            <label class="field-label">
+              {{ isPhotographerCreator ? 'Collaboration Title' : 'Campaign title' }} <span class="required">*</span>
+              <span class="lock-badge" *ngIf="isApprovalLocked"><i class="bi bi-lock-fill"></i> Locked</span>
+            </label>
+            <span class="cf-counter" [class.is-near]="titleLength > titleMaxLength - 10">{{ titleLength }} / {{ titleMaxLength }} characters</span>
+          </div>
+          <input type="text" formControlName="title" class="field-input" placeholder="e.g. Summer Fashion Collection" [attr.maxlength]="titleMaxLength" />
           <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['required']">Title is required</span>
           <span class="field-error" *ngIf="f['title'].touched && f['title'].errors?.['minlength']">Minimum 3 characters</span>
           <p class="field-sublabel lock-note" *ngIf="isApprovalLocked">
@@ -127,7 +145,9 @@
           <label class="field-label">{{ isPhotographerCreator ? 'Creator name' : 'Brand name' }}</label>
           <div class="field-static-value">
             <span class="field-static-value__icon" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
-            <span class="field-static-value__name">{{ f['brandName'].value || 'Auto from your profile' }}</span>
+            <span class="field-static-value__name">{{ f['brandName'].value || 'Auto from your profile' }}
+              <span class="cf-verified" *ngIf="ownerVerified"><i class="bi bi-patch-check-fill"></i> {{ ownerVerifiedLabel }}</span>
+            </span>
             <a [routerLink]="isPhotographerCreator ? '/photographer-profile' : '/brand-profile'" class="field-static-edit-link">Edit in profile</a>
           </div>
         </div>
@@ -358,6 +378,9 @@
       <div class="form-footer">
         <button type="button" class="btn btn-cancel" (click)="onCancel()">Cancel</button>
         <span class="cf-footer-step">Step 1 of 3</span>
+        <button type="button" class="btn btn-skip" [disabled]="uploading || saving || submitLocked" (click)="saveAsDraft()">
+          {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Save as Draft' }}
+        </button>
         <button type="button" class="btn btn-next" [disabled]="!step1Valid()" (click)="nextStep()">
           Next — Requirements <i class="bi bi-arrow-right"></i>
         </button>
@@ -365,6 +388,9 @@
       <app-mobile-bottom-actions ariaLabel="Campaign details actions">
         <button type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" (click)="onCancel()">
           <i class="bi bi-x-lg"></i> Cancel
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="saveAsDraft()" [disabled]="uploading || saving || submitLocked">
+          <i class="bi bi-save"></i> {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Draft' }}
         </button>
         <button type="button" class="btn btn-primary" [disabled]="!step1Valid()" (click)="nextStep()">
           <i class="bi bi-arrow-right"></i> Next
@@ -505,7 +531,7 @@
 
         <div class="budget-preview budget-preview--total" *ngIf="estimatedBudgetRupees > 0">
           <span>{{ selectedCampaignType === 'pay_to_join' ? 'Max potential join amount' : 'Max potential payout' }} <em class="budget-preview__pill">Total</em>
-            <small *ngIf="selectedCampaignType !== 'pay_to_join'">If max participants accept &amp; deliver</small></span>
+            <small *ngIf="selectedCampaignType !== 'pay_to_join'">If max participants accept &amp; deliver · you pay only for accepted creators, released after approval</small></span>
           <strong class="budget-preview__value">₹{{ estimatedBudgetRupees | number:'1.0-0' }}</strong>
         </div>
         </div>
@@ -879,6 +905,9 @@
           <i class="bi bi-arrow-left"></i> Back
         </button>
         <span class="cf-footer-step">Step 2 of 3</span>
+        <button type="button" class="btn btn-skip" [disabled]="uploading || saving || submitLocked" (click)="saveAsDraft()">
+          {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Save as Draft' }}
+        </button>
         <button type="button" class="btn btn-next" [disabled]="!step2Valid()" (click)="nextStep()">
           {{ f['campaignMode'].value === 'tier_filtered_open' ? 'Next — Review &amp; Publish' : ('Next — Invite ' + inviteRecipientLabelPlural) }}
           <i class="bi bi-arrow-right"></i>
@@ -887,6 +916,9 @@
       <app-mobile-bottom-actions ariaLabel="Requirements actions">
         <button type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" (click)="prevStep()">
           <i class="bi bi-arrow-left"></i> Back
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="saveAsDraft()" [disabled]="uploading || saving || submitLocked">
+          <i class="bi bi-save"></i> {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Draft' }}
         </button>
         <button type="button" class="btn btn-primary" [disabled]="!step2Valid()" (click)="nextStep()">
           <i class="bi bi-arrow-right"></i> Next
@@ -1372,7 +1404,7 @@
             <i class="bi bi-arrow-left"></i> Back
           </button>
           <span class="cf-footer-step">Step 3 of 3 · {{ inviteStepLabel }}</span>
-          <button type="button" class="btn btn-skip" (click)="skipAndSave()" [disabled]="uploading || saving || submitLocked">
+          <button type="button" class="btn btn-skip" (click)="saveAsDraft()" [disabled]="uploading || saving || submitLocked">
             {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Save as Draft' }}
           </button>
           <button type="button" class="btn btn-send"
@@ -1385,7 +1417,7 @@
           <button type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" [disabled]="uploading || saving || submitLocked" (click)="prevStep()">
             <i class="bi bi-arrow-left"></i> Back
           </button>
-          <button type="button" class="btn btn-outline-secondary" (click)="skipAndSave()" [disabled]="uploading || saving || submitLocked">
+          <button type="button" class="btn btn-outline-secondary" (click)="saveAsDraft()" [disabled]="uploading || saving || submitLocked">
             <i class="bi bi-save"></i> {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Draft' }}
           </button>
           <button type="button" class="btn btn-success"

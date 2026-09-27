@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, OnDestroy, SimpleChanges, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
@@ -29,7 +29,7 @@ import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVER
   templateUrl: './campaign-form.component.html',
   styleUrls: ['./campaign-form.component.scss']
 })
-export class CampaignFormComponent implements OnInit, OnChanges {
+export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   /** When true, render the form as a full page (no modal backdrop) */
   @Input() asPage = false;
   private static readonly MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -761,6 +761,268 @@ export class CampaignFormComponent implements OnInit, OnChanges {
 
     this.normalizeMinParticipantsField();
 
+    this.loadOwnerVerification();
+    this.initLocalDraftAutosave();
+  }
+
+  ngOnDestroy(): void {
+    if (this.autosaveTimer) clearInterval(this.autosaveTimer);
+  }
+
+  // ── Owner verification badge (Step 1 "Brand name" card) ─────────
+  /** null = unknown/not loaded; true when TrendStarz admin has approved the owner's profile. */
+  ownerVerified: boolean | null = null;
+
+  private loadOwnerVerification(): void {
+    if (this.isInfluencerCreator) return;
+    const source$ = this.isPhotographerCreator
+      ? this.config.getPhotographerProfileById()
+      : this.config.getBrandProfileById();
+    source$.subscribe((profile: any) => {
+      if (!profile) return;
+      this.ownerVerified = String(profile?.verificationStatus || '').toLowerCase() === 'approved'
+        || profile?.verifiedByTrendStarz === true;
+      this.cd.detectChanges();
+    });
+  }
+
+  get ownerVerifiedLabel(): string {
+    return this.isPhotographerCreator ? 'Verified Creator' : 'Verified Brand';
+  }
+
+  // ── Title length ─────────────────────────────────────────────────
+  /** 80-char cap for new titles; never shorter than an existing saved title. */
+  get titleMaxLength(): number {
+    return Math.max(80, String(this.campaign?.title || '').length);
+  }
+
+  get titleLength(): number {
+    return String(this.f?.['title']?.value || '').length;
+  }
+
+  // ── Campaign template (fills the description for the chosen type) ─
+  get campaignTemplateText(): string {
+    if (this.isPhotographerCreator || this.isInvitingPhotographers) return '';
+    return this.DESCRIPTION_TEMPLATES[this.selectedCampaignType] || '';
+  }
+
+  useCampaignTemplate(): void {
+    const text = this.campaignTemplateText;
+    const ctrl = this.form?.get('description');
+    if (!text || !ctrl || ctrl.disabled) return;
+    const apply = () => {
+      ctrl.setValue(text);
+      ctrl.markAsDirty();
+      this.cd.detectChanges();
+    };
+    if (!String(ctrl.value || '').trim()) {
+      apply();
+      return;
+    }
+    this.confirmDialogTitle = 'Replace description?';
+    this.confirmDialogMessage = 'Your current campaign description will be replaced with the template for this campaign type.';
+    this.confirmDialogConfirmText = 'Replace';
+    this.confirmDialogCancelText = 'Keep mine';
+    this.confirmDialogVariant = 'warning';
+    this.confirmDialogPurpose = null;
+    this.confirmDialogCallback = apply;
+    this.confirmDialogOpen = true;
+    this.cd.detectChanges();
+  }
+
+  // ── Local draft autosave (create mode, this browser only) ────────
+  private autosaveTimer: any = null;
+  private lastAutosaveJson = '';
+  /** Time of the last local autosave — drives the header badge. */
+  localDraftSavedAt: Date | null = null;
+  /** A draft found on load, waiting for the user to restore or discard it. */
+  localDraftOffer: { savedAt: Date; data: any } | null = null;
+
+  private get localDraftKey(): string {
+    let uid = '';
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      uid = String(u?.userId || u?._id || u?.id || '');
+    } catch { /* ignore */ }
+    return `ts:campaign-draft:v1:${uid || 'anon'}`;
+  }
+
+  private initLocalDraftAutosave(): void {
+    if (typeof window === 'undefined' || this.isEdit || this.campaign) return;
+    try {
+      const raw = localStorage.getItem(this.localDraftKey);
+      if (raw) {
+        const data = JSON.parse(raw);
+        const savedAt = new Date(data?.savedAt || 0);
+        const fresh = Date.now() - savedAt.getTime() < 14 * 24 * 3600 * 1000;
+        if (data?.v === 1 && fresh) this.localDraftOffer = { savedAt, data };
+        else localStorage.removeItem(this.localDraftKey);
+      }
+    } catch { /* storage unavailable — autosave silently off */ }
+    this.autosaveTimer = setInterval(() => this.autosaveLocalDraft(), 4000);
+  }
+
+  private buildLocalDraftSnapshot(): any {
+    const { brandName, status, ...formValue } = this.form.getRawValue();
+    return {
+      v: 1,
+      form: formValue,
+      selectedCategories: this.selectedCategories,
+      lookingForCreatorTypes: this.lookingForCreatorTypes,
+      preferredCollaborationPreference: this.preferredCollaborationPreference,
+      photographerPreferredCreatorTypes: this.photographerPreferredCreatorTypes,
+      photographerCollaborationPreference: this.photographerCollaborationPreference,
+      photographerEquipmentPreference: this.photographerEquipmentPreference,
+      selectedPhotographerServices: this.selectedPhotographerServices,
+      selectedPhotographerPricing: this.selectedPhotographerPricing,
+      selectedPhotographerDeliverables: this.selectedPhotographerDeliverables,
+      photographerPricingPrices: this.photographerPricingPrices,
+      platformDeliverables: this.platformDeliverables,
+    };
+  }
+
+  private autosaveLocalDraft(): void {
+    if (!this.form || this.localDraftOffer || this.submitLocked) return;
+    const snap = this.buildLocalDraftSnapshot();
+    const hasContent = !!String(snap.form?.title || '').trim()
+      || !!String(snap.form?.description || '').trim()
+      || snap.selectedCategories.length > 0;
+    if (!hasContent) return;
+    const json = JSON.stringify(snap);
+    if (json === this.lastAutosaveJson) return;
+    try {
+      const savedAt = new Date();
+      localStorage.setItem(this.localDraftKey, JSON.stringify({ ...snap, savedAt: savedAt.toISOString() }));
+      this.lastAutosaveJson = json;
+      this.localDraftSavedAt = savedAt;
+      this.cd.detectChanges();
+    } catch { /* quota/private mode — skip */ }
+  }
+
+  restoreLocalDraft(): void {
+    const data = this.localDraftOffer?.data;
+    this.localDraftOffer = null;
+    if (!data) return;
+    const type = String(data.form?.campaignType || this.f['campaignType'].value);
+    if (!this.hasPremium && this.isPremiumOnlyType(type)) delete data.form.campaignType;
+    this.form.patchValue(data.form || {});
+    this.selectedCategories = [...(data.selectedCategories || [])];
+    this.lookingForCreatorTypes = [...(data.lookingForCreatorTypes || [])];
+    this.preferredCollaborationPreference = data.preferredCollaborationPreference || '';
+    this.photographerPreferredCreatorTypes = [...(data.photographerPreferredCreatorTypes || [])];
+    this.photographerCollaborationPreference = data.photographerCollaborationPreference || '';
+    this.photographerEquipmentPreference = [...(data.photographerEquipmentPreference || [])];
+    this.selectedPhotographerServices = [...(data.selectedPhotographerServices || [])];
+    this.selectedPhotographerPricing = [...(data.selectedPhotographerPricing || [])];
+    this.selectedPhotographerDeliverables = [...(data.selectedPhotographerDeliverables || [])];
+    this.photographerPricingPrices = { ...(data.photographerPricingPrices || {}) };
+    this.platformDeliverables = Array.isArray(data.platformDeliverables) ? data.platformDeliverables : [];
+    this.selectedPlatforms = this.platformDeliverables.map((pd) => pd.platform);
+    this.activePlatformTab = this.selectedPlatforms[0] || '';
+    this.applyCampaignTypeValidators(String(this.f['campaignType'].value || ''));
+    this.form.markAsDirty();
+    this.toast.success('Your unsaved campaign has been restored.');
+    this.cd.detectChanges();
+  }
+
+  discardLocalDraft(): void {
+    this.localDraftOffer = null;
+    this.clearLocalDraft();
+  }
+
+  private clearLocalDraft(): void {
+    this.lastAutosaveJson = '';
+    this.localDraftSavedAt = null;
+    try { if (typeof window !== 'undefined') localStorage.removeItem(this.localDraftKey); } catch { /* ignore */ }
+  }
+
+  // ── Save as Draft (any step) ─────────────────────────────────────
+  private static readonly DRAFT_FIELD_LABELS: Record<string, string> = {
+    pricePerInfluencer: 'Payment per participant',
+    venueAddress: 'Venue area / locality',
+    venueState: 'Venue state',
+    venueDistrict: 'Venue district',
+    venueCity: 'Venue city',
+    inviteBenefits: 'Location & benefits',
+    payToJoinBenefits: 'Benefits',
+    productDescription: 'Product details',
+    productPaymentAmount: 'Cash component',
+    shootLocationType: 'Shoot location type',
+    shootLocationAddress: 'Shoot location address',
+  };
+
+  /**
+   * Saves the campaign as a draft from any step. Only the title plus the
+   * fields the backend requires for the chosen campaign type are needed
+   * (drafts don't need the full form). Never sends invites and never
+   * submits for review — that stays on the explicit Step 3 actions.
+   */
+  async saveAsDraft(): Promise<void> {
+    if (this.saving || this.uploading || this.submitLocked) return;
+    const title = this.f['title'];
+    if (title.invalid) {
+      title.markAsTouched();
+      if (this.currentStep !== 1) this.goToStep(1);
+      this.toast.error('Add a campaign title (at least 3 characters) to save a draft.');
+      return;
+    }
+    const required = getRequiredFields({
+      campaignType: String(this.f['campaignType']?.value || ''),
+      campaignMode: String(this.f['campaignMode']?.value || 'invite_only'),
+      ownerType: this.isPhotographerCreator ? 'photographer' : 'brand',
+      inviteRecipientRole: this.inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer',
+      productPaymentMode: String(this.form.get('productPaymentMode')?.value || 'product_only'),
+      shootLocationType: String(this.form.get('shootLocationType')?.value || ''),
+    });
+    const missing = required.filter((name) => {
+      const ctrl = this.form.get(name);
+      if (!ctrl) return false;
+      if (ctrl.invalid) return true;
+      const v = ctrl.value;
+      return v === null || v === undefined || (typeof v === 'string' && !v.trim());
+    });
+    if (missing.length) {
+      missing.forEach((name) => this.form.get(name)?.markAsTouched());
+      const labels = missing.map((name) => CampaignFormComponent.DRAFT_FIELD_LABELS[name] || name);
+      this.toast.error(`To save this campaign type as a draft, also fill: ${labels.join(', ')}.`);
+      return;
+    }
+
+    this.uploading = true;
+    const v = this.form.value;
+    const originalStatus = String(this.campaign?.status || 'draft').toLowerCase();
+    const keepStatus = this.isEdit && ['pending_review', 'pending'].includes(originalStatus);
+    const base: any = {
+      ...v,
+      pricePerInfluencer: v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : 0,
+      minInfluencers: Number(v.minInfluencers || 1),
+      status: keepStatus ? originalStatus : (this.isEdit ? originalStatus : 'draft'),
+      targetCities: v.targetDistrict ? [v.targetDistrict] : [],
+      targetDistrict: undefined,
+    };
+    base.acceptanceDeadline = base.acceptanceDeadline ? new Date(base.acceptanceDeadline).toISOString() : undefined;
+    this.sanitizeCampaignTypeFields(base);
+    try {
+      if (this.selectedFile) base.image = await this.uploadToCloudinary(this.selectedFile);
+      else if (this.isEdit && this.campaign?.image) base.image = this.campaign.image;
+      const uploaded = this.selectedResourceImageFiles.length
+        ? await Promise.all(this.selectedResourceImageFiles.map((file) => this.uploadToCloudinary(file, this.campaignImagesFolder)))
+        : [];
+      base.resourceImages = [...this.existingResourceImages, ...uploaded];
+    } catch {
+      this.uploading = false;
+      this.toast.error('Image upload failed. Remove or replace the image, then save the draft again.');
+      this.cd.detectChanges();
+      return;
+    }
+    const payload: any = this.buildSavePayload(base);
+    // A draft never sends invites — selections are kept only in this form.
+    delete payload.inviteInfluencerIds;
+    delete payload.inviteRecipientIds;
+    this.uploading = false;
+    this.submitLocked = true;
+    this.clearLocalDraft();
+    this.save.emit(payload);
   }
 
   get isEdit(): boolean { return this.mode === 'edit'; }
@@ -2799,6 +3061,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.sanitizeCampaignTypeFields(payload);
     this.uploading = false;
     this.submitLocked = true;
+    this.clearLocalDraft();
     this.save.emit(payload);
     this.selectedInfluencerIds.clear();
   }
@@ -2859,6 +3122,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     }
     this.uploading = false;
     this.submitLocked = true;
+    this.clearLocalDraft();
     this.save.emit(this.buildSavePayload(payload));
     if (this.isEdit && this.campaign?._id) {
       this.fetchCampaignInvites();
@@ -3028,6 +3292,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.uploading = false;
     this.toast.success('Campaign saved as draft. You can continue editing it later.');
     this.submitLocked = true;
+    this.clearLocalDraft();
     this.save.emit(this.buildSavePayload(payload));
   }
 
@@ -3070,6 +3335,7 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     this.uploading = false;
     this.toast.warning('Campaign saved as draft so you can fix the image later.');
     this.submitLocked = true;
+    this.clearLocalDraft();
     this.save.emit(this.buildSavePayload(payload));
   }
 

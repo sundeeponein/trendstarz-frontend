@@ -123,7 +123,9 @@ export class CampaignFormPageComponent implements OnInit {
       const validIds = inviteIds.filter((recipientId) => !!recipientId);
       if (validIds.length === 0) {
         this.saving = false;
-        this.toast.success(`${entityNoun} ${this.mode === 'create' ? 'created' : 'updated'} successfully!`);
+        this.toast.success(String(campaignData?.status || '') === 'draft'
+          ? `${entityNoun} saved as draft. You can continue editing it later.`
+          : `${entityNoun} ${this.mode === 'create' ? 'created' : 'updated'} successfully!`);
         this.router.navigate(['/campaigns']);
         return;
       }
