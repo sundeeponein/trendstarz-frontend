@@ -4,6 +4,7 @@
     <p>This is new — please choose a visibility setting. You can change it anytime in Settings.</p>
 
     <app-profile-visibility-selector
+      [showHeader]="false"
       [value]="selected"
       [disabled]="busy"
       (valueChange)="onValueChange($event)">

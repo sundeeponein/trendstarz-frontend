@@ -1,5 +1,8 @@
-<div class="visibility-selector">
-  <p class="visibility-selector__question">Who can view my profile?</p>
+<div class="visibility-selector" role="radiogroup" aria-label="Who can view my profile?">
+  <div class="visibility-selector__head" *ngIf="showHeader">
+    <p class="visibility-selector__question">Who can view my profile?</p>
+    <p class="visibility-selector__hint">You can change this anytime in Settings.</p>
+  </div>
 
   <label
     *ngFor="let opt of options"
@@ -8,15 +11,24 @@
     [class.disabled]="disabled">
     <input
       type="radio"
+      class="visibility-option__input"
       name="profileVisibility"
       [value]="opt.value"
       [checked]="value === opt.value"
       [disabled]="disabled"
       (change)="select(opt.value)" />
-    <span class="visibility-option__icon" aria-hidden="true">{{ opt.icon }}</span>
+    <span class="visibility-option__icon" [ngClass]="'tone-' + opt.tone" aria-hidden="true">
+      <i class="bi" [ngClass]="opt.icon"></i>
+    </span>
     <span class="visibility-option__body">
-      <strong>{{ opt.label }}</strong>
-      <span>{{ opt.description }}</span>
+      <span class="visibility-option__title">
+        <strong>{{ opt.label }}</strong>
+        <span *ngIf="opt.badge" class="visibility-option__badge">{{ opt.badge }}</span>
+      </span>
+      <span class="visibility-option__desc">{{ opt.description }}</span>
+    </span>
+    <span class="visibility-option__check" aria-hidden="true">
+      <i class="bi bi-check-lg"></i>
     </span>
   </label>
 </div>

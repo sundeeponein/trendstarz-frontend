@@ -4,6 +4,15 @@
     <div class="page-campaign-dialog">
       <div class="page-campaign-card">
 
+        <!-- ── Breadcrumb ── -->
+        <nav class="cf-crumbs" aria-label="Breadcrumb">
+          <a routerLink="/campaigns">{{ isPhotographerCreator ? 'Collaborations' : 'Campaigns' }}</a>
+          <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          <span>{{ isEdit ? 'Edit' : 'New' }} {{ formTitleNoun }}</span>
+          <i class="bi bi-chevron-right" aria-hidden="true"></i>
+          <span class="cf-crumbs__current">Step {{ currentStep }}: {{ currentStep === 1 ? detailsStepLabel : (currentStep === 2 ? requirementsStepLabel : inviteStepLabel) }}</span>
+        </nav>
+
         <!-- ── Header ── -->
         <div class="form-header">
           <div>
@@ -25,34 +34,34 @@
               </button>
             </p>
           </div>
-          <!-- <button class="btn-close-modal" (click)="onCancel()" type="button"><i class="bi bi-x-lg"></i></button> -->
         </div>
 
-      <!-- ── Stepper ── -->
-    <div class="wizard-stepper">
-      <div class="wizard-step" [class.active]="currentStep === 1" [class.done]="currentStep > 1"
-           (click)="currentStep > 1 ? goToStep(1) : null" [style.cursor]="currentStep > 1 ? 'pointer' : 'default'">
-        <div class="step-circle">
-          <i class="bi bi-check-lg" *ngIf="currentStep > 1"></i>
-          <span *ngIf="currentStep <= 1">1</span>
+        <!-- ── Stepper (same on every step) ── -->
+        <div class="cf-stepper" role="list">
+          <div class="cf-stepper__steps">
+            <button type="button" role="listitem" class="cf-step"
+                    [class.is-active]="currentStep === 1" [class.is-done]="currentStep > 1"
+                    [disabled]="currentStep <= 1" [attr.aria-current]="currentStep === 1 ? 'step' : null"
+                    (click)="goToStep(1)">
+              <span class="cf-step__circle"><i class="bi bi-check-lg" *ngIf="currentStep > 1"></i><span *ngIf="currentStep <= 1">1</span></span>
+              <span class="cf-step__text"><span class="cf-step__kicker">Step 1</span><span class="cf-step__label">{{ detailsStepLabel }}</span></span>
+            </button>
+            <button type="button" role="listitem" class="cf-step"
+                    [class.is-active]="currentStep === 2" [class.is-done]="currentStep > 2"
+                    [disabled]="currentStep <= 2" [attr.aria-current]="currentStep === 2 ? 'step' : null"
+                    (click)="goToStep(2)">
+              <span class="cf-step__circle"><i class="bi bi-check-lg" *ngIf="currentStep > 2"></i><span *ngIf="currentStep <= 2">2</span></span>
+              <span class="cf-step__text"><span class="cf-step__kicker">Step 2</span><span class="cf-step__label">{{ requirementsStepLabel }}</span></span>
+            </button>
+            <div role="listitem" class="cf-step" [class.is-active]="currentStep === 3" [attr.aria-current]="currentStep === 3 ? 'step' : null">
+              <span class="cf-step__circle"><span>3</span></span>
+              <span class="cf-step__text"><span class="cf-step__kicker">Step 3</span><span class="cf-step__label">{{ inviteStepLabel }}</span></span>
+            </div>
+          </div>
+          <div class="cf-stepper__track" aria-hidden="true">
+            <span class="cf-stepper__fill" [style.width.%]="(currentStep / 3) * 100"></span>
+          </div>
         </div>
-        <span class="step-label">{{ detailsStepLabel }}</span>
-      </div>
-      <div class="step-line" [class.done]="currentStep > 1"></div>
-      <div class="wizard-step" [class.active]="currentStep === 2" [class.done]="currentStep > 2"
-           (click)="currentStep > 2 ? goToStep(2) : null" [style.cursor]="currentStep > 2 ? 'pointer' : 'default'">
-        <div class="step-circle">
-          <i class="bi bi-check-lg" *ngIf="currentStep > 2"></i>
-          <span *ngIf="currentStep <= 2">2</span>
-        </div>
-        <span class="step-label">{{ requirementsStepLabel }}</span>
-      </div>
-      <div class="step-line" [class.done]="currentStep > 2"></div>
-      <div class="wizard-step" [class.active]="currentStep === 3">
-        <div class="step-circle"><span>3</span></div>
-        <span class="step-label">{{ inviteStepLabel }}</span>
-      </div>
-         </div>
 
          <!-- ══════════════════════════════════════════
            STEP 1 — Campaign Details
@@ -81,20 +90,21 @@
               {{ opt.label }}{{ (!hasPremium && !!opt.premiumOnly) ? ' 🔒 Premium' : '' }}{{ (opt.enabled === false) ? ' (Unavailable)' : '' }}
             </option>
           </select>
-          <p class="field-sublabel premium-lock-hint" *ngIf="!hasPremium">
-            <i class="bi bi-lock-fill"></i>
-            Upgrade to <strong>Premium</strong> to create Product &amp; Invite campaigns.
-          </p>
+          <div class="cf-upgrade" *ngIf="!hasPremium">
+            <span class="cf-upgrade__icon" aria-hidden="true"><i class="bi bi-lock-fill"></i></span>
+            <span class="cf-upgrade__text"><strong>Upgrade to Premium</strong> to create Product &amp; Invite campaigns.</span>
+            <a routerLink="/upgrade-premium" class="cf-upgrade__btn">Upgrade Now <i class="bi bi-chevron-right"></i></a>
+          </div>
           <!-- Per-type explanation hints -->
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'paid_collab'">
+          <p class="field-sublabel cf-type-hint" *ngIf="f['campaignType'].value === 'paid_collab'">
             <i class="bi bi-cash-stack"></i>
             <strong>Paid Collab</strong> — You pay the influencer a fixed fee to create and post content (Reel, Story, etc.). You review the submitted post. Best for awareness, launches, and product promotions.
           </p>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'product'">
+          <p class="field-sublabel cf-type-hint" *ngIf="f['campaignType'].value === 'product'">
             <i class="bi bi-gift"></i>
             <strong>Product Collab</strong> — You send a free product to the influencer in exchange for an honest review or post. No cash payment — the product itself is the compensation. Best for unboxing, reviews, and lifestyle integrations.
           </p>
-          <p class="field-sublabel" *ngIf="f['campaignType'].value === 'invite_location'">
+          <p class="field-sublabel cf-type-hint" *ngIf="f['campaignType'].value === 'invite_location'">
             <i class="bi bi-geo-alt"></i>
             <strong>Invite to Location</strong> — You invite the influencer to visit your store, event, or venue for on-site content creation. Attendance itself completes the collaboration. Best for restaurants, launches, and experience-based brands.
           </p>
@@ -116,8 +126,8 @@
         <div class="field-group">
           <label class="field-label">{{ isPhotographerCreator ? 'Creator name' : 'Brand name' }}</label>
           <div class="field-static-value">
-            <i class="bi bi-shield-check"></i>
-            <span>{{ f['brandName'].value || 'Auto from your profile' }}</span>
+            <span class="field-static-value__icon" aria-hidden="true"><i class="bi bi-shield-check"></i></span>
+            <span class="field-static-value__name">{{ f['brandName'].value || 'Auto from your profile' }}</span>
             <a [routerLink]="isPhotographerCreator ? '/photographer-profile' : '/brand-profile'" class="field-static-edit-link">Edit in profile</a>
           </div>
         </div>
@@ -142,7 +152,11 @@
             <i class="bi bi-exclamation-triangle-fill"></i>
             Contact details (phone, email, URLs or messaging links) are not allowed here. They will be shared with creators automatically after user accepted/confirmed.
           </div>
-          <p class="field-sublabel">
+          <div class="cf-quick-inserts" *ngIf="!isAcceptanceLocked">
+            <span class="cf-quick-inserts__label">Quick inserts:</span>
+            <button type="button" class="cf-quick-insert" *ngFor="let q of descriptionQuickInserts" (click)="insertDescriptionSection(q)">+ {{ q }}</button>
+          </div>
+          <p class="field-sublabel cf-tip">
             <i class="bi bi-lightbulb"></i> Tip: Click <strong>View guide &amp; examples</strong> to see ready-made briefs you can read and copy-paste. Mention expected deliverables here — timeline and payment are captured in the structured fields below.
           </p>
         </div>
@@ -298,14 +312,14 @@
               <i class="bi bi-lock-fill"></i> Start date is fixed once an influencer has confirmed.
             </p>
             <span class="field-error" *ngIf="f['timelineStart'].touched && !f['timelineStart'].value">Required</span>
-            <p class="field-sublabel">Acceptance deadline: <strong>{{ acceptanceDeadlineDisplay }}</strong> — creators must accept or decline by then.</p>
+            <p class="field-sublabel cf-note">Acceptance deadline: <strong>{{ acceptanceDeadlineDisplay }}</strong> — creators must accept or decline by then.</p>
           </div>
           <div class="field-group half">
             <label class="field-label">End date <span class="required">*</span></label>
             <input type="date" formControlName="timelineEnd" class="field-input" [attr.min]="f['timelineStart'].value || minStartDate" [attr.max]="maxEndDate" />
             <span class="field-error" *ngIf="f['timelineEnd'].touched && !f['timelineEnd'].value">Required</span>
-            <p class="field-sublabel">
-              Note: {{ inviteRecipientLabelPlural }} can only choose a posting/visit date within your selected start and end dates when accepting invites.
+            <p class="field-sublabel cf-note">
+              {{ inviteRecipientLabelPlural }} can only choose a posting/visit date within your selected start and end dates when accepting invites.
             </p>
           </div>
         </div>
@@ -322,7 +336,7 @@
 
         <div class="field-group">
           <label class="field-label">
-            Posting Deadline
+            Posting Deadline &amp; Grace Window
             <span class="lock-badge" *ngIf="isAcceptanceLocked"><i class="bi bi-lock-fill"></i> Locked</span>
           </label>
           <select formControlName="postingDeadlineMode" class="field-input">
@@ -339,11 +353,11 @@
           </p>
         </div>
 
-        <p class="step-indicator">Step 1 of 3</p>
       </div>
 
       <div class="form-footer">
         <button type="button" class="btn btn-cancel" (click)="onCancel()">Cancel</button>
+        <span class="cf-footer-step">Step 1 of 3</span>
         <button type="button" class="btn btn-next" [disabled]="!step1Valid()" (click)="nextStep()">
           Next — Requirements <i class="bi bi-arrow-right"></i>
         </button>
@@ -401,19 +415,18 @@
           </div>
         </div>
 
-        <p class="field-sublabel">
-          <i class="bi bi-info-circle"></i>
-          Minimum participants required is set to 1.
-        </p>
+        <div class="cf-terms">
+          <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+          <div>
+            <p><strong>Important terms:</strong> Minimum participants required is set to 1.</p>
+            <p *ngIf="selectedCampaignType === 'paid_collab'">Prices are negotiable. Influencers can accept or send counter offers.</p>
+          </div>
+        </div>
 
         <span class="field-error" *ngIf="(f['minInfluencers'].touched || f['maxInfluencers'].touched) && form.errors?.['invalidMinMaxInfluencers']">
           Minimum participants cannot be greater than max participants.
         </span>
 
-        <p class="field-sublabel" *ngIf="selectedCampaignType === 'paid_collab'">
-          <i class="bi bi-info-circle"></i>
-          Prices are negotiable. Influencers can accept or send counter offers.
-        </p>
 
         <div class="field-row" *ngIf="selectedCampaignType === 'product'">
           <div class="field-group half">
@@ -477,8 +490,9 @@
 
 
 
+        <div class="cf-pay-cards" *ngIf="(isPerContentPricingFlow && hasSelectedContentTypePricing) || estimatedBudgetRupees > 0">
         <div class="budget-preview" *ngIf="isPerContentPricingFlow && hasSelectedContentTypePricing">
-          <span>Payment per participant (from selected content type):</span>
+          <span>Payment per participant <small>From selected content type</small></span>
           <strong class="budget-preview__value">
             <ng-container *ngIf="selectedContentTypeMinPriceRupees === selectedContentTypeMaxPriceRupees; else payoutRange">
               ₹{{ selectedContentTypeMaxPriceRupees | number:'1.0-0' }}
@@ -489,9 +503,11 @@
           </strong>
         </div>
 
-        <div class="budget-preview" *ngIf="estimatedBudgetRupees > 0">
-          <span>{{ selectedCampaignType === 'pay_to_join' ? 'Max potential join amount:' : 'Max potential payout (if max participants accept):' }}</span>
+        <div class="budget-preview budget-preview--total" *ngIf="estimatedBudgetRupees > 0">
+          <span>{{ selectedCampaignType === 'pay_to_join' ? 'Max potential join amount' : 'Max potential payout' }} <em class="budget-preview__pill">Total</em>
+            <small *ngIf="selectedCampaignType !== 'pay_to_join'">If max participants accept &amp; deliver</small></span>
           <strong class="budget-preview__value">₹{{ estimatedBudgetRupees | number:'1.0-0' }}</strong>
+        </div>
         </div>
 
         <div class="field-group" *ngIf="selectedCampaignType === 'pay_to_join'">
@@ -780,8 +796,9 @@
 
         <div class="field-group campaign-resources">
           <button type="button" class="resources-accordion-toggle" (click)="toggleResourcesExpanded()">
+            <span class="cf-assets-icon" aria-hidden="true"><i class="bi bi-paperclip"></i></span>
             <span class="field-label">
-              Add campaign assets (optional)
+              Add campaign assets <span class="field-optional">Optional</span>
               <span class="optional-badge" *ngIf="resourcesFilledCount > 0">{{ resourcesFilledCount }} added</span>
             </span>
             <i class="bi" [ngClass]="resourcesExpanded ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
@@ -855,13 +872,13 @@
           <p class="trust-note" *ngFor="let note of trustLabels"><i class="bi bi-check-circle"></i> {{ note }}</p>
         </div>
 
-        <p class="step-indicator">Step 2 of 3</p>
       </div>
 
       <div class="form-footer">
         <button type="button" class="btn btn-back" (click)="prevStep()">
           <i class="bi bi-arrow-left"></i> Back
         </button>
+        <span class="cf-footer-step">Step 2 of 3</span>
         <button type="button" class="btn btn-next" [disabled]="!step2Valid()" (click)="nextStep()">
           {{ f['campaignMode'].value === 'tier_filtered_open' ? 'Next — Review &amp; Publish' : ('Next — Invite ' + inviteRecipientLabelPlural) }}
           <i class="bi bi-arrow-right"></i>
@@ -962,7 +979,6 @@
             <div *ngIf="!f['targetState'].value">Location: <strong>India-wide (all states)</strong></div>
           </div>
 
-          <p class="step-indicator">Step 3 of 3</p>
         </ng-container>
 
         <!-- ── INVITE ONLY: manual influencer selection ── -->
@@ -975,10 +991,10 @@
             No new invites can be sent. You can extend the deadline in campaign settings.
           </div>
 
-          <div class="invite-summary" *ngIf="f['maxInfluencers'].value">
-            <div *ngIf="isPerContentPricingFlow && hasSelectedContentTypePricing">
-              Payment per participant:
-              <strong>
+          <div class="cf-metrics" *ngIf="f['maxInfluencers'].value">
+            <div class="cf-metric" *ngIf="isPerContentPricingFlow && hasSelectedContentTypePricing">
+              <span class="cf-metric__label">Payment per participant</span>
+              <strong class="cf-metric__value">
                 <ng-container *ngIf="selectedContentTypeMinPriceRupees === selectedContentTypeMaxPriceRupees; else summaryRange">
                   ₹{{ selectedContentTypeMaxPriceRupees | number:'1.0-0' }}
                 </ng-container>
@@ -987,15 +1003,24 @@
                 </ng-template>
               </strong>
             </div>
-            <div *ngIf="!isPerContentPricingFlow && f['pricePerInfluencer'].value">Payment per participant: <strong>₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong></div>
-            <div>
-              Invited: <strong>{{ invitedCount }}</strong>
-              <span *ngIf="selectedInfluencerIds.size > 0"> + Selected: <strong>{{ selectedInfluencerIds.size }}</strong></span>
-              &nbsp;/ <strong>{{ inviteSelectionLimit === -1 ? 'Unlimited' : inviteSelectionLimit }}</strong>
+            <div class="cf-metric" *ngIf="!isPerContentPricingFlow && f['pricePerInfluencer'].value">
+              <span class="cf-metric__label">Payment per participant</span>
+              <strong class="cf-metric__value">₹{{ f['pricePerInfluencer'].value | number:'1.0-0' }}</strong>
             </div>
-            <div>Accepted close target: <strong>{{ f['maxInfluencers'].value }}</strong></div>
-            <div *ngIf="(isPerContentPricingFlow && hasSelectedContentTypePricing) || (!isPerContentPricingFlow && f['pricePerInfluencer'].value)">
-              Max payout after accepted slots: <strong>₹{{ estimatedBudgetRupees | number:'1.0-0' }}</strong>
+            <div class="cf-metric">
+              <span class="cf-metric__label">Invited / Selected</span>
+              <span class="cf-metric__text">
+                Invited: <strong>{{ invitedCount }}</strong> + Selected: <strong class="cf-metric__hl">{{ selectedInfluencerIds.size }}</strong>
+                / <strong>{{ inviteSelectionLimit === -1 ? 'Unlimited' : inviteSelectionLimit }}</strong>
+              </span>
+            </div>
+            <div class="cf-metric">
+              <span class="cf-metric__label">Accepted close target</span>
+              <strong class="cf-metric__value">{{ f['maxInfluencers'].value }}</strong>
+            </div>
+            <div class="cf-metric cf-metric--total" *ngIf="(isPerContentPricingFlow && hasSelectedContentTypePricing) || (!isPerContentPricingFlow && f['pricePerInfluencer'].value)">
+              <span class="cf-metric__label">Max payout after accepted slots</span>
+              <strong class="cf-metric__value">₹{{ estimatedBudgetRupees | number:'1.0-0' }}</strong>
             </div>
           </div>
 
@@ -1101,8 +1126,10 @@
           </div>
 
           <div class="inf-sel-bar" *ngIf="selectedInfluencerIds.size > 0">
+            <span class="inf-sel-num" aria-hidden="true">{{ selectedInfluencerIds.size }}</span>
             <span class="inf-sel-count">
               {{ selectedInfluencerIds.size }} {{ inviteRecipientLabelSingular.toLowerCase() }}{{ selectedInfluencerIds.size !== 1 ? 's' : '' }} selected
+              <small>Shown at the top of the list · ready to send invites</small>
             </span>
             <button type="button" class="btn btn-send" [disabled]="uploading || saving || submitLocked" (click)="onSubmit()">
               <span *ngIf="uploading || saving || submitLocked">Saving…</span>
@@ -1151,7 +1178,7 @@
 
           <div class="inf-list" *ngIf="!influencersLoading && !photographersLoading">
             <div class="inf-row"
-              *ngFor="let inf of filteredInfluencers"
+              *ngFor="let inf of inviteListRows"
               [class.inf-row--selected]="selectedInfluencerIds.has(getRecipientId(inf))"
               [class.inf-row--invited]="isInfluencerInvited(inf)"
               [class.inf-row--disabled]="isInfluencerInvited(inf) || isInfluencerDeclined(inf) || (!selectedInfluencerIds.has(getRecipientId(inf)) && !canSelectMoreInfluencers())"
@@ -1221,7 +1248,7 @@
               </div>
             </div>
 
-            <div class="empty-state" *ngIf="filteredInfluencers.length === 0 && !influencersLoading">
+            <div class="empty-state" *ngIf="inviteListRows.length === 0 && !influencersLoading">
               <i class="bi bi-search"></i>
               <p>No {{ inviteRecipientLabelPlural.toLowerCase() }} match your filters.</p>
               <ul class="empty-state-suggestions" *ngIf="hasInviteRecipientFilters()">
@@ -1316,7 +1343,6 @@
             </div>
           </div>
 
-          <p class="step-indicator">Step 3 of 3</p>
         </ng-template>
 
       </div>
@@ -1326,6 +1352,7 @@
         <button type="button" class="btn btn-back" [disabled]="uploading || saving || submitLocked" (click)="prevStep()">
           <i class="bi bi-arrow-left"></i> Back
         </button>
+        <span class="cf-footer-step">Step 3 of 3</span>
         <button type="button" class="btn btn-send" [disabled]="uploading || saving || submitLocked" (click)="skipAndSave()">
           <span *ngIf="uploading || saving || submitLocked">Saving…</span>
           <span *ngIf="!(uploading || saving || submitLocked)">Submit for review <i class="bi bi-arrow-right"></i></span>
@@ -1344,6 +1371,7 @@
           <button type="button" class="btn btn-back" [disabled]="uploading || saving || submitLocked" (click)="prevStep()">
             <i class="bi bi-arrow-left"></i> Back
           </button>
+          <span class="cf-footer-step">Step 3 of 3 · {{ inviteStepLabel }}</span>
           <button type="button" class="btn btn-skip" (click)="skipAndSave()" [disabled]="uploading || saving || submitLocked">
             {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Save as Draft' }}
           </button>

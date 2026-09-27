@@ -5,6 +5,8 @@ import { ProfileVisibility } from '../../config.service';
 interface VisibilityOption {
   value: ProfileVisibility;
   icon: string;
+  tone: 'green' | 'indigo' | 'slate';
+  badge?: string;
   label: string;
   description: string;
 }
@@ -25,26 +27,32 @@ interface VisibilityOption {
 export class ProfileVisibilitySelectorComponent {
   @Input() value: ProfileVisibility = 'PUBLIC';
   @Input() disabled = false;
+  /** Hide the built-in question/hint when the host already renders its own heading. */
+  @Input() showHeader = true;
   @Output() valueChange = new EventEmitter<ProfileVisibility>();
 
   readonly options: VisibilityOption[] = [
     {
       value: 'PUBLIC',
-      icon: '🌍',
+      icon: 'bi-globe2',
+      tone: 'green',
+      badge: 'Recommended',
       label: 'Public (Guests & Logged-in Users)',
       description:
-        'Recommended for creators looking for brand collaborations. Visible to visitors, in creator/brand search, and eligible for the homepage Featured sections (Premium).',
+        'Best for creators looking for brand collaborations. Visible to visitors, in creator/brand search, and eligible for the homepage Featured sections (Premium).',
     },
     {
       value: 'MEMBERS_ONLY',
-      icon: '🔒',
+      icon: 'bi-shield-lock',
+      tone: 'indigo',
       label: 'Logged-in Users Only',
       description:
         'Only registered TrendStarz users can view your profile. Hidden from guests and search engines, but still findable in search by logged-in users.',
     },
     {
       value: 'PRIVATE',
-      icon: '👤',
+      icon: 'bi-eye-slash',
+      tone: 'slate',
       label: 'Private',
       description:
         'Hidden from everyone except you and TrendStarz admins. Not shown in search, listings, or the homepage.',

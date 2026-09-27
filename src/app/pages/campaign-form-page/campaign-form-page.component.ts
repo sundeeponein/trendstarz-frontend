@@ -77,7 +77,7 @@ export class CampaignFormPageComponent implements OnInit {
     if (!id && Array.isArray(navState?.preSelectedInfluencers)) {
       this.preSelectedInfluencers = navState.preSelectedInfluencers
         .filter((r: any) => r && r.id)
-        .map((r: any) => ({ id: String(r.id), name: String(r.name || ''), username: r.username || undefined }));
+        .map((r: any) => ({ id: String(r.id), name: String(r.name || ''), username: r.username || undefined, profile: r.profile || undefined }));
       this.preSelectedRecipientRole = navState.preSelectedRecipientRole === 'photographer' ? 'photographer' : 'influencer';
     }
   }

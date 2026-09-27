@@ -48,6 +48,12 @@
   color: #fff;
 }
 
+.chip-group__chip--selected:hover {
+  // background: #151729;
+  // border-color: #151729;
+  color: #fff;
+}
+
 .chip-group__chip--selected:hover:not(:disabled) {
   background: #f55b0a;
   border-color: #f55b0a;

@@ -2,6 +2,8 @@ export interface CampaignInfluencer {
   id: string;
   name: string;
   username?: string;
+  /** Card snapshot handed over from Search so a preselected recipient renders fully in Step 3 before its page is loaded. */
+  profile?: any;
 }
 
 export interface Campaign {

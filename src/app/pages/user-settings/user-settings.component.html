@@ -111,6 +111,7 @@
     </div>
 
     <app-profile-visibility-selector
+      [showHeader]="false"
       [value]="profileVisibility"
       [disabled]="visibilityBusy"
       (valueChange)="onProfileVisibilityChange($event)">

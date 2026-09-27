@@ -76,6 +76,8 @@ export class CampaignFormComponent implements OnInit, OnChanges {
   @Input() mode: 'create' | 'edit' = 'create';
   @Input() campaign: Campaign | null = null;
   @Input() preSelectedInfluencers: CampaignInfluencer[] = [];
+  /** Last-known card data for selected recipients (see pinnedSelectedRecipients). */
+  private selectedRecipientCache = new Map<string, any>();
   @Input() preSelectedRecipientRole: 'influencer' | 'photographer' | null = null;
   @Input() hasPremium: boolean = false;
   @Input() creatorRole: 'brand' | 'photographer' | 'influencer' = 'brand';
@@ -184,6 +186,18 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     invite_only: `Access mode note:\n• Invite only: you will manually shortlist and invite recipients in Step 3.`,
     tier_filtered_open: `Access mode note:\n• Open to all (with filters): eligible influencers can discover and apply; you review applications in Campaigns.`,
   };
+
+  /** Section headings the brand can drop into the description with one click (Step 1). */
+  readonly descriptionQuickInserts = ['Product USPs', 'Desired Tone', 'Hashtags & Handles'];
+
+  insertDescriptionSection(label: string): void {
+    const ctrl = this.form?.get('description');
+    if (!ctrl || ctrl.disabled) return;
+    const current = String(ctrl.value || '').replace(/\s+$/, '');
+    if (current.includes(`${label}:`)) return;
+    ctrl.setValue(`${current}${current ? '\n\n' : ''}${label}:\n• `);
+    ctrl.markAsDirty();
+  }
 
   /**
    * Opens a popup with guideline + copyable example brief based on the
@@ -561,6 +575,16 @@ export class CampaignFormComponent implements OnInit, OnChanges {
         .map((recipient) => String(recipient?.id || ''))
         .filter(Boolean),
     );
+    for (const recipient of this.preSelectedInfluencers || []) {
+      const id = String(recipient?.id || '');
+      if (!id) continue;
+      this.selectedRecipientCache.set(id, {
+        ...(recipient.profile || {}),
+        _id: id,
+        fullName: recipient.profile?.fullName || recipient.name,
+        username: recipient.profile?.username || recipient.username,
+      });
+    }
     this.loadCampaignTypeConfigs();
     this.loadCampaignAccessModeConfigs();
     // Coerce non-premium brands back to paid_collab if a premium-only type is somehow selected
@@ -1910,6 +1934,27 @@ export class CampaignFormComponent implements OnInit, OnChanges {
     });
   }
 
+  /**
+   * Selected recipients, pinned above the list in Step 3. They stay visible
+   * even when not on a loaded page or outside the current filters (e.g. a
+   * shortlist handed over from Search) so the user always sees who is picked.
+   */
+  get pinnedSelectedRecipients(): any[] {
+    if (!this.selectedInfluencerIds.size) return [];
+    const byId = new Map<string, any>();
+    for (const inf of this.inviteCandidates) byId.set(this.getRecipientId(inf), inf);
+    return [...this.selectedInfluencerIds]
+      .map((id) => byId.get(id) || this.selectedRecipientCache.get(id))
+      .filter(Boolean);
+  }
+
+  /** Step 3 list: selected recipients first, then the filtered/ranked candidates. */
+  get inviteListRows(): any[] {
+    const pinned = this.pinnedSelectedRecipients;
+    if (!pinned.length) return this.filteredInfluencers;
+    return [...pinned, ...this.filteredInfluencers.filter((inf) => !this.selectedInfluencerIds.has(this.getRecipientId(inf)))];
+  }
+
   get filteredInfluencers(): any[] {
     // Search text, category, and creator-type are now applied server-side
     // (see fetchInfluencerInvitePage) so matching isn't limited to whatever
@@ -2503,6 +2548,8 @@ export class CampaignFormComponent implements OnInit, OnChanges {
       return;
     }
     this.selectedInfluencerIds.add(id);
+    const picked = this.inviteCandidates.find((inf) => this.getRecipientId(inf) === id);
+    if (picked) this.selectedRecipientCache.set(id, picked);
   }
 
 

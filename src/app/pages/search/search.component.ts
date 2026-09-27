@@ -1302,9 +1302,19 @@ export class SearchComponent implements OnInit {
           id: this.entityId(e),
           name: this.shortlistName(e),
           username: e?.username || '',
+          profile: this.inviteCardSnapshot(e),
         })),
       },
     });
+  }
+
+  /** Plain-JSON subset of a result card, enough for the campaign invite step to render it. */
+  private inviteCardSnapshot(e: any): any {
+    const keys = ['fullName', 'name', 'username', 'profileImages', 'profileImage', 'location', 'categories',
+      'contentNiche', 'creatorTypes', 'skills', 'equipment', 'socialMedia', 'verifiedByTrendStarz', 'isPremium'];
+    const out: any = { _id: this.entityId(e) };
+    for (const k of keys) if (e?.[k] !== undefined) out[k] = e[k];
+    try { return JSON.parse(JSON.stringify(out)); } catch { return { _id: out._id }; }
   }
 
   /** "Post an open campaign" in the help banner — logged-out visitors register as a brand first. */
