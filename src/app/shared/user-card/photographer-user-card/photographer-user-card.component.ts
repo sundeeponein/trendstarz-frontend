@@ -31,7 +31,6 @@ export class PhotographerUserCardComponent {
   @Input() collaborationScore: number | null = null;
   @Input() campaignReady: 'Campaign Ready' | 'Partially Ready' | 'Not Ready' | null = null;
   @Input() trendstarzRecommended = false;
-  @Input() suggestedPriceRange: { reelPrice?: number | null } | null = null;
 
   @Output() viewProfileClick = new EventEmitter<void>();
 

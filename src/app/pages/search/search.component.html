@@ -207,7 +207,6 @@
         [collaborationScore]="influencer.collaborationScore ?? null"
         [campaignReady]="influencer.campaignReadiness ?? null"
         [trendstarzRecommended]="influencer.trendstarzRecommended === true"
-        [suggestedPriceRange]="influencer.suggestedPriceRange ?? null"
         (viewProfileClick)="viewInfluencerProfile(influencer)"
         (createCampaignClick)="router.navigate(['/campaigns'])">
       </app-influencer-user-card>
@@ -321,7 +320,6 @@
         [collaborationScore]="p.collaborationScore ?? null"
         [campaignReady]="p.campaignReadiness ?? null"
         [trendstarzRecommended]="p.trendstarzRecommended === true"
-        [suggestedPriceRange]="p.suggestedPriceRange ?? null"
         (viewProfileClick)="viewPhotographerProfile(p)">
       </app-photographer-user-card>
       </div>

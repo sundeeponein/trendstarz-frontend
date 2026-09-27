@@ -1,4 +1,5 @@
 import { environment } from '../../../environments/environment';
+import { CollaborationScoreApiService } from '../../services/collaboration-score-api.service';
 import { Component, OnInit, ChangeDetectorRef, NgZone, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService, ProfileVisibility } from '../../shared/config.service';
@@ -99,7 +100,20 @@ export class InfluencerProfileComponent implements OnInit {
     private firebaseAuth: FirebaseAuthService,
     private profileVerification: ProfileVerificationService,
     private session: SessionService,
+    private scoreApi: CollaborationScoreApiService,
   ) {}
+
+  /** Owner's own TrendScore pricing suggestion — shown as hints next to content rates. */
+  priceSuggestion: { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null } | null = null;
+
+  private loadPriceSuggestion(): void {
+    const userId = this.session.getUser()?.id;
+    if (!userId) return;
+    this.scoreApi.getAudit(String(userId)).subscribe({
+      next: (audit: any) => { this.priceSuggestion = audit?.pricingSuggestion || null; this.cd.detectChanges(); },
+      error: () => { this.priceSuggestion = null; },
+    });
+  }
 
   private loadProfileVerificationDashboard(): void {
     this.profileVerificationLoading = true;
@@ -543,6 +557,7 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadPriceSuggestion();
     this.loadProfileVerificationDashboard();
     this.loadPremiumMonthlyPrice();
     this.configService.getSupportContact().subscribe(s => {

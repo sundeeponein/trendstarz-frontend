@@ -21,6 +21,7 @@ import { CampaignFormComponent } from '../../shared/campaigns/campaign-form/camp
       [preSelectedInfluencers]="preSelectedInfluencers"
       [preSelectedRecipientRole]="preSelectedRecipientRole"
       [saving]="saving"
+      [slotsFullLimit]="slotsFullLimit"
       (save)="onSave($event)"
       (cancel)="onCancel()"
     ></app-campaign-form>
@@ -32,6 +33,8 @@ export class CampaignFormPageComponent implements OnInit {
   creatorRole: 'brand' | 'photographer' | 'influencer' = 'brand';
   hasPremium = false;
   saving = false;
+  /** Set (to the plan limit) when a new campaign can't be saved because all slots are used. */
+  slotsFullLimit: number | null = null;
   preSelectedInfluencers: CampaignInfluencer[] = [];
   preSelectedRecipientRole: 'influencer' | 'photographer' | null = null;
 
@@ -53,7 +56,11 @@ export class CampaignFormPageComponent implements OnInit {
       : (role === 'photographer' || role === 'videographer') ? 'photographer' : 'brand';
 
     this.plans.getMyCapabilities().subscribe({
-      next: (caps: any) => { this.hasPremium = !!caps?.hasPremium; this.cd.detectChanges(); },
+      next: (caps: any) => {
+        this.hasPremium = !!caps?.hasPremium;
+        if (!this.route.snapshot.paramMap.get('id')) this.checkCampaignSlots(caps);
+        this.cd.detectChanges();
+      },
       error: () => { this.hasPremium = false; this.cd.detectChanges(); },
     });
 
@@ -80,6 +87,27 @@ export class CampaignFormPageComponent implements OnInit {
         .map((r: any) => ({ id: String(r.id), name: String(r.name || ''), username: r.username || undefined, profile: r.profile || undefined }));
       this.preSelectedRecipientRole = navState.preSelectedRecipientRole === 'photographer' ? 'photographer' : 'influencer';
     }
+  }
+
+  /**
+   * Mirrors the backend create-time rule (campaigns.service create): active,
+   * pending, draft and paused campaigns use a plan slot; -1 = unlimited.
+   * Warns up front instead of failing after all three steps are filled.
+   */
+  private checkCampaignSlots(caps: any): void {
+    const limit = Number((caps?.limits || []).find((l: any) => l?.key === 'maxActiveCampaigns')?.value ?? 1);
+    const ownerId = this.getRequesterId();
+    if (limit === -1 || !ownerId) return;
+    this.config.getCampaignsByBrandId(ownerId).subscribe({
+      next: (rows: any[]) => {
+        const used = (Array.isArray(rows) ? rows : [])
+          .filter((c: any) => ['active', 'pending', 'draft', 'paused'].includes(String(c?.status || '').toLowerCase()))
+          .length;
+        this.slotsFullLimit = used >= limit ? limit : null;
+        this.cd.detectChanges();
+      },
+      error: () => {},
+    });
   }
 
   onCancel(): void {

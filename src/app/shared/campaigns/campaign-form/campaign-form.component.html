@@ -44,6 +44,16 @@
           </button>
         </div>
 
+        <div class="cf-slots-full" *ngIf="slotsFullLimit !== null && !isEdit" role="alert">
+          <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+          <span>
+            <strong>{{ slotsFullLimit === 1 ? 'Your plan\'s campaign slot is in use.' : 'All ' + slotsFullLimit + ' campaign slots on your plan are in use.' }}</strong>
+            Drafts, pending and active campaigns count. Complete or delete one, or upgrade, before you can save this campaign. Your progress here is kept on this device.
+          </span>
+          <a routerLink="/campaigns" class="cf-restore__link">My campaigns</a>
+          <a routerLink="/upgrade-premium" class="cf-upgrade__btn">Upgrade</a>
+        </div>
+
         <div class="cf-restore" *ngIf="localDraftOffer">
           <i class="bi bi-clock-history" aria-hidden="true"></i>
           <span>You have an unsaved campaign from {{ localDraftOffer.savedAt | date:'MMM d, h:mm a' }} on this device.</span>

@@ -388,7 +388,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   get createButtonLabel(): string {
-    if (this.summaryActiveCampaigns >= this.maxActiveCampaigns) return 'Quota full';
+    if (this.isActiveQuotaFull) return 'Quota full';
     if (this.isInfluencerCollaborationsView) return 'Create Collaboration';
     if (this.isPhotographerView) return 'Create Collaboration';
     return 'Create Campaign Request';
@@ -460,7 +460,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   get quotaChipTitle(): string {
-    return `Active ${this.quotaEntityPluralLabel} used`;
+    return `Drafts, pending and active ${this.quotaEntityPluralLabel} count toward your plan limit. Completed ones free up a slot.`;
   }
 
   get influencerInboxSubtitle(): string {
@@ -1579,7 +1579,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   private applyPlanLimits(limits: any[]): void {
     const rows = Array.isArray(limits) ? limits : [];
     const maxActive = Number(rows.find((l: any) => String(l?.key || '') === 'maxActiveCampaigns')?.value);
-    if (Number.isFinite(maxActive) && maxActive > 0) {
+    // -1 = unlimited (same convention as the other plan limits).
+    if (Number.isFinite(maxActive) && (maxActive > 0 || maxActive === -1)) {
       this.maxActiveCampaigns = maxActive;
     }
   }
@@ -2236,7 +2237,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   onPageSizeChange(size: number): void { this.pageSize = size; this.currentPage = 1; }
 
   openCreateForm() {
-    if (this.summaryActiveCampaigns >= this.maxActiveCampaigns) {
+    if (this.isActiveQuotaFull) {
       // Determine if user is premium or free
       const isPremium = this.isPremiumPlan;
       if (isPremium) {
@@ -4919,6 +4920,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   get summaryTotalCampaigns(): number { return this.campaigns.length; }
+  /** True when the plan's campaign slots are used up (-1 = unlimited, never full). */
+  get isActiveQuotaFull(): boolean {
+    return this.maxActiveCampaigns !== -1 && this.summaryActiveCampaigns >= this.maxActiveCampaigns;
+  }
   get summaryActiveCampaigns(): number {
     if (!this.isInfluencerView) {
       return this.campaigns.filter((campaign) => this.consumesQuota(campaign)).length;

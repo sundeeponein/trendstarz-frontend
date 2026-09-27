@@ -45,18 +45,10 @@
       <i class="bi bi-geo-alt"></i>
       <ng-container *ngIf="location?.district">{{ location.district }}, </ng-container>{{ location.state }}
     </div>
-
-    <!-- Collaboration Score summary -->
-    <div class="inf-card__score-row" *ngIf="collaborationScore != null">
-      <span class="badge rounded-pill" [ngClass]="collaborationScoreUi.scoreTierClass(collaborationScore)">
-        {{ collaborationScore }}
-      </span>
-      <span class="badge rounded-pill" *ngIf="campaignReady" [ngClass]="collaborationScoreUi.campaignReadinessClass(campaignReady)">
-        {{ campaignReady }}
-      </span>
-      <span class="inf-card__suggested-price" *ngIf="suggestedPriceRangeLabel">
-        {{ suggestedPriceRangeLabel }}
-      </span>
+    <!-- TrendScore: cards show only the positive "Campaign Ready" signal; the score
+         and full readiness live on the profile page (logged-in viewers). -->
+    <div class="inf-card__score-row" *ngIf="campaignReady === 'Campaign Ready'">
+      <span class="card-ready-badge"><i class="bi bi-rocket-takeoff"></i> Campaign Ready</span>
     </div>
 
     <!-- PRO VIEW: Contact-visible badge -->

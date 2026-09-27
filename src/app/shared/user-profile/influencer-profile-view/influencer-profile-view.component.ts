@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
+import { ProfileTrendscoreComponent } from '../../collaboration-score/profile-trendscore.component';
 import { isPlatformBrowser, DOCUMENT } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
@@ -27,6 +28,7 @@ import { ImageGalleryModalComponent } from '../../components/image-gallery-modal
     ProfileSocialPlatformsComponent,
     CollaborationAvailabilityViewComponent,
     ImageGalleryModalComponent,
+    ProfileTrendscoreComponent,
   ],
   templateUrl: './influencer-profile-view.component.html',
   styleUrls: ['./influencer-profile-view.component.scss'],

@@ -133,3 +133,16 @@
     }
   }
 }
+
+.card-ready-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ecfdf3;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  font-size: 0.74rem;
+  font-weight: 700;
+}

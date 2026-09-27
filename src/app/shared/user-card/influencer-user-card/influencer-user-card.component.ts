@@ -42,17 +42,12 @@ export class InfluencerUserCardComponent {
   /** Disable opening profile view (used for restricted free-plan visibility). */
   @Input() profileViewDisabled = false;
 
-  // Collaboration Score — brand-safe fields only (score/readiness/recommended/
-  // suggested price). Never "Premium" wording for these; that word is reserved
+  // Collaboration Score — brand-safe fields only (score/readiness/recommended).
+  // Cards render only the positive "Campaign Ready" signal. Never "Premium" wording for these; that word is reserved
   // for subscription status (isPremium above).
   @Input() collaborationScore: number | null = null;
   @Input() campaignReady: 'Campaign Ready' | 'Partially Ready' | 'Not Ready' | null = null;
   @Input() trendstarzRecommended = false;
-  @Input() suggestedPriceRange: {
-    reelPrice?: number | null;
-    storyPrice?: number | null;
-    videoPrice?: number | null;
-  } | null = null;
 
   @Output() viewProfileClick = new EventEmitter<void>();
   @Output() createCampaignClick = new EventEmitter<void>();
@@ -67,20 +62,6 @@ export class InfluencerUserCardComponent {
     // profileImages[0] is the live source of truth; profileImage is a legacy
     // field that can go stale after a re-upload/recrop, so prefer the array.
     return this.profileImages?.[0]?.url || this.profileImage || 'assets/default-profile.png';
-  }
-
-  /** Min–max across reel/story/video prices, for the brand-facing "Suggested Pricing" range. */
-  get suggestedPriceRangeLabel(): string | null {
-    const prices = [
-      this.suggestedPriceRange?.reelPrice,
-      this.suggestedPriceRange?.storyPrice,
-      this.suggestedPriceRange?.videoPrice,
-    ].filter((p): p is number => p != null);
-    if (!prices.length) return null;
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    const format = (n: number) => n.toLocaleString('en-IN');
-    return min === max ? `₹${format(min)}` : `₹${format(min)}–₹${format(max)}`;
   }
 
   get platforms(): string[] {

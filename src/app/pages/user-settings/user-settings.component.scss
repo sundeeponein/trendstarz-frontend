@@ -570,3 +570,6 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+// Referral card renders nothing while loading / when unavailable — hide the empty bordered host.
+app-referral-link-card.settings-section:empty { display: none; }

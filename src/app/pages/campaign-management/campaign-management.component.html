@@ -143,10 +143,10 @@
       <div>
 
             <span class="campaign-quota-chip" *ngIf="showActiveQuotaChip"
-              [class.is-full]="summaryActiveCampaigns >= maxActiveCampaigns"
+              [class.is-full]="isActiveQuotaFull"
               [title]="quotaChipTitle">
           <i class="bi bi-folder-fill"></i>
-          {{ summaryActiveCampaigns }} / {{ maxActiveCampaigns }} active
+          {{ summaryActiveCampaigns }} / {{ maxActiveCampaigns }} slots used
         </span>
       </div>
       <div class="cm-header-actions" *ngIf="canCreateCollaborations">
@@ -159,8 +159,8 @@
           <i class="bi bi-info-circle"></i>
         </button>
         <button class="btn btn-create" (click)="openCreateForm()"
-                [disabled]="!brandId || summaryActiveCampaigns >= maxActiveCampaigns"
-                [title]="summaryActiveCampaigns >= maxActiveCampaigns ? ((isPhotographerView || isInfluencerCollaborationsView) ? 'Active collaboration quota full (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + '). Upgrade to Premium for more.' : 'Active request quota full (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + '). Upgrade to Premium for more.') : ((isPhotographerView || isInfluencerCollaborationsView) ? 'Create a new collaboration' : 'Create a new campaign request')">
+                [disabled]="!brandId || isActiveQuotaFull"
+                [title]="isActiveQuotaFull ? ((isPhotographerView || isInfluencerCollaborationsView) ? 'Active collaboration quota full (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + '). Upgrade to Premium for more.' : 'Active request quota full (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + '). Upgrade to Premium for more.') : ((isPhotographerView || isInfluencerCollaborationsView) ? 'Create a new collaboration' : 'Create a new campaign request')">
           <i class="bi bi-plus-circle-fill"></i>
           {{ createButtonLabel }}
         </button>
@@ -1315,7 +1315,7 @@
         <p *ngIf="isInfluencerBrowseMode && isInfluencerCollaborationsView && influencerCollabSubview === 'invited'">No open collaborations available right now. Check back soon!</p>
         <p *ngIf="!isInfluencerBrowseMode && isInfluencerCollaborationsView && influencerCollabSubview === 'created'">No collaborations created yet.</p>
         <p *ngIf="isInfluencerBrowseMode && !isInfluencerCollaborationsView">No open campaigns available right now. Check back soon!</p>
-        <button class="btn btn-create-sm" (click)="openCreateForm()" *ngIf="canCreateCollaborations" [disabled]="!brandId || summaryActiveCampaigns >= maxActiveCampaigns">{{ (isPhotographerView || isInfluencerCollaborationsView) ? 'Create your collaboration' : 'Create your campaign' }}</button>
+        <button class="btn btn-create-sm" (click)="openCreateForm()" *ngIf="canCreateCollaborations" [disabled]="!brandId || isActiveQuotaFull">{{ (isPhotographerView || isInfluencerCollaborationsView) ? 'Create your collaboration' : 'Create your campaign' }}</button>
           <div *ngIf="showUpgradeBanner && planLimitError" class="upgrade-banner">
             <app-upgrade-banner [message]="planLimitError"></app-upgrade-banner>
           </div>

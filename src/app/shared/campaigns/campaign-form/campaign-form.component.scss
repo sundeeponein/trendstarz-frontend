@@ -2428,3 +2428,25 @@ $cf-navy: #151729;
 }
 
 .page-campaign-card .field-static-value .cf-verified i { color: #16a34a; }
+
+.cf-slots-full {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 28px 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 0.82rem;
+
+  > i { color: #dc2626; }
+  > span { flex: 1 1 260px; }
+  .cf-restore__link { color: #991b1b; text-decoration: underline; }
+}
+
+@media (max-width: 768px) {
+  .cf-slots-full { margin: 6px 16px 0; }
+}

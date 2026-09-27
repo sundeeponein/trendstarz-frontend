@@ -86,6 +86,10 @@
             <input type="checkbox" [(ngModel)]="form.contentTypes[ct.name].selected" [ngModelOptions]="{standalone: true}" [disabled]="readonly" (ngModelChange)="onFieldChange()" />
             <span>{{ ct.name }}</span>
             <input *ngIf="form.contentTypes[ct.name].selected" type="number" class="form-control price-input" placeholder="₹" [(ngModel)]="form.contentTypes[ct.name].price" [ngModelOptions]="{standalone: true}" [readonly]="readonly" (ngModelChange)="onFieldChange()" />
+            <span class="price-suggestion" *ngIf="!readonly && form.contentTypes[ct.name].selected && suggestedPriceFor(ct.name) as suggested">
+              <i class="bi bi-lightbulb"></i> Suggested ₹{{ suggested | number:'1.0-0' }} from your TrendScore
+              <button type="button" class="price-suggestion__use" *ngIf="form.contentTypes[ct.name].price != suggested" (click)="useSuggestedPrice(ct.name)">Use</button>
+            </span>
           </div>
         </ng-container>
       </div>

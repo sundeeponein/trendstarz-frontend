@@ -37,6 +37,8 @@ export class SocialPlatformFieldComponent implements OnInit {
   /** True for instagram/facebook (Meta OAuth is live); false for youtube/linkedin (no Connect button). */
   @Input() supportsOAuth = false;
   @Input() showRemove = true;
+  /** The creator's own TrendScore pricing suggestion (rupees) — shown as a hint to the owner only. */
+  @Input() priceSuggestion: { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null } | null = null;
 
   /** Any manual field mutation — parent should call its own refreshStepCompletion(). */
   @Output() changed = new EventEmitter<void>();
@@ -172,5 +174,27 @@ export class SocialPlatformFieldComponent implements OnInit {
 
   onFieldChange(): void {
     this.changed.emit();
+  }
+
+  /** Maps a content type name to the matching TrendScore suggestion (Story / Reel & Shorts / Video). */
+  suggestedPriceFor(contentTypeName: string): number | null {
+    const sug = this.priceSuggestion;
+    if (!sug) return null;
+    const name = String(contentTypeName || '').toLowerCase();
+    const value = name.includes('story')
+      ? sug.storyPrice
+      : (name.includes('reel') || name.includes('short'))
+        ? sug.reelPrice
+        : name.includes('video')
+          ? sug.videoPrice
+          : null;
+    return value != null && value > 0 ? value : null;
+  }
+
+  useSuggestedPrice(contentTypeName: string): void {
+    const value = this.suggestedPriceFor(contentTypeName);
+    if (value == null || this.readonly) return;
+    this.form.contentTypes[contentTypeName].price = value;
+    this.onFieldChange();
   }
 }
