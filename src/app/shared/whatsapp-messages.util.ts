@@ -11,7 +11,8 @@ export function buildWhatsAppLink(phone: string | null | undefined, text: string
   const digits = String(phone || '').replace(/\D/g, '');
   if (!digits) return null;
   const withCountry = digits.startsWith('91') ? digits : `91${digits}`;
-  return `https://wa.me/${withCountry}?text=${encodeURIComponent(text)}`;
+  // Not wa.me: its redirect to api.whatsapp.com mangles 4-byte emoji (🎉📢📍📅) into "�".
+  return `https://api.whatsapp.com/send?phone=${withCountry}&text=${encodeURIComponent(text)}`;
 }
 
 export function paymentReleaseMessage(params: {
