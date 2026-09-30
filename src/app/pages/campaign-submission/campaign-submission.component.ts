@@ -101,6 +101,9 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   disputeActionSubmitting = false;
   disputeActionError = '';
   showWithdrawConfirm = false;
+  /** Pre-submit reminder: names of the brief items the host filled in (content isn't repeated). */
+  showSubmitReminder = false;
+  briefItemLabels: string[] = [];
   private disputeStatusInterval: any = null;
 
   // Insights timing lock
@@ -189,6 +192,16 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
               this.campaignPlatforms = campaign.platforms.map((p: string) => p.toLowerCase());
             }
             this.specialInstructions = campaign.specialInstructions || '';
+            const hasText = (v: any) => !!String(v ?? '').trim();
+            this.briefItemLabels = [
+              hasText(campaign.description) ? 'Campaign description' : '',
+              hasText(campaign.script) ? 'Script / talking points' : '',
+              hasText(campaign.suggestedCaption) ? 'Caption' : '',
+              hasText(campaign.hashtags) ? 'Hashtags' : '',
+              // Creators share their personal tracking link for this promotion URL.
+              hasText(campaign.promotionUrl) ? 'Promotion link (your tracking link)' : '',
+              hasText(campaign.specialInstructions) ? 'Special instructions' : '',
+            ].filter(Boolean);
             // Filter post types to accepted invite selection first, fallback to campaign platforms.
             const acceptedTypeKey = this.mapContentTypeToPostType(this.acceptedContentType);
             if (this.acceptedPlatform && acceptedTypeKey) {
@@ -664,6 +677,28 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       }
       return;
     }
+    const submittedPlatform = this.normalizePlatformKey(this.detectPlatformFromUrl(this.postUrl.trim()));
+    const acceptedPlatform = this.normalizePlatformKey(this.acceptedPlatform);
+    if (acceptedPlatform && submittedPlatform !== 'other' && submittedPlatform !== acceptedPlatform) {
+      this.error = `Please submit a ${this.acceptedPlatform} URL as per your accepted platform.`;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // Awareness only: remind the creator to cross-check the host's brief before it goes for review.
+    this.error = '';
+    this.showSubmitReminder = true;
+    this.cdr.markForCheck();
+  }
+
+  closeSubmitReminder(): void {
+    if (this.submitting) return;
+    this.showSubmitReminder = false;
+    this.cdr.markForCheck();
+  }
+
+  confirmSubmit(): void {
+    if (this.submitting || !this.canSubmit()) return;
     this.submitting = true;
     this.error = '';
 
@@ -671,15 +706,6 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       postUrl: this.postUrl.trim(),
     };
     if (this.postScreenshotUrl) payload.postScreenshotUrl = this.postScreenshotUrl;
-
-    const submittedPlatform = this.normalizePlatformKey(this.detectPlatformFromUrl(payload.postUrl));
-    const acceptedPlatform = this.normalizePlatformKey(this.acceptedPlatform);
-    if (acceptedPlatform && submittedPlatform !== 'other' && submittedPlatform !== acceptedPlatform) {
-      this.error = `Please submit a ${this.acceptedPlatform} URL as per your accepted platform.`;
-      this.submitting = false;
-      this.cdr.markForCheck();
-      return;
-    }
 
     if (this.postType) payload.postType = this.postType;
     if (this.captionUsed) payload.captionUsed = this.captionUsed;
@@ -706,11 +732,13 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
         }
         this.submitted = true;
         this.submitting = false;
+        this.showSubmitReminder = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
         this.error = err?.error?.message || 'Submission failed. Please try again.';
         this.submitting = false;
+        this.showSubmitReminder = false;
         this.cdr.markForCheck();
       }
     });

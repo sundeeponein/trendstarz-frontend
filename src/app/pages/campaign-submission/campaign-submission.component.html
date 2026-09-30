@@ -402,6 +402,23 @@
     </div>
   </div>
 
+  <!-- Pre-submit reminder (awareness only — nothing is checked automatically) -->
+  <app-confirm-action-modal
+    [isOpen]="showSubmitReminder"
+    title="Before you submit, cross-check the campaign brief"
+    confirmLabel="Submit for review"
+    confirmLoadingLabel="Submitting…"
+    [submitting]="submitting"
+    (closed)="closeSubmitReminder()"
+    (confirmed)="confirmSubmit()"
+  >
+    <p>Make sure your {{ acceptedContentType || 'post' }}{{ acceptedPlatform ? ' on ' + acceptedPlatform : '' }} matches what the host asked for:</p>
+    <ul *ngIf="briefItemLabels.length">
+      <li *ngFor="let label of briefItemLabels">{{ label }}</li>
+    </ul>
+    <p class="mb-0">Once submitted, it goes to the host for review.</p>
+  </app-confirm-action-modal>
+
   <!-- Withdraw confirmation -->
   <app-confirm-action-modal
     [isOpen]="showWithdrawConfirm"
