@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { tierOptionsWithCurrent } from '../../shared/tiers.constants';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -944,6 +945,11 @@ export class PhotographerProfileComponent implements OnInit {
     if (!values.length) return true;
     const selected = values.filter((ct: any) => ct?.selected === true);
     return selected.length > 0 && selected.every((ct: any) => Number(ct?.price) > 0);
+  }
+
+  /** Visible tiers plus the account's current tier if it's hidden (Starter/Nano) — keeps the select from blanking it. */
+  tierOptionsFor(current: unknown): any[] {
+    return tierOptionsWithCurrent(this.tiers, current);
   }
 
   getTierOptionLabel(tier: any): string {

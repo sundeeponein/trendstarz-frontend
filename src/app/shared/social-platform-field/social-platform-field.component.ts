@@ -5,6 +5,7 @@ import { CollaborationScoreApiService, SocialConnectionDetail } from '../../serv
 import { TierInfoService } from '../components/tier-info-modal/tier-info.service';
 import { ToastService } from '../toast/toast.service';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../social-handle.util';
+import { tierOptionsWithCurrent } from '../tiers.constants';
 
 export interface SocialPlatformFieldForm {
   handle: string;
@@ -158,6 +159,11 @@ export class SocialPlatformFieldComponent implements OnInit {
   get profileUrl(): string {
     if (!this.form?.handle) return '';
     return buildSocialProfileUrl(this.platform?.name || '', this.form.handle);
+  }
+
+  /** Visible tiers plus this account's current tier if it's a hidden one (e.g. Starter/Nano). */
+  get tierOptions(): any[] {
+    return tierOptionsWithCurrent(this.tiers, this.form?.tier);
   }
 
   getTierOptionLabel(tier: any): string {

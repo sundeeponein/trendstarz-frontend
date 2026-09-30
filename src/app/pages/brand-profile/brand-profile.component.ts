@@ -14,7 +14,7 @@ import { RouterModule } from '@angular/router';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
-import { TIER_DESC_MAP } from '../../shared/tiers.constants';
+import { TIER_DESC_MAP, tierOptionsWithCurrent } from '../../shared/tiers.constants';
 import { ToastService } from '../../shared/toast/toast.service';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
@@ -72,6 +72,11 @@ export class BrandProfileComponent implements OnInit {
 
   openBrandImageGuidelines(): void {
     this.guidelinesService.open('brand');
+  }
+
+  /** Visible tiers plus the account's current tier if it's hidden (Starter/Nano) — keeps the select from blanking it. */
+  tierOptionsFor(current: unknown): any[] {
+    return tierOptionsWithCurrent(this.tiers, current);
   }
 
   getTierOptionLabel(tier: any): string {

@@ -13,7 +13,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TierInfoService } from '../../shared/components/tier-info-modal/tier-info.service';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { PlansService, Plan } from '../../shared/plans.service';
-import { TIER_DESC_MAP } from '../../shared/tiers.constants';
+import { TIER_DESC_MAP, tierOptionsWithCurrent } from '../../shared/tiers.constants';
 import { ChipSelectionGroupComponent } from '../../shared/chip-selection-group/chip-selection-group.component';
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { MobileBottomActionsComponent } from '../../shared/components/mobile-bottom-actions/mobile-bottom-actions.component';
@@ -57,6 +57,11 @@ export class BrandRegistrationComponent implements OnInit {
 
   openBrandImageGuidelines(): void {
     this.guidelinesService.open('brand');
+  }
+
+  /** Visible tiers plus the account's current tier if it's hidden (Starter/Nano) — keeps the select from blanking it. */
+  tierOptionsFor(current: unknown): any[] {
+    return tierOptionsWithCurrent(this.tiers, current);
   }
 
   getTierOptionLabel(tier: any): string {

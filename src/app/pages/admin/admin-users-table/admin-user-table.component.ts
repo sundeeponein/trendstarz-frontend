@@ -2632,8 +2632,14 @@ export class AdminUserTableComponent implements OnInit {
     const userType = this.selectedUserType || this.activeTab;
     this.smEditSaving = true;
     this.smEditError = null;
+    // Stage 3A-0: address the account by its stable id; the position-based route
+    // only accepts entries that don't have an id yet (before the backfill).
+    const socialAccountId = String(this.selectedUser?.socialMedia?.[idx]?.socialAccountId || '');
+    const target = socialAccountId
+      ? `social-accounts/${encodeURIComponent(socialAccountId)}`
+      : `social-media/${idx}`;
     this.http.patch(
-      `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-media/${idx}`,
+      `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/${target}`,
       payload,
       this.getAuthHeaders()
     ).subscribe({

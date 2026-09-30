@@ -53,3 +53,18 @@ export function getInfluencerPrimaryTier(inf: any): string {
   const raw = social[0]?.tier || social.find((s: any) => s?.tier)?.tier || inf?.tier || '';
   return normalizeTierLabel(raw);
 }
+
+/**
+ * Tier dropdown options that always include the creator's CURRENT tier, even
+ * when that tier is hidden for new selections (Starter/Nano have
+ * showInFrontend=false but existing creators still hold them). Without this
+ * the <select> renders blank for them. The stored value is used verbatim as
+ * the option value, so saving never converts it.
+ */
+export function tierOptionsWithCurrent(tiers: any[] | null | undefined, current: unknown): any[] {
+  const list = Array.isArray(tiers) ? tiers : [];
+  const value = String(current ?? '').trim();
+  if (!value || list.some((t: any) => String(t?.name ?? '') === value)) return list;
+  const canonical = normalizeTierLabel(value);
+  return [...list, { name: value, desc: TIER_DESC_MAP[canonical.toLowerCase()] ?? '', hiddenCurrent: true }];
+}

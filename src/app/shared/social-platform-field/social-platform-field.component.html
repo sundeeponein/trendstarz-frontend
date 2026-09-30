@@ -72,7 +72,7 @@
         <label>Tier <i (click)="tierInfo.open()" class="bi bi-info-circle" style="cursor:pointer;" title="View tier info"></i></label>
         <select [(ngModel)]="form.tier" [ngModelOptions]="{standalone: true}" class="form-control" [disabled]="readonly" (ngModelChange)="onFieldChange()">
           <option value="" disabled>Select tier</option>
-          <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
+          <option *ngFor="let t of tierOptions" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
         </select>
         <small class="text-muted d-block mt-1">Followers/Subscribers range</small>
       </div>

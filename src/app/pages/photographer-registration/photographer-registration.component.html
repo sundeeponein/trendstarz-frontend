@@ -305,7 +305,7 @@
                         <label>Tier <span class="text-danger">*</span></label>
                         <select class="form-control" [(ngModel)]="platformForms[platform._id].tier" [ngModelOptions]="{standalone: true}">
                           <option value="">Select tier</option>
-                          <option *ngFor="let t of tiers" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
+                          <option *ngFor="let t of tierOptionsFor(platformForms[platform._id].tier)" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
                         </select>
                         <small class="text-muted d-block mt-1">Followers/Subscribers range</small>
                         <div *ngIf="submitted && !(platformForms[platform._id].tier || '').trim()" class="text-danger mt-1">Tier is required.</div>
