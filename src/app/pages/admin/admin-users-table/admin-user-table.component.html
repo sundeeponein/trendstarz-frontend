@@ -419,12 +419,13 @@
                 type="button"
                 class="btn btn-sm btn-outline-secondary"
                 (click)="sendTemporaryPassword(selectedUser)"
-                [disabled]="temporaryPasswordSendingFor === selectedUser._id"
+                [disabled]="!getTemporaryPasswordState(selectedUser).enabled || temporaryPasswordSendingFor === selectedUser._id"
                 title="For users locked out after a password reset: emails a temporary password (valid 24h) and forces a change on first login. You won't see the password."
               >
                 <i class="bi bi-key"></i>
                 {{ temporaryPasswordSendingFor === selectedUser._id ? 'Sending…' : 'Send temporary password' }}
               </button>
+              <div class="user-sub mt-1">{{ getTemporaryPasswordState(selectedUser).hint }}</div>
             </div>
             <div class="user-sub mt-1" *ngIf="selectedUser.previousVerifiedEmail" title="This account changed email after the previous one was verified — useful signal to check for account takeover or typos.">
               Previous verified email: {{ selectedUser.previousVerifiedEmail }}

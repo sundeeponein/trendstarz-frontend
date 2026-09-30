@@ -7,11 +7,12 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
 import { finalize } from 'rxjs/operators';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
+import { SupportBannerComponent } from '../../shared/support-banner/support-banner.component';
 
 @Component({
   selector: 'app-reset-password',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, SupportBannerComponent],
   templateUrl: './reset-password.component.html',
   styleUrls: ['./reset-password.component.scss']
 })

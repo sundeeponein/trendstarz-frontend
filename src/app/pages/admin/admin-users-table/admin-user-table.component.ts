@@ -2691,6 +2691,40 @@ export class AdminUserTableComponent implements OnInit {
   /** User id currently being issued a temporary password (disables the button). */
   temporaryPasswordSendingFor: string | null = null;
 
+  /** Mirrors AuthService.TEMP_PASSWORD_REQUEST_WINDOW_HOURS on the backend (which enforces it). */
+  private static readonly TEMP_PASSWORD_REQUEST_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+  /**
+   * The button unlocks only after the user clicks "Forgot password" (within 24h),
+   * and only once per such click. The backend enforces the same rules.
+   */
+  getTemporaryPasswordState(user: any): { enabled: boolean; hint: string } {
+    const requestedAt = user?.passwordResetRequestedAt ? new Date(user.passwordResetRequestedAt).getTime() : 0;
+    const issuedAt = user?.tempPasswordIssuedAt ? new Date(user.tempPasswordIssuedAt).getTime() : 0;
+    const now = Date.now();
+    if (!requestedAt || now - requestedAt > AdminUserTableComponent.TEMP_PASSWORD_REQUEST_WINDOW_MS) {
+      return {
+        enabled: false,
+        hint: 'Ask the user to click "Forgot password" first. This unlocks for 24 hours after they do.',
+      };
+    }
+    if (issuedAt && issuedAt >= requestedAt) {
+      return {
+        enabled: false,
+        hint: `Temporary password sent ${this.formatAgo(issuedAt)}. Ask the user to click "Forgot password" again if they need another.`,
+      };
+    }
+    return { enabled: true, hint: `User clicked "Forgot password" ${this.formatAgo(requestedAt)}.` };
+  }
+
+  private formatAgo(timestamp: number): string {
+    const minutes = Math.max(0, Math.round((Date.now() - timestamp) / 60000));
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.round(minutes / 60);
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  }
+
   get canIssueTemporaryPassword(): boolean {
     return this.currentAdmin?.role === 'admin' &&
       ['influencer', 'brand', 'photographer'].includes(String(this.selectedRole || ''));
@@ -2705,6 +2739,7 @@ export class AdminUserTableComponent implements OnInit {
     const userId = String(user?._id || '');
     const email = String(user?.email || '');
     if (!userId || !email || this.temporaryPasswordSendingFor) return;
+    if (!this.getTemporaryPasswordState(user).enabled) return;
     const ok = confirm(
       `Email a temporary password to ${email}?\n\n` +
       `Their current password will stop working. The temporary password expires in 24 hours ` +
@@ -2719,6 +2754,8 @@ export class AdminUserTableComponent implements OnInit {
     ).subscribe({
       next: (res) => {
         this.temporaryPasswordSendingFor = null;
+        // One per "Forgot password" click — lock the button again.
+        user.tempPasswordIssuedAt = new Date().toISOString();
         const body = res?.data ?? res;
         alert(body?.message || `Temporary password emailed to ${email}.`);
         this.cd.detectChanges();
