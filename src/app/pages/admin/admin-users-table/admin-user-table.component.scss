@@ -900,6 +900,48 @@
   &:hover { background: #f3f4f6; }
 }
 
+/* Stage 3A-1: per-account Ownership / Tier review */
+.sm-verify-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 4px 0 6px;
+}
+
+.sm-verify-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+}
+
+.sm-verify-label {
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.sm-verify-chip {
+  @include cb.badge-pill($padding: 1px 7px, $radius: 20px, $font-size: 0.7rem, $font-weight: 600, $letter-spacing: null, $display: null);
+  background: #f3f4f6;
+  color: #4b5563;
+  cursor: default;
+  &--verified { background: #dcfce7; color: #15803d; }
+  &--rejected { background: #fee2e2; color: #b91c1c; }
+}
+
+.sm-verify-btn {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-size: 0.7rem;
+  color: #15803d;
+  cursor: pointer;
+  &--reject { color: #b91c1c; }
+  &:hover:not(:disabled) { background: #f3f4f6; }
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+
 /* Change log */
 .sm-changelog {
   margin-top: 10px;

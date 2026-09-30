@@ -747,6 +747,25 @@
                   </button>
                 </div>
 
+                <!-- Stage 3A-1: per-account Ownership / Tier review (admin only; no effect on badges or discovery) -->
+                <div class="sm-verify-row" *ngIf="sm?.socialAccountId; else smVerifyNoId">
+                  <span class="sm-verify-item" *ngFor="let rt of socialReviewTypes">
+                    <span class="sm-verify-label">{{ rt === 'ownership' ? 'Ownership' : 'Tier' }}</span>
+                    <span class="sm-verify-chip"
+                          [ngClass]="'sm-verify-chip--' + socialVerificationStatus(sm, rt)"
+                          [title]="socialVerificationTitle(sm, rt)">{{ socialVerificationLabel(sm, rt) }}</span>
+                    <button type="button" class="sm-verify-btn"
+                            [disabled]="socialVerificationSaving === sm.socialAccountId + rt"
+                            (click)="decideSocialAccount(sm, rt, 'verified')">Verify</button>
+                    <button type="button" class="sm-verify-btn sm-verify-btn--reject"
+                            [disabled]="socialVerificationSaving === sm.socialAccountId + rt"
+                            (click)="decideSocialAccount(sm, rt, 'rejected')">Reject</button>
+                  </span>
+                </div>
+                <ng-template #smVerifyNoId>
+                  <div class="sm-verify-row text-muted small">Per-account review is available once this account has an id (after the identity backfill or its next save).</div>
+                </ng-template>
+
                 <!-- Content type rates (influencer only) -->
                 <ng-container *ngIf="(selectedRole) === 'influencer'">
                   <div class="rate-row" *ngFor="let ct of sm?.contentTypes">

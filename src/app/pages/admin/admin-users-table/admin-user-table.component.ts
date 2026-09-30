@@ -35,6 +35,26 @@ import { CollaborationScoreApiService, CollaborationAudit } from '../../../servi
 
 type AdminUserRole = 'influencer' | 'brand' | 'photographer';
 
+// Stage 3A-1: per-social-account verification as returned by
+// GET admin/users/:type/:id/social-account-verifications.
+type SocialReviewType = 'ownership' | 'tier';
+interface SocialDecision {
+  status: 'pending' | 'verified' | 'rejected';
+  decidedHandle?: string;
+  decidedTier?: string;
+  decidedAt?: string;
+  decidedByName?: string;
+  note?: string;
+  invalidatedAt?: string;
+  stale?: boolean;
+  lastDecision?: SocialDecision;
+}
+interface SocialAccountVerification {
+  socialAccountId: string | null;
+  ownershipVerification: SocialDecision;
+  tierVerification: SocialDecision;
+}
+
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
@@ -2179,6 +2199,7 @@ export class AdminUserTableComponent implements OnInit {
     if (!userId) return;
     this.selectedProfileVerificationLoading = true;
     this.selectedProfileVerification = null;
+    this.loadSocialAccountVerifications();
     this.profileVerification
       .getModerationDetail(this.getAdminUserType(this.selectedUserType), userId)
       .pipe(catchError(() => of(null)))
@@ -2187,6 +2208,118 @@ export class AdminUserTableComponent implements OnInit {
         this.selectedProfileVerificationLoading = false;
         this.cd.detectChanges();
       });
+  }
+
+  // ── Stage 3A-1: per-social-account verification (admin-only data) ──────
+  // Independent Ownership / Tier decisions per account, addressed by
+  // socialAccountId. Never changes the declared tier, creatorTierVerified,
+  // flags, badges or discovery.
+  readonly socialReviewTypes: SocialReviewType[] = ['ownership', 'tier'];
+  socialVerificationByAccount: Record<string, SocialAccountVerification> = {};
+  socialVerificationSaving: string | null = null;
+
+  loadSocialAccountVerifications(): void {
+    this.socialVerificationByAccount = {};
+    const userType = this.selectedUserType;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userType || !userId) return;
+    this.http
+      .get<{ accounts: SocialAccountVerification[] }>(
+        `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-account-verifications`,
+        this.getAuthHeaders(),
+      )
+      .pipe(catchError(() => of(null)))
+      .subscribe((res) => {
+        // Ignore a late response for a user that is no longer selected.
+        if (!res || String(this.selectedUser?._id || '') !== userId) return;
+        const next: Record<string, SocialAccountVerification> = {};
+        for (const account of res.accounts || []) {
+          if (account?.socialAccountId) next[account.socialAccountId] = account;
+        }
+        this.socialVerificationByAccount = next;
+        this.cd.detectChanges();
+      });
+  }
+
+  private socialDecision(sm: any, reviewType: SocialReviewType): SocialDecision {
+    const account = this.socialVerificationByAccount[String(sm?.socialAccountId || '')];
+    const decision = reviewType === 'ownership' ? account?.ownershipVerification : account?.tierVerification;
+    return decision || { status: 'pending' };
+  }
+
+  socialVerificationStatus(sm: any, reviewType: SocialReviewType): SocialDecision['status'] {
+    return this.socialDecision(sm, reviewType).status;
+  }
+
+  socialVerificationLabel(sm: any, reviewType: SocialReviewType): string {
+    const decision = this.socialDecision(sm, reviewType);
+    if (decision.status === 'verified') return 'Verified';
+    if (decision.status === 'rejected') return 'Rejected';
+    return decision.stale || decision.invalidatedAt ? 'Pending (changed)' : 'Pending';
+  }
+
+  socialVerificationTitle(sm: any, reviewType: SocialReviewType): string {
+    const decision = this.socialDecision(sm, reviewType);
+    const describe = (d: SocialDecision | undefined) => {
+      if (!d?.decidedAt) return '';
+      const value = reviewType === 'ownership' ? `@${d.decidedHandle || ''}` : d.decidedTier || '';
+      const when = new Date(d.decidedAt).toLocaleString();
+      return `${d.status} ${value} by ${d.decidedByName || 'admin'} on ${when}${d.note ? ` — ${d.note}` : ''}`;
+    };
+    if (decision.status !== 'pending') return describe(decision);
+    const previous = describe(decision.lastDecision);
+    return previous ? `Needs review — previously ${previous}` : 'Not reviewed yet';
+  }
+
+  decideSocialAccount(sm: any, reviewType: SocialReviewType, status: 'verified' | 'rejected'): void {
+    const socialAccountId = String(sm?.socialAccountId || '');
+    const userType = this.selectedUserType;
+    const userId = String(this.selectedUser?._id || '');
+    if (!socialAccountId || !userType || !userId) return;
+    const platform = this.getSocialLabelForPlatform(sm?.platform);
+    const subject = reviewType === 'ownership'
+      ? `${platform} @${sm?.handle || ''} ownership`
+      : `${platform} declared tier "${sm?.tier || ''}"`;
+
+    const submit = (note: string) => {
+      this.socialVerificationSaving = socialAccountId + reviewType;
+      // expected* makes the server refuse (409) if the account changed since this page loaded.
+      const body = reviewType === 'ownership'
+        ? { status, note, expectedHandle: sm?.handle ?? '' }
+        : { status, note, expectedTier: sm?.tier ?? '' };
+      this.http
+        .patch<{ account: SocialAccountVerification }>(
+          `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-accounts/${encodeURIComponent(socialAccountId)}/${reviewType}-verification`,
+          body,
+          this.getAuthHeaders(),
+        )
+        .subscribe({
+          next: (res) => {
+            this.socialVerificationSaving = null;
+            if (res?.account?.socialAccountId) {
+              this.socialVerificationByAccount = {
+                ...this.socialVerificationByAccount,
+                [res.account.socialAccountId]: res.account,
+              };
+            }
+            this.cd.detectChanges();
+          },
+          error: (err: any) => {
+            this.socialVerificationSaving = null;
+            alert('Could not save the review: ' + (err?.error?.message || err?.message || 'Unknown error'));
+            if (err?.status === 409 || err?.status === 404) this.fetchUsers(userType);
+            this.loadSocialAccountVerifications();
+          },
+        });
+    };
+
+    if (status === 'rejected') {
+      const reason = window.prompt(`Reject ${subject}? Reason (optional):`, '');
+      if (reason === null) return;
+      submit(reason.trim());
+      return;
+    }
+    this.showConfirm(`Mark ${subject} as verified?`, () => submit(''));
   }
 
   getProfileVerificationScore(): number {
