@@ -2688,6 +2688,49 @@ export class AdminUserTableComponent implements OnInit {
   }
   // ─────────────────────────────────────────────────────────────────────
 
+  /** User id currently being issued a temporary password (disables the button). */
+  temporaryPasswordSendingFor: string | null = null;
+
+  get canIssueTemporaryPassword(): boolean {
+    return this.currentAdmin?.role === 'admin' &&
+      ['influencer', 'brand', 'photographer'].includes(String(this.selectedRole || ''));
+  }
+
+  /**
+   * Support action for users locked out after a password reset. The backend sets a
+   * random temporary password (MongoDB + Firebase, email marked verified), emails it
+   * to the user and forces a change on first login. The admin never sees it.
+   */
+  sendTemporaryPassword(user: any): void {
+    const userId = String(user?._id || '');
+    const email = String(user?.email || '');
+    if (!userId || !email || this.temporaryPasswordSendingFor) return;
+    const ok = confirm(
+      `Email a temporary password to ${email}?\n\n` +
+      `Their current password will stop working. The temporary password expires in 24 hours ` +
+      `and they will have to choose a new one right after logging in.`,
+    );
+    if (!ok) return;
+    this.temporaryPasswordSendingFor = userId;
+    this.http.post<any>(
+      `${environment.apiBaseUrl}/admin/users/${this.selectedRole}/${userId}/temporary-password`,
+      {},
+      this.getAuthHeaders(),
+    ).subscribe({
+      next: (res) => {
+        this.temporaryPasswordSendingFor = null;
+        const body = res?.data ?? res;
+        alert(body?.message || `Temporary password emailed to ${email}.`);
+        this.cd.detectChanges();
+      },
+      error: (err) => {
+        this.temporaryPasswordSendingFor = null;
+        alert('Could not send temporary password: ' + (err?.error?.message || err?.message || 'Unknown error'));
+        this.cd.detectChanges();
+      },
+    });
+  }
+
   getAuthHeaders() {
     const token =
       typeof window !== 'undefined'

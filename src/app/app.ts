@@ -13,10 +13,12 @@ import { ToastHostComponent } from './shared/toast/toast-host.component';
 import { TierInfoModalComponent } from './shared/components/tier-info-modal/tier-info-modal.component';
 import { FlowHelpModalComponent } from './shared/components/flow-help-modal/flow-help-modal.component';
 import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-install-banner.component';
+import { ResetPasswordModalComponent } from './shared/components/reset-password-modal/reset-password-modal.component';
+import { ToastService } from './shared/toast/toast.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastHostComponent, TierInfoModalComponent, FlowHelpModalComponent, PwaInstallBannerComponent],
+  imports: [RouterOutlet, ToastHostComponent, TierInfoModalComponent, FlowHelpModalComponent, PwaInstallBannerComponent, ResetPasswordModalComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -25,6 +27,9 @@ export class App implements OnInit {
   private readonly injector = inject(Injector);
   private lastPushSubscriptionKey: string | null = null;
   private lastSessionOpenedPing = 0;
+  private readonly toast = inject(ToastService);
+  /** Logged in with an admin-issued temporary password → must choose a new one before using the app. */
+  mustChangePassword = false;
 
   constructor(
     private session: SessionService,
@@ -40,6 +45,13 @@ export class App implements OnInit {
     @Inject(PLATFORM_ID) private platformId: object,
   ) {}
 
+  onTemporaryPasswordChanged(): void {
+    const user = this.session.getUser();
+    if (user) this.session.setUser({ ...user, mustChangePassword: false });
+    this.mustChangePassword = false;
+    this.toast.success('Password changed. Use your new password from now on.');
+  }
+
   ngOnInit() {
     this.session.loadUserFromStorage();
     this.setupSeo();
@@ -50,6 +62,7 @@ export class App implements OnInit {
       this.setupServiceWorkerUpdates();
       this.markOpenedWhenVisible();
       this.session.user$.subscribe((user) => {
+        this.mustChangePassword = !!(user as any)?.mustChangePassword;
         if (!user) {
           this.lastPushSubscriptionKey = null;
           return;

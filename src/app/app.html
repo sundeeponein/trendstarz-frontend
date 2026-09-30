@@ -5,3 +5,10 @@
 <app-tier-info-modal></app-tier-info-modal>
 <app-flow-help-modal></app-flow-help-modal>
 <app-pwa-install-banner></app-pwa-install-banner>
+@if (mustChangePassword) {
+  <app-reset-password-modal
+    [visible]="true"
+    [required]="true"
+    (changed)="onTemporaryPasswordChanged()"
+  ></app-reset-password-modal>
+}
