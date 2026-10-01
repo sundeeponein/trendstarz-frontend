@@ -823,7 +823,7 @@
                         </ng-container>
                         <ng-template #cmpNotObserved><div class="sm-compare__muted">Not observed yet</div></ng-template>
                         <div *ngIf="cmp.observed.lastAttempt?.status === 'failed'" class="sm-compare__muted">
-                          Last fetch did not complete ({{ formatComparisonDate(cmp.observed.lastAttempt?.at) }})
+                          Last fetch: {{ observationErrorLabel(cmp.observed.lastAttempt?.error) }} ({{ formatComparisonDate(cmp.observed.lastAttempt?.at) }})
                         </div>
                       </div>
                       <div class="sm-compare__col">

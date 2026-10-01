@@ -2390,6 +2390,11 @@ export class AdminUserTableComponent implements OnInit {
     return this.socialComparisonById[String(sm?.socialAccountId || '')] || null;
   }
 
+  /** Same plain-language reasons as the Platform data line (never raw API detail). */
+  observationErrorLabel(code: string | null | undefined): string {
+    return AdminUserTableComponent.OBSERVATION_ERRORS[code || ''] || 'did not complete';
+  }
+
   comparisonStatusLabel(status: ComparisonStatus | null | undefined): string {
     if (status === 'match') return 'Match';
     if (status === 'mismatch') return 'Mismatch';
