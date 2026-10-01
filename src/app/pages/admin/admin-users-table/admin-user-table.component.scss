@@ -942,6 +942,31 @@
   &:disabled { opacity: 0.5; cursor: default; }
 }
 
+/* Stage 3A-2: platform observation line */
+.sm-observe-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+}
+
+.sm-observe-text {
+  color: #374151;
+  overflow-wrap: anywhere;
+}
+
+.sm-observe-link {
+  color: #2563eb;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+.sm-observe-btn {
+  color: #374151;
+}
+
 /* Change log */
 .sm-changelog {
   margin-top: 10px;

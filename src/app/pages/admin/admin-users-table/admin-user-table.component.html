@@ -762,6 +762,15 @@
                             (click)="decideSocialAccount(sm, rt, 'rejected')">Reject</button>
                   </span>
                 </div>
+                <!-- Stage 3A-2: what the platform reports (admin only; observation, not verification) -->
+                <div class="sm-observe-row" *ngIf="sm?.socialAccountId && isSocialAccountObservable(sm)">
+                  <span class="sm-verify-label">Platform data</span>
+                  <span class="sm-observe-text">{{ socialObservationSummary(sm) }}</span>
+                  <a *ngIf="socialObservationUrl(sm) as obsUrl" [href]="obsUrl" target="_blank" rel="noopener noreferrer" class="sm-observe-link">open</a>
+                  <button type="button" class="sm-verify-btn sm-observe-btn"
+                          [disabled]="socialObservationFetching === sm.socialAccountId"
+                          (click)="observeSocialAccount(sm)">{{ socialObservationFetching === sm.socialAccountId ? 'Fetching…' : 'Fetch' }}</button>
+                </div>
                 <ng-template #smVerifyNoId>
                   <div class="sm-verify-row text-muted small">Per-account review is available once this account has an id (after the identity backfill or its next save).</div>
                 </ng-template>

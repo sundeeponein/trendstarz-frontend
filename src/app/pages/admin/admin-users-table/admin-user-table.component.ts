@@ -55,6 +55,27 @@ interface SocialAccountVerification {
   tierVerification: SocialDecision;
 }
 
+// Stage 3A-2: latest platform observation as returned by
+// GET admin/users/:type/:id/social-account-observations.
+interface SocialAccountObservation {
+  socialAccountId: string | null;
+  platformKey: string;
+  observable: boolean;
+  observation: {
+    status: 'success' | 'failed';
+    lastError: string | null;
+    lastAttemptAt: string | null;
+    latest: {
+      source: string;
+      externalAccountId: string;
+      observedHandle: string;
+      observedFollowersCount: number | null;
+      externalUrl: string;
+      capturedAt: string;
+    } | null;
+  } | null;
+}
+
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
@@ -2200,6 +2221,7 @@ export class AdminUserTableComponent implements OnInit {
     this.selectedProfileVerificationLoading = true;
     this.selectedProfileVerification = null;
     this.loadSocialAccountVerifications();
+    this.loadSocialAccountObservations();
     this.profileVerification
       .getModerationDetail(this.getAdminUserType(this.selectedUserType), userId)
       .pipe(catchError(() => of(null)))
@@ -2217,6 +2239,103 @@ export class AdminUserTableComponent implements OnInit {
   readonly socialReviewTypes: SocialReviewType[] = ['ownership', 'tier'];
   socialVerificationByAccount: Record<string, SocialAccountVerification> = {};
   socialVerificationSaving: string | null = null;
+
+  // ── Stage 3A-2: what the platform reports (admin-only, observation only) ──
+  // Shown next to the declared data; never compared, never changes tier,
+  // handle or verification.
+  socialObservationByAccount: Record<string, SocialAccountObservation> = {};
+  socialObservationFetching: string | null = null;
+  private static readonly OBSERVATION_ERRORS: Record<string, string> = {
+    external_account_not_found: 'Account not found on the platform',
+    account_mismatch: 'Platform account does not match this handle',
+    authorization_required: 'Creator has not connected this account',
+    platform_api_error: 'Platform API error',
+    rate_limited: 'Platform rate limit — try later',
+    unsupported_platform: 'Platform not supported',
+    platform_not_configured: 'Platform credentials not configured',
+  };
+
+  loadSocialAccountObservations(): void {
+    this.socialObservationByAccount = {};
+    const userType = this.selectedUserType;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userType || !userId) return;
+    this.http
+      .get<{ accounts: SocialAccountObservation[] }>(
+        `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-account-observations`,
+        this.getAuthHeaders(),
+      )
+      .pipe(catchError(() => of(null)))
+      .subscribe((res) => {
+        if (!res || String(this.selectedUser?._id || '') !== userId) return;
+        const next: Record<string, SocialAccountObservation> = {};
+        for (const account of res.accounts || []) {
+          if (account?.socialAccountId) next[account.socialAccountId] = account;
+        }
+        this.socialObservationByAccount = next;
+        this.cd.detectChanges();
+      });
+  }
+
+  isSocialAccountObservable(sm: any): boolean {
+    const key = String(sm?.platformKey || '').toLowerCase();
+    return ['youtube', 'instagram', 'facebook'].includes(key);
+  }
+
+  socialObservationSummary(sm: any): string {
+    const observation = this.socialObservationByAccount[String(sm?.socialAccountId || '')]?.observation;
+    const latest = observation?.latest;
+    const parts: string[] = [];
+    if (latest) {
+      const followers = latest.observedFollowersCount === null
+        ? 'followers hidden'
+        : `${latest.observedFollowersCount.toLocaleString('en-IN')} followers`;
+      parts.push(`${followers} · @${latest.observedHandle} · ${latest.source} · ${new Date(latest.capturedAt).toLocaleString()}`);
+    }
+    if (observation?.status === 'failed') {
+      const reason = AdminUserTableComponent.OBSERVATION_ERRORS[observation.lastError || ''] || 'Failed';
+      const when = observation.lastAttemptAt ? ` (${new Date(observation.lastAttemptAt).toLocaleString()})` : '';
+      parts.push(`${latest ? 'Last fetch failed' : 'Failed'}: ${reason}${when}`);
+    }
+    return parts.length ? parts.join(' — ') : 'Not fetched yet';
+  }
+
+  socialObservationUrl(sm: any): string | null {
+    const url = this.socialObservationByAccount[String(sm?.socialAccountId || '')]?.observation?.latest?.externalUrl;
+    return url && /^https:\/\//.test(url) ? url : null;
+  }
+
+  observeSocialAccount(sm: any): void {
+    const socialAccountId = String(sm?.socialAccountId || '');
+    const userType = this.selectedUserType;
+    const userId = String(this.selectedUser?._id || '');
+    if (!socialAccountId || !userType || !userId) return;
+    this.socialObservationFetching = socialAccountId;
+    this.http
+      .post<{ account: SocialAccountObservation }>(
+        `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-accounts/${encodeURIComponent(socialAccountId)}/observe`,
+        {},
+        this.getAuthHeaders(),
+      )
+      .subscribe({
+        next: (res) => {
+          this.socialObservationFetching = null;
+          if (res?.account?.socialAccountId) {
+            this.socialObservationByAccount = {
+              ...this.socialObservationByAccount,
+              [res.account.socialAccountId]: res.account,
+            };
+          }
+          this.cd.detectChanges();
+        },
+        error: (err: any) => {
+          this.socialObservationFetching = null;
+          alert('Could not fetch platform data: ' + (err?.error?.message || err?.message || 'Unknown error'));
+          if (err?.status === 404) this.fetchUsers(userType);
+          this.cd.detectChanges();
+        },
+      });
+  }
 
   loadSocialAccountVerifications(): void {
     this.socialVerificationByAccount = {};
