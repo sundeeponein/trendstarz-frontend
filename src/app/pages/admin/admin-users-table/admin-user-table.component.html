@@ -66,6 +66,8 @@
       <option value="admin_approved">Admin Approved</option>
       <option value="admin_review_pending">Admin Review Pending</option>
       <option value="admin_review_rejected">Admin Review Rejected</option>
+      <option value="profile_updated">Updated since approval — needs review</option>
+      <option value="social_changed">Social media changed — re-review</option>
       <option value="callback_requested">Callback Requested</option>
       <option value="featured_eligible">Featured Eligible (Premium + Public)</option>
       <option value="search_eligible">Search Eligible</option>
@@ -196,6 +198,11 @@
             <div class="mt-1">
               <span class="ts-status-badge" [ngClass]="getUserVisibilityBadgeClass(user)">
                 {{ getUserVisibilityLabel(user) }}
+              </span>
+            </div>
+            <div class="mt-1" *ngIf="user.creatorUpdatesPending || user.socialReviewChanged" [title]="creatorUpdateTitle(user)">
+              <span class="ts-status-badge ts-status-pending">
+                <i class="bi bi-pencil-square"></i> {{ user.socialReviewChanged || hasSocialCreatorUpdate(user) ? 'Social changed — re-review' : 'Updated — needs review' }}
               </span>
             </div>
             <div class="mt-1" *ngIf="user.hasPendingPremiumPayment" title="This user submitted a payment that is still awaiting admin approval/decline in Premium Payments. Review it there before accepting, declining, or deleting this account.">
@@ -343,6 +350,23 @@
       </div>
 
       <div class="modal-body pt-2">
+        <!-- Updated since approval: review signal only (approval, visibility and badges are unchanged) -->
+        <div class="creator-update-banner mb-3" *ngIf="selectedUser.creatorUpdatesPending || selectedUser.socialReviewChanged">
+          <div class="creator-update-banner__text">
+            <strong><i class="bi bi-pencil-square"></i> Updated since approval</strong>
+            <span *ngIf="selectedUser.creatorUpdatesPending">
+              The creator changed {{ creatorUpdatedSectionsLabel(selectedUser) }}<ng-container *ngIf="selectedUser.creatorUpdatedAt"> on {{ selectedUser.creatorUpdatedAt | date:'d MMM y, h:mm a' }}</ng-container>.
+            </span>
+            <span *ngIf="selectedUser.socialReviewChanged">
+              A social account's handle or tier changed after it was reviewed — see "Pending (changed)" below.
+            </span>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-secondary" *ngIf="selectedUser.creatorUpdatesPending"
+                  [disabled]="creatorUpdatesMarking"
+                  (click)="markCreatorUpdatesReviewed()">
+            {{ creatorUpdatesMarking ? 'Saving…' : 'Mark as reviewed' }}
+          </button>
+        </div>
         <div class="collab-score-summary mb-3" *ngIf="!selectedUserCollabScoreLoading">
           <ng-container *ngIf="selectedUserCollabScore; else noCollabScore">
             <div class="collab-score-summary__row">

@@ -1562,6 +1562,16 @@ export class AdminUserTableComponent implements OnInit {
     if (filters.contactVerification === 'admin_review_rejected' && this.getAdminReviewStatus(user) !== 'rejected') {
       return false;
     }
+    if (filters.contactVerification === 'profile_updated' && !user.creatorUpdatesPending) {
+      return false;
+    }
+    if (
+      filters.contactVerification === 'social_changed' &&
+      !user.socialReviewChanged &&
+      !(user.creatorUpdatesPending && this.hasSocialCreatorUpdate(user))
+    ) {
+      return false;
+    }
     
     // Premium filter
     if (filters.premium === 'premium' && !user.isPremium) {
@@ -2329,6 +2339,92 @@ export class AdminUserTableComponent implements OnInit {
       });
   }
 
+  // ── "Updated since approval" review signal ─────────────────────────────
+  // Set by the creator's own saves; cleared by "Mark as reviewed" or approval.
+  // Never changes approval, visibility, badges or verification.
+  private static readonly CREATOR_UPDATE_SECTION_LABELS: Record<string, string> = {
+    socialMedia: 'social media & rates',
+    profileImages: 'profile photo',
+    brandLogo: 'logo',
+    name: 'name',
+    username: 'username',
+    brandName: 'brand name',
+    location: 'location',
+    languages: 'languages',
+    categories: 'categories',
+    influencerCategory: 'category',
+    creatorTypes: 'creator type',
+    skills: 'skills',
+    bio: 'bio',
+    description: 'description',
+    phoneNumber: 'mobile number',
+    email: 'email',
+    dateOfBirth: 'date of birth',
+    gender: 'gender',
+    payout: 'payment details',
+    paymentOption: 'payment details',
+    verificationDocuments: 'verification documents',
+    collaborationAvailability: 'availability',
+    products: 'products',
+    website: 'website',
+  };
+  creatorUpdatesMarking = false;
+
+  hasSocialCreatorUpdate(user: any): boolean {
+    return Array.isArray(user?.creatorUpdatedFields) && user.creatorUpdatedFields.includes('socialMedia');
+  }
+
+  creatorUpdatedSectionsLabel(user: any): string {
+    const fields: string[] = Array.isArray(user?.creatorUpdatedFields) ? user.creatorUpdatedFields : [];
+    const labels = Array.from(new Set(fields.map((f) =>
+      AdminUserTableComponent.CREATOR_UPDATE_SECTION_LABELS[f] || f.replace(/([A-Z])/g, ' $1').toLowerCase(),
+    )));
+    if (!labels.length) return 'their profile';
+    return labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+  }
+
+  creatorUpdateTitle(user: any): string {
+    const parts: string[] = [];
+    if (user?.creatorUpdatesPending) parts.push(`Changed since approval: ${this.creatorUpdatedSectionsLabel(user)}`);
+    if (user?.socialReviewChanged) parts.push('A reviewed social account changed handle/tier');
+    return parts.join(' · ');
+  }
+
+  markCreatorUpdatesReviewed(): void {
+    const user = this.selectedUser;
+    const userType = this.selectedUserType;
+    const userId = String(user?._id || '');
+    if (!user || !userType || !userId) return;
+    this.creatorUpdatesMarking = true;
+    this.http
+      .post<ApiEnvelope<{ creatorUpdatesReviewedAt: string | null }>>(
+        `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/creator-updates/reviewed`,
+        // The update the admin is looking at — a newer one is never cleared unseen (409).
+        { seenUpdatedAt: user.creatorUpdatedAt || null },
+        this.getAuthHeaders(),
+      )
+      .subscribe({
+        next: (res) => {
+          this.creatorUpdatesMarking = false;
+          const cleared = {
+            creatorUpdatedFields: [],
+            creatorUpdatesPending: false,
+            creatorUpdatesReviewedAt: unwrapApiData(res)?.creatorUpdatesReviewedAt ?? null,
+          };
+          this.selectedUser = { ...this.selectedUser, ...cleared };
+          this.mergeUpdatedUser(userType, { ...this.selectedUser });
+          this.applyFilters(userType);
+          this.cd.detectChanges();
+        },
+        error: (err: any) => {
+          this.creatorUpdatesMarking = false;
+          alert('Could not mark as reviewed: ' + (err?.error?.message || err?.message || 'Unknown error'));
+          if (err?.status === 409) this.fetchUsers(userType);
+          this.cd.detectChanges();
+        },
+      });
+  }
+
   // ── Stage 3A-3: DECLARED vs VERIFIED vs OBSERVED (read-only, loaded on open) ──
   // Opening it never calls YouTube/Meta and never changes anything; Fetch and
   // Verify/Reject stay the only actions.
@@ -2765,6 +2861,10 @@ export class AdminUserTableComponent implements OnInit {
         if (!detail) return;
         this.selectedProfileVerification = detail;
         this.syncSelectedUserFromProfileReview(detail);
+        // Approving also marks the creator's updates as reviewed (server does the same).
+        if (action === 'approve' || action === 'approve_warning') {
+          this.selectedUser = { ...this.selectedUser, creatorUpdatedFields: [], creatorUpdatesPending: false };
+        }
         this.fetchUsers(this.selectedUserType || this.activeTab);
         this.cd.detectChanges();
       });
