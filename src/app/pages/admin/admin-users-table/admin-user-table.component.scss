@@ -903,13 +903,14 @@
 /* Stage 3A-1: per-account Ownership / Tier review */
 .sm-verify-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
+  flex-direction: column;
+  gap: 5px;
   margin: 4px 0 6px;
 }
 
 .sm-verify-item {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 5px;
   font-size: 0.75rem;
@@ -918,6 +919,22 @@
 .sm-verify-label {
   color: #6b7280;
   font-weight: 600;
+  min-width: 72px;
+}
+
+.sm-verify-meta {
+  color: #6b7280;
+  overflow-wrap: anywhere;
+}
+
+.sm-verify-link {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  font-size: 0.7rem;
+  color: #2563eb;
+  cursor: pointer;
+  &:hover { text-decoration: underline; }
 }
 
 .sm-verify-chip {

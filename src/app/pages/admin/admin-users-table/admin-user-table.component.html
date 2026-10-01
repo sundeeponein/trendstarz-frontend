@@ -749,18 +749,30 @@
 
                 <!-- Stage 3A-1: per-account Ownership / Tier review (admin only; no effect on badges or discovery) -->
                 <div class="sm-verify-row" *ngIf="sm?.socialAccountId; else smVerifyNoId">
-                  <span class="sm-verify-item" *ngFor="let rt of socialReviewTypes">
+                  <div class="sm-verify-item" *ngFor="let rt of socialReviewTypes">
                     <span class="sm-verify-label">{{ rt === 'ownership' ? 'Ownership' : 'Tier' }}</span>
                     <span class="sm-verify-chip"
                           [ngClass]="'sm-verify-chip--' + socialVerificationStatus(sm, rt)"
                           [title]="socialVerificationTitle(sm, rt)">{{ socialVerificationLabel(sm, rt) }}</span>
-                    <button type="button" class="sm-verify-btn"
-                            [disabled]="socialVerificationSaving === sm.socialAccountId + rt"
-                            (click)="decideSocialAccount(sm, rt, 'verified')">Verify</button>
-                    <button type="button" class="sm-verify-btn sm-verify-btn--reject"
-                            [disabled]="socialVerificationSaving === sm.socialAccountId + rt"
-                            (click)="decideSocialAccount(sm, rt, 'rejected')">Reject</button>
-                  </span>
+                    <span class="sm-verify-meta" *ngIf="socialDecisionMeta(sm, rt) as meta">{{ meta }}</span>
+                    <!-- Pending (incl. after a handle/tier change): decide. Decided: result + "Change". -->
+                    <ng-container *ngIf="isSocialDecisionOpen(sm, rt); else smDecided">
+                      <button type="button" class="sm-verify-btn"
+                              *ngIf="socialVerificationStatus(sm, rt) !== 'verified'"
+                              [disabled]="socialVerificationSaving === sm.socialAccountId + rt"
+                              (click)="decideSocialAccount(sm, rt, 'verified')">Verify</button>
+                      <button type="button" class="sm-verify-btn sm-verify-btn--reject"
+                              *ngIf="socialVerificationStatus(sm, rt) !== 'rejected'"
+                              [disabled]="socialVerificationSaving === sm.socialAccountId + rt"
+                              (click)="decideSocialAccount(sm, rt, 'rejected')">Reject</button>
+                      <button type="button" class="sm-verify-link"
+                              *ngIf="socialVerificationStatus(sm, rt) !== 'pending'"
+                              (click)="toggleSocialDecisionChange(sm, rt)">Cancel</button>
+                    </ng-container>
+                    <ng-template #smDecided>
+                      <button type="button" class="sm-verify-link" (click)="toggleSocialDecisionChange(sm, rt)">Change</button>
+                    </ng-template>
+                  </div>
                 </div>
                 <!-- Stage 3A-2: what the platform reports (admin only; observation, not verification) -->
                 <div class="sm-observe-row" *ngIf="sm?.socialAccountId && isSocialAccountObservable(sm)">

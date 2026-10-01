@@ -35,6 +35,13 @@ import { CollaborationScoreApiService, CollaborationAudit } from '../../../servi
 
 type AdminUserRole = 'influencer' | 'brand' | 'photographer';
 
+// Backend responses are wrapped by its ResponseInterceptor as { success, data }.
+type ApiEnvelope<T> = { success?: boolean; data?: T } & Partial<T>;
+function unwrapApiData<T>(res: ApiEnvelope<T> | null | undefined): Partial<T> | undefined {
+  if (!res) return undefined;
+  return (res.data ?? res) as Partial<T>;
+}
+
 // Stage 3A-1: per-social-account verification as returned by
 // GET admin/users/:type/:id/social-account-verifications.
 type SocialReviewType = 'ownership' | 'tier';
@@ -2261,7 +2268,7 @@ export class AdminUserTableComponent implements OnInit {
     const userId = String(this.selectedUser?._id || '');
     if (!userType || !userId) return;
     this.http
-      .get<{ accounts: SocialAccountObservation[] }>(
+      .get<ApiEnvelope<{ accounts: SocialAccountObservation[] }>>(
         `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-account-observations`,
         this.getAuthHeaders(),
       )
@@ -2269,7 +2276,7 @@ export class AdminUserTableComponent implements OnInit {
       .subscribe((res) => {
         if (!res || String(this.selectedUser?._id || '') !== userId) return;
         const next: Record<string, SocialAccountObservation> = {};
-        for (const account of res.accounts || []) {
+        for (const account of unwrapApiData(res)?.accounts || []) {
           if (account?.socialAccountId) next[account.socialAccountId] = account;
         }
         this.socialObservationByAccount = next;
@@ -2312,7 +2319,7 @@ export class AdminUserTableComponent implements OnInit {
     if (!socialAccountId || !userType || !userId) return;
     this.socialObservationFetching = socialAccountId;
     this.http
-      .post<{ account: SocialAccountObservation }>(
+      .post<ApiEnvelope<{ account: SocialAccountObservation }>>(
         `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-accounts/${encodeURIComponent(socialAccountId)}/observe`,
         {},
         this.getAuthHeaders(),
@@ -2320,10 +2327,11 @@ export class AdminUserTableComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.socialObservationFetching = null;
-          if (res?.account?.socialAccountId) {
+          const account = unwrapApiData(res)?.account;
+          if (account?.socialAccountId) {
             this.socialObservationByAccount = {
               ...this.socialObservationByAccount,
-              [res.account.socialAccountId]: res.account,
+              [account.socialAccountId]: account,
             };
           }
           this.cd.detectChanges();
@@ -2343,7 +2351,7 @@ export class AdminUserTableComponent implements OnInit {
     const userId = String(this.selectedUser?._id || '');
     if (!userType || !userId) return;
     this.http
-      .get<{ accounts: SocialAccountVerification[] }>(
+      .get<ApiEnvelope<{ accounts: SocialAccountVerification[] }>>(
         `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-account-verifications`,
         this.getAuthHeaders(),
       )
@@ -2352,7 +2360,7 @@ export class AdminUserTableComponent implements OnInit {
         // Ignore a late response for a user that is no longer selected.
         if (!res || String(this.selectedUser?._id || '') !== userId) return;
         const next: Record<string, SocialAccountVerification> = {};
-        for (const account of res.accounts || []) {
+        for (const account of unwrapApiData(res)?.accounts || []) {
           if (account?.socialAccountId) next[account.socialAccountId] = account;
         }
         this.socialVerificationByAccount = next;
@@ -2372,9 +2380,44 @@ export class AdminUserTableComponent implements OnInit {
 
   socialVerificationLabel(sm: any, reviewType: SocialReviewType): string {
     const decision = this.socialDecision(sm, reviewType);
-    if (decision.status === 'verified') return 'Verified';
-    if (decision.status === 'rejected') return 'Rejected';
+    if (decision.status === 'verified') return '✓ Verified';
+    if (decision.status === 'rejected') return '✕ Rejected';
     return decision.stale || decision.invalidatedAt ? 'Pending (changed)' : 'Pending';
+  }
+
+  /** Decided reviews collapse to the result; "Change" reopens Verify/Reject for that one review. */
+  socialDecisionChanging = new Set<string>();
+
+  isSocialDecisionOpen(sm: any, reviewType: SocialReviewType): boolean {
+    return this.socialVerificationStatus(sm, reviewType) === 'pending'
+      || this.socialDecisionChanging.has(String(sm?.socialAccountId || '') + reviewType);
+  }
+
+  toggleSocialDecisionChange(sm: any, reviewType: SocialReviewType): void {
+    const key = String(sm?.socialAccountId || '') + reviewType;
+    if (this.socialDecisionChanging.has(key)) this.socialDecisionChanging.delete(key);
+    else this.socialDecisionChanging.add(key);
+    this.cd.detectChanges();
+  }
+
+  /** Inline "who / when / why" next to the chip. */
+  socialDecisionMeta(sm: any, reviewType: SocialReviewType): string {
+    const decision = this.socialDecision(sm, reviewType);
+    const who = (d: SocialDecision) => {
+      const when = d.decidedAt
+        ? new Date(d.decidedAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+        : '';
+      return [d.decidedByName ? `by ${d.decidedByName}` : '', when].filter(Boolean).join(' · ');
+    };
+    if (decision.status !== 'pending') {
+      const reason = decision.status === 'rejected' && decision.note ? ` — ${decision.note}` : '';
+      return `${who(decision)}${reason}`;
+    }
+    const previous = decision.lastDecision;
+    if (!previous?.status || previous.status === 'pending') return '';
+    const value = reviewType === 'ownership' ? `@${previous.decidedHandle || ''}` : previous.decidedTier || '';
+    const changed = reviewType === 'ownership' ? 'handle changed' : 'tier changed';
+    return `${changed} — was ${previous.status === 'verified' ? 'Verified' : 'Rejected'} (${value})`;
   }
 
   socialVerificationTitle(sm: any, reviewType: SocialReviewType): string {
@@ -2407,7 +2450,7 @@ export class AdminUserTableComponent implements OnInit {
         ? { status, note, expectedHandle: sm?.handle ?? '' }
         : { status, note, expectedTier: sm?.tier ?? '' };
       this.http
-        .patch<{ account: SocialAccountVerification }>(
+        .patch<ApiEnvelope<{ account: SocialAccountVerification }>>(
           `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-accounts/${encodeURIComponent(socialAccountId)}/${reviewType}-verification`,
           body,
           this.getAuthHeaders(),
@@ -2415,12 +2458,14 @@ export class AdminUserTableComponent implements OnInit {
         .subscribe({
           next: (res) => {
             this.socialVerificationSaving = null;
-            if (res?.account?.socialAccountId) {
+            const account = unwrapApiData(res)?.account;
+            if (account?.socialAccountId) {
               this.socialVerificationByAccount = {
                 ...this.socialVerificationByAccount,
-                [res.account.socialAccountId]: res.account,
+                [account.socialAccountId]: account,
               };
             }
+            this.socialDecisionChanging.delete(socialAccountId + reviewType);
             this.cd.detectChanges();
           },
           error: (err: any) => {
