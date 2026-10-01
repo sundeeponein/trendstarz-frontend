@@ -972,6 +972,7 @@
 .sm-observe-text {
   color: #374151;
   overflow-wrap: anywhere;
+  &--manual { color: #6b7280; font-style: italic; }
 }
 
 .sm-observe-link {

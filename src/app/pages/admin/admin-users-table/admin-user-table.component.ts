@@ -68,6 +68,10 @@ interface SocialAccountObservation {
   socialAccountId: string | null;
   platformKey: string;
   observable: boolean;
+  /** Instagram/Facebook: Meta shares data only after the creator connects. */
+  requiresConnection?: boolean;
+  /** null = not looked up (e.g. a Fetch response). */
+  connected?: boolean | null;
   observation: {
     status: 'success' | 'failed';
     lastError: string | null;
@@ -2284,6 +2288,20 @@ export class AdminUserTableComponent implements OnInit {
       });
   }
 
+  /**
+   * Instagram/Facebook with no creator connection: there is nothing Meta will
+   * return, so the admin checks the profile manually instead of clicking Fetch.
+   */
+  needsManualSocialCheck(sm: any): boolean {
+    const info = this.socialObservationByAccount[String(sm?.socialAccountId || '')];
+    return !!info?.requiresConnection && info.connected === false;
+  }
+
+  manualSocialCheckText(sm: any): string {
+    const platform = this.getSocialLabelForPlatform(sm?.platform);
+    return `Manual check — creator hasn't connected ${platform}. Open the profile to check followers.`;
+  }
+
   isSocialAccountObservable(sm: any): boolean {
     const key = String(sm?.platformKey || '').toLowerCase();
     return ['youtube', 'instagram', 'facebook'].includes(key);
@@ -2329,9 +2347,14 @@ export class AdminUserTableComponent implements OnInit {
           this.socialObservationFetching = null;
           const account = unwrapApiData(res)?.account;
           if (account?.socialAccountId) {
+            const previous = this.socialObservationByAccount[account.socialAccountId];
             this.socialObservationByAccount = {
               ...this.socialObservationByAccount,
-              [account.socialAccountId]: account,
+              // A Fetch response doesn't re-check the connection; keep what the list said.
+              [account.socialAccountId]: {
+                ...account,
+                connected: account.connected ?? previous?.connected ?? null,
+              },
             };
           }
           this.cd.detectChanges();
