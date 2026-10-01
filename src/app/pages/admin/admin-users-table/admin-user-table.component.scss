@@ -985,6 +985,61 @@
   color: #374151;
 }
 
+/* Stage 3A-3: declared / verified / observed comparison */
+.sm-compare {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+}
+
+.sm-compare__toggle {
+  font-size: 0.75rem;
+  padding: 0;
+}
+
+.sm-compare__note {
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.sm-compare__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.sm-compare__col {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: #fff;
+  color: #374151;
+  overflow-wrap: anywhere;
+  > div { margin: 2px 0; }
+  > div > span:first-child:not(.sm-compare__status) { color: #6b7280; margin-right: 4px; }
+}
+
+.sm-compare__title {
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4b5563;
+}
+
+.sm-compare__muted {
+  color: #6b7280;
+}
+
+/* Neutral wording and colours — informational, not alarming. */
+.sm-compare__status {
+  @include cb.badge-pill($padding: 0 6px, $radius: 20px, $font-size: 0.68rem, $font-weight: 600, $letter-spacing: null, $display: null);
+  background: #f3f4f6;
+  color: #4b5563;
+  &--match { background: #e0f2fe; color: #0369a1; }
+  &--mismatch { background: #fef3c7; color: #92400e; }
+}
+
 /* Change log */
 .sm-changelog {
   margin-top: 10px;

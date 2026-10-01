@@ -790,6 +790,58 @@
                             (click)="observeSocialAccount(sm)">{{ socialObservationFetching === sm.socialAccountId ? 'Fetching…' : 'Fetch' }}</button>
                   </ng-template>
                 </div>
+                <!-- Stage 3A-3: DECLARED vs VERIFIED vs OBSERVED (admin only, read-only, no platform calls) -->
+                <div class="sm-compare" *ngIf="sm?.socialAccountId">
+                  <button type="button" class="sm-verify-link sm-compare__toggle" (click)="toggleSocialComparison(sm)">
+                    {{ isSocialComparisonOpen(sm) ? '▾ Hide comparison' : '▸ Compare declared / verified / observed' }}
+                  </button>
+                  <ng-container *ngIf="isSocialComparisonOpen(sm)">
+                    <div class="sm-compare__note" *ngIf="socialComparisonLoading === sm.socialAccountId && !socialComparison(sm)">Loading…</div>
+                    <div class="sm-compare__note" *ngIf="socialComparisonError[sm.socialAccountId] as cmpErr">{{ cmpErr }}</div>
+                    <div class="sm-compare__grid" *ngIf="socialComparison(sm) as cmp">
+                      <div class="sm-compare__col">
+                        <div class="sm-compare__title">Declared</div>
+                        <div><span>Handle</span> {{ cmp.declared.handle ? '@' + cmp.declared.handle : 'Not available' }}</div>
+                        <div><span>Tier</span> {{ cmp.declared.tier || 'Not available' }}</div>
+                        <div><span>Followers</span> {{ cmp.declared.followersCount === null ? 'Not declared' : formatCount(cmp.declared.followersCount) }}</div>
+                      </div>
+                      <div class="sm-compare__col">
+                        <div class="sm-compare__title">Verified</div>
+                        <div><span>Ownership</span> {{ comparisonReviewLabel(cmp.verified.ownership, 'ownership') }}</div>
+                        <div><span>Tier</span> {{ comparisonReviewLabel(cmp.verified.tier, 'tier') }}</div>
+                        <div *ngIf="cmp.verified.ownership.reviewedAt || cmp.verified.tier.reviewedAt" class="sm-compare__muted">
+                          {{ cmp.verified.ownership.reviewedBy || cmp.verified.tier.reviewedBy }} · {{ formatComparisonDate(cmp.verified.tier.reviewedAt || cmp.verified.ownership.reviewedAt) }}
+                        </div>
+                      </div>
+                      <div class="sm-compare__col">
+                        <div class="sm-compare__title">Observed</div>
+                        <ng-container *ngIf="cmp.observed.latest as obs; else cmpNotObserved">
+                          <div><span>Handle</span> {{ obs.observedHandle ? '@' + obs.observedHandle : 'Not available' }}</div>
+                          <div><span>Followers</span> {{ formatCount(obs.observedFollowersCount) }}</div>
+                          <div><span>Observed tier</span> {{ cmp.comparison.tier.observed?.label || 'Not available' }}</div>
+                          <div><span>Captured</span> {{ formatComparisonDate(obs.capturedAt) }} · {{ obs.source }}</div>
+                        </ng-container>
+                        <ng-template #cmpNotObserved><div class="sm-compare__muted">Not observed yet</div></ng-template>
+                        <div *ngIf="cmp.observed.lastAttempt?.status === 'failed'" class="sm-compare__muted">
+                          Last fetch did not complete ({{ formatComparisonDate(cmp.observed.lastAttempt?.at) }})
+                        </div>
+                      </div>
+                      <div class="sm-compare__col">
+                        <div class="sm-compare__title">Comparison</div>
+                        <div><span>Handle</span>
+                          <span class="sm-compare__status" [ngClass]="'sm-compare__status--' + cmp.comparison.handle.status">{{ comparisonStatusLabel(cmp.comparison.handle.status) }}</span>
+                        </div>
+                        <div><span>Declared tier vs observed</span>
+                          <span class="sm-compare__status" [ngClass]="'sm-compare__status--' + cmp.comparison.tier.declaredVsObserved">{{ comparisonStatusLabel(cmp.comparison.tier.declaredVsObserved) }}</span>
+                        </div>
+                        <div><span>Verified tier vs observed</span>
+                          <span class="sm-compare__status" [ngClass]="'sm-compare__status--' + cmp.comparison.tier.verifiedVsObserved">{{ comparisonStatusLabel(cmp.comparison.tier.verifiedVsObserved) }}</span>
+                        </div>
+                        <div><span>Followers</span> {{ formatFollowerDifference(cmp.comparison.followers.difference) }}</div>
+                      </div>
+                    </div>
+                  </ng-container>
+                </div>
                 <ng-template #smVerifyNoId>
                   <div class="sm-verify-row text-muted small">Per-account review is available once this account has an id (after the identity backfill or its next save).</div>
                 </ng-template>

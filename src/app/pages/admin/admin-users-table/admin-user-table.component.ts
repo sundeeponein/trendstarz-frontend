@@ -42,6 +42,47 @@ function unwrapApiData<T>(res: ApiEnvelope<T> | null | undefined): Partial<T> | 
   return (res.data ?? res) as Partial<T>;
 }
 
+// Stage 3A-3: DECLARED vs VERIFIED vs OBSERVED as returned by
+// GET admin/users/:type/:id/social-accounts/:socialAccountId/comparison.
+type ComparisonStatus = 'match' | 'mismatch' | 'not_available';
+interface ComparisonTier { key: string; label: string }
+interface ComparisonReview {
+  status: 'pending' | 'verified' | 'rejected';
+  reviewedHandle?: string | null;
+  reviewedTier?: string | null;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  note: string | null;
+  changedSinceReview: boolean;
+}
+interface SocialAccountComparison {
+  socialAccountId: string | null;
+  declared: { handle: string; tier: string; followersCount: number | null };
+  verified: { ownership: ComparisonReview; tier: ComparisonReview };
+  observed: {
+    available: boolean;
+    lastAttempt: { status: 'success' | 'failed'; at: string | null; error: string | null } | null;
+    latest: {
+      observedHandle: string;
+      observedFollowersCount: number | null;
+      source: string;
+      capturedAt: string;
+      externalUrl: string;
+    } | null;
+  };
+  comparison: {
+    handle: { declared: string; observed: string | null; status: ComparisonStatus };
+    tier: {
+      declared: ComparisonTier | null;
+      verified: ComparisonTier | null;
+      observed: ComparisonTier | null;
+      declaredVsObserved: ComparisonStatus;
+      verifiedVsObserved: ComparisonStatus;
+    };
+    followers: { declared: number | null; observed: number | null; comparisonAvailable: boolean; difference: number | null };
+  };
+}
+
 // Stage 3A-1: per-social-account verification as returned by
 // GET admin/users/:type/:id/social-account-verifications.
 type SocialReviewType = 'ownership' | 'tier';
@@ -2288,6 +2329,99 @@ export class AdminUserTableComponent implements OnInit {
       });
   }
 
+  // ── Stage 3A-3: DECLARED vs VERIFIED vs OBSERVED (read-only, loaded on open) ──
+  // Opening it never calls YouTube/Meta and never changes anything; Fetch and
+  // Verify/Reject stay the only actions.
+  socialComparisonOpen = new Set<string>();
+  socialComparisonById: Record<string, SocialAccountComparison> = {};
+  socialComparisonLoading: string | null = null;
+  socialComparisonError: Record<string, string> = {};
+
+  isSocialComparisonOpen(sm: any): boolean {
+    return this.socialComparisonOpen.has(String(sm?.socialAccountId || ''));
+  }
+
+  toggleSocialComparison(sm: any): void {
+    const id = String(sm?.socialAccountId || '');
+    if (!id) return;
+    if (this.socialComparisonOpen.has(id)) {
+      this.socialComparisonOpen.delete(id);
+      this.cd.detectChanges();
+      return;
+    }
+    this.socialComparisonOpen.add(id);
+    this.loadSocialComparison(id);
+  }
+
+  /** Re-reads an open comparison after Fetch / Verify / Reject so it never shows stale data. */
+  private refreshOpenSocialComparison(socialAccountId: string): void {
+    if (this.socialComparisonOpen.has(socialAccountId)) this.loadSocialComparison(socialAccountId);
+  }
+
+  private loadSocialComparison(socialAccountId: string): void {
+    const userType = this.selectedUserType;
+    const userId = String(this.selectedUser?._id || '');
+    if (!userType || !userId) return;
+    this.socialComparisonLoading = socialAccountId;
+    delete this.socialComparisonError[socialAccountId];
+    this.cd.detectChanges();
+    this.http
+      .get<ApiEnvelope<{ account: SocialAccountComparison }>>(
+        `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-accounts/${encodeURIComponent(socialAccountId)}/comparison`,
+        this.getAuthHeaders(),
+      )
+      .subscribe({
+        next: (res) => {
+          if (String(this.selectedUser?._id || '') !== userId) return;
+          const account = unwrapApiData(res)?.account;
+          if (account) this.socialComparisonById = { ...this.socialComparisonById, [socialAccountId]: account };
+          this.socialComparisonLoading = null;
+          this.cd.detectChanges();
+        },
+        error: (err: any) => {
+          this.socialComparisonLoading = null;
+          this.socialComparisonError[socialAccountId] = err?.error?.message || 'Could not load the comparison.';
+          this.cd.detectChanges();
+        },
+      });
+  }
+
+  socialComparison(sm: any): SocialAccountComparison | null {
+    return this.socialComparisonById[String(sm?.socialAccountId || '')] || null;
+  }
+
+  comparisonStatusLabel(status: ComparisonStatus | null | undefined): string {
+    if (status === 'match') return 'Match';
+    if (status === 'mismatch') return 'Mismatch';
+    return 'Not available';
+  }
+
+  comparisonReviewLabel(review: ComparisonReview | null | undefined, kind: 'ownership' | 'tier'): string {
+    if (!review || review.status === 'pending') {
+      return review?.changedSinceReview ? 'Pending (changed since review)' : 'Pending / Not reviewed';
+    }
+    const what = kind === 'ownership'
+      ? (review.reviewedHandle ? ` — @${review.reviewedHandle}` : '')
+      : (review.reviewedTier ? ` — ${review.reviewedTier}` : '');
+    return `${review.status === 'verified' ? 'Verified' : 'Rejected'}${what}`;
+  }
+
+  formatCount(n: number | null | undefined): string {
+    return n === null || n === undefined ? 'Not available' : n.toLocaleString('en-IN');
+  }
+
+  formatFollowerDifference(diff: number | null | undefined): string {
+    if (diff === null || diff === undefined) return 'Not available';
+    if (diff === 0) return 'No difference';
+    return `${diff > 0 ? '+' : '−'}${Math.abs(diff).toLocaleString('en-IN')}`;
+  }
+
+  formatComparisonDate(value: string | null | undefined): string {
+    return value
+      ? new Date(value).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+      : '';
+  }
+
   /**
    * Instagram/Facebook with no creator connection: there is nothing Meta will
    * return, so the admin checks the profile manually instead of clicking Fetch.
@@ -2357,6 +2491,7 @@ export class AdminUserTableComponent implements OnInit {
               },
             };
           }
+          this.refreshOpenSocialComparison(socialAccountId);
           this.cd.detectChanges();
         },
         error: (err: any) => {
@@ -2370,6 +2505,10 @@ export class AdminUserTableComponent implements OnInit {
 
   loadSocialAccountVerifications(): void {
     this.socialVerificationByAccount = {};
+    // A different user (or a reload) — drop any comparison loaded for the previous one.
+    this.socialComparisonOpen.clear();
+    this.socialComparisonById = {};
+    this.socialComparisonError = {};
     const userType = this.selectedUserType;
     const userId = String(this.selectedUser?._id || '');
     if (!userType || !userId) return;
@@ -2489,6 +2628,7 @@ export class AdminUserTableComponent implements OnInit {
               };
             }
             this.socialDecisionChanging.delete(socialAccountId + reviewType);
+            this.refreshOpenSocialComparison(socialAccountId);
             this.cd.detectChanges();
           },
           error: (err: any) => {
