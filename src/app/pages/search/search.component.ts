@@ -1,4 +1,5 @@
-import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, DestroyRef, Inject, PLATFORM_ID } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -12,6 +13,9 @@ import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/b
 import { PhotographerUserCardComponent } from '../../shared/user-card/photographer-user-card/photographer-user-card.component';
 import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
 import { PlatformStats, formatMilestoneCount } from '../../shared/utils/platform-stats.util';
+import { CollaborationScoreUiUtilsService } from '../../services/collaboration-score-ui-utils.service';
+
+type TrendScoreBand = 'scored' | 'growing' | 'campaign_ready' | 'recommended';
 
 @Component({
   selector: 'app-search',
@@ -85,8 +89,57 @@ export class SearchComponent implements OnInit {
     { value: 'premium_first', label: 'Premium First' },
     { value: 'lowest_price', label: 'Lowest Price' },
     { value: 'highest_followers', label: 'Highest Followers' },
+    { value: 'trendscore_high', label: 'TrendScore: High to Low' },
   ];
   sortBy = 'recommended';
+
+  // ── TrendScore view (brand navbar "TrendScore" tab → /search?tab=influencers&view=trendscore) ──
+  // Same creator Search, ranked by TrendScore with a purpose-specific heading.
+  // Uses scores already returned with search results — no extra API calls.
+  trendScoreView = false;
+
+  /** TrendScore filter bands — the same live thresholds as the score badges on creator cards. */
+  get trendScoreFilterOptions(): { value: TrendScoreBand; label: string }[] {
+    const t = this.scoreUi.scoreThresholds;
+    const recommended = Math.max(t.trendstarzRecommendedMinScore, t.campaignReadyMinScore);
+    return [
+      { value: 'scored', label: 'Has a TrendScore' },
+      { value: 'growing', label: `Growing (${t.partiallyReadyMinScore}+)` },
+      { value: 'campaign_ready', label: `Campaign Ready (${t.campaignReadyMinScore}+)` },
+      { value: 'recommended', label: `TrendStarz Recommended (${recommended}+)` },
+    ];
+  }
+
+  private trendScoreValue(row: any): number | null {
+    const raw = row?.collaborationScore;
+    if (raw === null || raw === undefined || raw === '') return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  private meetsTrendScoreBand(row: any, band: TrendScoreBand | ''): boolean {
+    if (!band) return true;
+    const score = this.trendScoreValue(row);
+    if (score === null) return false;
+    const t = this.scoreUi.scoreThresholds;
+    switch (band) {
+      case 'growing': return score >= t.partiallyReadyMinScore;
+      case 'campaign_ready': return score >= t.campaignReadyMinScore;
+      case 'recommended': return score >= Math.max(t.trendstarzRecommendedMinScore, t.campaignReadyMinScore);
+      default: return true;
+    }
+  }
+
+  private applyTrendScoreViewParam(view: string | null): void {
+    const next = view === 'trendscore';
+    if (next === this.trendScoreView) return;
+    this.trendScoreView = next;
+    if (next) {
+      this.sortBy = 'trendscore_high';
+    } else if (this.sortBy === 'trendscore_high') {
+      this.sortBy = 'recommended';
+    }
+  }
 
   onSortChange(): void {
     if (this.isPhotographerMode) {
@@ -111,6 +164,7 @@ export class SearchComponent implements OnInit {
     tier: '',
     ageRange: '',
     minEngagement: 0,
+    trendScore: '' as TrendScoreBand | '',
   };
 
   // Brand filters
@@ -174,12 +228,16 @@ export class SearchComponent implements OnInit {
   }
 
   get pageTitle(): string {
+    if (this.isInfluencerMode && this.trendScoreView) return 'Find creators by TrendScore';
     if (this.isInfluencerMode) return 'Discover High-Impact Creators & Influencers';
     if (this.isPhotographerMode) return 'Discover Professional Photo/Videographers';
     return 'Discover Brands';
   }
 
   get heroSubtitle(): string {
+    if (this.isInfluencerMode && this.trendScoreView) {
+      return 'Discover and compare creators using TrendScore and other creator signals.';
+    }
     if (this.isInfluencerMode) {
       return 'Filter by niche, location, follower tier and age range, compare TrendScores and starting rates, and invite verified creators directly.';
     }
@@ -319,7 +377,7 @@ export class SearchComponent implements OnInit {
 
   get activeFilterCount(): number {
     const values = [this.activeKeyword, this.activeCategory, this.activeLocation, this.activeAgeRange];
-    if (this.isInfluencerMode) values.push(this.infFilters.tier);
+    if (this.isInfluencerMode) values.push(this.infFilters.tier, this.infFilters.trendScore);
     if (this.isPhotographerMode) values.push(this.photographerFilters.skill);
     return values.filter((v) => !!v).length;
   }
@@ -340,6 +398,8 @@ export class SearchComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private route: ActivatedRoute,
     public router: Router,
+    private scoreUi: CollaborationScoreUiUtilsService,
+    private destroyRef: DestroyRef,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -355,6 +415,18 @@ export class SearchComponent implements OnInit {
     this.loadPlatformStats();
     const urlTab = this.route.snapshot.queryParamMap.get('tab') as 'influencers' | 'brands' | 'photographers' | null;
     this.activeTab = this.isValidTab(urlTab) ? urlTab : this.defaultTab;
+    this.applyTrendScoreViewParam(this.route.snapshot.queryParamMap.get('view'));
+    // The page isn't re-created when the navbar switches between Search and TrendScore.
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const wasActive = this.trendScoreView;
+      this.applyTrendScoreViewParam(params.get('view'));
+      if (wasActive === this.trendScoreView) return;
+      if (this.trendScoreView && this.activeTab !== 'influencers' && this.showInfluencerTab) {
+        this.setTab('influencers');
+      }
+      this.applyInfluencerFilters();
+      this.cd.detectChanges();
+    });
     // Deep link from the home niche cards, e.g. /search?tab=influencers&category=Fashion
     const urlCategory = (this.route.snapshot.queryParamMap.get('category') || '').trim();
     if (urlCategory && this.activeTab === 'influencers') {
@@ -480,7 +552,9 @@ export class SearchComponent implements OnInit {
   setTab(tab: 'influencers' | 'brands' | 'photographers') {
     this.activeTab = tab;
     this.resetPageForMode(tab);
-    this.router.navigate([], { queryParams: { tab }, queryParamsHandling: 'merge', replaceUrl: true });
+    // The TrendScore view is a creator view — leaving the creators tab leaves it.
+    const queryParams = tab === 'influencers' ? { tab } : { tab, view: null };
+    this.router.navigate([], { queryParams, queryParamsHandling: 'merge', replaceUrl: true });
     if (tab === 'influencers' && this.allInfluencers.length === 0 && !this.influencersLoading) {
       this.fetchInfluencers({ countSearch: false });
     } else if (tab === 'photographers' && this.allPhotographers.length === 0 && !this.photographersLoading) {
@@ -831,6 +905,7 @@ export class SearchComponent implements OnInit {
         const ageRange = this.getInfluencerAgeRange(u);
         if (!ageRange || ageRange !== f.ageRange) return false;
       }
+      if (!this.meetsTrendScoreBand(u, f.trendScore)) return false;
       return true;
     });
     this.filteredInfluencers = this.sortResults(filtered, !!f.location);
@@ -878,7 +953,7 @@ export class SearchComponent implements OnInit {
 
   clearInfluencerFilters(countSearch = false) {
     const hadCategory = !!this.infFilters.category;
-    this.infFilters = { keyword: '', category: '', location: '', tier: '', ageRange: '', minEngagement: 0 };
+    this.infFilters = { keyword: '', category: '', location: '', tier: '', ageRange: '', minEngagement: 0, trendScore: '' };
     this.influencersPage = 1;
     this.applyInfluencerFilters();
     if (hadCategory) this.syncCategoryParam('');
@@ -1036,6 +1111,17 @@ export class SearchComponent implements OnInit {
         break;
       case 'highest_followers':
         sorted.sort((a: any, b: any) => this.getTopFollowersCount(b) - this.getTopFollowersCount(a));
+        break;
+      case 'trendscore_high':
+        // Unscored creators go last (never treated as 0), then the usual follower tiebreak.
+        sorted.sort((a: any, b: any) => {
+          const sa = this.trendScoreValue(a);
+          const sb = this.trendScoreValue(b);
+          if (sa === null && sb === null) return this.getTopFollowersCount(b) - this.getTopFollowersCount(a);
+          if (sa === null) return 1;
+          if (sb === null) return -1;
+          return sb - sa || this.getTopFollowersCount(b) - this.getTopFollowersCount(a);
+        });
         break;
     }
     return sorted;

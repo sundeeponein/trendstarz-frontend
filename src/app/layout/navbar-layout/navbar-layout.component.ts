@@ -102,6 +102,26 @@ export class NavbarLayoutComponent implements OnDestroy {
     return '/search';
   }
 
+  /** Brands get a TrendScore tab that lands on creator Search ranked by TrendScore (no YouTube call). */
+  readonly brandTrendScoreParams = { tab: 'influencers', view: 'trendscore' };
+
+  get showBrandTrendScoreLink(): boolean {
+    return this.user?.role === 'brand' && this.showSearchLink;
+  }
+
+  private get isTrendScoreSearchUrl(): boolean {
+    const url = this.router.url;
+    return url.startsWith('/search') && /[?&]view=trendscore(&|$)/.test(url);
+  }
+
+  get isBrandTrendScoreNavActive(): boolean {
+    return this.user?.role === 'brand' && this.isTrendScoreSearchUrl;
+  }
+
+  get isSearchNavActive(): boolean {
+    return this.router.url.startsWith('/search') && !this.isBrandTrendScoreNavActive;
+  }
+
   get showRegisterLinks(): boolean {
     return !this.user;
   }

@@ -95,6 +95,14 @@
       </div>
 
       <div class="filter-item" *ngIf="isInfluencerMode">
+        <label class="filter-label" for="f-trendscore">TrendScore</label>
+        <select id="f-trendscore" class="filter-select" [(ngModel)]="infFilters.trendScore" (ngModelChange)="influencersPage = 1; applyInfluencerFilters()">
+          <option value="">Any TrendScore</option>
+          <option *ngFor="let opt of trendScoreFilterOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+
+      <div class="filter-item" *ngIf="isInfluencerMode">
         <label class="filter-label" for="f-age">Age Range</label>
         <select id="f-age" class="filter-select" [ngModel]="activeAgeRange" (ngModelChange)="onAgeRangeChange($event)">
           <option value="">All Ages</option>

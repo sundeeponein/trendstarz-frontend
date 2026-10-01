@@ -18,7 +18,7 @@
         Dashboard
       </a>
       <!-- will active on in 30days so dont remove this code  -->
-      <a *ngIf="showSearchLink" [routerLink]="searchRoute" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
+      <a *ngIf="showSearchLink" [routerLink]="searchRoute" class="nav-tab" [class.active]="isSearchNavActive">
         {{ searchLabel }}
       </a>
       <a routerLink="/campaigns" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand'" class="nav-tab">
@@ -55,6 +55,10 @@
         For Creators
       </a>
       <a *ngIf="user?.role === 'influencer' || user?.role === 'photographer'" routerLink="/dashboard/trendstarz-score" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
+        TrendScore ⭐
+      </a>
+      <!-- Brands have no personal score: TrendScore opens creator Search ranked by TrendScore. -->
+      <a *ngIf="showBrandTrendScoreLink" routerLink="/search" [queryParams]="brandTrendScoreParams" class="nav-tab" [class.active]="isBrandTrendScoreNavActive">
         TrendScore ⭐
       </a>
     </div>
@@ -244,7 +248,7 @@
         <a routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }" *ngIf="user?.role === 'influencer'" class="mobile-link" [class.active]="isInfluencerCollaborationsNavActive" (click)="closeMobileMenu()"><i class="bi bi-camera-reels"></i><span>Collaborations</span></a>
         <a routerLink="/campaigns" [queryParams]="{ view: 'campaign_requests' }" *ngIf="user?.role === 'photographer'" class="mobile-link" [class.active]="isPhotographerCampaignsNavActive" (click)="closeMobileMenu()"><i class="bi bi-megaphone"></i><span>Campaigns</span></a>
         <a routerLink="/campaigns" [queryParams]="{ view: 'collaborations' }" *ngIf="user?.role === 'photographer'" class="mobile-link" [class.active]="isPhotographerCollaborationsNavActive" (click)="closeMobileMenu()"><i class="bi bi-camera-reels"></i><span>Collaborations</span></a>
-        <a *ngIf="showSearchLink" [routerLink]="searchRoute" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>
+        <a *ngIf="showSearchLink" [routerLink]="searchRoute" class="mobile-link" [class.active]="isSearchNavActive" (click)="closeMobileMenu()"><i class="bi bi-search"></i><span>{{ searchLabel }}</span></a>
         <a routerLink="/transactions" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" *ngIf="user?.role === 'brand' || user?.role === 'influencer' || user?.role === 'photographer'" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-receipt"></i><span>Transactions</span></a>
         <a routerLink="/how-it-works" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gear"></i><span>How It Works</span></a>
         <a *ngIf="user" routerLink="/why-trendstarz" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-stars"></i><span>Why TrendStarz</span></a>
@@ -253,6 +257,7 @@
         <a *ngIf="!user" routerLink="/features/influencers" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-person-video3"></i><span>For Creators</span></a>
         <p *ngIf="showGetStarted" class="mobile-link-heading">Get started as</p>
         <a *ngIf="user?.role === 'influencer' || user?.role === 'photographer'" routerLink="/dashboard/trendstarz-score" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>TrendScore ⭐</span></a>
+        <a *ngIf="showBrandTrendScoreLink" routerLink="/search" [queryParams]="brandTrendScoreParams" class="mobile-link" [class.active]="isBrandTrendScoreNavActive" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>TrendScore ⭐</span></a>
         <a *ngIf="showRegisterInfluencerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('influencer')" style="cursor:pointer;"><i class="bi bi-person-plus"></i><span>Influencer</span></a>
         <a *ngIf="showRegisterBrandLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('brand')" style="cursor:pointer;"><i class="bi bi-building"></i><span>Brand</span></a>
         <a *ngIf="showRegisterPhotographerLink" class="mobile-link" (click)="closeMobileMenu(); regConfirm.open('photographer')" style="cursor:pointer;"><i class="bi bi-camera"></i><span>Photo/Videographer</span></a>
