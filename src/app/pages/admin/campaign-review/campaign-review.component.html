@@ -257,6 +257,9 @@
               <button *ngIf="!canApproveCampaign(c) && !canRequestChangesCampaign(c)"
                       class="cm-act-btn cm-act-btn--view" type="button"
                       (click)="openCampaignPreview(c)">View</button>
+              <button class="cm-act-btn cm-act-btn--view" type="button"
+                      title="Which creators meet this campaign's requirements"
+                      (click)="openEligibility(c)">Eligibility</button>
             </div>
           </td>
         </tr>
@@ -332,6 +335,14 @@
   (dismissHostShareMessage)="onDismissHostShareMessage()"
   (requestPayoutMessagePhone)="onRequestPayoutMessagePhone($event)"
 ></app-campaign-detail-modal>
+
+<!-- ══ CREATOR ELIGIBILITY (Stage 3B-3) ══ -->
+<app-campaign-eligibility-panel
+  *ngIf="eligibilityCampaign"
+  [campaignId]="eligibilityCampaign.id"
+  [campaignTitle]="eligibilityCampaign.title"
+  (close)="closeEligibility()"
+></app-campaign-eligibility-panel>
 
 <!-- ══ MODERATION MODAL ══ -->
 <div class="modal-backdrop show" *ngIf="showModerationModal" (click)="closeModerationModal()"></div>

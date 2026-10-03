@@ -1,0 +1,251 @@
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
+import { AppPaginatorComponent } from '../../../../shared/components/app-paginator/app-paginator.component';
+import { environment } from '../../../../../environments/environment';
+
+// Stage 3B-3: GET admin/matching/eligibility/:campaignId — grouped, not ranked.
+export type EligibilityStatus = 'PASS' | 'UNKNOWN' | 'FAIL';
+export type EligibilityRequirementKey =
+  | 'accountApproval'
+  | 'creatorType'
+  | 'platformContent'
+  | 'category'
+  | 'minimumTier'
+  | 'location'
+  | 'language';
+
+interface StatusCounts {
+  PASS: number;
+  UNKNOWN: number;
+  FAIL: number;
+}
+
+export interface CampaignEligibilityRow {
+  creatorId: string;
+  creatorType: 'Influencer' | 'Photographer';
+  name: string;
+  username: string;
+  publicId: string;
+  overall: EligibilityStatus;
+  requirements: Record<
+    EligibilityRequirementKey,
+    { status: EligibilityStatus; reason: string; configured: boolean }
+  >;
+}
+
+export interface CampaignEligibilityList {
+  campaign: {
+    campaignId: string;
+    title: string;
+    status: string;
+    recipientRole: 'influencer' | 'photographer';
+    ownerType: 'brand' | 'photographer';
+    requirements: {
+      platforms: string[];
+      contentTypes: string[];
+      categories: string[];
+      targetCreatorCategories: string[];
+      minimumTier: string | null;
+      location: { state: string | null; district: string | null };
+      languages: string[];
+    };
+  };
+  scope: { creatorType: 'Influencer' | 'Photographer'; evaluated: number };
+  counts: StatusCounts;
+  requirementCounts: Record<EligibilityRequirementKey, StatusCounts & { configured: boolean }>;
+  total: number;
+  rows: CampaignEligibilityRow[];
+  notEvaluated: Array<{ input: string; reason: string }>;
+}
+
+type ApiEnvelope<T> = { success?: boolean; data?: T } & Partial<T>;
+function unwrapApiData<T>(res: ApiEnvelope<T> | null | undefined): T | undefined {
+  if (!res) return undefined;
+  return (res.data ?? res) as T;
+}
+
+export const ELIGIBILITY_REQUIREMENTS: Array<{ key: EligibilityRequirementKey; label: string }> = [
+  { key: 'accountApproval', label: 'Approval' },
+  { key: 'creatorType', label: 'Creator type' },
+  { key: 'platformContent', label: 'Platform / content' },
+  { key: 'category', label: 'Category' },
+  { key: 'minimumTier', label: 'Tier' },
+  { key: 'location', label: 'Location' },
+  { key: 'language', label: 'Language' },
+];
+
+@Component({
+  selector: 'app-campaign-eligibility-panel',
+  standalone: true,
+  imports: [CommonModule, FormsModule, AppPaginatorComponent],
+  templateUrl: './campaign-eligibility-panel.component.html',
+  styleUrls: ['./campaign-eligibility-panel.component.scss'],
+})
+export class CampaignEligibilityPanelComponent implements OnInit, OnDestroy {
+  @Input({ required: true }) campaignId = '';
+  @Input() campaignTitle = '';
+  @Output() close = new EventEmitter<void>();
+
+  readonly statuses: EligibilityStatus[] = ['PASS', 'UNKNOWN', 'FAIL'];
+  readonly requirements = ELIGIBILITY_REQUIREMENTS;
+  readonly pageSizeOptions = [10, 25, 50, 100];
+
+  selectedStatuses = new Set<EligibilityStatus>(['PASS', 'UNKNOWN']);
+  requirementFilter: EligibilityRequirementKey | '' = '';
+  searchQuery = '';
+  currentPage = 1;
+  pageSize = 25;
+
+  data: CampaignEligibilityList | null = null;
+  loading = false;
+  error = '';
+  showNotEvaluated = false;
+
+  private request: Subscription | null = null;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+  ) {}
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  ngOnDestroy(): void {
+    this.request?.unsubscribe();
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+  }
+
+  private authHeaders() {
+    const token =
+      typeof window === 'undefined'
+        ? null
+        : localStorage.getItem('token') || sessionStorage.getItem('token');
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  }
+
+  buildQuery(): string {
+    const params = new URLSearchParams({
+      status: this.statuses.filter((s) => this.selectedStatuses.has(s)).join(','),
+      page: String(this.currentPage),
+      pageSize: String(this.pageSize),
+    });
+    if (this.requirementFilter) params.set('requirement', this.requirementFilter);
+    if (this.searchQuery.trim()) params.set('q', this.searchQuery.trim());
+    return params.toString();
+  }
+
+  load(): void {
+    if (!this.campaignId) return;
+    this.request?.unsubscribe();
+    this.loading = true;
+    this.error = '';
+    this.request = this.http
+      .get<ApiEnvelope<CampaignEligibilityList>>(
+        `${environment.apiBaseUrl}/admin/matching/eligibility/${encodeURIComponent(this.campaignId)}?${this.buildQuery()}`,
+        this.authHeaders(),
+      )
+      .subscribe({
+        next: (res) => {
+          this.data = unwrapApiData(res) ?? null;
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.error = err?.error?.message || 'Could not load creator eligibility.';
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  toggleStatus(status: EligibilityStatus): void {
+    if (this.selectedStatuses.has(status)) {
+      // Keep at least one group selected (the backend would fall back to its default).
+      if (this.selectedStatuses.size === 1) return;
+      this.selectedStatuses.delete(status);
+    } else {
+      this.selectedStatuses.add(status);
+    }
+    this.currentPage = 1;
+    this.load();
+  }
+
+  onRequirementFilterChange(): void {
+    this.currentPage = 1;
+    this.load();
+  }
+
+  onSearchChange(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => {
+      this.currentPage = 1;
+      this.load();
+    }, 300);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.load();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.load();
+  }
+
+  statusLabel(status: EligibilityStatus): string {
+    return status === 'PASS' ? 'Eligible' : status === 'UNKNOWN' ? 'Unknown' : 'Not eligible';
+  }
+
+  /** Requirements the row does not pass, with the backend's reason. */
+  openIssues(
+    row: CampaignEligibilityRow,
+  ): Array<{ label: string; status: EligibilityStatus; reason: string }> {
+    return this.requirements
+      .map(({ key, label }) => ({ label, ...row.requirements[key] }))
+      .filter((r) => r.status !== 'PASS')
+      .map(({ label, status, reason }) => ({ label, status, reason }));
+  }
+
+  requirementChips(): Array<{ label: string; value: string }> {
+    const r = this.data?.campaign.requirements;
+    if (!r) return [];
+    const list = (values: string[]) => (values.length ? values.join(', ') : 'Any');
+    const location = [r.location.district, r.location.state].filter(Boolean).join(', ');
+    const photographerOwned = this.data?.campaign.ownerType === 'photographer';
+    return [
+      {
+        label: 'Creators',
+        value: this.data?.scope.creatorType === 'Photographer' ? 'Photographers' : 'Influencers',
+      },
+      { label: 'Platforms', value: list(r.platforms) },
+      { label: 'Content', value: list(r.contentTypes.map((c) => c.replace(':', ' · '))) },
+      {
+        label: 'Categories',
+        value: list(photographerOwned ? r.targetCreatorCategories : r.categories),
+      },
+      { label: 'Tier', value: r.minimumTier ? `${r.minimumTier} or above` : 'Any' },
+      { label: 'Location', value: location || 'Any' },
+      { label: 'Languages', value: list(r.languages) },
+    ];
+  }
+
+  trackRow(_: number, row: CampaignEligibilityRow): string {
+    return row.creatorId;
+  }
+}

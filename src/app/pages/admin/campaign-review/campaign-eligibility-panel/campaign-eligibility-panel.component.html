@@ -1,0 +1,151 @@
+<div class="modal-backdrop show" (click)="close.emit()"></div>
+<div class="modal d-block" tabindex="-1" (click)="close.emit()">
+  <div
+    class="modal-dialog modal-dialog-centered ts-dialog-xlarge"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-content ts-modal ce-modal">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title">Creator eligibility</h5>
+          <div class="ce-subtitle">
+            {{ data?.campaign?.title || campaignTitle || 'Untitled campaign' }}
+          </div>
+        </div>
+        <button type="button" class="btn-close" (click)="close.emit()" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="ce-note">
+          Checks each creator against this campaign's requirements. Grouped, not ranked — no scores.
+        </p>
+
+        <div class="ce-req-chips" *ngIf="data">
+          <span class="ce-req-chip" *ngFor="let chip of requirementChips()">
+            <span class="ce-req-label">{{ chip.label }}</span> {{ chip.value }}
+          </span>
+        </div>
+
+        <div class="ce-groups" *ngIf="data">
+          <button
+            *ngFor="let s of statuses"
+            type="button"
+            class="ce-group"
+            [ngClass]="'ce-group--' + s.toLowerCase()"
+            [class.ce-group--active]="selectedStatuses.has(s)"
+            [attr.aria-pressed]="selectedStatuses.has(s)"
+            (click)="toggleStatus(s)"
+          >
+            <span class="ce-group-count">{{ data.counts[s] }}</span>
+            <span class="ce-group-label">{{ statusLabel(s) }}</span>
+          </button>
+          <span class="ce-scope"
+            >of {{ data.scope.evaluated }}
+            {{ data.scope.creatorType === 'Photographer' ? 'photographers' : 'influencers' }}</span
+          >
+        </div>
+
+        <div class="ce-toolbar">
+          <input
+            class="form-control form-control-sm ce-search"
+            type="text"
+            placeholder="Search name, username or ID"
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchChange()"
+          />
+          <select
+            class="form-select form-select-sm ce-select"
+            [(ngModel)]="requirementFilter"
+            (ngModelChange)="onRequirementFilterChange()"
+          >
+            <option value="">Any requirement</option>
+            <option *ngFor="let r of requirements" [value]="r.key">
+              Not met: {{ r.label
+              }}<ng-container *ngIf="data">
+                ({{ data.requirementCounts[r.key].FAIL }} fail ·
+                {{ data.requirementCounts[r.key].UNKNOWN }} unknown)</ng-container
+              >
+            </option>
+          </select>
+        </div>
+
+        <div *ngIf="loading" class="ce-state">Loading creators…</div>
+        <div *ngIf="error && !loading" class="ce-state ce-state--error">{{ error }}</div>
+
+        <ng-container *ngIf="data && !loading && !error">
+          <div *ngIf="data.rows.length === 0" class="ce-state">
+            No creators in the selected groups.
+          </div>
+
+          <div class="ce-row" *ngFor="let row of data.rows; trackBy: trackRow">
+            <div class="ce-row-head">
+              <div class="ce-creator">
+                <span class="ce-name">{{ row.name || 'Unnamed creator' }}</span>
+                <span class="ce-meta">
+                  <span *ngIf="row.username">&#64;{{ row.username }}</span>
+                  <span *ngIf="row.publicId"> · {{ row.publicId }}</span>
+                </span>
+              </div>
+              <span class="ce-pill" [ngClass]="'ce-pill--' + row.overall.toLowerCase()">{{
+                statusLabel(row.overall)
+              }}</span>
+            </div>
+            <div class="ce-chips">
+              <span
+                *ngFor="let r of requirements"
+                class="ce-chip"
+                [ngClass]="
+                  row.requirements[r.key].configured
+                    ? 'ce-chip--' + row.requirements[r.key].status.toLowerCase()
+                    : 'ce-chip--unset'
+                "
+                [title]="row.requirements[r.key].reason"
+              >
+                <i
+                  class="bi"
+                  [ngClass]="
+                    !row.requirements[r.key].configured
+                      ? 'bi-dash'
+                      : row.requirements[r.key].status === 'PASS'
+                        ? 'bi-check-lg'
+                        : row.requirements[r.key].status === 'FAIL'
+                          ? 'bi-x-lg'
+                          : 'bi-question-lg'
+                  "
+                ></i>
+                {{ r.label }}
+              </span>
+            </div>
+            <ul class="ce-reasons" *ngIf="openIssues(row).length">
+              <li
+                *ngFor="let issue of openIssues(row)"
+                [ngClass]="'ce-reason--' + issue.status.toLowerCase()"
+              >
+                <strong>{{ issue.label }}:</strong> {{ issue.reason }}
+              </li>
+            </ul>
+          </div>
+
+          <app-paginator
+            [total]="data.total"
+            [pageSize]="pageSize"
+            [currentPage]="currentPage"
+            [pageSizeOptions]="pageSizeOptions"
+            entityLabel="creators"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+          ></app-paginator>
+
+          <button type="button" class="ce-link" (click)="showNotEvaluated = !showNotEvaluated">
+            {{ showNotEvaluated ? 'Hide' : 'Show' }} what is not checked
+          </button>
+          <ul class="ce-not-evaluated" *ngIf="showNotEvaluated">
+            <li *ngFor="let n of data.notEvaluated">
+              <strong>{{ n.input }}:</strong> {{ n.reason }}
+            </li>
+          </ul>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

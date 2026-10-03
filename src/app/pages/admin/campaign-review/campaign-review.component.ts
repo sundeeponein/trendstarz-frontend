@@ -10,6 +10,7 @@ import { AppPaginatorComponent } from '../../../shared/components/app-paginator/
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/toast/toast.service';
 import { campaignIdLabel as sharedCampaignIdLabel } from '../../../shared/referral-link.util';
+import { CampaignEligibilityPanelComponent } from './campaign-eligibility-panel/campaign-eligibility-panel.component';
 
 interface CampaignShareMessages {
   openCampaignMessage: string;
@@ -22,7 +23,15 @@ interface CampaignShareMessages {
 @Component({
   selector: 'app-campaign-review',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, CampaignDetailModalComponent, CampaignAlertMessageComponent, AppPaginatorComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    CampaignDetailModalComponent,
+    CampaignAlertMessageComponent,
+    AppPaginatorComponent,
+    CampaignEligibilityPanelComponent,
+  ],
   templateUrl: './campaign-review.component.html',
   styleUrls: ['./campaign-review.component.scss'],
 })
@@ -96,6 +105,8 @@ export class CampaignReviewComponent implements OnInit {
   approvedCampaignShareMessages: CampaignShareMessages | null = null;
   approvedCampaignShareMessagesLoading = false;
   alertMessageCopied = false;
+  // Stage 3B-3: read-only creator eligibility list for one campaign.
+  eligibilityCampaign: { id: string; title: string } | null = null;
 
   private readonly isServer: boolean;
 
@@ -109,6 +120,17 @@ export class CampaignReviewComponent implements OnInit {
     private elRef: ElementRef<HTMLElement>,
   ) {
     this.isServer = isPlatformServer(platformId);
+  }
+
+  openEligibility(c: any): void {
+    this.eligibilityCampaign = {
+      id: String(c?._id || ''),
+      title: c?.title || c?.campaignTitle || '',
+    };
+  }
+
+  closeEligibility(): void {
+    this.eligibilityCampaign = null;
   }
 
   @HostListener('document:click', ['$event'])
