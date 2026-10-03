@@ -23,7 +23,7 @@ import { FlowHelpModalService } from '../../shared/components/flow-help-modal/fl
 import { PromoLinkCardComponent } from '../../shared/promo-link-card/promo-link-card.component';
 import { campaignIdLabel, promotionUrlTypeLabel } from '../../shared/referral-link.util';
 import { TrackingLinksApiService } from '../../shared/tracking-links/tracking-links-api.service';
-import { normalizeTierLabel, getInfluencerPrimaryTier } from '../../shared/tiers.constants';
+import { normalizeTierLabel, getInfluencerPrimaryTier, meetsMinimumTier } from '../../shared/tiers.constants';
 import { ShippingAddressModalComponent } from '../../shared/components/shipping-address-modal/shipping-address-modal.component';
 import { ShippingAddressModalService, ShippingAddress } from '../../shared/components/shipping-address-modal/shipping-address-modal.service';
 import { OfferTrailComponent } from '../../shared/offer-trail/offer-trail.component';
@@ -3938,11 +3938,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
     if (!candidates.length) return [];
 
+    // Minimum tier = this tier or above (not an exact match).
     if (minIdx !== -1) {
-      candidates = candidates.filter(smEntry => {
-        const idx = TIER_ORDER.indexOf(smEntry.tier || '');
-        return idx !== -1 && idx === minIdx;
-      });
+      candidates = candidates.filter(smEntry => meetsMinimumTier(smEntry.tier, minTier));
     }
     return candidates;
   }
@@ -4555,14 +4553,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
       if (selectedPlatform) {
         const matched = smList.find((sm: any) => String(sm?.platform || '').trim().toLowerCase() === selectedPlatform);
-        if (matched) {
-          const infIdx = ORDER.indexOf(String(matched?.tier || '').trim());
-          if (infIdx !== -1 && infIdx === reqIdx) return true;
-        }
+        if (matched && meetsMinimumTier(matched?.tier, requiredTier)) return true;
       }
 
+      // Minimum tier = this tier or above (not an exact match).
       if (!relevant.length) return false;
-      return relevant.some((sm: any) => ORDER.indexOf(String(sm?.tier || '').trim()) === reqIdx);
+      return relevant.some((sm: any) => meetsMinimumTier(sm?.tier, requiredTier));
     });
   }
 

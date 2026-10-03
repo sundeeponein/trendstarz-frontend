@@ -45,6 +45,19 @@ export function normalizeTierLabel(tier: string): string {
 }
 
 /**
+ * Open-campaign tier rule (matches the backend's meetsMinimumTier): the
+ * creator's tier is AT LEAST the campaign minimum, by TIER_ORDER. No minimum,
+ * or an unrecognised minimum, means no restriction; an unrecognised creator
+ * tier never qualifies.
+ */
+export function meetsMinimumTier(creatorTier: string | null | undefined, minimumTier: string | null | undefined): boolean {
+  const minIdx = TIER_ORDER.indexOf(normalizeTierLabel(minimumTier || ''));
+  if (minIdx === -1) return true;
+  const idx = TIER_ORDER.indexOf(normalizeTierLabel(creatorTier || ''));
+  return idx !== -1 && idx >= minIdx;
+}
+
+/**
  * Extracts and normalizes the primary tier from an influencer object.
  * Checks socialMedia[0].tier first, then any socialMedia entry, then inf.tier.
  */
