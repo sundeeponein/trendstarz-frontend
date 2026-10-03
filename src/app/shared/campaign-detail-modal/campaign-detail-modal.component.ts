@@ -58,6 +58,8 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Input() showDateInput = true;
   @Input() busy = false;
   @Input() adminReview = false;
+  /** Campaign owner's read-only view: show everything they entered, no tracked-link creation. */
+  @Input() hostView = false;
   @Input() adminInviteProgressLoading = false;
   @Input() adminCanApprove = true;
   @Input() adminCanRequestChanges = true;
@@ -430,6 +432,35 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   get resourceImages(): { url: string; public_id: string }[] {
     return Array.isArray(this.campaign?.resourceImages) ? this.campaign.resourceImages : [];
   }
+  /**
+   * A real invite (not the stand-in object the brand profile, campaign list and
+   * host view build around a campaign) — only real invites have a recipient.
+   */
+  get isRealInvite(): boolean {
+    return !!(this.invite?.influencerId || this.invite?.photographerId);
+  }
+
+  /**
+   * Campaign assets (caption, hashtags, promotion link, brand images) are
+   * "shared with the creator once they accept" (campaign form). So: the
+   * accepted creator on their own invite, the host viewing their campaign, and
+   * admin during review — never public brand-profile/campaign-list previews.
+   */
+  get showCampaignResources(): boolean {
+    if (!this.hasCampaignResources) return false;
+    if (this.hostView || this.adminReview) return true;
+    return this.isCreatorViewer && this.isRealInvite && this.isAcceptedOrLater;
+  }
+
+  /** Host/admin see the raw destination; only the accepted creator gets a tracked link (which is created on demand). */
+  get showRawPromotionLink(): boolean {
+    return (this.hostView || this.adminReview) && !!this.resourcePromotionUrl;
+  }
+
+  get showTrackedPromotionLink(): boolean {
+    return !this.hostView && !this.adminReview && this.isRealInvite && !!this.resourcePromotionUrl;
+  }
+
   get hasCampaignResources(): boolean {
     return !!(
       this.resourcePromotionUrl ||
