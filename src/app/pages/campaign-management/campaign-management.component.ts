@@ -3721,6 +3721,40 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   // ── My Invites (influencer) ───────────────────────────────────
 
   // Preview modal — shows campaign + brand details before accept/decline
+  // ── Host read-only campaign view ──────────────────────────────────────
+  // Lets the campaign owner read everything they entered (brief, deliverables,
+  // caption, hashtags, promotion link, asset images) without opening the edit
+  // form — including running campaigns. Reuses the shared detail modal with a
+  // stand-in "accepted" invite (no Accept/Decline), like the brand profile view.
+  hostViewInvite: any | null = null;
+  hostViewLoadingId: string | null = null;
+
+  openHostCampaignView(c: any): void {
+    const id = String(c?._id || '');
+    if (!id) return;
+    this.hostViewLoadingId = id;
+    // List rows can be partial — load the full campaign so assets/hashtags are present.
+    // getCampaignById resolves null on failure — fall back to the list row then.
+    this.config.getCampaignById(id).subscribe((res: any) => {
+      const full = res && typeof res === 'object' ? res : c;
+      this.hostViewLoadingId = null;
+      this.hostViewInvite = {
+        _id: id,
+        status: 'accepted',
+        campaign: full,
+        brandId: {
+          brandName: c?.brandName || full?.brandName || '',
+          brandUsername: c?.brandUsername || full?.brandUsername || '',
+        },
+      };
+      this.cd.detectChanges();
+    });
+  }
+
+  closeHostCampaignView(): void {
+    this.hostViewInvite = null;
+  }
+
   invitePreview: any | null = null;
   // Only show preview modal when opened explicitly by user action
   invitePreviewManual = false;

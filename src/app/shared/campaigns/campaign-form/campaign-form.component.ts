@@ -1585,10 +1585,17 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     const endDate = new Date(end);
     if (endDate < startDate) return { invalidDateRange: true };
 
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    const minStart = new Date(today.getTime() + this.minStartDays * CampaignFormComponent.MS_PER_DAY);
-    if (startDate < minStart) return { invalidStartDate: true };
+    // Lead time applies to a NEW or CHANGED start date only. Editing a running
+    // campaign keeps its (now past) start date — that must not block the
+    // steps or the save (the backend applies the same rule).
+    const originalStart = (this.campaign as any)?.startDate || (this.campaign as any)?.timelineStart;
+    const startUnchanged = this.isEdit && !!originalStart && this.formatDate(originalStart) === this.formatDate(start);
+    if (!startUnchanged) {
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const minStart = new Date(today.getTime() + this.minStartDays * CampaignFormComponent.MS_PER_DAY);
+      if (startDate < minStart) return { invalidStartDate: true };
+    }
 
     const maxDurationMs = this.maxDurationDays * CampaignFormComponent.MS_PER_DAY;
     if (endDate.getTime() - startDate.getTime() > maxDurationMs) return { invalidDuration: true };

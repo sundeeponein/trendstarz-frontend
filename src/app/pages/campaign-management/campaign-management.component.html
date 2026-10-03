@@ -633,6 +633,10 @@
               <button class="btn-cmanage" [class.is-open]="expandedCampaignId === c._id" (click)="toggleExpand(c)">
                 Manage <i class="bi bi-chevron-down"></i>
               </button>
+              <!-- Read-only view of everything the host entered (brief, deliverables, caption, hashtags, assets) — works for running campaigns too. -->
+              <button class="btn-invite" type="button" (click)="openHostCampaignView(c)" [disabled]="hostViewLoadingId === c._id" title="View campaign details (read-only)">
+                <i class="bi bi-eye"></i> {{ hostViewLoadingId === c._id ? 'Opening…' : 'View' }}
+              </button>
               <button class="btn-invite" (click)="openInvitePanel(c)"
                 [title]="isInviteQuotaFull(c) ? 'Invite quota full (' + getCardInvitedCount(c) + '/' + (c.maxInfluencers || 0) + ')' : 'Invite recipients'"
                 [disabled]="c.status === 'completed' || isInviteQuotaFull(c)">
@@ -1782,6 +1786,15 @@
     </div>
 
   </div>
+
+  <!-- ─── Host read-only campaign view (same detail modal, no Accept/Decline) ─── -->
+  <app-campaign-detail-modal
+    *ngIf="hostViewInvite"
+    [visible]="!!hostViewInvite"
+    [invite]="hostViewInvite"
+    [showDateInput]="false"
+    (close)="closeHostCampaignView()"
+  ></app-campaign-detail-modal>
 
   <!-- ─── Shared Campaign Detail Modal ─── -->
   <app-campaign-detail-modal
