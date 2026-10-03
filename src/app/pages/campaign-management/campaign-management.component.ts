@@ -3916,9 +3916,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   getOpenCampaignPreviewPlatforms(campaign: Campaign | null): string[] {
     if (!campaign) return [];
     const platforms: string[] = Array.isArray((campaign as any)?.platforms) ? (campaign as any).platforms : [];
-    // Treat campaigns as tier-filtered when either the explicit campaignMode is set
-    // to 'tier_filtered_open' OR a minimum influencer tier is provided on the campaign.
-    const isTierFiltered = String((campaign as any)?.campaignMode || '').toLowerCase() === 'tier_filtered_open' || !!(campaign as any)?.minInfluencerTier;
+    // Tier-filtered means campaignMode 'tier_filtered_open' only. Since Stage 3B-1
+    // invite-only campaigns may also store a minimum tier as a matching
+    // requirement; that must never gate who an invite-only campaign shows to.
+    const isTierFiltered = String((campaign as any)?.campaignMode || '').toLowerCase() === 'tier_filtered_open';
     if (!isTierFiltered) return platforms;
 
     const norm = (s: string) => String(s || '').trim().toLowerCase();
@@ -4184,7 +4185,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     // The embedded campaignId object from the invites API often omits those fields.
     const cid = embedded?._id || embedded?.id;
     const campaign: any = (cid && this.campaigns.find((c: any) => String(c._id) === String(cid))) || embedded;
-    const isTierFiltered = String(campaign?.campaignMode || '').toLowerCase() === 'tier_filtered_open' || !!campaign?.minInfluencerTier;
+    // Mode only — an invite-only campaign's minimum tier is a matching requirement, not a gate (Stage 3B-1).
+    const isTierFiltered = String(campaign?.campaignMode || '').toLowerCase() === 'tier_filtered_open';
     if (!isTierFiltered) return [];
     const normalized = (value: string) => String(value || '').trim().toLowerCase();
     const seen = new Set<string>();

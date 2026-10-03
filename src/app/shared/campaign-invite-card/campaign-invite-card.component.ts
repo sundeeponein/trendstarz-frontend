@@ -755,7 +755,8 @@ export class CampaignInviteCardComponent {
 
   get platformText(): string {
     const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
-    const isTierFiltered = campaignMode === 'tier_filtered_open' || !!this.campaign?.minInfluencerTier;
+    // Mode only — an invite-only campaign's minimum tier is a matching requirement, not a gate (Stage 3B-1).
+    const isTierFiltered = campaignMode === 'tier_filtered_open';
     if (this.isActionable && (isTierFiltered || this.hasMultiplePlatformChoices)) {
       if (this.qualifyingPlatformChoices.length) {
         return this.qualifyingPlatformChoices.map((platform) => this.platformLabel(platform)).join(', ');
@@ -780,7 +781,8 @@ export class CampaignInviteCardComponent {
   get selectedOutputs(): string[] {
     const sm = this.campaign?.socialMedia;
     const campaignMode = String(this.campaign?.campaignMode || '').toLowerCase();
-    const isTierFiltered = campaignMode === 'tier_filtered_open' || !!this.campaign?.minInfluencerTier;
+    // Mode only — an invite-only campaign's minimum tier is a matching requirement, not a gate (Stage 3B-1).
+    const isTierFiltered = campaignMode === 'tier_filtered_open';
     const qualifying = this.qualifyingPlatformKeySet;
     // If campaign is tier-filtered and influencer doesn't qualify for any platform,
     // do not show legacy deliverables — return empty list.

@@ -12,6 +12,7 @@ import { CampaignGuideModalService, CampaignGuideContent } from '../../component
 import { CampaignGuideModalComponent } from '../../components/campaign-guide-modal/campaign-guide-modal.component';
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog.component';
 import { TIER_ORDER, TIER_DESC_MAP, normalizeTierLabel, getInfluencerPrimaryTier } from '../../tiers.constants';
+import { campaignTargetDistrictOf, campaignTargetLocationPayload } from '../campaign-location.util';
 import { ToastService } from '../../toast/toast.service';
 import { getRequiredFields, CampaignRequiredFieldsCtx } from '../campaign-required-fields';
 import { FREE_CAPABILITIES, PlanCapabilities, PlansService } from '../../plans.service';
@@ -360,6 +361,31 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   states: any[] = [];
+  languageOptions: string[] = [];
+
+  /** Stage 3B-1: requirements are offered on every campaign this form creates for influencers. */
+  get showCreatorRequirements(): boolean {
+    return !this.isPhotographerCreator;
+  }
+
+  get isRequirementGating(): boolean {
+    return this.f['campaignMode']?.value === 'tier_filtered_open';
+  }
+
+  isLanguageSelected(lang: string): boolean {
+    const list: string[] = this.form.get('languages')?.value || [];
+    return list.some((l) => l.toLowerCase() === lang.toLowerCase());
+  }
+
+  toggleLanguage(lang: string): void {
+    const ctrl = this.form.get('languages');
+    const list: string[] = [...(ctrl?.value || [])];
+    const idx = list.findIndex((l) => l.toLowerCase() === lang.toLowerCase());
+    if (idx >= 0) list.splice(idx, 1);
+    else list.push(lang);
+    ctrl?.setValue(list);
+    ctrl?.markAsDirty();
+  }
   districts: any[] = [];
   targetDistricts: any[] = [];
   selectedCategories: string[] = [];
@@ -423,8 +449,9 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
               timelineStart: this.formatDate(newCampaign.timelineStart),
               timelineEnd: this.formatDate(newCampaign.timelineEnd),
               minInfluencerTier: newCampaign.minInfluencerTier || '',
+              languages: Array.isArray(newCampaign.languages) ? [...newCampaign.languages] : [],
               targetState: newCampaign.targetState || '',
-              targetDistrict: (newCampaign.targetCities && newCampaign.targetCities[0]) || '',
+              targetDistrict: campaignTargetDistrictOf(newCampaign),
               platformPreference: newCampaign.platformPreference || '',
               shootLocationType: newCampaign.shootLocationType || '',
               shootLocationAddress: newCampaign.shootLocationAddress || '',
@@ -531,8 +558,10 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       timelineStart: [this.formatDate(this.campaign?.timelineStart), Validators.required],
       timelineEnd: [this.formatDate(this.campaign?.timelineEnd), Validators.required],
       minInfluencerTier: [(this.campaign as any)?.minInfluencerTier || ''],
+      // Stage 3B-1: optional creator languages (from the languages master list).
+      languages: [Array.isArray((this.campaign as any)?.languages) ? [...(this.campaign as any).languages] : []],
       targetState: [(this.campaign as any)?.targetState || ''],
-      targetDistrict: [(this.campaign as any)?.targetCities?.[0] || ''],
+      targetDistrict: [campaignTargetDistrictOf(this.campaign)],
       platformPreference: [this.campaign?.platformPreference || ''],
       shootLocationType: [(this.campaign as any)?.shootLocationType || ''],
       shootLocationAddress: [(this.campaign as any)?.shootLocationAddress || ''],
@@ -629,6 +658,17 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
         this.loadInviteRecipients();
       }
       this.cd.detectChanges();
+    });
+
+    // Stage 3B-1: language options for the optional creator-language requirement.
+    this.config.getLanguages().subscribe({
+      next: (data: any[]) => {
+        this.languageOptions = (Array.isArray(data) ? data : [])
+          .map((l: any) => String(l?.name || '').trim())
+          .filter(Boolean);
+        this.cd.detectChanges();
+      },
+      error: () => { this.languageOptions = []; },
     });
 
     // Load states and (when state selected) districts
@@ -999,8 +1039,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       pricePerInfluencer: v.pricePerInfluencer ? Math.round(Number(v.pricePerInfluencer) * 100) : 0,
       minInfluencers: Number(v.minInfluencers || 1),
       status: keepStatus ? originalStatus : (this.isEdit ? originalStatus : 'draft'),
-      targetCities: v.targetDistrict ? [v.targetDistrict] : [],
-      targetDistrict: undefined,
+      // T1: the selected district goes to targetDistrict (see campaign-location.util).
+      ...campaignTargetLocationPayload(v.targetState, v.targetDistrict),
     };
     base.acceptanceDeadline = base.acceptanceDeadline ? new Date(base.acceptanceDeadline).toISOString() : undefined;
     this.sanitizeCampaignTypeFields(base);
@@ -3022,8 +3062,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       deliverables: this.isPhotographerCreator || this.isInvitingPhotographers
         ? this.selectedPhotographerDeliverables
         : this.getInfluencerDeliverables(),
-      targetCities: v.targetDistrict ? [v.targetDistrict] : [],
-      targetDistrict: undefined,
+      // T1: the selected district goes to targetDistrict (see campaign-location.util).
+      ...campaignTargetLocationPayload(v.targetState, v.targetDistrict),
       categories: this.cappedTargetCategories(),
       // Target (influencer) Categories for the photographer-creator's own
       // listing has no free field of its own (`categories` already holds

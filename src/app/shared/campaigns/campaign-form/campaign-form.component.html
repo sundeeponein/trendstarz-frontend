@@ -794,10 +794,19 @@
           </div>
         </ng-container>
 
+        <!-- ── Creator requirements (Stage 3B-1) ──
+             Open campaigns: these limit who can apply (unchanged behaviour).
+             Invite-only campaigns: stored for future matching only — they never
+             restrict who you can invite or who sees the campaign. -->
+        <p class="field-sublabel" *ngIf="showCreatorRequirements && !isRequirementGating" style="margin-bottom:8px;">
+          <i class="bi bi-sliders"></i>
+          <strong>Creator requirements</strong> <span class="text-muted">(optional)</span> — helps us suggest suitable creators later. They don't restrict who you can invite.
+        </p>
+
         <!-- ── Minimum tier ── -->
-        <div class="field-group" *ngIf="f['campaignMode'].value === 'tier_filtered_open'">
+        <div class="field-group" *ngIf="isRequirementGating || showCreatorRequirements">
           <label class="field-label">
-            Minimum tier
+            Minimum tier <span class="text-muted" style="font-weight:400;" *ngIf="!isRequirementGating">(optional)</span>
             <i class="bi bi-info-circle" title="View tier info" style="cursor:pointer;margin-left:6px;" (click)="tierInfo.open()"></i>
           </label>
           <select [formControl]="$any(form.get('minInfluencerTier'))" class="field-input">
@@ -806,12 +815,16 @@
           </select>
         </div>
 
-        <!-- ── Location targeting (only for tier_filtered_open) ── -->
-        <div class="field-group" *ngIf="f['campaignMode'].value === 'tier_filtered_open'">
+        <!-- ── Location targeting (limits applicants on open campaigns; a requirement only on invite-only) ── -->
+        <div class="field-group" *ngIf="isRequirementGating || showCreatorRequirements">
           <label class="field-label">Target location <span class="text-muted" style="font-weight:400;">(optional)</span></label>
-          <p class="field-sublabel" style="margin-bottom:8px;">
+          <p class="field-sublabel" style="margin-bottom:8px;" *ngIf="isRequirementGating">
             <i class="bi bi-geo-alt"></i>
             Limit applicants to {{ inviteRecipientLabelPlural.toLowerCase() }} from a specific state and/or city. Leave blank to accept from anywhere in India.
+          </p>
+          <p class="field-sublabel" style="margin-bottom:8px;" *ngIf="!isRequirementGating">
+            <i class="bi bi-geo-alt"></i>
+            Where you'd prefer {{ inviteRecipientLabelPlural.toLowerCase() }} to be based. Leave blank for anywhere in India.
           </p>
           <div class="field-row">
             <div class="field-group half">
@@ -827,6 +840,21 @@
                 <option *ngFor="let d of targetDistricts" [value]="d.name">{{ d.name }}</option>
               </select>
             </div>
+          </div>
+        </div>
+
+        <!-- ── Creator languages (Stage 3B-1, optional, stored only) ── -->
+        <div class="field-group" *ngIf="(isRequirementGating || showCreatorRequirements) && languageOptions.length">
+          <label class="field-label">Creator languages <span class="text-muted" style="font-weight:400;">(optional)</span></label>
+          <p class="field-sublabel" style="margin-bottom:8px;">
+            <i class="bi bi-translate"></i>
+            Languages you'd like the content in. Used to suggest creators later — it doesn't filter anyone today.
+          </p>
+          <div class="chip-list">
+            <button type="button" class="chip" *ngFor="let lang of languageOptions"
+                    [class.chip--selected]="isLanguageSelected(lang)"
+                    [attr.aria-pressed]="isLanguageSelected(lang)"
+                    (click)="toggleLanguage(lang)">{{ lang }}</button>
           </div>
         </div>
 

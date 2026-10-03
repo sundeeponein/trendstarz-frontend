@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
+import { campaignTargetDistrictOf, campaignTargetLocationPayload } from '../../campaigns/campaign-location.util';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Campaign } from '../../campaigns/campaign.model';
@@ -69,7 +70,7 @@ export class PhotographerCollaborationFormComponent implements OnInit, OnChanges
       timelineStart: [this.formatDate(this.campaign?.timelineStart), Validators.required],
       timelineEnd: [this.formatDate(this.campaign?.timelineEnd), Validators.required],
       targetState: [(this.campaign as any)?.targetState || ''],
-      targetDistrict: [(this.campaign as any)?.targetCities?.[0] || ''],
+      targetDistrict: [campaignTargetDistrictOf(this.campaign)],
       minInfluencerTier: [(this.campaign as any)?.minInfluencerTier || ''],
       maxInfluencers: [(this.campaign as any)?.maxInfluencers || 5, [Validators.required, Validators.min(1)]],
       minInfluencers: [(this.campaign as any)?.minInfluencers || 1, [Validators.min(1)]],
@@ -399,8 +400,8 @@ export class PhotographerCollaborationFormComponent implements OnInit, OnChanges
       maxInfluencers: Number(v.maxInfluencers || 0),
       minInfluencers: Number(v.minInfluencers || 1),
       pricePerInfluencer: isPaid ? Math.round(rawPrice * 100) : undefined,
-      targetState: v.targetState || undefined,
-      targetCities: v.targetDistrict ? [String(v.targetDistrict)] : [],
+      // T1: the selected district goes to targetDistrict (see campaign-location.util).
+      ...campaignTargetLocationPayload(v.targetState, v.targetDistrict),
       specialInstructions,
     };
 
