@@ -42,7 +42,18 @@ export interface CampaignEligibilityRow {
     EligibilityRequirementKey,
     { status: EligibilityStatus; reason: string; configured: boolean }
   >;
+  /** Already holds an invite for this campaign (any status). */
+  invited: boolean;
 }
+
+// Stage 3B-4: POST admin/matching/eligibility/:campaignId/invites
+export interface EligibilityInviteOutcome {
+  requested: number;
+  invited: Array<{ creatorId: string; inviteId: string }>;
+  skipped: Array<{ creatorId: string; reason: string }>;
+}
+
+export const MAX_INVITES_PER_REQUEST = 50;
 
 export interface CampaignEligibilityList {
   campaign: {
@@ -61,7 +72,11 @@ export interface CampaignEligibilityList {
       languages: string[];
     };
   };
-  scope: { creatorType: 'Influencer' | 'Photographer'; evaluated: number };
+  scope: {
+    creatorType: 'Influencer' | 'Photographer';
+    evaluated: number;
+    alreadyInvited: number;
+  };
   counts: StatusCounts;
   requirementCounts: Record<EligibilityRequirementKey, StatusCounts & { configured: boolean }>;
   total: number;
@@ -111,6 +126,15 @@ export class CampaignEligibilityPanelComponent implements OnInit, OnDestroy {
   loading = false;
   error = '';
   showNotEvaluated = false;
+
+  // Stage 3B-4: admin picks eligible creators and invites them as the campaign owner.
+  /** creatorId → display name, kept across pages until sent. */
+  selected = new Map<string, string>();
+  confirmingInvite = false;
+  sendingInvites = false;
+  inviteOutcome: EligibilityInviteOutcome | null = null;
+  inviteError = '';
+  private inviteNames = new Map<string, string>();
 
   private request: Subscription | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -243,6 +267,85 @@ export class CampaignEligibilityPanelComponent implements OnInit, OnDestroy {
       { label: 'Location', value: location || 'Any' },
       { label: 'Languages', value: list(r.languages) },
     ];
+  }
+
+  /** Invites only go out for live campaigns (the backend enforces the same). */
+  get canInvite(): boolean {
+    return String(this.data?.campaign.status || '').toLowerCase() === 'active';
+  }
+
+  isSelectable(row: CampaignEligibilityRow): boolean {
+    return this.canInvite && row.overall === 'PASS' && !row.invited;
+  }
+
+  toggleSelected(row: CampaignEligibilityRow): void {
+    if (!this.isSelectable(row)) return;
+    if (this.selected.has(row.creatorId)) this.selected.delete(row.creatorId);
+    else if (this.selected.size < MAX_INVITES_PER_REQUEST)
+      this.selected.set(row.creatorId, this.displayName(row));
+    this.confirmingInvite = false;
+  }
+
+  get selectableOnPage(): CampaignEligibilityRow[] {
+    return (this.data?.rows || []).filter((r) => this.isSelectable(r));
+  }
+
+  get allOnPageSelected(): boolean {
+    const rows = this.selectableOnPage;
+    return rows.length > 0 && rows.every((r) => this.selected.has(r.creatorId));
+  }
+
+  toggleSelectPage(): void {
+    const rows = this.selectableOnPage;
+    if (this.allOnPageSelected) rows.forEach((r) => this.selected.delete(r.creatorId));
+    else
+      for (const r of rows) {
+        if (this.selected.size >= MAX_INVITES_PER_REQUEST) break;
+        this.selected.set(r.creatorId, this.displayName(r));
+      }
+    this.confirmingInvite = false;
+  }
+
+  clearSelection(): void {
+    this.selected.clear();
+    this.confirmingInvite = false;
+  }
+
+  sendInvites(): void {
+    if (!this.selected.size || this.sendingInvites) return;
+    this.sendingInvites = true;
+    this.inviteError = '';
+    this.inviteOutcome = null;
+    this.inviteNames = new Map(this.selected);
+    this.http
+      .post<ApiEnvelope<EligibilityInviteOutcome>>(
+        `${environment.apiBaseUrl}/admin/matching/eligibility/${encodeURIComponent(this.campaignId)}/invites`,
+        { creatorIds: [...this.selected.keys()] },
+        this.authHeaders(),
+      )
+      .subscribe({
+        next: (res) => {
+          this.inviteOutcome = unwrapApiData(res) ?? null;
+          this.sendingInvites = false;
+          this.confirmingInvite = false;
+          this.selected.clear();
+          this.load();
+        },
+        error: (err) => {
+          this.inviteError = err?.error?.message || 'Could not send invites.';
+          this.sendingInvites = false;
+          this.confirmingInvite = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  inviteName(creatorId: string): string {
+    return this.inviteNames.get(creatorId) || creatorId;
+  }
+
+  private displayName(row: CampaignEligibilityRow): string {
+    return row.name || (row.username ? `@${row.username}` : row.creatorId);
   }
 
   trackRow(_: number, row: CampaignEligibilityRow): string {

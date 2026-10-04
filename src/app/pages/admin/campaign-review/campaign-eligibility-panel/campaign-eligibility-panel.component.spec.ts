@@ -29,17 +29,18 @@ const row = (over: Partial<CampaignEligibilityRow> = {}): CampaignEligibilityRow
     location: req('PASS'),
     language: req('PASS', 'No language requirement.', false),
   },
+  invited: false,
   ...over,
 });
 
-const list = (rows: CampaignEligibilityRow[]): CampaignEligibilityList => {
+const list = (rows: CampaignEligibilityRow[], status = 'active'): CampaignEligibilityList => {
   const counts = { PASS: 1, UNKNOWN: 0, FAIL: 1 };
   const rc = { PASS: 2, UNKNOWN: 0, FAIL: 0, configured: true };
   return {
     campaign: {
       campaignId: 'camp-1',
       title: 'Diwali Reels',
-      status: 'active',
+      status,
       recipientRole: 'influencer',
       ownerType: 'brand',
       requirements: {
@@ -52,7 +53,7 @@ const list = (rows: CampaignEligibilityRow[]): CampaignEligibilityList => {
         languages: [],
       },
     },
-    scope: { creatorType: 'Influencer', evaluated: 2 },
+    scope: { creatorType: 'Influencer', evaluated: 2, alreadyInvited: 1 },
     counts,
     requirementCounts: {
       accountApproval: rc,
@@ -167,5 +168,108 @@ describe('CampaignEligibilityPanelComponent (Stage 3B-3)', () => {
     expectLoad().flush({ message: 'Campaign not found' }, { status: 404, statusText: 'Not Found' });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Campaign not found');
+  });
+
+  describe('Stage 3B-4 invites', () => {
+    const rows = () => [
+      row({ creatorId: 'p1', name: 'Asha' }),
+      row({ creatorId: 'p2', name: 'Bala', invited: true }),
+      row({ creatorId: 'u1', name: 'Chitra', overall: 'UNKNOWN' }),
+      row({ creatorId: 'p3', name: 'Dev' }),
+    ];
+    const loadWith = (status = 'active') => {
+      fixture.detectChanges();
+      expectLoad().flush({ success: true, data: list(rows(), status) });
+      fixture.detectChanges();
+    };
+    const expectInvitePost = () =>
+      http.expectOne(
+        (r) => r.method === 'POST' && r.url.endsWith('/admin/matching/eligibility/camp-1/invites'),
+      );
+
+    it('only eligible, not-yet-invited rows are selectable', () => {
+      loadWith();
+      const boxes: HTMLInputElement[] = Array.from(
+        fixture.nativeElement.querySelectorAll('.ce-row-check'),
+      );
+      expect(boxes.map((b) => b.disabled)).toEqual([false, true, true, false]);
+      expect(fixture.nativeElement.querySelector('.ce-invited-tag').textContent).toContain(
+        'Invited',
+      );
+
+      component.toggleSelectPage();
+      expect([...component.selected.keys()]).toEqual(['p1', 'p3']);
+      component.toggleSelected(component.data!.rows[1]);
+      component.toggleSelected(component.data!.rows[2]);
+      expect(component.selected.size).toBe(2);
+      component.toggleSelectPage();
+      expect(component.selected.size).toBe(0);
+    });
+
+    it('no selection or invite controls unless the campaign is live', () => {
+      loadWith('pending_review');
+      expect(component.canInvite).toBeFalse();
+      expect(fixture.nativeElement.querySelector('.ce-row-check')).toBeNull();
+      expect(fixture.nativeElement.textContent).toContain('once the campaign is live');
+      component.toggleSelected(component.data!.rows[0]);
+      expect(component.selected.size).toBe(0);
+    });
+
+    it('asks for confirmation, posts the selected ids, shows the outcome and reloads', () => {
+      // Real DOM events, as the admin uses it (zoneless: events schedule the refresh).
+      const el: HTMLElement = fixture.nativeElement;
+      const button = (text: string) =>
+        Array.from(el.querySelectorAll('button')).find((b) =>
+          (b.textContent || '').includes(text),
+        ) as HTMLButtonElement;
+      loadWith();
+      (el.querySelector('.ce-check input') as HTMLInputElement).click();
+      fixture.detectChanges();
+      expect(el.querySelector('.ce-invite-count')!.textContent).toContain('2 selected');
+      http.expectNone((r) => r.method === 'POST');
+
+      button('Invite selected (2)').click();
+      fixture.detectChanges();
+      expect(el.querySelector('.ce-confirm')!.textContent).toContain(
+        'Send 2 invites on behalf of the campaign owner',
+      );
+      http.expectNone((r) => r.method === 'POST');
+
+      button('Send invites').click();
+      const post = expectInvitePost();
+      expect(post.request.body).toEqual({ creatorIds: ['p1', 'p3'] });
+      post.flush({
+        success: true,
+        data: {
+          requested: 2,
+          invited: [{ creatorId: 'p1', inviteId: 'i1' }],
+          skipped: [
+            { creatorId: 'p3', reason: 'Plan limit: Only 1 invites per campaign allowed.' },
+          ],
+        },
+      });
+      expectLoad().flush({ success: true, data: list(rows()) });
+      fixture.detectChanges();
+
+      expect(component.selected.size).toBe(0);
+      const outcome = fixture.nativeElement.querySelector('.ce-outcome').textContent as string;
+      expect(outcome).toContain('1 invited');
+      expect(outcome).toContain('1 not sent');
+      expect(outcome).toContain('Dev:');
+      expect(outcome).toContain('Plan limit');
+    });
+
+    it('shows the backend error and keeps the selection', () => {
+      loadWith();
+      component.toggleSelectPage();
+      component.sendInvites();
+      expectInvitePost().flush(
+        { message: 'Invites can only be sent for live (approved) campaigns.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
+      fixture.detectChanges();
+      expect(component.selected.size).toBe(2);
+      expect(fixture.nativeElement.textContent).toContain('live (approved) campaigns');
+    });
   });
 });

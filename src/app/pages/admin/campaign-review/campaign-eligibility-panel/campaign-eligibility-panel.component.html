@@ -18,6 +18,7 @@
       <div class="modal-body">
         <p class="ce-note">
           Checks each creator against this campaign's requirements. Grouped, not ranked — no scores.
+          Eligible creators can be invited on the owner's behalf.
         </p>
 
         <div class="ce-req-chips" *ngIf="data">
@@ -69,6 +70,79 @@
           </select>
         </div>
 
+        <div class="ce-invite-bar" *ngIf="data">
+          <ng-container *ngIf="canInvite; else notLive">
+            <label class="ce-check" *ngIf="selectableOnPage.length">
+              <input type="checkbox" [checked]="allOnPageSelected" (change)="toggleSelectPage()" />
+              Select eligible on this page
+            </label>
+            <span class="ce-invite-count"
+              >{{ selected.size }} selected<ng-container *ngIf="data.scope.alreadyInvited">
+                · {{ data.scope.alreadyInvited }} already invited</ng-container
+              ></span
+            >
+            <ng-container *ngIf="selected.size">
+              <button
+                *ngIf="!confirmingInvite"
+                type="button"
+                class="btn btn-sm btn-primary"
+                (click)="confirmingInvite = true"
+              >
+                Invite selected ({{ selected.size }})
+              </button>
+              <button
+                *ngIf="!confirmingInvite"
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                (click)="clearSelection()"
+              >
+                Clear
+              </button>
+            </ng-container>
+          </ng-container>
+          <ng-template #notLive>
+            <span class="ce-invite-count">Invites can be sent once the campaign is live.</span>
+          </ng-template>
+        </div>
+
+        <div class="ce-confirm" *ngIf="confirmingInvite && selected.size">
+          <p>
+            Send {{ selected.size }} invite{{ selected.size === 1 ? '' : 's' }} on behalf of the
+            campaign owner? Creators get the usual invite notification, and the owner's plan invite
+            limits apply. Eligibility is re-checked before each invite.
+          </p>
+          <button
+            type="button"
+            class="btn btn-sm btn-primary"
+            [disabled]="sendingInvites"
+            (click)="sendInvites()"
+          >
+            {{ sendingInvites ? 'Sending…' : 'Send invites' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            [disabled]="sendingInvites"
+            (click)="confirmingInvite = false"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <div class="ce-outcome" *ngIf="inviteOutcome">
+          <strong>{{ inviteOutcome.invited.length }} invited</strong
+          ><ng-container *ngIf="inviteOutcome.skipped.length">
+            · {{ inviteOutcome.skipped.length }} not sent</ng-container
+          >
+          <ul *ngIf="inviteOutcome.skipped.length">
+            <li *ngFor="let s of inviteOutcome.skipped">
+              <strong>{{ inviteName(s.creatorId) }}:</strong> {{ s.reason }}
+            </li>
+          </ul>
+          <button type="button" class="ce-link" (click)="inviteOutcome = null">Dismiss</button>
+        </div>
+        <div class="ce-state--error ce-invite-error" *ngIf="inviteError">{{ inviteError }}</div>
+
         <div *ngIf="loading" class="ce-state">Loading creators…</div>
         <div *ngIf="error && !loading" class="ce-state ce-state--error">{{ error }}</div>
 
@@ -79,6 +153,15 @@
 
           <div class="ce-row" *ngFor="let row of data.rows; trackBy: trackRow">
             <div class="ce-row-head">
+              <input
+                *ngIf="canInvite"
+                type="checkbox"
+                class="ce-row-check"
+                [disabled]="!isSelectable(row)"
+                [checked]="selected.has(row.creatorId)"
+                [attr.aria-label]="'Select ' + (row.name || row.creatorId)"
+                (change)="toggleSelected(row)"
+              />
               <div class="ce-creator">
                 <span class="ce-name">{{ row.name || 'Unnamed creator' }}</span>
                 <span class="ce-meta">
@@ -86,6 +169,7 @@
                   <span *ngIf="row.publicId"> · {{ row.publicId }}</span>
                 </span>
               </div>
+              <span class="ce-invited-tag" *ngIf="row.invited">Invited</span>
               <span class="ce-pill" [ngClass]="'ce-pill--' + row.overall.toLowerCase()">{{
                 statusLabel(row.overall)
               }}</span>
