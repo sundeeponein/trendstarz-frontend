@@ -1,4 +1,5 @@
 import { map, switchMap } from 'rxjs/operators';
+import { HostEligibilityView } from './campaigns/host-eligibility.util';
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
@@ -1178,6 +1179,16 @@ export class ConfigService {
       map((res) => this.extractData<any>(res) || res),
       catchError(() => of(null))
     );
+  }
+
+  /** Stage 3B-4: which approved creators meet the campaign's requirements (owner/admin only). Null on any error. */
+  getCampaignCreatorEligibility(campaignId: string): Observable<HostEligibilityView | null> {
+    return this.http
+      .get<any>(`${this.apiUrl}/campaigns/${encodeURIComponent(campaignId)}/creator-eligibility`)
+      .pipe(
+        map((res) => (this.extractData<HostEligibilityView>(res) as HostEligibilityView) || null),
+        catchError(() => of(null)),
+      );
   }
 
   getInvitesByCampaign(campaignId: string): Observable<any[]> {

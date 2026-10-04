@@ -3325,3 +3325,39 @@
 .invite-list > :not(:first-child) {
   margin-top: 12px;
 }
+
+// Stage 3B-4: campaign-requirement hint on invite rows (never blocks inviting).
+.host-elig-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.5;
+  border: 1px solid transparent;
+
+  &--meets {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+  }
+
+  &--not_met {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+  }
+
+  &--needs_info {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+  }
+}
+
+.host-elig-filter {
+  margin: 0.5rem 0;
+}

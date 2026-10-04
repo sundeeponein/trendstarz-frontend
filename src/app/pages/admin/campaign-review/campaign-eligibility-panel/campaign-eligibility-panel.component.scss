@@ -297,3 +297,28 @@
   font-size: 0.8rem;
   color: #4b5563;
 }
+
+.ce-group--all.ce-group--active {
+  border-color: #4f46e5;
+  background: #eef2ff;
+}
+
+.ce-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.25rem 0 0.75rem;
+
+  .ce-chip {
+    cursor: default;
+  }
+}
+
+.ce-review-tag {
+  margin-left: 0.35rem;
+  font-size: 0.7rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+}

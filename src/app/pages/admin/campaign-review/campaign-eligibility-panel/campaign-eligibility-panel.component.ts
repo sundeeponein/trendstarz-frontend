@@ -42,15 +42,28 @@ export interface CampaignEligibilityRow {
     EligibilityRequirementKey,
     { status: EligibilityStatus; reason: string; configured: boolean }
   >;
-  /** Already holds an invite for this campaign (any status). */
+  /** Already holds an invite for this campaign (any status). Separate from eligibility. */
   invited: boolean;
+  /** Decided by the backend (live campaign + PASS + not invited); re-checked again at send time. */
+  invitable: boolean;
+  inviteBlockedReason: string | null;
 }
 
 // Stage 3B-4: POST admin/matching/eligibility/:campaignId/invites
 export interface EligibilityInviteOutcome {
   requested: number;
   invited: Array<{ creatorId: string; inviteId: string }>;
-  skipped: Array<{ creatorId: string; reason: string }>;
+  skipped: Array<{
+    creatorId: string;
+    code:
+      | 'invalid_id'
+      | 'unavailable'
+      | 'already_invited'
+      | 'not_eligible'
+      | 'eligibility_unknown'
+      | 'invite_rejected';
+    reason: string;
+  }>;
 }
 
 export const MAX_INVITES_PER_REQUEST = 50;
@@ -60,6 +73,8 @@ export interface CampaignEligibilityList {
     campaignId: string;
     title: string;
     status: string;
+    invitesOpen: boolean;
+    invitesClosedReason: string | null;
     recipientRole: 'influencer' | 'photographer';
     ownerType: 'brand' | 'photographer';
     requirements: {
@@ -196,6 +211,17 @@ export class CampaignEligibilityPanelComponent implements OnInit, OnDestroy {
       });
   }
 
+  get allStatusesSelected(): boolean {
+    return this.statuses.every((s) => this.selectedStatuses.has(s));
+  }
+
+  showAllStatuses(): void {
+    if (this.allStatusesSelected) return;
+    this.statuses.forEach((s) => this.selectedStatuses.add(s));
+    this.currentPage = 1;
+    this.load();
+  }
+
   toggleStatus(status: EligibilityStatus): void {
     if (this.selectedStatuses.has(status)) {
       // Keep at least one group selected (the backend would fall back to its default).
@@ -269,13 +295,14 @@ export class CampaignEligibilityPanelComponent implements OnInit, OnDestroy {
     ];
   }
 
-  /** Invites only go out for live campaigns (the backend enforces the same). */
+  /** From the backend: campaign status + acceptance deadline. */
   get canInvite(): boolean {
-    return String(this.data?.campaign.status || '').toLowerCase() === 'active';
+    return !!this.data?.campaign.invitesOpen;
   }
 
+  /** The backend decides; the browser only mirrors it (and the server re-checks at send). */
   isSelectable(row: CampaignEligibilityRow): boolean {
-    return this.canInvite && row.overall === 'PASS' && !row.invited;
+    return this.canInvite && row.invitable === true;
   }
 
   toggleSelected(row: CampaignEligibilityRow): void {
@@ -338,6 +365,11 @@ export class CampaignEligibilityPanelComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         },
       });
+  }
+
+  /** Selection went stale: eligibility or invite state changed after the list was loaded. */
+  needsReview(code: EligibilityInviteOutcome['skipped'][number]['code']): boolean {
+    return code === 'not_eligible' || code === 'eligibility_unknown' || code === 'unavailable';
   }
 
   inviteName(creatorId: string): string {

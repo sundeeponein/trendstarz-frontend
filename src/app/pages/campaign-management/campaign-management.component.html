@@ -1456,6 +1456,12 @@
               <div class="invited-badges">
                 <span class="tier-badge-mini" *ngIf="getCampaignInviteRecipientTier(inv, invitePanelCampaign)">{{ getCampaignInviteRecipientTier(inv, invitePanelCampaign) }}</span>
               </div>
+              <ng-container *ngIf="showInviteEligibility && inviteEligibilityBadge(inv.influencerId) as eb">
+                <span class="host-elig-badge" [ngClass]="'host-elig-badge--' + eb.status" [title]="eb.title">
+                  <i class="bi" [ngClass]="eb.status === 'meets' ? 'bi-check-circle-fill' : eb.status === 'not_met' ? 'bi-x-circle' : 'bi-question-circle'"></i>
+                  {{ eb.label }}
+                </span>
+              </ng-container>
               <div class="invited-socials" *ngIf="getCampaignInviteRecipientSocialTags(inv, invitePanelCampaign).length">
                 <span class="invited-social-chip" *ngFor="let sm of getCampaignInviteRecipientSocialTags(inv, invitePanelCampaign, 3)">{{ sm.platform }} · {{ sm.tier }}</span>
               </div>
@@ -1708,6 +1714,13 @@
         </label>
       </div>
 
+      <label class="invite-smart-check host-elig-filter" *ngIf="showInviteEligibility">
+        <input type="checkbox"
+          [(ngModel)]="inviteMeetsRequirementsOnly"
+          [ngModelOptions]="{standalone: true}" />
+        <span>Only show creators who meet this campaign's requirements</span>
+      </label>
+
       <div class="invite-error" *ngIf="inviteError">{{ inviteError }}</div>
 
       <div class="invite-limit-note" *ngIf="inviteSlotsLimit">
@@ -1758,6 +1771,12 @@
             <div class="invited-socials" *ngIf="getInfluencerSocialTags(inf).length">
               <span class="invited-social-chip" *ngFor="let sm of getInfluencerSocialTags(inf, 3)">{{ sm.platform }} · {{ sm.tier }}</span>
             </div>
+            <ng-container *ngIf="showInviteEligibility && inviteEligibilityBadge(inf._id) as eb">
+              <span class="host-elig-badge" [ngClass]="'host-elig-badge--' + eb.status" [title]="eb.title">
+                <i class="bi" [ngClass]="eb.status === 'meets' ? 'bi-check-circle-fill' : eb.status === 'not_met' ? 'bi-x-circle' : 'bi-question-circle'"></i>
+                {{ eb.label }}
+              </span>
+            </ng-container>
           </div>
           <div class="invited-right">
             <span class="already-invited" *ngIf="invitedIds.has(inf._id)">

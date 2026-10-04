@@ -30,6 +30,8 @@ const row = (over: Partial<CampaignEligibilityRow> = {}): CampaignEligibilityRow
     language: req('PASS', 'No language requirement.', false),
   },
   invited: false,
+  invitable: true,
+  inviteBlockedReason: null,
   ...over,
 });
 
@@ -41,6 +43,9 @@ const list = (rows: CampaignEligibilityRow[], status = 'active'): CampaignEligib
       campaignId: 'camp-1',
       title: 'Diwali Reels',
       status,
+      invitesOpen: status === 'active',
+      invitesClosedReason:
+        status === 'active' ? null : 'Invites can only be sent for live (approved) campaigns.',
       recipientRole: 'influencer',
       ownerType: 'brand',
       requirements: {
@@ -173,8 +178,20 @@ describe('CampaignEligibilityPanelComponent (Stage 3B-3)', () => {
   describe('Stage 3B-4 invites', () => {
     const rows = () => [
       row({ creatorId: 'p1', name: 'Asha' }),
-      row({ creatorId: 'p2', name: 'Bala', invited: true }),
-      row({ creatorId: 'u1', name: 'Chitra', overall: 'UNKNOWN' }),
+      row({
+        creatorId: 'p2',
+        name: 'Bala',
+        invited: true,
+        invitable: false,
+        inviteBlockedReason: 'Already invited to this campaign.',
+      }),
+      row({
+        creatorId: 'u1',
+        name: 'Chitra',
+        overall: 'UNKNOWN',
+        invitable: false,
+        inviteBlockedReason: 'Eligibility unknown.',
+      }),
       row({ creatorId: 'p3', name: 'Dev' }),
     ];
     const loadWith = (status = 'active') => {
@@ -210,7 +227,7 @@ describe('CampaignEligibilityPanelComponent (Stage 3B-3)', () => {
       loadWith('pending_review');
       expect(component.canInvite).toBeFalse();
       expect(fixture.nativeElement.querySelector('.ce-row-check')).toBeNull();
-      expect(fixture.nativeElement.textContent).toContain('once the campaign is live');
+      expect(fixture.nativeElement.textContent).toContain('live (approved) campaigns');
       component.toggleSelected(component.data!.rows[0]);
       expect(component.selected.size).toBe(0);
     });
@@ -244,7 +261,11 @@ describe('CampaignEligibilityPanelComponent (Stage 3B-3)', () => {
           requested: 2,
           invited: [{ creatorId: 'p1', inviteId: 'i1' }],
           skipped: [
-            { creatorId: 'p3', reason: 'Plan limit: Only 1 invites per campaign allowed.' },
+            {
+              creatorId: 'p3',
+              code: 'invite_rejected',
+              reason: 'Plan limit: Only 1 invites per campaign allowed.',
+            },
           ],
         },
       });
@@ -270,6 +291,104 @@ describe('CampaignEligibilityPanelComponent (Stage 3B-3)', () => {
       fixture.detectChanges();
       expect(component.selected.size).toBe(2);
       expect(fixture.nativeElement.textContent).toContain('live (approved) campaigns');
+    });
+  });
+
+  describe('Stage 3B-3 hardening', () => {
+    const el = () => fixture.nativeElement as HTMLElement;
+
+    it('Invited and eligibility are shown independently (invited + not eligible stays visible)', () => {
+      fixture.detectChanges();
+      expectLoad().flush({
+        success: true,
+        data: list([
+          row({
+            creatorId: 'x',
+            name: 'Ravi',
+            overall: 'FAIL',
+            invited: true,
+            invitable: false,
+            inviteBlockedReason: 'Already invited to this campaign.',
+            requirements: { ...row().requirements, category: req('FAIL', 'Wrong category.') },
+          }),
+        ]),
+      });
+      fixture.detectChanges();
+      const r = el().querySelector('.ce-row')!;
+      expect(r.querySelector('.ce-invited-tag')!.textContent).toContain('Invited');
+      expect(r.querySelector('.ce-pill')!.textContent).toContain('Not eligible');
+      expect(r.textContent).toContain('Wrong category.');
+      expect((r.querySelector('.ce-row-check') as HTMLInputElement).disabled).toBeTrue();
+    });
+
+    it("selection follows the server's invitable flag, not the browser's own reading of PASS", () => {
+      fixture.detectChanges();
+      expectLoad().flush({
+        success: true,
+        data: list([
+          row({ creatorId: 'ok' }),
+          row({ creatorId: 'blocked', invitable: false, inviteBlockedReason: 'Server says no.' }),
+        ]),
+      });
+      fixture.detectChanges();
+      const boxes = Array.from(el().querySelectorAll('.ce-row-check')) as HTMLInputElement[];
+      expect(boxes.map((b) => b.disabled)).toEqual([false, true]);
+      expect(boxes[1].title).toBe('Server says no.');
+      component.toggleSelected(component.data!.rows[1]);
+      expect(component.selected.has('blocked')).toBeFalse();
+    });
+
+    it('"All" selects every group; counts come from the server', () => {
+      fixture.detectChanges();
+      expectLoad().flush({ success: true, data: list([row()]) });
+      fixture.detectChanges();
+      const all = el().querySelector('.ce-group--all') as HTMLButtonElement;
+      expect(all.textContent).toContain('2');
+      expect(all.textContent).toContain('All');
+      all.click();
+      const params = new URLSearchParams(expectLoad().request.url.split('?')[1]);
+      expect(params.get('status')).toBe('PASS,UNKNOWN,FAIL');
+    });
+
+    it('explains that "–" means no requirement set, not a failure', () => {
+      fixture.detectChanges();
+      expectLoad().flush({ success: true, data: list([row()]) });
+      fixture.detectChanges();
+      expect(el().querySelector('.ce-legend')!.textContent).toContain(
+        'no requirement set on this campaign',
+      );
+      const unset = el().querySelector('.ce-row .ce-chip--unset') as HTMLElement;
+      expect(unset.title).toBe('No language requirement.');
+    });
+
+    it('stale selections are flagged "needs review" in the outcome', () => {
+      fixture.detectChanges();
+      expectLoad().flush({ success: true, data: list([row({ creatorId: 'p1', name: 'Asha' })]) });
+      fixture.detectChanges();
+      (el().querySelector('.ce-check input') as HTMLInputElement).click();
+      component.sendInvites();
+      http
+        .expectOne((r) => r.method === 'POST')
+        .flush({
+          success: true,
+          data: {
+            requested: 1,
+            invited: [],
+            skipped: [
+              {
+                creatorId: 'p1',
+                code: 'not_eligible',
+                reason: 'No longer eligible: Wrong category.',
+              },
+            ],
+          },
+        });
+      expectLoad().flush({ success: true, data: list([]) });
+      fixture.detectChanges();
+      const outcome = el().querySelector('.ce-outcome')!.textContent as string;
+      expect(outcome).toContain('Asha:');
+      expect(outcome).toContain('No longer eligible');
+      expect(outcome).toContain('needs review');
     });
   });
 });

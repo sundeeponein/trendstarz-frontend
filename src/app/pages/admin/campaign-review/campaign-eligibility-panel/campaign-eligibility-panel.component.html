@@ -29,6 +29,16 @@
 
         <div class="ce-groups" *ngIf="data">
           <button
+            type="button"
+            class="ce-group ce-group--all"
+            [class.ce-group--active]="allStatusesSelected"
+            [attr.aria-pressed]="allStatusesSelected"
+            (click)="showAllStatuses()"
+          >
+            <span class="ce-group-count">{{ data.scope.evaluated }}</span>
+            <span class="ce-group-label">All</span>
+          </button>
+          <button
             *ngFor="let s of statuses"
             type="button"
             class="ce-group"
@@ -40,10 +50,9 @@
             <span class="ce-group-count">{{ data.counts[s] }}</span>
             <span class="ce-group-label">{{ statusLabel(s) }}</span>
           </button>
-          <span class="ce-scope"
-            >of {{ data.scope.evaluated }}
-            {{ data.scope.creatorType === 'Photographer' ? 'photographers' : 'influencers' }}</span
-          >
+          <span class="ce-scope">{{
+            data.scope.creatorType === 'Photographer' ? 'photographers' : 'influencers'
+          }}</span>
         </div>
 
         <div class="ce-toolbar">
@@ -101,7 +110,9 @@
             </ng-container>
           </ng-container>
           <ng-template #notLive>
-            <span class="ce-invite-count">Invites can be sent once the campaign is live.</span>
+            <span class="ce-invite-count">{{
+              data.campaign.invitesClosedReason || 'This campaign is not accepting invites.'
+            }}</span>
           </ng-template>
         </div>
 
@@ -137,6 +148,7 @@
           <ul *ngIf="inviteOutcome.skipped.length">
             <li *ngFor="let s of inviteOutcome.skipped">
               <strong>{{ inviteName(s.creatorId) }}:</strong> {{ s.reason }}
+              <span class="ce-review-tag" *ngIf="needsReview(s.code)">needs review</span>
             </li>
           </ul>
           <button type="button" class="ce-link" (click)="inviteOutcome = null">Dismiss</button>
@@ -158,6 +170,7 @@
                 type="checkbox"
                 class="ce-row-check"
                 [disabled]="!isSelectable(row)"
+                [title]="row.inviteBlockedReason || 'Can be invited'"
                 [checked]="selected.has(row.creatorId)"
                 [attr.aria-label]="'Select ' + (row.name || row.creatorId)"
                 (change)="toggleSelected(row)"
@@ -209,6 +222,17 @@
               </li>
             </ul>
           </div>
+
+          <p class="ce-legend" *ngIf="data.rows.length">
+            <span class="ce-chip ce-chip--pass"><i class="bi bi-check-lg"></i> met</span>
+            <span class="ce-chip ce-chip--fail"><i class="bi bi-x-lg"></i> not met</span>
+            <span class="ce-chip ce-chip--unknown"
+              ><i class="bi bi-question-lg"></i> can't be checked</span
+            >
+            <span class="ce-chip ce-chip--unset"
+              ><i class="bi bi-dash"></i> no requirement set on this campaign</span
+            >
+          </p>
 
           <app-paginator
             [total]="data.total"

@@ -31,6 +31,12 @@ import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../../shared
 import { AppPaginatorComponent } from '../../shared/components/app-paginator/app-paginator.component';
 import { ConfirmActionModalComponent } from '../../shared/components/confirm-action-modal/confirm-action-modal.component';
 import { WriteReviewComponent } from '../../shared/write-review/write-review.component';
+import {
+  HostEligibilityBadge,
+  HostEligibilityView,
+  hostEligibilityBadge,
+  passesHostEligibilityFilter,
+} from '../../shared/campaigns/host-eligibility.util';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
@@ -122,6 +128,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   // ── Invite panel (brand view) ─────────────────────────────────
   invitePanelOpen = false;
   invitePanelCampaign: Campaign | null = null;
+  // Stage 3B-4: which creators meet this campaign's requirements (hint only, never blocks inviting).
+  inviteEligibility: HostEligibilityView | null = null;
+  inviteMeetsRequirementsOnly = false;
   invites: any[] = [];
   invitesLoading = false;
   inviteTab: 'invited' | 'search' = 'invited';
@@ -867,6 +876,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       }
       if (!this.matchesInviteSmartFilters(inf)) return false;
       if (!this.matchesInvitePhotographerSmartFilters(inf)) return false;
+      if (!passesHostEligibilityFilter(this.inviteEligibility, inf?._id, this.inviteMeetsRequirementsOnly))
+        return false;
       if (!kw) return true;
       return (inf.name || inf.fullname || inf.fullName || '').toLowerCase().includes(kw);
     });
@@ -2400,6 +2411,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       error: () => { this.invitesLoading = false; this.cd.detectChanges(); }
     });
     this.loadInviteRecipients();
+    this.loadInviteEligibility(campaign._id);
     const hints = this.getInviteCategoryHints();
     this.analytics.trackCampaignInviteSuggestionsApplied({
       campaignId: campaign._id,
@@ -2409,9 +2421,33 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Stage 3B-4 — the badge for a creator id (or a populated recipient object). */
+  inviteEligibilityBadge(creator: unknown): HostEligibilityBadge | null {
+    return hostEligibilityBadge(this.inviteEligibility, creator);
+  }
+
+  /** Show eligibility controls only for influencer invites on campaigns it supports. */
+  get showInviteEligibility(): boolean {
+    return !!this.inviteEligibility?.supported && this.inviteTargetRole === 'influencer';
+  }
+
+  private loadInviteEligibility(campaignId: string | undefined): void {
+    this.inviteEligibility = null;
+    this.inviteMeetsRequirementsOnly = false;
+    if (!campaignId) return;
+    this.config.getCampaignCreatorEligibility(campaignId).subscribe((view) => {
+      // Ignore a late response for a drawer that was closed or switched campaigns.
+      if (this.invitePanelCampaign?._id !== campaignId) return;
+      this.inviteEligibility = view;
+      this.cd.detectChanges();
+    });
+  }
+
   closeInvitePanel() {
     this.invitePanelOpen = false;
     this.invitePanelCampaign = null;
+    this.inviteEligibility = null;
+    this.inviteMeetsRequirementsOnly = false;
     this.influencerSearch = '';
     this.inviteCreatorTypeFilter = '';
     this.clearInviteSmartMatchingFilters();
