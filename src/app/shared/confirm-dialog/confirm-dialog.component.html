@@ -1,0 +1,26 @@
+<div class="modal-backdrop show confirm-dialog-backdrop" *ngIf="open" (click)="onCancel()"></div>
+
+<div class="modal d-block confirm-dialog-modal" *ngIf="open" tabindex="-1" (click)="onCancel()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal">
+      <div class="dialog-content">
+        <button type="button" class="dialog-close-btn" aria-label="Close" (click)="onClose()">&times;</button>
+        <div class="dialog-title" *ngIf="title">{{ title }}</div>
+        <div class="dialog-message">{{ message }}</div>
+        <div class="dialog-actions">
+          <button class="btn btn-secondary" (click)="onCancel()">{{ cancelText }}</button>
+          <button 
+            class="btn"
+            [ngClass]="{
+              'btn-primary': confirmVariant === 'primary',
+              'btn-danger': confirmVariant === 'danger',
+              'btn-warning': confirmVariant === 'warning'
+            }"
+            (click)="onConfirm()">
+            {{ confirmText }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

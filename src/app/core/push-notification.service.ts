@@ -5,9 +5,17 @@ import { environment } from '../../environments/environment';
 import { catchError } from 'rxjs/operators';
 import { of, Subscription } from 'rxjs';
 
+export interface NotificationPreferences {
+  webEnabled: boolean;
+  mobileEnabled: boolean;
+  campaignEnabled: boolean;
+  paymentEnabled: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PushNotificationService implements OnDestroy {
   private readonly apiUrl = environment.apiBaseUrl || '/api';
+  private readonly preferenceKey = 'notificationPushPreference';
   private msgSub?: Subscription;
 
   constructor(
@@ -19,6 +27,28 @@ export class PushNotificationService implements OnDestroy {
     return this.swPush.isEnabled;
   }
 
+  get localPreference(): 'enabled' | 'disabled' | 'unset' {
+    if (typeof localStorage === 'undefined') return 'unset';
+    const value = localStorage.getItem(this.preferenceKey);
+    return value === 'enabled' || value === 'disabled' ? value : 'unset';
+  }
+
+  setLocalPreference(value: 'enabled' | 'disabled'): void {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(this.preferenceKey, value);
+  }
+
+  get browserPermission(): NotificationPermission | 'unsupported' {
+    if (typeof Notification === 'undefined') return 'unsupported';
+    return Notification.permission;
+  }
+
+  async hasActiveSubscription(): Promise<boolean> {
+    if (!this.swPush.isEnabled) return false;
+    const sub = await this.swPush.subscription.pipe(catchError(() => of(null))).toPromise();
+    return !!sub;
+  }
+
   /**
    * Fetch VAPID public key, subscribe the browser to push, and POST the
    * subscription object to the backend so it can send notifications later.
@@ -27,6 +57,7 @@ export class PushNotificationService implements OnDestroy {
     if (!this.swPush.isEnabled) return false;
 
     try {
+      this.setLocalPreference('enabled');
       const { key } = await this.http
         .get<{ key: string }>(`${this.apiUrl}/push/vapid-public-key`)
         .toPromise() as { key: string };
@@ -47,6 +78,7 @@ export class PushNotificationService implements OnDestroy {
 
   /** Cancel the active browser push subscription and notify the backend. */
   async cancelSubscription(): Promise<void> {
+    this.setLocalPreference('disabled');
     if (!this.swPush.isEnabled) return;
     try {
       const sub = await this.swPush.subscription.pipe(catchError(() => of(null))).toPromise();
@@ -59,6 +91,20 @@ export class PushNotificationService implements OnDestroy {
         await this.swPush.unsubscribe();
       }
     } catch { /* silent */ }
+  }
+
+  /** Get the account-level push preference for the logged-in user (device + event category). */
+  getPreferences() {
+    return this.http
+      .get<NotificationPreferences>(`${this.apiUrl}/push/preferences`)
+      .pipe(catchError(() => of({ webEnabled: true, mobileEnabled: true, campaignEnabled: true, paymentEnabled: true })));
+  }
+
+  /** Update the account-level push preference for the logged-in user (device + event category). */
+  updatePreferences(updates: Partial<NotificationPreferences>) {
+    return this.http
+      .patch<NotificationPreferences>(`${this.apiUrl}/push/preferences`, updates)
+      .pipe(catchError(() => of(null)));
   }
 
   /** Register a handler that shows an in-app toast when a push message arrives. */

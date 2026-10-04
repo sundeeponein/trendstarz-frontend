@@ -5,8 +5,10 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { isPlatformServer } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { buildDefaultUserTagVisibilityOptions } from '../../../shared/constants/user-tag-options.constants';
+import { buildReferralLink, copyTextToClipboard, ReferralLinkRole } from '../../../shared/referral-link.util';
 
 const DEFAULT_EQUIPMENT_OPTIONS = [
   { name: 'Sony', visible: true },
@@ -23,6 +25,50 @@ const DEFAULT_PRICING_OPTIONS = [
   { key: 'Equipment', label: 'Equipment Rental', visible: true },
 ];
 
+const DEFAULT_CREATOR_TYPE_OPTIONS = [
+  { name: 'UGC Creator', visible: true },
+  { name: 'Model', visible: true },
+  { name: 'Actor', visible: true },
+  { name: 'Host/Presenter', visible: true },
+  { name: 'Content Creator', visible: true },
+  { name: 'Lifestyle Creator', visible: true },
+  { name: 'Fashion Creator', visible: true },
+];
+
+const DEFAULT_SOCIAL_MEDIA_NAMES = [
+  'Instagram',
+  'YouTube',
+  'Facebook',
+  'TikTok',
+  'X / Twitter',
+  'LinkedIn',
+];
+
+type CampaignTypeConfigItem = {
+  key: string;
+  label: string;
+  ownerType: 'brand' | 'photographer';
+  enabled: boolean;
+  premiumOnly: boolean;
+  sortOrder: number;
+};
+
+type CampaignAccessModeConfigItem = {
+  key: 'invite_only' | 'tier_filtered_open';
+  label: string;
+  enabled: boolean;
+  premiumOnly: boolean;
+  sortOrder: number;
+};
+
+type CollaborationAvailabilityRole = 'influencer' | 'photographer';
+
+type CollaborationAvailabilitySection = {
+  title: string;
+  role: CollaborationAvailabilityRole;
+  key: string;
+};
+
 @Component({
   selector: 'app-admin-management',
   standalone: true,
@@ -34,22 +80,43 @@ export class AdminManagementComponent implements OnInit {
   getDistrictIndex(dist: any): number {
     return this.config.districts.findIndex((d: any) => d._id === dist._id);
   }
+
+  getStateIndex(state: any): number {
+    return this.config.locations.findIndex((item: any) => item._id === state?._id);
+  }
   activeTab: string = 'campaigns';
+  referralLinkRole: ReferralLinkRole = 'influencer';
+  referralLinkUsername = '';
+  referralLinkPlatform = '';
+  referralLinkCopied = false;
+  readonly REFERRAL_LINK_PLATFORMS = ['Instagram', 'YouTube', 'Facebook', 'WhatsApp'];
   categoriesRoleTab: 'influencer' | 'brand' | 'photographer' = 'influencer';
   userTagsRoleTab: 'influencer' | 'brand' | 'photographer' | 'commission' = 'influencer';
+  collaborationAvailabilityRoleTab: CollaborationAvailabilityRole = 'influencer';
+  collaborationAvailabilitySections: CollaborationAvailabilitySection[] = [
+    { title: 'Collaboration Types', role: 'influencer', key: 'collaborationTypes' },
+    { title: 'Preferences', role: 'influencer', key: 'preferences' },
+    { title: 'Available For', role: 'influencer', key: 'availableFor' },
+    { title: 'Preferences', role: 'photographer', key: 'preferences' },
+    { title: 'Available For', role: 'photographer', key: 'availableFor' },
+  ];
   config: any = {
     socialMediaPlatforms: [],
     categories: [],
     equipmentOptions: [],
     pricingOptions: [],
+    creatorTypeOptions: [],
     locations: [],
     districts: [],
     languages: [],
     tiers: [],
     userTags: buildDefaultUserTagVisibilityOptions(),
+    collaborationAvailability: {},
   };
 
   districtFilterState: string = '';
+  locationSearch = '';
+  locationStatusFilter: 'all' | 'active' | 'inactive' = 'all';
 
   get filteredCategories(): any[] {
     const role = this.categoriesRoleTab;
@@ -65,12 +132,53 @@ export class AdminManagementComponent implements OnInit {
     return all.filter((d: any) => d.state === this.districtFilterState);
   }
 
+  get filteredLocations(): any[] {
+    const query = this.locationSearch.trim().toLowerCase();
+    return (this.config.locations || []).filter((state: any) => {
+      if (this.locationStatusFilter === 'active' && state?.visible === false) return false;
+      if (this.locationStatusFilter === 'inactive' && state?.visible !== false) return false;
+      if (!query) return true;
+      const districts = this.getStateDistricts(state?.name).map((district: any) => district?.name).join(' ');
+      const haystack = `${state?.name || ''} ${districts}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  get activeLocationCount(): number {
+    return (this.config.locations || []).filter((state: any) => state?.visible !== false).length;
+  }
+
+  getStateDistricts(stateName: string): any[] {
+    const normalizedState = String(stateName || '').trim().toLowerCase();
+    return (this.config.districts || [])
+      .map((district: any, index: number) => ({ ...district, _origIndex: index }))
+      .filter((district: any) => String(district?.state || '').trim().toLowerCase() === normalizedState);
+  }
+
+  getVisibleDistrictCount(stateName: string): number {
+    return this.getStateDistricts(stateName).filter((district: any) => district?.visible !== false).length;
+  }
+
+  toggleLocationStateExpanded(state: any) {
+    if (state?.visible === false) return;
+    const stateName = String(state?.name || '');
+    this.districtFilterState = this.districtFilterState === stateName ? '' : stateName;
+  }
+
+  isLocationStateExpanded(stateName: string): boolean {
+    return this.districtFilterState === stateName;
+  }
+
   setCategoriesRoleTab(role: 'influencer' | 'brand' | 'photographer') {
     this.categoriesRoleTab = role;
   }
 
   setUserTagsRoleTab(role: 'influencer' | 'brand' | 'photographer' | 'commission') {
     this.userTagsRoleTab = role;
+  }
+
+  setCollaborationAvailabilityRoleTab(role: CollaborationAvailabilityRole) {
+    this.collaborationAvailabilityRoleTab = role;
   }
 
   private normalizeUserTagList(list: unknown, fallback: Array<{ name: string; visible: boolean }>) {
@@ -99,9 +207,167 @@ export class AdminManagementComponent implements OnInit {
     return buildDefaultUserTagVisibilityOptions();
   }
 
+  private normalizeSocialMediaPlatforms(list: unknown): any[] {
+    const data = Array.isArray(list) ? list : [];
+    return data.map((item: any, index: number) => {
+      const label = [item?.name, item?.socialMedia, item?.platform, item?.label, item?.title]
+        .find((value: unknown) => typeof value === 'string' && value.trim());
+
+      return {
+        ...item,
+        visible: !!item?.showInFrontend,
+        displayName: label || DEFAULT_SOCIAL_MEDIA_NAMES[index] || `Platform ${index + 1}`,
+      };
+    });
+  }
+
+  private normalizeCampaignTypeConfigs(list: unknown, fallbackList: CampaignTypeConfigItem[] = []): CampaignTypeConfigItem[] {
+    const source = Array.isArray(list) ? list : fallbackList;
+    const out: CampaignTypeConfigItem[] = [];
+    const seen = new Set<string>();
+
+    for (const raw of source) {
+      if (!raw || typeof raw !== 'object') continue;
+      const ownerType: 'brand' | 'photographer' = String((raw as any).ownerType || 'brand') === 'photographer'
+        ? 'photographer'
+        : 'brand';
+      const key = String((raw as any).key || '').trim();
+      if (!key) continue;
+
+      const dedupeKey = `${ownerType}:${key}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+
+      const fallback = fallbackList.find((item) => item.ownerType === ownerType && item.key === key);
+      out.push({
+        key,
+        ownerType,
+        label: String((raw as any).label || fallback?.label || key).trim(),
+        enabled: (raw as any).enabled !== false,
+        premiumOnly: (raw as any).premiumOnly === true,
+        sortOrder: Number.isFinite(Number((raw as any).sortOrder))
+          ? Number((raw as any).sortOrder)
+          : Number(fallback?.sortOrder || 999),
+      });
+    }
+
+    for (const fallback of fallbackList) {
+      const dedupeKey = `${fallback.ownerType}:${fallback.key}`;
+      if (!seen.has(dedupeKey)) out.push({ ...fallback });
+    }
+
+    return out.sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+  }
+
+  private normalizeCampaignAccessModeConfigs(
+    list: unknown,
+    fallbackList: CampaignAccessModeConfigItem[] = [],
+  ): CampaignAccessModeConfigItem[] {
+    const baseline: CampaignAccessModeConfigItem[] = fallbackList.length ? fallbackList : [
+      { key: 'invite_only', label: 'Invite only', enabled: true, premiumOnly: false, sortOrder: 10 },
+      { key: 'tier_filtered_open', label: 'Open to all', enabled: true, premiumOnly: false, sortOrder: 20 },
+    ];
+    const source = Array.isArray(list) && list.length ? list : baseline;
+    const out: CampaignAccessModeConfigItem[] = [];
+    const seen = new Set<string>();
+
+    for (const raw of source) {
+      if (!raw || typeof raw !== 'object') continue;
+      const key: 'invite_only' | 'tier_filtered_open' =
+        String((raw as any).key || (raw as any).value) === 'tier_filtered_open'
+          ? 'tier_filtered_open'
+          : 'invite_only';
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const fallback = baseline.find((item) => item.key === key);
+      out.push({
+        key,
+        label: String((raw as any).label || fallback?.label || key).trim(),
+        enabled: (raw as any).enabled !== false,
+        premiumOnly: (raw as any).premiumOnly === true,
+        sortOrder: Number.isFinite(Number((raw as any).sortOrder))
+          ? Number((raw as any).sortOrder)
+          : Number(fallback?.sortOrder || 999),
+      });
+    }
+
+    for (const fallback of baseline) {
+      if (!seen.has(fallback.key)) out.push({ ...fallback });
+    }
+
+    return out.sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+  }
+
   get filteredUserTags(): Array<{ name: string; visible: boolean }> {
     const list = this.config?.userTags?.[this.userTagsRoleTab];
     return Array.isArray(list) ? list : [];
+  }
+
+  get filteredCollaborationAvailabilitySections(): CollaborationAvailabilitySection[] {
+    return this.collaborationAvailabilitySections.filter((section) => section.role === this.collaborationAvailabilityRoleTab);
+  }
+
+  get brandCampaignTypeConfigs(): CampaignTypeConfigItem[] {
+    return (this.settings.campaignTypeConfigs || [])
+      .filter((item: CampaignTypeConfigItem) => item.ownerType === 'brand')
+      .sort((a: CampaignTypeConfigItem, b: CampaignTypeConfigItem) => a.sortOrder - b.sortOrder);
+  }
+
+  get photographerCampaignTypeConfigs(): CampaignTypeConfigItem[] {
+    return (this.settings.campaignTypeConfigs || [])
+      .filter((item: CampaignTypeConfigItem) => item.ownerType === 'photographer')
+      .sort((a: CampaignTypeConfigItem, b: CampaignTypeConfigItem) => a.sortOrder - b.sortOrder);
+  }
+
+  get campaignAccessModeConfigs(): CampaignAccessModeConfigItem[] {
+    return (this.settings.campaignAccessModeConfigs || [])
+      .sort((a: CampaignAccessModeConfigItem, b: CampaignAccessModeConfigItem) => a.sortOrder - b.sortOrder);
+  }
+
+  canMoveCampaignType(ownerType: 'brand' | 'photographer', item: CampaignTypeConfigItem, direction: -1 | 1): boolean {
+    const list = this.getCampaignTypeConfigsForOwner(ownerType);
+    const index = list.findIndex((entry) => entry.key === item.key);
+    if (index < 0) return false;
+    const nextIndex = index + direction;
+    return nextIndex >= 0 && nextIndex < list.length;
+  }
+
+  moveCampaignType(ownerType: 'brand' | 'photographer', item: CampaignTypeConfigItem, direction: -1 | 1): void {
+    const list = this.getCampaignTypeConfigsForOwner(ownerType);
+    const index = list.findIndex((entry) => entry.key === item.key);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= list.length) return;
+
+    const [moved] = list.splice(index, 1);
+    list.splice(nextIndex, 0, moved);
+    this.applyCampaignTypeOrder(ownerType, list);
+  }
+
+  onCampaignTypeSortOrderChange(ownerType: 'brand' | 'photographer', item: CampaignTypeConfigItem): void {
+    const normalizedValue = Number.isFinite(Number(item.sortOrder))
+      ? Math.max(1, Math.round(Number(item.sortOrder)))
+      : 999;
+    item.sortOrder = normalizedValue;
+
+    const list = this.getCampaignTypeConfigsForOwner(ownerType)
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+    this.applyCampaignTypeOrder(ownerType, list);
+  }
+
+  private getCampaignTypeConfigsForOwner(ownerType: 'brand' | 'photographer'): CampaignTypeConfigItem[] {
+    return (this.settings.campaignTypeConfigs || [])
+      .filter((item: CampaignTypeConfigItem) => item.ownerType === ownerType)
+      .sort((a: CampaignTypeConfigItem, b: CampaignTypeConfigItem) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+  }
+
+  private applyCampaignTypeOrder(ownerType: 'brand' | 'photographer', orderedItems: CampaignTypeConfigItem[]): void {
+    const orderMap = new Map(orderedItems.map((item, index) => [item.key, (index + 1) * 10]));
+    this.settings.campaignTypeConfigs = (this.settings.campaignTypeConfigs || []).map((item: CampaignTypeConfigItem) => {
+      if (item.ownerType !== ownerType) return item;
+      const nextSortOrder = orderMap.get(item.key);
+      return nextSortOrder == null ? item : { ...item, sortOrder: nextSortOrder };
+    });
+    this.cdr.detectChanges();
   }
 
   getCategoryIndex(cat: any): number {
@@ -119,8 +385,13 @@ export class AdminManagementComponent implements OnInit {
     preApproveBrands: false,
     brandRequireEmailVerified: true,
     brandRequireMobileVerified: false,
+    pendingUserAutoDeleteEnabled: false,
+    pendingUserAutoDeleteDays: 45,
+    pendingUploadAutoDeleteEnabled: false,
+    pendingUploadAutoDeleteHours: 48,
     campaignApprovalMode: 'manual',
     collaborationApprovalMode: 'manual',
+    paymentGatewayMode: 'razorpay_fallback',
     // Admin-managed support contact (shown on campaign-management page banner).
     // Can be toggled off entirely via supportContactEnabled. Stays useful even
     // after Razorpay automation lands — repurposed as "Need help?" channel.
@@ -131,15 +402,37 @@ export class AdminManagementComponent implements OnInit {
     supportContactMessage: '',
     // Number shown on registration/profile phone field as verification call hint
     verificationCallNumber: '',
+    otpVerificationEnabled: false,
     // Platform commission and tax (admin-managed)
     platformFeeEnabled: false,
     platformFeePercent: 0,
+    brandFeePercent: null as number | null,
+    influencerFeePercent: 0 as number,
+    photographerFeePercent: 0 as number,
+    influencerRecipientFeePercent: 0 as number,
+    photographerRecipientFeePercent: 0 as number,
+    brandRecipientFeePercent: 0 as number,
     gstPercent: 0,
+    submissionApprovalWaitHours: 24,
+    submissionAutoCompleteGraceHours: 48,
+    payoutReleaseWaitHours: 24,
+    disputeResponseWaitHours: 12,
+    campaignAutoCloseGraceHours: 24,
+    minCampaignStartDays: 3,
+    maxCampaignDurationDays: 15,
     earlyAccessAssignmentMode: 'manual',
     // Commission percentages for badge types (applicable when badge is assigned)
     earlyAccessCommissionPercent: 0,
     partnerCommissionPercent: 0,
     internalTestCommissionPercent: 0,
+    showSearchLink: true,
+    showRegisterInfluencerLink: true,
+    showRegisterBrandLink: true,
+    showRegisterPhotographerLink: true,
+    showInfluencerSearchTab: true,
+    showPhotographerSearchTab: true,
+    campaignTypeConfigs: [] as CampaignTypeConfigItem[],
+    campaignAccessModeConfigs: [] as CampaignAccessModeConfigItem[],
   };
   settingsSaving = false;
   settingsSaved = false;
@@ -155,12 +448,66 @@ export class AdminManagementComponent implements OnInit {
   earlyAccessNormalizeRunning = false;
   earlyAccessNormalizeMessage = '';
   earlyAccessAdvancedOpen = false;
+  pendingUserAutoDeleteLastRunAt: string | null = null;
+  pendingUserAutoDeleteLastRunCount = 0;
+  pendingUserAutoDeleteLastRunBy = '';
+  pendingUserCleanupPreviewLoading = false;
+  pendingUserCleanupPreview: any = null;
+  pendingUserCleanupRunning = false;
+  pendingUserCleanupMessage = '';
+  pendingUploadAutoDeleteLastRunAt: string | null = null;
+  pendingUploadAutoDeleteLastRunCount = 0;
+  pendingUploadAutoDeleteLastRunBy = '';
+  pendingUploadCleanupPreviewLoading = false;
+  pendingUploadCleanupPreview: any = null;
+  pendingUploadCleanupRunning = false;
+  pendingUploadCleanupMessage = '';
+  pendingUnverifiedReportLoading = false;
+  pendingUnverifiedReport: any = null;
+  pendingUnverifiedReportLastRunAt: string | null = null;
+  pendingUnverifiedReportLastRunCount = 0;
+  firebaseEmailSyncRunning = false;
+  firebaseEmailSyncMessage = '';
+  firebaseEmailSyncLastRunAt: string | null = null;
+  firebaseEmailSyncLastRunCount = 0;
+  campaignTypeConfigDefaults: CampaignTypeConfigItem[] = [];
+  campaignAccessModeConfigDefaults: CampaignAccessModeConfigItem[] = [];
+  campaignTypeResetMessage = '';
+  tierUsageCounts: Record<string, number> = {};
+  whatsappCommunities: any[] = [];
+  whatsappCommunitiesLoading = false;
+  whatsappCommunitySaving = false;
+  whatsappCommunityError = '';
+  whatsappCommunitySearch = '';
+  whatsappCommunityStatusFilter: 'all' | 'active' | 'inactive' = 'all';
+  editingWhatsappCommunityId = '';
+  whatsappCommunityForm = {
+    state: '',
+    communityName: '',
+    communityLink: '',
+    isActive: true,
+  };
   showVisibilityConfirmModal = false;
+  private visibilitySnapshot: any = null;
 
   commissionCounts = {
     influencer: { early_access_creator: 0, partner_creator: 0, internal_test_creator: 0 },
     brand: { early_access_brand: 0, partner_brand: 0, internal_test_brand: 0 },
+    photographer: { early_access_photographer: 0, partner_photographer: 0, internal_test_photographer: 0 },
   };
+
+  effectiveRoleFee(roleField: 'brandFeePercent' | 'influencerFeePercent' | 'photographerFeePercent'): number {
+    const val = this.settings[roleField];
+    return typeof val === 'number' ? val : 0;
+  }
+
+  platformFeeSavingsText(userFeePercent: unknown, basePercent?: number): string {
+    const standard = typeof basePercent === 'number' ? basePercent : Number(this.settings.platformFeePercent || 0);
+    const userFee = Number(userFeePercent || 0);
+    const savings = Math.max(standard - userFee, 0);
+    if (!Number.isFinite(savings) || savings <= 0) return '—';
+    return `Save ${savings.toLocaleString('en-IN', { maximumFractionDigits: 2 })}%`;
+  }
 
   isServer: boolean;
 
@@ -176,17 +523,210 @@ export class AdminManagementComponent implements OnInit {
     if (!this.isServer) {
       this.loadConfig();
       this.loadSettings();
+      this.loadWhatsappCommunities();
+      this.loadPendingUnverifiedReport();
       this.loadCommissionCounts();
     }
   }
 
   setTab(tab: string) {
+    this.visibilitySnapshot = null;
     this.activeTab = tab;
+    if (tab === 'communities') {
+      this.loadWhatsappCommunities();
+    }
+  }
+
+  private ensureVisibilitySnapshot() {
+    if (this.visibilitySnapshot) return;
+    this.visibilitySnapshot = JSON.parse(JSON.stringify({
+      socialMediaPlatforms: this.config.socialMediaPlatforms,
+      categories: this.config.categories,
+      equipmentOptions: this.config.equipmentOptions,
+      pricingOptions: this.config.pricingOptions,
+      creatorTypeOptions: this.config.creatorTypeOptions,
+      locations: this.config.locations,
+      districts: this.config.districts,
+      languages: this.config.languages,
+      tiers: this.config.tiers,
+      userTags: this.config.userTags,
+      collaborationAvailability: this.config.collaborationAvailability,
+    }));
+  }
+
+  private restoreVisibilitySnapshot() {
+    if (!this.visibilitySnapshot) return;
+    this.config.socialMediaPlatforms = this.visibilitySnapshot.socialMediaPlatforms || [];
+    this.config.categories = this.visibilitySnapshot.categories || [];
+    this.config.equipmentOptions = this.visibilitySnapshot.equipmentOptions || [];
+    this.config.pricingOptions = this.visibilitySnapshot.pricingOptions || [];
+    this.config.creatorTypeOptions = this.visibilitySnapshot.creatorTypeOptions || [];
+    this.config.locations = this.visibilitySnapshot.locations || [];
+    this.config.districts = this.visibilitySnapshot.districts || [];
+    this.config.languages = this.visibilitySnapshot.languages || [];
+    this.config.tiers = this.visibilitySnapshot.tiers || [];
+    this.config.userTags = this.visibilitySnapshot.userTags || this.getDefaultUserTags();
+    this.config.collaborationAvailability = this.visibilitySnapshot.collaborationAvailability || {};
+    this.cdr.detectChanges();
   }
 
   private getToken(): string | null {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('token') || sessionStorage.getItem('token');
+  }
+
+  private getAuthHeaders() {
+    const token = this.getToken();
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+  }
+
+  get filteredWhatsappCommunities(): any[] {
+    const query = this.whatsappCommunitySearch.trim().toLowerCase();
+    const list = Array.isArray(this.whatsappCommunities) ? this.whatsappCommunities : [];
+    return list.filter((item: any) => {
+      if (this.whatsappCommunityStatusFilter === 'active' && item?.isActive === false) return false;
+      if (this.whatsappCommunityStatusFilter === 'inactive' && item?.isActive !== false) return false;
+      if (!query) return true;
+      const haystack = [
+        item?.state,
+        item?.communityName,
+        item?.communityLink,
+      ]
+        .map((value) => String(value || '').toLowerCase())
+        .join(' ');
+      return haystack.includes(query);
+    });
+  }
+
+  get activeWhatsappCommunityCount(): number {
+    return this.whatsappCommunities.filter((item: any) => item?.isActive !== false).length;
+  }
+
+  get totalWhatsappJoinedUserCount(): number {
+    return this.whatsappCommunities.reduce(
+      (sum: number, item: any) => sum + Number(item?.joinedUserCount || 0),
+      0,
+    );
+  }
+
+  loadWhatsappCommunities() {
+    this.whatsappCommunitiesLoading = true;
+    this.whatsappCommunityError = '';
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/whatsapp-communities`, this.getAuthHeaders()).subscribe({
+      next: (res) => {
+        const data = res?.data ?? res ?? [];
+        this.whatsappCommunities = Array.isArray(data) ? data : [];
+        this.whatsappCommunitiesLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.whatsappCommunitiesLoading = false;
+        this.whatsappCommunityError = err?.error?.message || 'Failed to load WhatsApp communities.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  resetWhatsappCommunityForm() {
+    this.editingWhatsappCommunityId = '';
+    this.whatsappCommunityForm = {
+      state: '',
+      communityName: '',
+      communityLink: '',
+      isActive: true,
+    };
+  }
+
+  editWhatsappCommunity(item: any) {
+    this.editingWhatsappCommunityId = String(item?._id || '');
+    this.whatsappCommunityForm = {
+      state: String(item?.state || ''),
+      communityName: String(item?.communityName || ''),
+      communityLink: String(item?.communityLink || ''),
+      isActive: item?.isActive !== false,
+    };
+  }
+
+  get generatedReferralLink(): string {
+    return buildReferralLink(this.referralLinkRole, this.referralLinkUsername, this.referralLinkPlatform);
+  }
+
+  selectReferralLinkText(event: Event) {
+    (event.target as HTMLInputElement)?.select();
+  }
+
+  copyReferralLink() {
+    const link = this.generatedReferralLink;
+    if (!link) return;
+    copyTextToClipboard(link);
+    this.referralLinkCopied = true;
+    setTimeout(() => { this.referralLinkCopied = false; }, 2000);
+  }
+
+  getWhatsappQrUrl(link: string, size = 96): string {
+    const value = String(link || '').trim();
+    if (!value) return '';
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}`;
+  }
+
+  copyWhatsappCommunityLink(item: any) {
+    const link = String(item?.communityLink || '').trim();
+    if (!link) return;
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(link);
+      return;
+    }
+    if (typeof document === 'undefined') return;
+    const textarea = document.createElement('textarea');
+    textarea.value = link;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+  }
+
+  saveWhatsappCommunity() {
+    if (this.whatsappCommunitySaving) return;
+    this.whatsappCommunitySaving = true;
+    this.whatsappCommunityError = '';
+    const payload = { ...this.whatsappCommunityForm };
+    const request = this.editingWhatsappCommunityId
+      ? this.http.patch<any>(
+          `${environment.apiBaseUrl}/admin/whatsapp-communities/${this.editingWhatsappCommunityId}`,
+          payload,
+          this.getAuthHeaders(),
+        )
+      : this.http.post<any>(
+          `${environment.apiBaseUrl}/admin/whatsapp-communities`,
+          payload,
+          this.getAuthHeaders(),
+        );
+    request.subscribe({
+      next: () => {
+        this.whatsappCommunitySaving = false;
+        this.resetWhatsappCommunityForm();
+        this.loadWhatsappCommunities();
+      },
+      error: (err) => {
+        this.whatsappCommunitySaving = false;
+        this.whatsappCommunityError = err?.error?.message || 'Failed to save WhatsApp community.';
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  deleteWhatsappCommunity(item: any) {
+    const id = String(item?._id || '');
+    if (!id) return;
+    this.http.delete<any>(`${environment.apiBaseUrl}/admin/whatsapp-communities/${id}`, this.getAuthHeaders()).subscribe({
+      next: () => this.loadWhatsappCommunities(),
+      error: (err) => {
+        this.whatsappCommunityError = err?.error?.message || 'Failed to delete WhatsApp community.';
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   loadSettings() {
@@ -203,17 +743,66 @@ export class AdminManagementComponent implements OnInit {
         this.settings.preApproveBrands = !!data?.preApproveBrands;
         this.settings.brandRequireEmailVerified = !!data?.brandRequireEmailVerified;
         this.settings.brandRequireMobileVerified = !!data?.brandRequireMobileVerified;
+        this.settings.pendingUserAutoDeleteEnabled = data?.pendingUserAutoDeleteEnabled === true;
+        this.settings.pendingUserAutoDeleteDays =
+          typeof data?.pendingUserAutoDeleteDays === 'number' && data.pendingUserAutoDeleteDays > 0
+            ? Math.floor(data.pendingUserAutoDeleteDays)
+            : 45;
+        this.pendingUserAutoDeleteLastRunAt = data?.pendingUserAutoDeleteLastRunAt || null;
+        this.pendingUserAutoDeleteLastRunCount =
+          typeof data?.pendingUserAutoDeleteLastRunCount === 'number'
+            ? data.pendingUserAutoDeleteLastRunCount
+            : 0;
+        this.pendingUserAutoDeleteLastRunBy = String(data?.pendingUserAutoDeleteLastRunBy || '');
+        this.settings.pendingUploadAutoDeleteEnabled = data?.pendingUploadAutoDeleteEnabled === true;
+        this.settings.pendingUploadAutoDeleteHours =
+          typeof data?.pendingUploadAutoDeleteHours === 'number' && data.pendingUploadAutoDeleteHours > 0
+            ? Math.floor(data.pendingUploadAutoDeleteHours)
+            : 48;
+        this.pendingUploadAutoDeleteLastRunAt = data?.pendingUploadAutoDeleteLastRunAt || null;
+        this.pendingUploadAutoDeleteLastRunCount =
+          typeof data?.pendingUploadAutoDeleteLastRunCount === 'number'
+            ? data.pendingUploadAutoDeleteLastRunCount
+            : 0;
+        this.pendingUploadAutoDeleteLastRunBy = String(data?.pendingUploadAutoDeleteLastRunBy || '');
+        this.pendingUnverifiedReportLastRunAt = data?.pendingUnverifiedReportLastRunAt || null;
+        this.pendingUnverifiedReportLastRunCount =
+          typeof data?.pendingUnverifiedReportLastRunCount === 'number'
+            ? data.pendingUnverifiedReportLastRunCount
+            : 0;
+        this.firebaseEmailSyncLastRunAt = data?.firebaseEmailSyncLastRunAt || null;
+        this.firebaseEmailSyncLastRunCount =
+          typeof data?.firebaseEmailSyncLastRunCount === 'number'
+            ? data.firebaseEmailSyncLastRunCount
+            : 0;
         this.settings.campaignApprovalMode = data?.campaignApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
         this.settings.collaborationApprovalMode = data?.collaborationApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
+        this.settings.paymentGatewayMode = ['manual', 'razorpay_fallback', 'razorpay_only'].includes(data?.paymentGatewayMode)
+          ? data.paymentGatewayMode
+          : 'razorpay_fallback';
         this.settings.supportContactEnabled = data?.supportContactEnabled !== false;
         this.settings.supportContactEmail = data?.supportContactEmail || 'support@trendstarz.in';
         this.settings.supportContactPhone = data?.supportContactPhone || '';
         this.settings.supportContactWhatsapp = data?.supportContactWhatsapp || '';
         this.settings.supportContactMessage = data?.supportContactMessage || '';
           this.settings.verificationCallNumber = data?.verificationCallNumber || '';
+          this.settings.otpVerificationEnabled = data?.otpVerificationEnabled === true;
           this.settings.platformFeeEnabled = !!data?.platformFeeEnabled;
           this.settings.platformFeePercent = typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : 10;
+          this.settings.brandFeePercent = typeof data?.brandFeePercent === 'number' ? data.brandFeePercent : null;
+          this.settings.influencerFeePercent = typeof data?.influencerFeePercent === 'number' ? data.influencerFeePercent : 0;
+          this.settings.photographerFeePercent = typeof data?.photographerFeePercent === 'number' ? data.photographerFeePercent : 0;
+          this.settings.influencerRecipientFeePercent = typeof data?.influencerRecipientFeePercent === 'number' ? data.influencerRecipientFeePercent : 0;
+          this.settings.photographerRecipientFeePercent = typeof data?.photographerRecipientFeePercent === 'number' ? data.photographerRecipientFeePercent : 0;
+          this.settings.brandRecipientFeePercent = typeof data?.brandRecipientFeePercent === 'number' ? data.brandRecipientFeePercent : 0;
           this.settings.gstPercent = typeof data?.gstPercent === 'number' ? data.gstPercent : 18;
+          this.settings.submissionApprovalWaitHours = typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24;
+          this.settings.submissionAutoCompleteGraceHours = typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48;
+          this.settings.payoutReleaseWaitHours = typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24;
+          this.settings.disputeResponseWaitHours = typeof data?.disputeResponseWaitHours === 'number' ? data.disputeResponseWaitHours : 12;
+          this.settings.campaignAutoCloseGraceHours = typeof data?.campaignAutoCloseGraceHours === 'number' ? data.campaignAutoCloseGraceHours : 24;
+          this.settings.minCampaignStartDays = typeof data?.minCampaignStartDays === 'number' ? data.minCampaignStartDays : 3;
+          this.settings.maxCampaignDurationDays = typeof data?.maxCampaignDurationDays === 'number' ? data.maxCampaignDurationDays : 15;
           this.settings.earlyAccessAssignmentMode = data?.earlyAccessAssignmentMode === 'auto' ? 'auto' : 'manual';
           this.earlyAccessLastRunAt = data?.earlyAccessLastRunAt || null;
           this.earlyAccessLastRunStatus = String(data?.earlyAccessLastRunStatus || '');
@@ -221,10 +810,168 @@ export class AdminManagementComponent implements OnInit {
           this.settings.earlyAccessCommissionPercent = typeof data?.earlyAccessCommissionPercent === 'number' ? data.earlyAccessCommissionPercent : 0;
           this.settings.partnerCommissionPercent = typeof data?.partnerCommissionPercent === 'number' ? data.partnerCommissionPercent : 2;
           this.settings.internalTestCommissionPercent = typeof data?.internalTestCommissionPercent === 'number' ? data.internalTestCommissionPercent : 0;
+          this.settings.showSearchLink = data?.showSearchLink !== false;
+          this.settings.showRegisterInfluencerLink = data?.showRegisterInfluencerLink !== false;
+	          this.settings.showRegisterBrandLink = data?.showRegisterBrandLink !== false;
+	          this.settings.showRegisterPhotographerLink = data?.showRegisterPhotographerLink !== false;
+            this.settings.showInfluencerSearchTab = data?.showInfluencerSearchTab !== false;
+            this.settings.showPhotographerSearchTab = data?.showPhotographerSearchTab !== false;
+	          this.campaignTypeConfigDefaults = this.normalizeCampaignTypeConfigs(data?.campaignTypeConfigDefaults);
+	          this.campaignAccessModeConfigDefaults = this.normalizeCampaignAccessModeConfigs(
+	            data?.campaignAccessModeConfigDefaults,
+	          );
+	          this.settings.campaignTypeConfigs = this.normalizeCampaignTypeConfigs(
+	            data?.campaignTypeConfigs,
+	            this.campaignTypeConfigDefaults,
+	          );
+	          this.settings.campaignAccessModeConfigs = this.normalizeCampaignAccessModeConfigs(
+	            data?.campaignAccessModeConfigs,
+	            this.campaignAccessModeConfigDefaults,
+	          );
         this.cdr.detectChanges();
       },
       error: () => {}
     });
+  }
+
+  loadPendingUnverifiedReport() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.pendingUnverifiedReportLoading = true;
+    this.http
+      .get<any>(`${environment.apiBaseUrl}/admin/pending-unverified-report?days=7&limit=25`, headers)
+      .subscribe({
+        next: (res) => {
+          this.pendingUnverifiedReport = res?.data ?? res;
+          this.pendingUnverifiedReportLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.pendingUnverifiedReportLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  previewPendingUserCleanup() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.pendingUserCleanupPreviewLoading = true;
+    this.pendingUserCleanupMessage = '';
+    this.http
+      .get<any>(`${environment.apiBaseUrl}/admin/pending-user-cleanup/preview`, headers)
+      .subscribe({
+        next: (res) => {
+          this.pendingUserCleanupPreview = res?.data ?? res;
+          this.pendingUserCleanupPreviewLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.pendingUserCleanupMessage = err?.error?.message || 'Preview failed.';
+          this.pendingUserCleanupPreviewLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  runPendingUserCleanupNow() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.pendingUserCleanupRunning = true;
+    this.pendingUserCleanupMessage = '';
+    this.http
+      .post<any>(`${environment.apiBaseUrl}/admin/pending-user-cleanup/run`, {}, headers)
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.pendingUserCleanupMessage = data?.skipped
+            ? `Skipped: ${data.reason || 'disabled in settings'}`
+            : `Soft-deleted ${data?.totalDeleted || 0} pending user(s).`;
+          this.pendingUserCleanupRunning = false;
+          this.pendingUserCleanupPreview = null;
+          this.loadSettings();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.pendingUserCleanupMessage = err?.error?.message || 'Cleanup run failed.';
+          this.pendingUserCleanupRunning = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  previewPendingUploadCleanup() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.pendingUploadCleanupPreviewLoading = true;
+    this.pendingUploadCleanupMessage = '';
+    this.http
+      .get<any>(`${environment.apiBaseUrl}/admin/pending-upload-cleanup/preview`, headers)
+      .subscribe({
+        next: (res) => {
+          this.pendingUploadCleanupPreview = res?.data ?? res;
+          this.pendingUploadCleanupPreviewLoading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.pendingUploadCleanupMessage = err?.error?.message || 'Preview failed.';
+          this.pendingUploadCleanupPreviewLoading = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  runPendingUploadCleanupNow() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.pendingUploadCleanupRunning = true;
+    this.pendingUploadCleanupMessage = '';
+    this.http
+      .post<any>(`${environment.apiBaseUrl}/admin/pending-upload-cleanup/run`, {}, headers)
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.pendingUploadCleanupMessage = data?.skipped
+            ? `Skipped: ${data.reason || 'disabled in settings'}`
+            : `Deleted ${data?.totalDeleted || 0} orphaned upload(s)` +
+              (data?.totalSkippedInUse ? `, skipped ${data.totalSkippedInUse} still-referenced asset(s)` : '') + '.';
+          this.pendingUploadCleanupRunning = false;
+          this.pendingUploadCleanupPreview = null;
+          this.loadSettings();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.pendingUploadCleanupMessage = err?.error?.message || 'Cleanup run failed.';
+          this.pendingUploadCleanupRunning = false;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  runFirebaseEmailSync() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.firebaseEmailSyncRunning = true;
+    this.firebaseEmailSyncMessage = '';
+    this.http
+      .post<any>(`${environment.apiBaseUrl}/admin/firebase-email-sync/run`, {}, headers)
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.firebaseEmailSyncMessage = data?.skipped
+            ? `Sync skipped: ${data.reason || 'not available'}`
+            : `Firebase email sync complete. Updated ${data?.synced || 0} MongoDB user(s) from ${data?.firebaseVerified || 0} verified Firebase user(s).`;
+          this.firebaseEmailSyncRunning = false;
+          this.loadSettings();
+          this.loadPendingUnverifiedReport();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.firebaseEmailSyncMessage = err?.error?.message || 'Firebase email sync failed.';
+          this.firebaseEmailSyncRunning = false;
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   onCampaignApprovalModeToggle(isAutoLive: boolean) {
@@ -233,6 +980,17 @@ export class AdminManagementComponent implements OnInit {
 
   onCollaborationApprovalModeToggle(isAutoLive: boolean) {
     this.settings.collaborationApprovalMode = isAutoLive ? 'auto_live' : 'manual';
+  }
+
+  resetCampaignTypeConfigs(): void {
+    this.settings.campaignTypeConfigs = this.campaignTypeConfigDefaults.map((item) => ({ ...item }));
+    this.settings.campaignAccessModeConfigs = this.campaignAccessModeConfigDefaults.map((item) => ({ ...item }));
+    this.campaignTypeResetMessage = 'Campaign, collaboration, and access mode rules restored to the default baseline. Save Settings to persist them.';
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.campaignTypeResetMessage = '';
+      this.cdr.detectChanges();
+    }, 4000);
   }
 
   saveSettings() {
@@ -251,7 +1009,19 @@ export class AdminManagementComponent implements OnInit {
       }
     }, 15000);
 
-    this.http.patch<any>(`${environment.apiBaseUrl}/admin/settings`, this.settings, headers).subscribe({
+    const payload = {
+      ...this.settings,
+      campaignTypeConfigs: this.normalizeCampaignTypeConfigs(
+        this.settings.campaignTypeConfigs,
+        this.campaignTypeConfigDefaults,
+      ),
+      campaignAccessModeConfigs: this.normalizeCampaignAccessModeConfigs(
+        this.settings.campaignAccessModeConfigs,
+        this.campaignAccessModeConfigDefaults,
+      ),
+    };
+
+    this.http.patch<any>(`${environment.apiBaseUrl}/admin/settings`, payload, headers).subscribe({
       next: (res) => {
         clearTimeout(safetyTimer);
         // Confirm the saved doc actually contains our support fields. If the
@@ -259,21 +1029,33 @@ export class AdminManagementComponent implements OnInit {
         // missing from the returned `settings` and we'd warn the admin instead
         // of silently letting them think the save worked.
         const saved = (res && (res.settings ?? res.data?.settings)) || {};
-        const persistedSupport =
-          'supportContactEmail' in saved ||
-          'supportContactPhone' in saved ||
-          'supportContactWhatsapp' in saved ||
-          'supportContactMessage' in saved ||
-          'supportContactEnabled' in saved;
-        this.settingsSaving = false;
+	        const persistedSupport =
+	          'supportContactEmail' in saved ||
+	          'supportContactPhone' in saved ||
+	          'supportContactWhatsapp' in saved ||
+	          'supportContactMessage' in saved ||
+	          'supportContactEnabled' in saved;
+  	        const persistedSearchTabs = 'showInfluencerSearchTab' in saved || 'showPhotographerSearchTab' in saved;
+	        const persistedCampaignAccessModes = 'campaignAccessModeConfigs' in saved;
+	        this.settingsSaving = false;
         this.settingsSaved = true;
         this.cdr.detectChanges();
         this.loadSettings();
-        if (!persistedSupport) {
-          alert(
-            'Saved, but support contact fields were not persisted. Please restart the backend so the new schema is loaded.',
-          );
-        }
+	        if (!persistedSupport) {
+	          alert(
+	            'Saved, but support contact fields were not persisted. Please restart the backend so the new schema is loaded.',
+	          );
+	        }
+	        if (!persistedCampaignAccessModes) {
+	          alert(
+	            'Saved, but campaign access mode fields were not persisted. Please restart/deploy the backend so the new schema is loaded.',
+	          );
+	        }
+  	        if (!persistedSearchTabs) {
+  	          alert(
+  	            'Saved, but search tab visibility fields were not persisted. Please restart/deploy the backend so the new schema is loaded.',
+  	          );
+  	        }
         setTimeout(() => {
           this.settingsSaved = false;
           this.cdr.detectChanges();
@@ -296,26 +1078,27 @@ export class AdminManagementComponent implements OnInit {
 
     this.http.get(baseUrl + '/admin/social-media', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
-      this.config.socialMediaPlatforms = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+      this.config.socialMediaPlatforms = this.normalizeSocialMediaPlatforms(data);
     });
     this.http.get(baseUrl + '/admin/categories', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.categories = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
-    this.http.get(baseUrl + '/equipment-options').subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/equipment-options', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.equipmentOptions = (data.length ? data : DEFAULT_EQUIPMENT_OPTIONS)
         .map((item: any) => ({ ...item, visible: item.visible !== false }));
     }, () => {
       this.config.equipmentOptions = DEFAULT_EQUIPMENT_OPTIONS.map((item: any) => ({ ...item }));
     });
-    this.http.get(baseUrl + '/pricing-options').subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/pricing-options', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.pricingOptions = (data.length ? data : DEFAULT_PRICING_OPTIONS)
         .map((item: any) => ({ ...item, visible: item.visible !== false }));
     }, () => {
       this.config.pricingOptions = DEFAULT_PRICING_OPTIONS.map((item: any) => ({ ...item }));
     });
+    this.loadCreatorTypeOptionsConfig();
     this.http.get(baseUrl + '/admin/states', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.locations = data.map((state: any) => ({ ...state, visible: !!state.showInFrontend }));
@@ -327,6 +1110,7 @@ export class AdminManagementComponent implements OnInit {
     this.http.get(baseUrl + '/admin/tiers', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.tiers = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+      this.loadTierUsageCounts();
     });
     this.http.get(baseUrl + '/admin/districts', headers).subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
@@ -334,6 +1118,64 @@ export class AdminManagementComponent implements OnInit {
     });
 
     this.loadUserTagsConfig();
+    this.loadCollaborationAvailabilityConfig();
+  }
+
+  loadTierUsageCounts() {
+    const baseUrl = environment.apiBaseUrl;
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    const requests = [
+      this.http.get<any>(`${baseUrl}/admin/influencers?limit=1000`, headers),
+      this.http.get<any>(`${baseUrl}/admin/brands?limit=1000`, headers),
+      this.http.get<any>(`${baseUrl}/admin/photographers?limit=1000`, headers),
+    ];
+    forkJoin(requests).subscribe({
+      next: (responses) => {
+        const counts: Record<string, number> = {};
+        responses
+          .flatMap((res: any) => {
+            const data = res?.data ?? res ?? [];
+            return Array.isArray(data) ? data : [];
+          })
+          .forEach((user: any) => {
+            const userTiers = new Set<string>();
+            (Array.isArray(user?.socialMedia) ? user.socialMedia : []).forEach((sm: any) => {
+              const tier = String(sm?.tier || '').trim();
+              if (tier) userTiers.add(tier.toLowerCase());
+            });
+            userTiers.forEach((tier) => {
+              counts[tier] = (counts[tier] || 0) + 1;
+            });
+          });
+        this.tierUsageCounts = counts;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.tierUsageCounts = {};
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  getTierUsageCount(tier: any): number {
+    const name = String(tier?.name || '').trim().toLowerCase();
+    return name ? Number(this.tierUsageCounts[name] || 0) : 0;
+  }
+
+  loadCollaborationAvailabilityConfig() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/collaboration-availability-config`, headers).subscribe({
+      next: (res) => {
+        this.config.collaborationAvailability = res?.data ?? res ?? {};
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.config.collaborationAvailability = {};
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   loadUserTagsConfig() {
@@ -358,9 +1200,28 @@ export class AdminManagementComponent implements OnInit {
     });
   }
 
+  loadCreatorTypeOptionsConfig() {
+    const token = this.getToken();
+    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/creator-type-options-config`, headers).subscribe({
+      next: (res) => {
+        const data = res?.data ?? res ?? [];
+        this.config.creatorTypeOptions = (Array.isArray(data) && data.length ? data : DEFAULT_CREATOR_TYPE_OPTIONS)
+          .map((item: any) => ({ ...item, visible: item.visible !== false }));
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.config.creatorTypeOptions = DEFAULT_CREATOR_TYPE_OPTIONS.map((item: any) => ({ ...item }));
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
-  toggleVisible(type: string, idx: number, subIdx?: number) {
+
+  toggleVisible(type: string, idx: number, subIdx?: any) {
     // Only update local state, do not persist yet
+    this.ensureVisibilitySnapshot();
+
     if (type === 'tiers') {
       const tier = this.config.tiers[idx];
       tier.visible = !tier.visible;
@@ -376,12 +1237,23 @@ export class AdminManagementComponent implements OnInit {
     } else if (type === 'pricingOptions') {
       const pricing = this.config.pricingOptions[idx];
       pricing.visible = !pricing.visible;
+    } else if (type === 'creatorTypeOptions') {
+      const item = this.config.creatorTypeOptions[idx];
+      item.visible = !item.visible;
     } else if (type === 'languages') {
       const lang = this.config.languages[idx];
       lang.visible = !lang.visible;
     } else if (type === 'state') {
       const state = this.config.locations[idx];
       state.visible = !state.visible;
+      if (state.visible === false && this.districtFilterState === state.name) {
+        this.districtFilterState = '';
+      }
+      this.config.districts
+        .filter((district: any) => String(district?.state || '').trim().toLowerCase() === String(state?.name || '').trim().toLowerCase())
+        .forEach((district: any) => {
+          district.visible = state.visible;
+        });
     } else if (type === 'district') {
       const district = this.config.districts[idx];
       district.visible = !district.visible;
@@ -390,7 +1262,14 @@ export class AdminManagementComponent implements OnInit {
       if (tag) {
         tag.visible = !tag.visible;
       }
+    } else if (type === 'collaborationOption') {
+      const item = this.getCollaborationOptionGroup(subIdx)?.[idx];
+      if (item) item.visible = !item.visible;
     }
+  }
+
+  getCollaborationOptionGroup(group: { role: CollaborationAvailabilityRole; key: string }): any[] {
+    return this.config.collaborationAvailability?.[group.role]?.[group.key] || [];
   }
 
   requestVisibilitySaveConfirmation() {
@@ -399,6 +1278,8 @@ export class AdminManagementComponent implements OnInit {
 
   cancelVisibilitySaveConfirmation() {
     this.showVisibilityConfirmModal = false;
+    this.restoreVisibilitySnapshot();
+    this.visibilitySnapshot = null;
   }
 
   confirmVisibilitySave() {
@@ -428,17 +1309,43 @@ export class AdminManagementComponent implements OnInit {
         reloadFn = () => {
           this.http.get(baseUrl + '/admin/social-media', headers).subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
-            this.config.socialMediaPlatforms = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
+            this.config.socialMediaPlatforms = this.normalizeSocialMediaPlatforms(data);
           });
         };
         break;
       case 'categories':
-        payload = { categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })) };
+        payload = {
+          categories: this.config.categories.map((c: any) => ({ _id: c._id, showInFrontend: c.visible })),
+          equipmentOptions: this.config.equipmentOptions.map((e: any) => ({
+            name: String(e?.name || '').trim(),
+            visible: e?.visible !== false,
+          })).filter((e: any) => !!e.name),
+          pricingOptions: this.config.pricingOptions.map((p: any) => ({
+            key: String(p?.key || p?.label || '').trim(),
+            label: String(p?.label || p?.key || '').trim(),
+            visible: p?.visible !== false,
+          })).filter((p: any) => !!p.key),
+          creatorTypeOptions: this.config.creatorTypeOptions.map((item: any) => ({
+            name: String(item?.name || '').trim(),
+            visible: item?.visible !== false,
+          })).filter((item: any) => !!item.name),
+        };
         reloadFn = () => {
           this.http.get(baseUrl + '/admin/categories', headers).subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.categories = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
           });
+          this.http.get(baseUrl + '/admin/equipment-options', headers).subscribe((res: any) => {
+            const data = Array.isArray(res) ? res : (res?.data || []);
+            this.config.equipmentOptions = (data.length ? data : DEFAULT_EQUIPMENT_OPTIONS)
+              .map((item: any) => ({ ...item, visible: item.visible !== false }));
+          });
+          this.http.get(baseUrl + '/admin/pricing-options', headers).subscribe((res: any) => {
+            const data = Array.isArray(res) ? res : (res?.data || []);
+            this.config.pricingOptions = (data.length ? data : DEFAULT_PRICING_OPTIONS)
+              .map((item: any) => ({ ...item, visible: item.visible !== false }));
+          });
+          this.loadCreatorTypeOptionsConfig();
         };
         break;
       case 'languages':
@@ -489,6 +1396,10 @@ export class AdminManagementComponent implements OnInit {
         };
         reloadFn = () => this.loadUserTagsConfig();
         break;
+      case 'collaborationAvailability':
+        payload = { collaborationAvailability: this.config.collaborationAvailability };
+        reloadFn = () => this.loadCollaborationAvailabilityConfig();
+        break;
       default:
         // fallback to all
         payload = {
@@ -498,6 +1409,19 @@ export class AdminManagementComponent implements OnInit {
           languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })),
           states: this.config.locations.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })),
           districts: this.config.districts.map((d: any) => ({ _id: d._id, showInFrontend: d.visible })),
+          equipmentOptions: this.config.equipmentOptions.map((e: any) => ({
+            name: String(e?.name || '').trim(),
+            visible: e?.visible !== false,
+          })).filter((e: any) => !!e.name),
+          pricingOptions: this.config.pricingOptions.map((p: any) => ({
+            key: String(p?.key || p?.label || '').trim(),
+            label: String(p?.label || p?.key || '').trim(),
+            visible: p?.visible !== false,
+          })).filter((p: any) => !!p.key),
+          creatorTypeOptions: this.config.creatorTypeOptions.map((item: any) => ({
+            name: String(item?.name || '').trim(),
+            visible: item?.visible !== false,
+          })).filter((item: any) => !!item.name),
           userTags: {
             influencer: (this.config.userTags?.influencer || []).map((t: any) => ({
               name: String(t?.name || '').trim(),
@@ -526,6 +1450,7 @@ export class AdminManagementComponent implements OnInit {
       .subscribe({
         next: () => {
           alert('Visibility updated successfully!');
+          this.visibilitySnapshot = null;
           reloadFn();
         },
         error: (err) => {
@@ -561,6 +1486,20 @@ export class AdminManagementComponent implements OnInit {
         next: (res) => {
           const data = res?.data ?? res;
           this.commissionCounts.brand[badge] = data.count || 0;
+          this.cdr.detectChanges();
+        },
+        error: () => {}
+      });
+    });
+
+    const photographerBadges: (keyof typeof this.commissionCounts.photographer)[] =
+      ['early_access_photographer', 'partner_photographer', 'internal_test_photographer'];
+
+    photographerBadges.forEach(badge => {
+      this.http.get<any>(`${base}/admin/users-by-commission-badge/photographer/${badge}`, headers).subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          this.commissionCounts.photographer[badge] = data.count || 0;
           this.cdr.detectChanges();
         },
         error: () => {}

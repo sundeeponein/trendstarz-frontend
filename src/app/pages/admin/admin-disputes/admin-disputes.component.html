@@ -1,10 +1,13 @@
-<div class="admin-disputes">
-  <header class="hdr">
-    <h2>Disputes & Reported Issues</h2>
-    <div class="filter-tabs">
-      <button [class.active]="statusFilter === 'open'" (click)="setFilter('open')">Open</button>
-      <button [class.active]="statusFilter === 'resolved'" (click)="setFilter('resolved')">Resolved</button>
-      <button [class.active]="statusFilter === 'all'" (click)="setFilter('all')">All reported</button>
+<div class="admin-disputes ts-admin-page">
+  <header class="hdr ts-admin-page-header">
+    <div class="ts-admin-heading">
+      <h2 class="ts-admin-title"><i class="bi bi-exclamation-octagon"></i> Disputes & Reported Issues</h2>
+      <p class="ts-admin-subtitle">Review reported campaign issues, resolve disputes, and keep payout decisions traceable.</p>
+    </div>
+    <div class="filter-tabs ts-admin-tabbar">
+      <button class="ts-admin-tab" [class.active]="statusFilter === 'open'" (click)="setFilter('open')">Open</button>
+      <button class="ts-admin-tab" [class.active]="statusFilter === 'resolved'" (click)="setFilter('resolved')">Resolved</button>
+      <button class="ts-admin-tab" [class.active]="statusFilter === 'all'" (click)="setFilter('all')">All reported</button>
     </div>
   </header>
 
@@ -50,12 +53,19 @@
           <strong>{{ inv.brand?.name || '—' }}</strong>
           <span class="arrow">→</span>
           <strong>{{ inv.influencer?.name || '—' }}</strong>
+          <span *ngIf="isAdminReviewRequested(inv)" class="admin-review-badge" title="The influencer contested this dispute and asked for an admin review">
+            🚩 Influencer requested review
+          </span>
         </div>
         <span class="status-pill" [attr.data-status]="inv.status">{{ inv.status }}</span>
       </div>
 
       <div class="meta">
         <span><b>Campaign:</b> {{ inv.campaign?.title || '—' }}</span>
+        <span class="sep">·</span>
+        <button type="button" class="cmp-id-badge" (click)="goToCampaign(inv)" title="Open this campaign in Campaign Review">
+          {{ campaignIdLabel(inv.campaign) }}
+        </button>
         <span class="sep">·</span>
         <span><b>Type:</b> {{ inv.campaign?.campaignType || '—' }}</span>
         <span class="sep">·</span>
@@ -68,7 +78,8 @@
 
       <div class="reason">
         <b>Reason:</b>
-        <pre>{{ inv.reportedIssue?.reason || '—' }}</pre>
+        <pre>{{ disputeReason(inv) || '—' }}</pre>
+        <a *ngIf="disputeEvidenceUrl(inv)" [href]="disputeEvidenceUrl(inv)" target="_blank" rel="noopener" class="evidence-link">View evidence</a>
       </div>
 
       <div class="contacts">

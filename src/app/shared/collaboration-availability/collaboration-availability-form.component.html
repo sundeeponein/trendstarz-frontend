@@ -1,0 +1,60 @@
+<section class="ca-form" [formGroup]="form" *ngIf="form">
+  <h3 class="m-0">Collaboration Availability</h3>
+  <small class="text-black">
+    Improve your visibility and receive better collaboration invites from brands, photographers and agencies.
+  </small>
+
+  <label class="ca-toggle mt-4">
+    <input type="checkbox" formControlName="enabled" [disabled]="readonly" />
+    <span>{{ role === 'influencer' ? 'Open for Collaborations & Shoots' : 'Open for Collaborations' }}</span>
+  </label>
+
+  <ng-container *ngIf="form.get('enabled')?.value">
+    <div class="ca-field" *ngIf="role === 'influencer' && (!readonly || optionsForField('collaborationTypes', influencerOptions.collaborationTypes || []).length)">
+      <label>Collaboration Types</label>
+      <div class="ca-chip-row">
+        <button
+          type="button"
+          class="ca-chip"
+          *ngFor="let item of optionsForField('collaborationTypes', influencerOptions.collaborationTypes || [])"
+          [class.selected]="has('collaborationTypes', item.name)"
+          [disabled]="readonly || isMaxed('collaborationTypes', item.name)"
+          (click)="toggle('collaborationTypes', item.name)">
+          {{ item.name }}
+        </button>
+      </div>
+      <div class="ca-limit" *ngIf="limitMessage('collaborationTypes')">{{ limitMessage('collaborationTypes') }}</div>
+    </div>
+
+    <div class="ca-field" *ngIf="!readonly || optionsForField('availableFor', roleOptions.availableFor || []).length">
+      <label>{{ role === 'influencer' ? 'Collaboration Preference' : 'Preferred Collaboration Type' }}</label>
+      <div class="ca-radio-row">
+        <label class="ca-radio" *ngFor="let item of roleOptions.preferences || []">
+          <input type="radio" formControlName="preference" [value]="item.name" [disabled]="readonly" />
+          <span>{{ item.name }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="ca-field" *ngIf="!readonly || optionsForField('availableFor', roleOptions.availableFor || []).length">
+      <label>Available For</label>
+      <div class="ca-chip-row">
+        <button
+          type="button"
+          class="ca-chip"
+          *ngFor="let item of optionsForField('availableFor', roleOptions.availableFor || [])"
+          [class.selected]="has('availableFor', item.name)"
+          [disabled]="readonly || isMaxed('availableFor', item.name)"
+          (click)="toggle('availableFor', item.name)">
+          {{ item.name }}
+        </button>
+      </div>
+      <div class="ca-limit" *ngIf="limitMessage('availableFor')">{{ limitMessage('availableFor') }}</div>
+    </div>
+
+    <label class="ca-toggle ca-toggle--compact">
+      <input type="checkbox" formControlName="openToTravel" [disabled]="readonly" />
+      <span>Open to Travel</span>
+    </label>
+  </ng-container>
+</section>

@@ -13,12 +13,16 @@ describe('PremiumPaymentsPanelComponent', () => {
       'listByStatus',
       'approvePayment',
       'rejectPayment',
+      'getSummary',
     ]);
 
     serviceSpy.listPending.and.returnValue(of({ success: true, payments: [], total: 0, page: 1, pages: 1 }));
     serviceSpy.listByStatus.and.returnValue(of({ payments: [] }));
     serviceSpy.approvePayment.and.returnValue(of({ message: 'ok' }));
     serviceSpy.rejectPayment.and.returnValue(of({ message: 'rejected' }));
+    serviceSpy.getSummary.and.returnValue(
+      of({ success: true, data: { received: 0, pending: 0, rejected: 0, refunded: 0, netReceived: 0 } }),
+    );
 
     localStorage.setItem('token', 'token');
 
@@ -36,7 +40,8 @@ describe('PremiumPaymentsPanelComponent', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
     expect(serviceSpy.listPending).toHaveBeenCalled();
-    expect(serviceSpy.listByStatus).toHaveBeenCalledTimes(2);
+    // approved + rejected + refunded lists
+    expect(serviceSpy.listByStatus).toHaveBeenCalledTimes(3);
   });
 
   it('emits error when pending load fails', () => {

@@ -1,0 +1,32 @@
+<div
+  *ngIf="open"
+  class="modal fade show reusable-image-gallery-modal"
+  style="display:block; background: rgba(7, 12, 22, 0.72);"
+  tabindex="-1"
+  (click)="close()"
+>
+  <div class="modal-dialog modal-xl modal-dialog-centered" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ title }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="gallery-viewer" *ngIf="images.length">
+          <img [src]="images[safeSelectedIndex]" [alt]="imageAlt" class="gallery-viewer-main" />
+          <div class="gallery-viewer-strip" *ngIf="images.length > 1">
+            <button
+              type="button"
+              class="gallery-thumb-btn"
+              *ngFor="let image of images; let i = index"
+              [class.active]="i === safeSelectedIndex"
+              (click)="select(i)"
+            >
+              <img [src]="image" [alt]="thumbnailAlt" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

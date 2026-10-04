@@ -9,7 +9,7 @@
   ></admin-confirm-dialog>
   
   <div class="page-header">
-    <h2>Plan Management</h2>
+    <h2 class="text-black">Plan Management</h2>
     <div class="header-actions">
       <button class="admin-btn admin-btn-secondary" (click)="loadFromConfig()">Load from Config</button>
       <button class="admin-btn admin-btn-primary" (click)="startCreate()">+ New Plan</button>
@@ -31,7 +31,7 @@
   </div>
 
   <div class="alert alert-danger" *ngIf="error">{{ error }}</div>
-  <div class="alert alert-success" *ngIf="successMsg">{{ successMsg }}</div>
+  <div class="alert alert-success" *ngIf="successMsg && !editingPlan">{{ successMsg }}</div>
 
   <!-- Plans list: Influencers -->
   <div *ngIf="!editingPlan">
@@ -40,10 +40,23 @@
       No plans found. Click <strong>Seed Default Plans</strong> to get started.
     </div>
 
-    <div class="plans-section">
-      <h3>Influencer Plans</h3>
+    <div class="trial-summary-card" *ngIf="!loading && plans.length > 0">
+      <div class="trial-summary-title">Recommended</div>
+      <div class="trial-summary-row" *ngFor="let r of trialDaysSummary">
+        <span class="trial-summary-label">{{ r.label }}</span>
+        <span class="trial-summary-days">Trial Days: {{ r.days }}</span>
+      </div>
+    </div>
+
+    <div class="role-tabs" role="tablist" aria-label="Plan Roles">
+      <button class="role-tab" [class.active]="activeTab === 'INFLUENCER'" (click)="setTab('INFLUENCER')">Influencers</button>
+      <button class="role-tab" [class.active]="activeTab === 'BRAND'" (click)="setTab('BRAND')">Brands</button>
+      <button class="role-tab" [class.active]="activeTab === 'PHOTOGRAPHER'" (click)="setTab('PHOTOGRAPHER')">Photographers</button>
+    </div>
+
+    <div class="plans-section mt-3">
       <div class="plans-grid">
-        <div class="plan-card" *ngFor="let plan of influencerPlans; trackBy: trackById">
+        <div class="plan-card" *ngFor="let plan of activePlans; trackBy: trackById">
           <div class="plan-card-header">
             <div>
               <span class="plan-name">{{ plan.name }}</span>
@@ -78,7 +91,7 @@
           <!-- Limits -->
           <div class="section-label">Limits</div>
           <ul class="limit-list">
-            <li *ngFor="let l of plan.limits">
+            <li *ngFor="let l of visibleLimits(plan)">
               {{ l.label }}: <strong>{{ l.value }}</strong>
             </li>
           </ul>
@@ -87,15 +100,13 @@
           <div class="section-label">Policies</div>
           <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }}</strong> days post-expiry</p>
 
-            <!-- Discount (Offers) -->
-            <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
-            <ul class="limit-list" *ngIf="plan.offers && plan.offers.length">
-              <li *ngFor="let o of plan.offers">
-                <span *ngIf="o.key === 'discountOnBrandPro' || o.key === 'discountOnInfluencerPro'">
-                  {{ o.label }}: <strong>{{ o.value }}%</strong>
-                </span>
-              </li>
-            </ul>
+          <!-- Discount (Offers) -->
+          <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
+          <ul class="limit-list" *ngIf="plan.offers && plan.offers.length">
+            <li *ngFor="let o of plan.offers">
+              {{ o.label }}: <strong>{{ offerValueDisplay(o) }}</strong>
+            </li>
+          </ul>
 
           <div class="card-actions">
             <button class="admin-btn admin-btn-secondary admin-btn-sm" (click)="startEdit(plan)">Edit</button>
@@ -104,245 +115,234 @@
         </div>
       </div>
     </div>
-
-    <div class="plans-section mt-5 border-top pt-4">
-      <h3>Brand Plans</h3>
-      <div class="plans-grid">
-        <div class="plan-card" *ngFor="let plan of brandPlans; trackBy: trackById">
-          <div class="plan-card-header">
-            <div>
-              <span class="plan-name">{{ plan.name }}</span>
-              <span class="badge" [class.badge-influencer]="plan.userType === 'INFLUENCER'"
-                  [class.badge-brand]="plan.userType === 'BRAND'">{{ plan.userType }}</span>
-            </div>
-            <div class="plan-status" [class.active]="plan.isActive">
-              {{ plan.isActive ? 'Active' : 'Inactive' }}
-            </div>
-          </div>
-
-          <div class="plan-pricing">
-            <span>₹{{ plan.price.monthly || 0 }}/mo
-            </span>
-            <span class="sep">·</span>
-            <span>₹{{ plan.price.quarterly || 0 }}/3mo
-            </span>
-            <span class="sep">·</span>
-            <span>₹{{ plan.price.yearly || 0 }}/yr
-            </span>
-          </div>
-          <div class="plan-pricing" *ngIf="plan.discountLabel">
-            <span>{{ plan.discountLabel }}</span>
-          </div>
-
-          <!-- Features -->
-          <div class="section-label">Features</div>
-          <ul class="feature-list">
-            <li *ngFor="let f of plan.features" [class.disabled]="!f.value">
-              <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
-              {{ f.label }}
-            </li>
-          </ul>
-
-          <!-- Limits -->
-          <div class="section-label">Limits</div>
-          <ul class="limit-list">
-            <li *ngFor="let l of plan.limits">
-              {{ l.label }}: <strong>{{ l.value }}</strong>
-            </li>
-          </ul>
-
-          <!-- Policies -->
-          <div class="section-label">Policies</div>
-          <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> post-expiry</p>
-
-            <!-- Discount (Offers) -->
-            <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
-            <ul class="limit-list" *ngIf="plan.offers && plan.offers.length">
-              <li *ngFor="let o of plan.offers">
-                <span *ngIf="o.key === 'discountOnBrandPro' || o.key === 'discountOnInfluencerPro'">
-                  {{ o.label }}: <strong>{{ o.value }}%</strong>
-                </span>
-              </li>
-            </ul>
-
-          <div class="card-actions">
-            <button class="btn btn-sm btn-outline" (click)="startEdit(plan)">Edit</button>
-            <button class="btn btn-sm btn-danger" (click)="deletePlan(plan)">Delete</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="plans-section mt-5 border-top pt-4">
-      <h3>Photographer Plans</h3>
-      <div class="plans-grid">
-        <div class="plan-card" *ngFor="let plan of photographerPlans; trackBy: trackById">
-          <div class="plan-card-header">
-            <div>
-              <span class="plan-name">{{ plan.name }}</span>
-              <span class="badge" [class.badge-influencer]="plan.userType === 'INFLUENCER'"
-                  [class.badge-brand]="plan.userType === 'BRAND'">{{ plan.userType }}</span>
-            </div>
-            <div class="plan-status" [class.active]="plan.isActive">
-              {{ plan.isActive ? 'Active' : 'Inactive' }}
-            </div>
-          </div>
-
-          <div class="plan-pricing">
-            <span>₹{{ plan.price.monthly || 0 }}/mo
-            </span>
-            <span class="sep">·</span>
-            <span>₹{{ plan.price.quarterly || 0 }}/3mo
-            </span>
-            <span class="sep">·</span>
-            <span>₹{{ plan.price.yearly || 0 }}/yr
-            </span>
-          </div>
-          <div class="plan-pricing" *ngIf="plan.discountLabel">
-            <span>{{ plan.discountLabel }}</span>
-          </div>
-
-          <div class="section-label">Features</div>
-          <ul class="feature-list">
-            <li *ngFor="let f of plan.features" [class.disabled]="!f.value">
-              <span class="dot" [class.on]="f.value" [class.off]="!f.value"></span>
-              {{ f.label }}
-            </li>
-          </ul>
-
-          <div class="section-label">Limits</div>
-          <ul class="limit-list">
-            <li *ngFor="let l of plan.limits">
-              {{ l.label }}: <strong>{{ l.value }}</strong>
-            </li>
-          </ul>
-
-          <div class="section-label">Policies</div>
-          <p class="policy">Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> post-expiry</p>
-
-          <div class="section-label" *ngIf="plan.offers && plan.offers.length">Offers</div>
-          <ul class="limit-list" *ngIf="plan.offers && plan.offers.length">
-            <li *ngFor="let o of plan.offers">
-              <span>
-                {{ o.label }}: <strong>{{ o.value }}%</strong>
-              </span>
-            </li>
-          </ul>
-
-          <div class="card-actions">
-            <button class="btn btn-sm btn-outline" (click)="startEdit(plan)">Edit</button>
-            <button class="btn btn-sm btn-danger" (click)="deletePlan(plan)">Delete</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Edit / Create form -->
   <div class="plan-form-wrap" *ngIf="editingPlan">
-    <h3 class="text-black">{{ isCreating ? 'Create Plan' : 'Edit Plan' }}</h3>
-
-    <div class="form-row">
-      <label>Name</label>
-      <input type="text" [(ngModel)]="editingPlan.name" placeholder="e.g. Pro" />
+    <div class="plan-form-header">
+      <div>
+        <h3 class="text-black">{{ isCreating ? 'Create Plan' : 'Edit Plan' }}</h3>
+        <p class="plan-form-subtitle">Configure {{ editingPlan.userType }} tier pricing, features, and administrative constraints.</p>
+      </div>
+      <span class="success-pill" *ngIf="successMsg"><i class="bi bi-check-circle-fill"></i> {{ successMsg }}</span>
     </div>
 
-    <div class="form-row">
-      <label>User Type</label>
-      <select [(ngModel)]="editingPlan.userType" (change)="onUserTypeChange()">
-        <option *ngFor="let t of userTypes" [value]="t">{{ t }}</option>
-      </select>
+    <div class="plan-card-section">
+      <div class="plan-card-section-header">
+        <i class="bi bi-briefcase"></i>
+        <span>Plan Basics</span>
+      </div>
+      <div class="form-row two-col">
+        <div>
+          <label>Name</label>
+          <input type="text" [(ngModel)]="editingPlan.name" placeholder="e.g. Pro" />
+        </div>
+        <div>
+          <label>User Type</label>
+          <select [(ngModel)]="editingPlan.userType" (change)="onUserTypeChange()">
+            <option *ngFor="let t of userTypes" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Offer Tagline (shown under Premium)</label>
+        <input type="text" [(ngModel)]="editingPlan.discountLabel" placeholder="e.g. Early Access Offer / New Year Offer" />
+      </div>
     </div>
 
-    <div class="form-row three-col">
-      <div>
-        <label>Monthly Price (₹)</label>
-        <input type="number" [(ngModel)]="editingPlan.price.monthly" min="0" />
+    <!-- Pricing & Discounts section: actual price + discount, paired per duration -->
+    <div class="plan-card-section">
+      <div class="plan-card-section-header">
+        <i class="bi bi-credit-card"></i>
+        <span>Pricing &amp; Discounts</span>
       </div>
-      <div>
-        <label>Quarterly Price (₹)</label>
-        <input type="number" [(ngModel)]="editingPlan.price.quarterly" min="0" />
+
+      <div class="cycle-grid">
+        <div class="cycle-card">
+          <div class="cycle-card-title">Monthly <span class="cycle-months-badge">1 mo</span></div>
+          <div class="form-row">
+            <label>Monthly Price (₹)</label>
+            <input type="number" [(ngModel)]="editingPlan.price.monthly" min="0" />
+          </div>
+          <div class="form-row">
+            <label>Monthly Discount (%)</label>
+            <input type="number" [value]="getOfferValue('discountMonthly')" min="0" max="100" (input)="setOfferValue('discountMonthly', $event.target.valueAsNumber)" />
+          </div>
+          <div class="form-row">
+            <label>Bonus Months (Monthly)</label>
+            <input type="number" [value]="getOfferValue('bonusMonthsMonthly')" min="0" (input)="setOfferValue('bonusMonthsMonthly', $event.target.valueAsNumber)" />
+          </div>
+          <div class="cycle-final">Final Price: <strong>₹{{ getFinalPrice('monthly') }}</strong></div>
+          <div class="cycle-final">Final Duration: <strong>{{ getFinalDuration('monthly') }} mo</strong></div>
+        </div>
+        <div class="cycle-card">
+          <div class="cycle-card-title">Quarterly <span class="cycle-months-badge">3 mo</span></div>
+          <div class="form-row">
+            <label>Quarterly Price (₹)</label>
+            <input type="number" [(ngModel)]="editingPlan.price.quarterly" min="0" />
+          </div>
+          <div class="form-row">
+            <label>Quarterly Discount (%)</label>
+            <input type="number" [value]="getOfferValue('discountQuarterly')" min="0" max="100" (input)="setOfferValue('discountQuarterly', $event.target.valueAsNumber)" />
+          </div>
+          <div class="form-row">
+            <label>Bonus Months (Quarterly)</label>
+            <input type="number" [value]="getOfferValue('bonusMonthsQuarterly')" min="0" (input)="setOfferValue('bonusMonthsQuarterly', $event.target.valueAsNumber)" />
+          </div>
+          <div class="cycle-final">Final Price: <strong>₹{{ getFinalPrice('quarterly') }}</strong></div>
+          <div class="cycle-final">Final Duration: <strong>{{ getFinalDuration('quarterly') }} mo</strong></div>
+        </div>
+        <div class="cycle-card">
+          <div class="cycle-card-title">Yearly <span class="cycle-months-badge">12 mo</span></div>
+          <div class="form-row">
+            <label>Yearly Price (₹)</label>
+            <input type="number" [(ngModel)]="editingPlan.price.yearly" min="0" />
+          </div>
+          <div class="form-row">
+            <label>Yearly Discount (%)</label>
+            <input type="number" [value]="getOfferValue('discountYearly')" min="0" max="100" (input)="setOfferValue('discountYearly', $event.target.valueAsNumber)" />
+          </div>
+          <div class="form-row">
+            <label>Bonus Months (Yearly)</label>
+            <input type="number" [value]="getOfferValue('bonusMonthsYearly')" min="0" (input)="setOfferValue('bonusMonthsYearly', $event.target.valueAsNumber)" />
+          </div>
+          <div class="cycle-final">Final Price: <strong>₹{{ getFinalPrice('yearly') }}</strong></div>
+          <div class="cycle-final">Final Duration: <strong>{{ getFinalDuration('yearly') }} mo</strong></div>
+        </div>
       </div>
-      <div>
-        <label>Yearly Price (₹)</label>
-        <input type="number" [(ngModel)]="editingPlan.price.yearly" min="0" />
+      <p class="section-hint">Bonus Months here apply to <strong>every</strong> purchase of that cycle. The Founder Offer popup below can add an <strong>extra</strong> bonus on top, only for users who still qualify when their payment is approved.</p>
+
+      <div class="form-row">
+        <label>Trial Days</label>
+        <input type="number" [value]="getOfferValue('trialPeriodDays')" min="0" (input)="setOfferValue('trialPeriodDays', $event.target.valueAsNumber)" />
       </div>
     </div>
 
-    <div class="form-row">
-      <label>Offer Tagline (shown under Premium)</label>
-      <input type="text" [(ngModel)]="editingPlan.discountLabel" placeholder="e.g. Early Access Offer / New Year Offer" />
+    <div class="plan-card-section">
+      <div class="plan-card-section-header">
+        <i class="bi bi-stars"></i>
+        <span>First-Login Founder Offer Popup</span>
+        <span class="audience-badge">{{ founderOfferAudienceBadge }}</span>
+      </div>
+      <p class="section-hint">Shown once for eligible free users when a real discount or bonus months are configured. The Founder Offer bonus below is an <strong>extra launch bonus</strong> added on top of the standard bonus from Pricing &amp; Discounts, only while users still match the audience, cap, and end-date rules.</p>
+
+      <div class="form-row two-col">
+        <div>
+          <label>Offer Name (popup title)</label>
+          <input type="text" [(ngModel)]="editingPlan.founderOfferName" placeholder="e.g. Founder Launch Offer / Festival Offer" />
+        </div>
+        <div>
+          <label>Offer Window (days)</label>
+          <input type="number" [(ngModel)]="editingPlan.founderOfferWindowDays" min="0" />
+        </div>
+      </div>
+
+      <div class="form-row two-col">
+        <div>
+          <label>Launch Audience Cap</label>
+          <input type="number" [(ngModel)]="editingPlan.founderOfferAudienceCap" min="0" placeholder="0 = unlimited" />
+          <small class="field-hint">Current {{ editingPlan.userType | titlecase }} count: {{ editingPlan.founderOfferAudienceCount || 0 }}</small>
+        </div>
+        <div>
+          <label>Offer Ends At</label>
+          <input type="date" [ngModel]="dateInputValue(editingPlan.founderOfferEndsAt)" (ngModelChange)="editingPlan.founderOfferEndsAt = $event || null" />
+          <small class="field-hint">Leave empty to use only audience/window rules.</small>
+        </div>
+      </div>
+
+      <div class="bonus-grid">
+        <div class="bonus-card bonus-monthly">
+          <label>Extra Founder Bonus Months (Monthly) <span class="cycle-months-badge" *ngIf="getOfferValue('bonusMonthsMonthly') > 0">+{{ getOfferValue('bonusMonthsMonthly') }} standard bonus</span></label>
+          <input type="number" [value]="getOfferValue('founderBonusMonthsMonthly')" min="0" (input)="setOfferValue('founderBonusMonthsMonthly', $event.target.valueAsNumber)" />
+          <span class="bonus-final">Final (stacked): {{ getFounderFinalDuration('monthly') }} mo</span>
+        </div>
+        <div class="bonus-card bonus-quarterly">
+          <label>Extra Founder Bonus Months (Quarterly) <span class="cycle-months-badge" *ngIf="getOfferValue('bonusMonthsQuarterly') > 0">+{{ getOfferValue('bonusMonthsQuarterly') }} standard bonus</span></label>
+          <input type="number" [value]="getOfferValue('founderBonusMonthsQuarterly')" min="0" (input)="setOfferValue('founderBonusMonthsQuarterly', $event.target.valueAsNumber)" />
+          <span class="bonus-final">Final (stacked): {{ getFounderFinalDuration('quarterly') }} mo</span>
+        </div>
+        <div class="bonus-card bonus-yearly">
+          <label>Extra Founder Bonus Months (Yearly) <span class="cycle-months-badge" *ngIf="getOfferValue('bonusMonthsYearly') > 0">+{{ getOfferValue('bonusMonthsYearly') }} standard bonus</span></label>
+          <input type="number" [value]="getOfferValue('founderBonusMonthsYearly')" min="0" (input)="setOfferValue('founderBonusMonthsYearly', $event.target.valueAsNumber)" />
+          <span class="bonus-final">Final (stacked): {{ getFounderFinalDuration('yearly') }} mo</span>
+        </div>
+      </div>
+
+      <div class="form-row checkbox-row">
+        <label>
+          <input type="checkbox" [(ngModel)]="editingPlan.founderOfferForNewUsers" />
+          New users (registered within the Offer Window above)
+        </label>
+        <label>
+          <input type="checkbox" [(ngModel)]="editingPlan.founderOfferForExistingUsers" />
+          Existing users (registered before that)
+        </label>
+      </div>
     </div>
 
     <!-- Features section: always show all for type -->
-    <div class="form-section">
-      <div class="section-header">
-        <span>Features (Toggles)</span>
+    <div class="plan-card-section">
+      <div class="plan-card-section-header">
+        <i class="bi bi-sliders"></i>
+        <span>Feature Toggles</span>
       </div>
-      <div class="feature-row" *ngFor="let f of getMergedFeatures()">
-        <div class="toggle-wrap">
+      <div class="feature-toggle-grid">
+        <div class="feature-toggle-item" *ngFor="let f of getMergedFeatures(); trackBy: trackByKey">
+          <div>
+            <div class="feature-toggle-key">{{ f.key }}</div>
+            <div class="feature-toggle-label">{{ f.label }}</div>
+          </div>
           <label class="toggle">
             <input type="checkbox" [checked]="f.value" (change)="toggleFeature(f.key)" />
             <span class="slider"></span>
           </label>
         </div>
-        <input type="text" [value]="f.key" class="input-key" readonly />
-        <input type="text" [value]="f.label" class="input-label" readonly />
       </div>
     </div>
 
-    <!-- Limits section: always show all for type -->
-    <div class="form-section">
-      <div class="section-header">
-        <span>Limits (Numbers)</span>
+    <div class="two-card-row">
+      <!-- Limits section: always show all for type -->
+      <div class="plan-card-section">
+        <div class="plan-card-section-header">
+          <i class="bi bi-123"></i>
+          <span>Limits (Numbers)</span>
+        </div>
+        <div class="limit-clean-row" *ngFor="let l of getMergedLimits(); trackBy: trackByKey">
+          <span class="limit-clean-label">{{ l.label }}</span>
+          <input type="number" [value]="l.value" min="0" class="limit-clean-value" (input)="setLimitValue(l.key, $event.target.valueAsNumber)" />
+        </div>
       </div>
-      <div class="limit-row" *ngFor="let l of getMergedLimits()">
-        <input type="text" [value]="l.key" class="input-key" readonly />
-        <input type="text" [value]="l.label" class="input-label" readonly />
-        <input type="number" [value]="l.value" min="0" class="input-value" (input)="setLimitValue(l.key, $event.target.valueAsNumber)" />
-      </div>
-    </div>
 
-    <!-- Offers section: trial periods, cross-plan discounts -->
-    <div class="form-section">
-      <div class="section-header">
-        <span>Offers (Trial / Discounts)</span>
+      <!-- Policies section -->
+      <div class="plan-card-section">
+        <div class="plan-card-section-header">
+          <i class="bi bi-shield-check"></i>
+          <span>Policies</span>
+        </div>
+        <div class="form-row">
+          <label>Image Retention After Expiry (days)</label>
+          <input type="number" [(ngModel)]="editingPlan.policies.imageRetentionDaysAfterExpiry" min="0" />
+        </div>
+        <div class="form-row checkbox-row">
+          <label>
+            <input type="checkbox" [(ngModel)]="editingPlan.isActive" />
+            Active (visible to users)
+          </label>
+          <label>
+            <input type="checkbox" [(ngModel)]="editingPlan.highlight" />
+            Highlight (recommended badge)
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Sort Order</label>
+          <input type="number" [(ngModel)]="editingPlan.sortOrder" min="0" />
+        </div>
       </div>
-      <div class="limit-row" *ngFor="let o of getMergedOffers()">
-        <input type="text" [value]="o.key" class="input-key" readonly />
-        <input type="text" [value]="o.label" class="input-label" readonly />
-        <input type="number" [value]="o.value" min="0" class="input-value" (input)="setOfferValue(o.key, $event.target.valueAsNumber)" />
-      </div>
-    </div>
-
-    <!-- Policies section -->
-    <div class="form-section">
-      <div class="section-header"><span>Policies</span></div>
-      <div class="form-row">
-        <label>Image Retention After Expiry (days)</label>
-        <input type="number" [(ngModel)]="editingPlan.policies.imageRetentionDaysAfterExpiry" min="0" />
-      </div>
-    </div>
-
-    <div class="form-row checkbox-row">
-      <label>
-        <input type="checkbox" [(ngModel)]="editingPlan.isActive" />
-        Active (visible to users)
-      </label>
-      <label>
-        <input type="checkbox" [(ngModel)]="editingPlan.highlight" />
-        Highlight (recommended badge)
-      </label>
-    </div>
-
-    <div class="form-row">
-      <label>Sort Order</label>
-      <input type="number" [(ngModel)]="editingPlan.sortOrder" min="0" />
     </div>
 
     <div class="form-actions">
-      <button class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
-      <button class="btn btn-primary" (click)="save()">{{ isCreating ? 'Create' : 'Save Changes' }}</button>
+      <button class="btn btn-secondary" [disabled]="saving" (click)="cancelEdit()">Cancel</button>
+      <button class="btn btn-primary" [disabled]="saving" (click)="save()">{{ saving ? (isCreating ? 'Saving...' : 'Updating...') : (isCreating ? 'Create' : 'Save Changes') }}</button>
     </div>
   </div>
 </div>

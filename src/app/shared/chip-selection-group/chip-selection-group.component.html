@@ -1,0 +1,27 @@
+<section class="chip-group" [class.chip-group--compact]="compact">
+  <label class="chip-group__label" *ngIf="label">
+    {{ label }} <span class="chip-group__required" *ngIf="required">*</span>
+  </label>
+  <p class="chip-group__sublabel" *ngIf="sublabel">{{ sublabel }}</p>
+
+  <div class="chip-group__list" *ngIf="visibleOptions.length; else empty">
+    <button
+      type="button"
+      class="chip-group__chip"
+      *ngFor="let item of visibleOptions"
+      [class.chip-group__chip--selected]="isSelected(item.value)"
+      [class.chip-group__chip--disabled]="isMaxed(item.value)"
+      [disabled]="readonly"
+      [attr.aria-pressed]="isSelected(item.value)"
+      [attr.aria-disabled]="readonly || isMaxed(item.value)"
+      (click)="toggle(item.value)">
+      {{ item.label }}
+    </button>
+  </div>
+
+  <ng-template #empty>
+    <span class="chip-group__empty" *ngIf="emptyText">{{ emptyText }}</span>
+  </ng-template>
+
+  <div class="chip-group__limit" *ngIf="!readonly && limitMessage()">{{ limitMessage() }}</div>
+</section>

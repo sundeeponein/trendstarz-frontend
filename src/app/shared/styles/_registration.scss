@@ -100,6 +100,36 @@
   }
 }
 
+.payout-block {
+  border: 1px solid #dfe7f1;
+  border-radius: 8px;
+  background: #fbfdff;
+  padding: 1rem;
+}
+
+.payout-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.9rem;
+  font-size: 1.05rem;
+  color: #1f2937;
+
+  small {
+    display: block;
+    margin-left: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #6b7280;
+  }
+}
+
+.payout-hint {
+  margin: 0.65rem 0 0;
+  color: #667085;
+  font-size: 0.9rem;
+}
+
 .plan-card-top {
   display: flex;
   justify-content: space-between;
@@ -151,6 +181,13 @@
   font-size: 0.8rem;
   color: #6b7280;
   line-height: 1.4;
+}
+
+.plan-card-cta {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #f55b0a;
 }
 
 .premium-upgrade-cta {
@@ -539,6 +576,14 @@
 @media (max-width: 768px) {
   .registration-shell {
     padding: 1rem 0.7rem;
+  }
+
+  .registration-shell.mobile-actions-enabled {
+    // padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+
+    .actions-row {
+      display: none;
+    }
   }
 
   .reg-tab-strip {

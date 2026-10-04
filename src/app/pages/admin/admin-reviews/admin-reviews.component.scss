@@ -1,7 +1,5 @@
 .ar-page {
-  padding: 1.5rem;
-  max-width: 800px;
-  margin: 0 auto;
+  display: block;
 }
 
 .ar-header {
@@ -12,8 +10,6 @@
 }
 
 .ar-title {
-  font-size: 1.3rem;
-  font-weight: 700;
   margin: 0;
   display: flex;
   align-items: center;

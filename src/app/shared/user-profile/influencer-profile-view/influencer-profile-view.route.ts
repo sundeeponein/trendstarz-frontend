@@ -1,20 +1,9 @@
-import { Route, ActivatedRouteSnapshot } from '@angular/router';
-import { inject } from '@angular/core';
+import { Route } from '@angular/router';
 import { InfluencerProfileViewComponent } from './influencer-profile-view.component';
-import { ConfigService } from '../../config.service';
-import { firstValueFrom } from 'rxjs';
 
 export default [
   {
     path: '',
     component: InfluencerProfileViewComponent,
-    resolve: {
-      influencer: async (route: ActivatedRouteSnapshot) => {
-        const config = inject(ConfigService);
-        const username = route.paramMap.get('username') || route.parent?.paramMap.get('username');
-        if (!username) return null;
-        return firstValueFrom(config.getInfluencerByUsername(username));
-      }
-    }
   }
 ] as Route[];

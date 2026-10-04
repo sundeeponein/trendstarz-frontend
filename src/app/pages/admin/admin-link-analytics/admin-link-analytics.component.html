@@ -1,0 +1,240 @@
+<div class="admin-link-analytics ts-admin-page">
+  <header class="hdr ts-admin-page-header">
+    <div class="ts-admin-heading">
+      <h2 class="ts-admin-title"><i class="bi bi-link-45deg"></i> Link Analytics</h2>
+      <p class="ts-admin-subtitle">Click performance for every creator's tracked promo link, across all campaigns/collabs.</p>
+    </div>
+    <div class="filter-bar">
+      <label for="campaignFilter">Campaign</label>
+      <div class="combobox">
+        <input
+          id="campaignFilter"
+          type="text"
+          autocomplete="off"
+          placeholder="All campaigns"
+          [(ngModel)]="campaignSearchTerm"
+          (focus)="openCampaignDropdown()"
+          (blur)="closeCampaignDropdown()"
+        />
+        <div class="combobox-panel" *ngIf="campaignDropdownOpen">
+          <div class="combobox-option" (mousedown)="$event.preventDefault(); selectCampaign(null)">All campaigns</div>
+          <div
+            class="combobox-option"
+            *ngFor="let opt of filteredCampaignOptions"
+            (mousedown)="$event.preventDefault(); selectCampaign(opt)"
+          >
+            {{ campaignDisplayText(opt) }}
+          </div>
+          <div class="combobox-empty" *ngIf="!filteredCampaignOptions.length">No matching campaigns</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="error" *ngIf="error">{{ error }}</div>
+  <div *ngIf="loading" class="state">Loading…</div>
+
+  <ng-container *ngIf="!loading && data as d">
+    <div class="overview-cards">
+      <div class="card">
+        <span class="label">Tracked links</span>
+        <span class="value">{{ d.overview.totalLinks }}</span>
+      </div>
+      <div class="card">
+        <span class="label">Total clicks</span>
+        <span class="value">{{ d.overview.totalClicks }}</span>
+      </div>
+      <div class="card">
+        <span class="label">Unique clicks</span>
+        <span class="value">{{ d.overview.totalUniqueClicks }}</span>
+      </div>
+    </div>
+
+    <div class="link-tabs ts-admin-tabbar" role="tablist" aria-label="Link analytics sections">
+      <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'top'" (click)="activeTab = 'top'">
+        Top performers
+        <span class="tab-badge">{{ d.topPerformers.length }}</span>
+      </button>
+      <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'byCampaign'" (click)="activeTab = 'byCampaign'">
+        Campaign summary
+        <span class="tab-badge">{{ d.perCampaign.length }}</span>
+      </button>
+      <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'zero'" (click)="activeTab = 'zero'">
+        No clicks yet
+        <span class="tab-badge">{{ d.zeroActivity.length }}</span>
+      </button>
+      <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'referral'" (click)="activeTab = 'referral'">
+        Referral performance
+        <span class="tab-badge">{{ d.referralLinks.length }}</span>
+      </button>
+    </div>
+
+    <section class="panel" *ngIf="activeTab === 'top'">
+      <h3>Top performers</h3>
+      <div class="table-wrap" *ngIf="d.topPerformers.length; else noTop">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Campaign</th>
+              <th>Host</th>
+              <th>Recipient</th>
+              <th>Platform</th>
+              <th>Content</th>
+              <th>Clicks</th>
+              <th>Unique</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of d.topPerformers">
+              <td class="mono">{{ row.code }}</td>
+              <td class="mono">{{ campaignIdLabel(row) }}</td>
+              <td>{{ row.hostName || row.hostType }}</td>
+              <td>{{ row.recipientType }}</td>
+              <td>{{ row.platform || '—' }}</td>
+              <td>{{ row.contentType || '—' }}</td>
+              <td class="num">{{ row.clickCount }}</td>
+              <td class="num">{{ row.uniqueClicks }}</td>
+              <td>{{ formatDate(row.createdAt) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noTop><p class="empty">No tracked links yet.</p></ng-template>
+    </section>
+
+    <section class="panel" *ngIf="activeTab === 'byCampaign'">
+      <h3>Campaign summary</h3>
+      <div class="table-wrap" *ngIf="d.perCampaign.length; else noCampaign">
+        <table>
+          <thead>
+            <tr>
+              <th>Campaign</th>
+              <th>Links</th>
+              <th>Clicks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of d.perCampaign">
+              <td class="mono">{{ campaignIdLabel(row) }}</td>
+              <td class="num">{{ row.links }}</td>
+              <td class="num">{{ row.clicks }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noCampaign><p class="empty">No campaigns with tracked links yet.</p></ng-template>
+    </section>
+
+    <section class="panel" *ngIf="activeTab === 'zero'">
+      <h3>No clicks yet</h3>
+      <p class="hint">Shared campaign links that have not received any clicks yet. Consider reminding the influencer or verifying the post and link.</p>
+      <div class="table-wrap" *ngIf="d.zeroActivity.length; else noZero">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Campaign</th>
+              <th>Platform</th>
+              <th>Content</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of d.zeroActivity">
+              <td class="mono">{{ row.code }}</td>
+              <td class="mono">{{ campaignIdLabel(row) }}</td>
+              <td>{{ row.platform || '—' }}</td>
+              <td>{{ row.contentType || '—' }}</td>
+              <td>{{ formatDate(row.createdAt) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noZero><p class="empty">Every tracked link has at least one click.</p></ng-template>
+    </section>
+
+    <section class="panel" *ngIf="activeTab === 'referral'">
+      <h3>Referral performance</h3>
+      <p class="hint">Campaign referrals are generated while creating a campaign. User referrals are permanent links from Profile → Settings.</p>
+
+      <div class="link-tabs ts-admin-tabbar" role="tablist" aria-label="Referral sub-sections">
+        <button class="link-tab ts-admin-tab" [class.active]="referralSubTab === 'campaign'" (click)="referralSubTab = 'campaign'">
+          Campaign referrals
+        </button>
+        <button class="link-tab ts-admin-tab" [class.active]="referralSubTab === 'user'" (click)="referralSubTab = 'user'">
+          User referrals
+        </button>
+      </div>
+
+      <div *ngIf="referralSubTab === 'campaign'">
+        <div class="table-wrap" *ngIf="d.referralLinks.length; else noReferral">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Host</th>
+                <th>Campaign</th>
+                <th>Clicks</th>
+                <th>Signups</th>
+                <th>Premium</th>
+                <th>Revenue</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of d.referralLinks">
+                <td class="mono">{{ row.code }}</td>
+                <td>{{ row.hostName || row.hostType }}</td>
+                <td>{{ row.destinationRole }}</td>
+                <td class="num">{{ row.clickCount }}</td>
+                <td class="num">{{ row.signups }}</td>
+                <td class="num">{{ row.premiumPurchases }}</td>
+                <td class="num">{{ formatRevenue(row.premiumRevenue + row.campaignPaymentRevenue) }}</td>
+                <td>{{ formatDate(row.createdAt) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noReferral><p class="empty">No campaign referrals recorded yet.</p></ng-template>
+      </div>
+
+      <div *ngIf="referralSubTab === 'user'">
+        <div class="table-wrap" *ngIf="d.referralLinks.length; else noUserReferral">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Referral Code</th>
+                <th>Clicks</th>
+                <th>Unique</th>
+                <th>Influencer Signups</th>
+                <th>Brand Signups</th>
+                <th>Premium Purchases</th>
+                <th>Campaign Revenue</th>
+                <th>Referral Earnings</th>
+                <th>Created</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of d.referralLinks">
+                <td>{{ row.hostName || row.hostType }}</td>
+                <td class="mono">{{ row.code }}</td>
+                <td class="num">{{ row.clickCount }}</td>
+                <td class="num">{{ row.uniqueClicks }}</td>
+                <td class="num">{{ row.signups }}</td>
+                <td class="num">{{ row.signups }}</td>
+                <td class="num">{{ row.premiumPurchases }}</td>
+                <td class="num">{{ formatRevenue(row.campaignPaymentRevenue) }}</td>
+                <td class="num">{{ formatRevenue(row.premiumRevenue + row.campaignPaymentRevenue) }}</td>
+                <td>{{ formatDate(row.createdAt) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #noUserReferral><p class="empty">No user referrals recorded yet.</p></ng-template>
+      </div>
+    </section>
+  </ng-container>
+</div>

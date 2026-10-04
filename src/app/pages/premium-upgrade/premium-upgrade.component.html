@@ -3,97 +3,110 @@
   <!-- ══════════════════════════════════════════
        STEP 1 — Choose Plan
   ══════════════════════════════════════════ -->
-  <div *ngIf="step === 'plan'" class="upgrade-card">
+  <div *ngIf="step === 'plan'" class="upgrade-card plan-upgrade-card">
     <div class="upgrade-header">
-      <span class="premium-badge">🌟 Premium</span>
+      <span class="premium-badge"><i class="bi bi-stars"></i> Premium</span>
       <h1>Choose Your Plan</h1>
-      <p class="upgrade-sub">Unlock contact visibility, analytics, priority search ranking, and unlimited social profiles.</p>
+      <p class="upgrade-sub">Unlock contact visibility, advanced analytics, priority search ranking, and unlimited social profiles to scale your {{ roleDisplayName.toLowerCase() }} journey.</p>
     </div>
 
-    <!-- Role toggle removed: Only show relevant plan for user's role -->
-
-    <div class="plans-grid">
-      <div *ngFor="let plan of plans" class="plan-card" [class.selected]="selectedPlan === plan" (click)="selectPlanCard(plan)">
-        <div class="plan-badge">{{ plan.name }}</div>
-        <div class="plan-offer-chip-upgrade" *ngIf="plan.discountLabel">{{ plan.discountLabel }}</div>
-
-        <!-- Duration selector for paid plans -->
-        <ng-container *ngIf="plan.price.monthly > 0 && selectedPlan === plan">
-          <div class="duration-tabs">
-            <button class="dur-btn" [class.active]="selectedDurationKey === '1m'" (click)="$event.stopPropagation(); selectDuration('1m')">
-              1 Month
-              <span class="dur-save" *ngIf="selectedPlan">{{ monthSavings > 0 ? 'Save ₹' + monthSavings : '' }}</span>
-            </button>
-            <button class="dur-btn" [class.active]="selectedDurationKey === '3m'" (click)="$event.stopPropagation(); selectDuration('3m')">
-              3 Months
-              <span class="dur-save" *ngIf="selectedPlan">{{ quarterlySavings > 0 ? 'Save ₹' + quarterlySavings : '' }}</span>
-            </button>
-            <button class="dur-btn" [class.active]="selectedDurationKey === '1y'" (click)="$event.stopPropagation(); selectDuration('1y')">
-              1 Year
-              <span class="dur-save" *ngIf="selectedPlan">
-                <span *ngIf="yearlySavings > 0">Save ₹{{ yearlySavings }} · Best Value</span>
-              </span>
-            </button>
-          </div>
-          <div class="plan-price">
-            <span>₹{{ selectedDuration?.price }}</span>
-            <span class="price-period"> /{{ selectedDurationKey === '1m' ? 'mo' : selectedDurationKey === '3m' ? '3mo' : 'yr' }}</span>
-          </div>
-          <div class="discount-info-pills" *ngIf="planDiscountPercent > 0">
-            <span class="pill pill-save">
-              ✨ Save ₹{{ (selectedPlan.price[selectedDurationKey === '1m' ? 'monthly' : selectedDurationKey === '3m' ? 'quarterly' : 'yearly'] * (planDiscountPercent / 100)).toFixed(0) }}
-              <ng-container *ngIf="selectedDurationKey === '1m'">/mo</ng-container>
-              <ng-container *ngIf="selectedDurationKey === '3m'">/3mo</ng-container>
-              <ng-container *ngIf="selectedDurationKey === '1y'">/yr</ng-container>
-            </span>
-            <span class="pill pill-discount">
-              {{ planDiscountPercent }}% Discount
-            </span>
-          </div>
-          <div class="price-monthly-hint mt-1">
-            <span *ngIf="selectedDurationKey === '3m' || selectedDurationKey === '1y'" class="per-month-after-discount">
-              ₹{{ (selectedDuration?.price / (selectedDurationKey === '3m' ? 3 : selectedDurationKey === '1y' ? 12 : 1)).toFixed(0) }}/mo
-            </span>
-          </div>
-        </ng-container>
-
-        <!-- Free plan price -->
-        <div class="plan-price" *ngIf="plan.price.monthly === 0">
-          <span>₹0</span>
-          <div class="price-period">Always free</div>
+    <div class="plan-comparison-grid">
+      <div class="comparison-plan free-plan">
+        <div class="plan-kicker">{{ freePlan?.name || freePlanName }}</div>
+        <div class="comparison-price">
+          <span class="currency-price">₹0</span>
+          <span class="plan-title">Starter</span>
         </div>
 
-        <!-- Unselected paid plan — just show monthly price -->
-        <div class="plan-price" *ngIf="plan.price.monthly > 0 && selectedPlan !== plan">
-          <span>₹{{ plan.price.monthly }}<span class="price-period">/mo</span></span>
+        <div class="feature-stack">
+          <div *ngFor="let feature of freeFeatures" class="feature-row" [class.muted]="!feature.value">
+            <span class="feature-icon" [class.negative]="!feature.value">
+              <i class="bi" [ngClass]="feature.value ? 'bi-check-lg' : 'bi-x-lg'"></i>
+            </span>
+            <span>{{ feature.label }}</span>
+          </div>
         </div>
 
-        <div class="plan-check" *ngIf="selectedPlan === plan">✓ Selected</div>
-        <div class="features-list unified">
-          <div *ngFor="let f of plan.features">
-            <span class="feat-icon" [style.color]="f.value ? '#22c55e' : '#ef4444'">{{ f.value ? '✔' : '✕' }}</span>
-            {{ f.label }}
+        <div class="limits-panel">
+          <div class="limits-header">
+            <span>Daily stats</span>
+            <span>Limits</span>
           </div>
-          <div *ngFor="let l of plan.limits">
-            <span class="feat-icon">📦</span> {{ l.label }}: <strong>{{ l.value }}</strong>
+          <div *ngFor="let limit of freeLimits" class="limit-row">
+            <span>{{ limit.label }}</span>
+            <strong>{{ limit.value }}</strong>
           </div>
-          <div class="feature-item note" *ngIf="plan.policies.imageRetentionDaysAfterExpiry">
-            <span class="feat-icon">⚠</span> Images removed after <strong>{{ plan.policies.imageRetentionDaysAfterExpiry }} days</strong> if not renewed
+        </div>
+
+        <div class="plan-notice warning" *ngIf="freeImageRetentionDays">
+          <i class="bi bi-exclamation-triangle"></i>
+          <span>Images removed after <strong>{{ freeImageRetentionDays }} days</strong> if not renewed.</span>
+        </div>
+
+        <div class="plan-footnote">
+          <i class="bi bi-lock"></i>
+          <span>{{ freePlan ? getContactVisibilityLabel(freePlan) : 'Contact details hidden' }}</span>
+        </div>
+      </div>
+
+      <div class="comparison-plan pro-plan" *ngIf="displayPaidPlan as proPlan">
+        <div class="limited-offer">{{ bestOfferLabel }}</div>
+        <div class="plan-kicker pro">{{ proPlan.name || proPlanName }}</div>
+
+        <div class="pro-price-row">
+          <span class="price-original-strike" *ngIf="planDiscountPercent > 0">₹{{ selectedDurationPrice }}</span>
+          <span class="premium-price">₹{{ finalPrice }}</span>
+          <span class="price-period">/ {{ durationPeriodLabel }}</span>
+        </div>
+
+        <div class="duration-tabs comparison-duration-tabs">
+          <button class="dur-btn" [class.active]="selectedDurationKey === '1m'" (click)="selectDuration('1m')">
+            1 Month
+            <span class="dur-save" *ngIf="monthSavings > 0">Save ₹{{ monthSavings }}</span>
+          </button>
+          <button class="dur-btn" [class.active]="selectedDurationKey === '3m'" (click)="selectDuration('3m')">
+            3 Months
+            <span class="dur-save" *ngIf="quarterlySavings > 0">Save ₹{{ quarterlySavings }}</span>
+          </button>
+          <button class="dur-btn" [class.active]="selectedDurationKey === '1y'" (click)="selectDuration('1y')">
+            1 Year
+            <span class="dur-save" *ngIf="yearlySavings > 0">Save ₹{{ yearlySavings }}</span>
+          </button>
+        </div>
+
+        <div class="discount-info-pills" *ngIf="planDiscountPercent > 0 || bonusMonths > 0 || founderBonusMonths > 0">
+          <span class="pill pill-save" *ngIf="planDiscountPercent > 0">Save ₹{{ discountAmount }}</span>
+          <span class="pill pill-discount" *ngIf="planDiscountPercent > 0">{{ planDiscountPercent }}% Discount</span>
+          <span class="pill pill-bonus" *ngIf="bonusMonths > 0 || founderBonusMonths > 0">Pay {{ baseMonths }}, get {{ totalMonths }}</span>
+        </div>
+
+        <div class="feature-stack pro-features">
+          <div *ngFor="let feature of paidFeatures" class="feature-row" [class.muted]="!feature.value">
+            <span class="feature-icon" [class.negative]="!feature.value" [class.info]="!feature.value">
+              <i class="bi" [ngClass]="feature.value ? 'bi-check-circle' : 'bi-info-circle'"></i>
+            </span>
+            <span>{{ feature.label }}</span>
           </div>
-          <div class="feature-item note">
-            <span class="feat-icon">🔓</span> <strong>{{ getContactVisibilityLabel(plan) }}</strong>
+        </div>
+
+        <div class="limits-panel pro-limits">
+          <div *ngFor="let limit of paidLimits" class="limit-row">
+            <span>{{ limit.label }}</span>
+            <strong>{{ limit.value }}</strong>
           </div>
-          <div class="offers">
-            <span *ngIf="plan.discountLabel">{{ plan.discountLabel }}</span>
-          </div>
+        </div>
+
+        <div class="plan-notice success">
+          <i class="bi bi-eye"></i>
+          <span>{{ getContactVisibilityLabel(proPlan) }}</span>
         </div>
       </div>
     </div>
 
     <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
 
-    <div class="upgrade-actions">
-      <button class="btn-back" (click)="goToProfile()">← Back to Profile</button>
+    <div class="upgrade-actions plan-actions">
+      <button class="btn-back" (click)="goToProfile()"><i class="bi bi-arrow-left"></i> Back to Profile</button>
       <button class="btn-upgrade" [disabled]="!selectedDuration" (click)="goToPayment()">
         {{ getCtaLabel() }}
       </button>
@@ -135,39 +148,72 @@
     <div *ngIf="couponApplied" class="coupon-success">🎉 Coupon applied! You save ₹{{ discountAmount }}</div>
     <div *ngIf="couponError" class="coupon-error">{{ couponError }}</div>
 
-    <!-- ── Unified payment block (UPI ID + QR + Pay button) ─── -->
-    <app-payment-checkout
-      *ngIf="selectedDuration"
-      title=""
-      [chip]="(selectedPlan?.name || '') + ' Premium'"
-      [amountRupees]="finalPrice"
-      [breakdown]="paymentBreakdown"
-      [transactionNote]="paymentTransactionNote"
-      [trustLabels]="['Secured by TrendstarZ', 'Premium activated within 24 hours of UTR verification']">
-    </app-payment-checkout>
+    <!-- ── Choose Payment Method (only when both are available) ───── -->
+    <div class="payment-method-tabs" *ngIf="effectiveGatewayMode === 'razorpay_fallback'">
+      <div class="payment-method-tabs-label">Choose Payment Method</div>
+      <div class="payment-method-tab-buttons">
+        <button class="payment-method-tab" [class.active]="paymentMethodTab === 'razorpay'" (click)="selectPaymentMethodTab('razorpay')">Razorpay ⚡ Recommended</button>
+        <button class="payment-method-tab" [class.active]="paymentMethodTab === 'manual'" (click)="selectPaymentMethodTab('manual')">Manual UPI</button>
+      </div>
+    </div>
 
-    <!-- ── UTR confirmation (manual verification) ───────────── -->
-    <div class="form-group">
-      <label>UPI Transaction ID / UTR Number <span style="color:#dc2626">*</span></label>
-      <input
-        type="text"
-        class="form-input"
-        placeholder="e.g. 416221039385"
-        [(ngModel)]="upiRef"
-        [disabled]="upgrading"
-      />
-      <small class="text-muted">Enter the UTR shown by your UPI app after paying. We verify within 24 hours.</small>
+    <!-- ── Razorpay panel ───────────────────────────────────────── -->
+    <div class="payment-method-panel"
+         *ngIf="effectiveGatewayMode === 'razorpay_only' || (effectiveGatewayMode === 'razorpay_fallback' && paymentMethodTab === 'razorpay')">
+      <p class="payment-method-info">⚡ Instant activation after successful payment</p>
+      <div class="upgrade-actions" style="margin-top: 8px; margin-bottom: 12px;">
+        <button class="btn-upgrade" [disabled]="processingRazorpay" (click)="payByRazorpay()">
+          <span *ngIf="processingRazorpay" class="spinner"></span>
+          <span *ngIf="!processingRazorpay">Pay with Razorpay</span>
+          <span *ngIf="processingRazorpay">Opening Razorpay…</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Manual UPI panel ─────────────────────────────────────── -->
+    <div class="payment-method-panel"
+         *ngIf="effectiveGatewayMode === 'manual' || (effectiveGatewayMode === 'razorpay_fallback' && paymentMethodTab === 'manual')">
+      <ul class="payment-method-info-list">
+        <li>Scan QR or pay to UPI ID</li>
+        <li>Submit UTR after payment</li>
+        <li>Activation within 24 hours</li>
+      </ul>
+
+      <app-payment-checkout
+        *ngIf="selectedDuration"
+        title=""
+        [chip]="(selectedPlan?.name || '') + ' Premium'"
+        [amountRupees]="finalPrice"
+        [breakdown]="paymentBreakdown"
+        [transactionNote]="paymentTransactionNote"
+        [trustLabels]="['Secured by TrendstarZ', 'Premium activated within 24 hours of UTR verification']">
+      </app-payment-checkout>
+
+      <div class="form-group">
+        <label>UPI Transaction ID / UTR Number <span style="color:#dc2626">*</span></label>
+        <input
+          type="text"
+          class="form-input"
+          placeholder="e.g. 416221039385"
+          [(ngModel)]="upiRef"
+          [disabled]="upgrading"
+        />
+        <small class="text-muted">Enter the UTR shown by your UPI app after paying. We verify within 24 hours.</small>
+      </div>
+
+      <div class="upgrade-actions">
+        <button class="btn-upgrade" [disabled]="upgrading || !upiRef.trim()" (click)="payByUpi()">
+          <span *ngIf="upgrading" class="spinner"></span>
+          <span *ngIf="!upgrading">Confirm Payment</span>
+          <span *ngIf="upgrading">Confirming…</span>
+        </button>
+      </div>
     </div>
 
     <div *ngIf="upgradeError" class="upgrade-error">{{ upgradeError }}</div>
 
     <div class="upgrade-actions">
       <button class="btn-back" (click)="step = 'plan'" [disabled]="upgrading">← Change Plan</button>
-      <button class="btn-upgrade" [disabled]="upgrading || !upiRef.trim()" (click)="payByUpi()">
-        <span *ngIf="upgrading" class="spinner"></span>
-        <span *ngIf="!upgrading">Confirm Payment</span>
-        <span *ngIf="upgrading">Confirming…</span>
-      </button>
     </div>
 
     <!-- ── Recent Payments ────────────────────── -->
@@ -175,7 +221,7 @@
       <h3 class="recent-title">Recent Payments</h3>
       <div *ngFor="let pay of myPayments" class="recent-row" [class.pending]="pay.status==='pending'" [class.approved]="pay.status==='approved'" [class.rejected]="pay.status==='rejected'">
         <div class="recent-main">
-          <span class="recent-amt">₹{{ pay.amount }}</span>
+          <span class="recent-amt">₹{{ getPaymentDisplayAmount(pay) | number:'1.0-2' }}</span>
           <span class="recent-plan">{{ pay.premiumDuration | uppercase }}</span>
           <span class="recent-status" [class.pending]="pay.status==='pending'" [class.approved]="pay.status==='approved'" [class.rejected]="pay.status==='rejected'">
             {{ pay.status | titlecase }}
@@ -207,4 +253,3 @@
   </div>
 
 </div>
-

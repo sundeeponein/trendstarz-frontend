@@ -14,7 +14,7 @@ export class AdminPaymentsComponent {
   error = '';
   successMessage = '';
 
-  viewMode: 'premium' | 'transactions' = 'premium';
+  viewMode: 'premium' | 'transactions' = 'transactions';
 
   constructor(private cdr: ChangeDetectorRef) {}
 
