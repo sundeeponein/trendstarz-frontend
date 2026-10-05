@@ -17,8 +17,9 @@
 
       <div class="modal-body">
         <p class="ce-note">
-          Checks each creator against this campaign's requirements. Grouped, not ranked — no scores.
-          Eligible creators can be invited on the owner's behalf.
+          Checks each creator against this campaign's requirements, grouped by eligibility. Eligible
+          creators also show an informational rank — no scores. Eligible creators can be invited on
+          the owner's behalf.
         </p>
 
         <div class="ce-req-chips" *ngIf="data">
@@ -53,6 +54,29 @@
           <span class="ce-scope">{{
             data.scope.creatorType === 'Photographer' ? 'photographers' : 'influencers'
           }}</span>
+        </div>
+
+        <div class="ce-ranking" *ngIf="data?.ranking as ranking">
+          <div class="ce-ranking-head">
+            <span class="ce-ranking-title">Deterministic ranking</span>
+            <span class="ce-ranking-count" *ngIf="ranking.rankedCount > 0; else noneRanked"
+              >{{ ranking.rankedCount }} eligible
+              {{ ranking.rankedCount === 1 ? 'creator' : 'creators' }} ranked</span
+            >
+            <ng-template #noneRanked>
+              <span class="ce-ranking-count">No eligible creators are currently ranked.</span>
+            </ng-template>
+            <span class="ce-ranking-asof"
+              >As of {{ ranking.asOf | date: 'MMM d, y, h:mm a' : 'UTC' }} UTC</span
+            >
+          </div>
+          <p class="ce-ranking-help">
+            Ranking is deterministic and informational. Eligible creators are ordered by
+            platform/content coverage, category coverage, recent activity, and a stable creator ID
+            tie-break. It does not use AI, randomness, follower counts, Premium status, or
+            TrendScore. Ranks are across all eligible creators, so they stay the same when you
+            filter, search or page; the list itself keeps its usual order.
+          </p>
         </div>
 
         <div class="ce-toolbar">
@@ -175,12 +199,25 @@
                 [attr.aria-label]="'Select ' + (row.name || row.creatorId)"
                 (change)="toggleSelected(row)"
               />
+              <div
+                class="ce-rank"
+                [class.ce-rank--none]="rankOf(row) === null"
+                [attr.aria-label]="rankOf(row) !== null ? 'Rank ' + rankOf(row) : 'Not ranked'"
+              >
+                <span class="ce-rank-label">Rank</span>
+                <span class="ce-rank-value">{{
+                  rankOf(row) !== null ? '#' + rankOf(row) : '—'
+                }}</span>
+              </div>
               <div class="ce-creator">
                 <span class="ce-name">{{ row.name || 'Unnamed creator' }}</span>
                 <span class="ce-meta">
                   <span *ngIf="row.username">&#64;{{ row.username }}</span>
                   <span *ngIf="row.publicId"> · {{ row.publicId }}</span>
                 </span>
+                <span class="ce-rank-summary" *ngIf="rankingSummary(row)">{{
+                  rankingSummary(row)
+                }}</span>
               </div>
               <span class="ce-invited-tag" *ngIf="row.invited">Invited</span>
               <span class="ce-pill" [ngClass]="'ce-pill--' + row.overall.toLowerCase()">{{
@@ -213,6 +250,41 @@
                 {{ r.label }}
               </span>
             </div>
+            <details
+              class="ce-rank-details"
+              *ngIf="rankOf(row) !== null && row.rankingEvidence as evidence"
+            >
+              <summary>Why rank #{{ rankOf(row) }}?</summary>
+              <ul class="ce-rank-reasons" *ngIf="row.rankingReasons?.length">
+                <li *ngFor="let reason of row.rankingReasons">{{ reason }}</li>
+              </ul>
+              <dl class="ce-rank-evidence">
+                <dt>Platform / content</dt>
+                <dd>
+                  {{ coverageLabel(evidence.platformContent) }}
+                  <span *ngIf="evidence.platformContent.matched.length" class="ce-rank-muted"
+                    >({{ matchedList(evidence.platformContent.matched) }})</span
+                  >
+                </dd>
+                <dt>Categories</dt>
+                <dd>
+                  {{ coverageLabel(evidence.category) }}
+                  <span *ngIf="evidence.category.matched.length" class="ce-rank-muted"
+                    >({{ matchedList(evidence.category.matched) }})</span
+                  >
+                </dd>
+                <dt>Activity</dt>
+                <dd>
+                  {{ activityLabel(evidence) }}
+                  <span *ngIf="evidence.activity.lastActiveAt" class="ce-rank-muted"
+                    >(last active
+                    {{ evidence.activity.lastActiveAt | date: 'MMM d, y' : 'UTC' }})</span
+                  >
+                </dd>
+                <dt>Creator ID</dt>
+                <dd>Final tie-break only</dd>
+              </dl>
+            </details>
             <ul class="ce-reasons" *ngIf="openIssues(row).length">
               <li
                 *ngFor="let issue of openIssues(row)"

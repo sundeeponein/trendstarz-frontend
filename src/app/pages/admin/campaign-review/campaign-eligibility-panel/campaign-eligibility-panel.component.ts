@@ -14,7 +14,9 @@ import { Subscription } from 'rxjs';
 import { AppPaginatorComponent } from '../../../../shared/components/app-paginator/app-paginator.component';
 import { environment } from '../../../../../environments/environment';
 
-// Stage 3B-3: GET admin/matching/eligibility/:campaignId — grouped, not ranked.
+// Stage 3B-3: GET admin/matching/eligibility/:campaignId — grouped by eligibility.
+// Stage 3C-1 adds a server-calculated, informational rank to PASS rows; this
+// panel only displays it (Stage 3C-2) and never re-ranks, re-orders or selects.
 export type EligibilityStatus = 'PASS' | 'UNKNOWN' | 'FAIL';
 export type EligibilityRequirementKey =
   | 'accountApproval'
@@ -24,6 +26,41 @@ export type EligibilityRequirementKey =
   | 'minimumTier'
   | 'location'
   | 'language';
+
+/** Stage 3C-1 activity buckets, as sent by the server. */
+export type RankingActivityBucket =
+  'within_7_days' | 'within_8_30_days' | 'within_31_90_days' | 'over_90_days' | 'unknown';
+
+export interface RankingCoverage {
+  matched: string[];
+  total: number;
+}
+
+export interface RankingEvidence {
+  platformContent: RankingCoverage;
+  category: RankingCoverage;
+  activity: {
+    bucket: RankingActivityBucket;
+    lastActiveAt: string | null;
+    daysSinceActive: number | null;
+  };
+}
+
+const ACTIVITY_SHORT: Record<RankingActivityBucket, string> = {
+  within_7_days: 'active ≤7d',
+  within_8_30_days: 'active 8–30d',
+  within_31_90_days: 'active 31–90d',
+  over_90_days: 'inactive >90d',
+  unknown: 'activity unknown',
+};
+
+const ACTIVITY_LONG: Record<RankingActivityBucket, string> = {
+  within_7_days: 'Active within the last 7 days',
+  within_8_30_days: 'Active within the last 8–30 days',
+  within_31_90_days: 'Active within the last 31–90 days',
+  over_90_days: 'Last active more than 90 days ago',
+  unknown: 'Unknown — treated as neutral',
+};
 
 interface StatusCounts {
   PASS: number;
@@ -47,6 +84,12 @@ export interface CampaignEligibilityRow {
   /** Decided by the backend (live campaign + PASS + not invited); re-checked again at send time. */
   invitable: boolean;
   inviteBlockedReason: string | null;
+  /** Stage 3C-1 — position among ALL eligible creators (server-calculated); null unless PASS. */
+  rank?: number | null;
+  /** Server-written plain-language reasons for the rank; empty unless PASS. */
+  rankingReasons?: string[];
+  /** The ranking keys behind `rank`; null unless PASS. */
+  rankingEvidence?: RankingEvidence | null;
 }
 
 // Stage 3B-4: POST admin/matching/eligibility/:campaignId/invites
@@ -94,6 +137,12 @@ export interface CampaignEligibilityList {
   };
   counts: StatusCounts;
   requirementCounts: Record<EligibilityRequirementKey, StatusCounts & { configured: boolean }>;
+  /** Stage 3C-1 — one request-level clock and how many eligible creators were ranked. */
+  ranking?: {
+    asOf: string;
+    rankedCount: number;
+    order: string[];
+  };
   total: number;
   rows: CampaignEligibilityRow[];
   notEvaluated: Array<{ input: string; reason: string }>;
@@ -293,6 +342,36 @@ export class CampaignEligibilityPanelComponent implements OnInit, OnDestroy {
       { label: 'Location', value: location || 'Any' },
       { label: 'Languages', value: list(r.languages) },
     ];
+  }
+
+  // ── Stage 3C-2: ranking display only (the server ranks; nothing here re-ranks) ──
+
+  /** The server's rank, shown only for an eligible row; anything else is unranked. */
+  rankOf(row: CampaignEligibilityRow): number | null {
+    return row.overall === 'PASS' && typeof row.rank === 'number' ? row.rank : null;
+  }
+
+  coverageLabel(c: RankingCoverage | undefined): string {
+    return c && c.total > 0 ? `${c.matched.length}/${c.total}` : 'none set';
+  }
+
+  /** e.g. "2/2 platform · 5/6 categories · active ≤7d" */
+  rankingSummary(row: CampaignEligibilityRow): string {
+    const e = row.rankingEvidence;
+    if (this.rankOf(row) === null || !e) return '';
+    return [
+      `${this.coverageLabel(e.platformContent)} platform`,
+      `${this.coverageLabel(e.category)} categories`,
+      ACTIVITY_SHORT[e.activity.bucket] ?? ACTIVITY_SHORT.unknown,
+    ].join(' · ');
+  }
+
+  activityLabel(e: RankingEvidence): string {
+    return ACTIVITY_LONG[e.activity.bucket] ?? ACTIVITY_LONG.unknown;
+  }
+
+  matchedList(values: string[]): string {
+    return values.map((v) => v.replace(':', ' · ')).join(', ');
   }
 
   /** From the backend: campaign status + acceptance deadline. */

@@ -322,3 +322,107 @@
   background: #fef3c7;
   color: #92400e;
 }
+
+// ── Stage 3C-2: informational rank (no score, no gamification) ──────────────
+
+.ce-ranking {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #f9fafb;
+}
+
+.ce-ranking-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+}
+
+.ce-ranking-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.ce-ranking-count {
+  font-size: 0.85rem;
+}
+
+.ce-ranking-asof {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.ce-ranking-help {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0.35rem 0 0;
+}
+
+.ce-rank {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 2.75rem;
+  line-height: 1.15;
+
+  &--none .ce-rank-value {
+    color: #9ca3af;
+  }
+}
+
+.ce-rank-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #6b7280;
+}
+
+.ce-rank-value {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.ce-rank-summary {
+  font-size: 0.78rem;
+  color: #4b5563;
+  overflow-wrap: anywhere;
+}
+
+.ce-rank-details {
+  font-size: 0.8rem;
+  margin: 0.25rem 0 0.4rem;
+
+  summary {
+    cursor: pointer;
+    color: #4b5563;
+  }
+}
+
+.ce-rank-reasons {
+  margin: 0.35rem 0 0.35rem 1rem;
+  padding: 0;
+}
+
+.ce-rank-evidence {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.15rem 0.75rem;
+  margin: 0;
+
+  dt {
+    font-weight: 600;
+    color: #4b5563;
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.ce-rank-muted {
+  color: #6b7280;
+}
