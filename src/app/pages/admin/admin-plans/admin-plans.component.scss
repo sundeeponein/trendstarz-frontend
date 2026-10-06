@@ -418,11 +418,12 @@
   width: 70px;
   text-align: right;
   padding: 4px 6px;
-  border: 1px solid transparent;
+  // Visible border so the numbers read as editable fields, not plain text.
+  border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-size: 0.88rem;
   font-weight: 700;
-  background: transparent;
+  background: #fff;
   &:hover, &:focus { border-color: #d1d5db; background: #fff; }
   &:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px #eef2ff; }
 }

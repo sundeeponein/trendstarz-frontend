@@ -129,7 +129,8 @@ export class AdminPlansComponent implements OnInit {
       { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxProductImages', label: 'Product images' },
       { key: 'maxActiveCampaigns', label: 'Active campaign' },
-      { key: 'maxInvitesPerCampaign', label: 'Invites / campaign' },
+      { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
+      { key: 'maxInvitesReceivedPerMonth', label: 'Invites received / month' },
       { key: 'maxInviteOptions', label: 'Invite options' },
       { key: 'maxCampaignPosts', label: 'Max campaign posts' },
     ],
@@ -137,7 +138,7 @@ export class AdminPlansComponent implements OnInit {
       { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
       { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxActiveCampaigns', label: 'Active campaign' },
-      { key: 'maxInvitesPerCampaign', label: 'Invites / campaign' },
+      { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
       // 'maxTeamSeats' intentionally omitted — no team-member feature exists
       // yet (no schema, no invite flow, no UI) to actually enforce this cap,
       // so it's hidden here rather than showing admins a limit that does
@@ -150,7 +151,8 @@ export class AdminPlansComponent implements OnInit {
       { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxPortfolioImages', label: 'Portfolio images' },
       { key: 'maxActiveCampaigns', label: 'Active campaign' },
-      { key: 'maxInvitesPerCampaign', label: 'Invites / campaign' },
+      { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
+      { key: 'maxInvitesReceivedPerMonth', label: 'Invites received / month' },
       { key: 'analytics', label: 'Analytics' },
       { key: 'maxCampaignPosts', label: 'Max campaign posts' },
     ],
