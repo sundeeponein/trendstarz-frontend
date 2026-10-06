@@ -7,7 +7,11 @@
     <div class="spinner-border text-warning" role="status"></div>
     <p class="mt-2 text-muted">Loading profile...</p>
   </div>
-  <div *ngIf="error" class="text-center py-5 text-danger">{{ error }}</div>
+  <div *ngIf="error" class="text-center py-5" [class.text-danger]="errorKind === 'none'">
+    <p class="mb-3">{{ error }}</p>
+    <a *ngIf="errorKind === 'login'" class="btn btn-primary" routerLink="/login" [queryParams]="{ returnUrl: loginReturnUrl }">Log in</a>
+    <a *ngIf="errorKind === 'limit'" class="btn btn-outline-primary" routerLink="/upgrade-premium">See plans</a>
+  </div>
 
   <div *ngIf="!loading && !error && brand" class="brand-profile">
 

@@ -340,9 +340,11 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
           mobile: profile?.payout?.mobile || profile?.phoneNumber || '',
           accountHolderName: profile?.payout?.accountHolderName || profile?.name || '',
         };
+        // The card says "Last 30 days": use the daily history when the server sends it.
+        const last30 = profile?.profileTrafficLast30Days;
         this.profileTraffic = {
-          impressions: Number(profile?.profileTraffic?.impressions || 0),
-          clicks: Number(profile?.profileTraffic?.clicks || 0),
+          impressions: Number((last30 ? last30.impressions : profile?.profileTraffic?.impressions) || 0),
+          clicks: Number((last30 ? last30.clicks : profile?.profileTraffic?.clicks) || 0),
           lastImpressionAt: profile?.profileTraffic?.lastImpressionAt || '',
           lastClickAt: profile?.profileTraffic?.lastClickAt || '',
         };

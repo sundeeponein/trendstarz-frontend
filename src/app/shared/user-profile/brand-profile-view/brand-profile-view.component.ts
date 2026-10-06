@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser, DOCUMENT } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../config.service';
 import { SessionService } from '../../../core/session.service';
@@ -18,7 +18,7 @@ import { buildSocialProfileUrl } from '../../social-handle.util';
 @Component({
   selector: 'app-brand-profile-view',
   standalone: true,
-  imports: [CommonModule, CampaignListComponent, CampaignCardComponent, CampaignDetailModalComponent, WriteReviewComponent, ReviewListComponent, ProfileSocialPlatformsComponent],
+  imports: [CommonModule, RouterLink, CampaignListComponent, CampaignCardComponent, CampaignDetailModalComponent, WriteReviewComponent, ReviewListComponent, ProfileSocialPlatformsComponent],
   templateUrl: './brand-profile-view.component.html',
   styleUrls: ['./brand-profile-view.component.scss']
 })
@@ -267,6 +267,13 @@ export class BrandProfileViewComponent implements OnInit {
     return labels[raw] ? `${labels[raw]} (${raw})` : raw;
   }
 
+  /** Why the profile could not be shown: needs login, daily limit, or not found. */
+  errorKind: 'none' | 'login' | 'limit' = 'none';
+
+  get loginReturnUrl(): string {
+    return typeof window !== 'undefined' ? window.location.pathname : '/';
+  }
+
   constructor(
     private route: ActivatedRoute,
     private config: ConfigService,
@@ -280,7 +287,9 @@ export class BrandProfileViewComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.data.subscribe(({ brand }) => {
+    this.route.data.subscribe(({ brandResult }) => {
+      const brand = brandResult?.brand || null;
+      this.errorKind = 'none';
       const routeBrandName = this.route.snapshot.paramMap.get('brandName') || this.route.parent?.snapshot.paramMap.get('brandName');
       this.brand = null;
       this.error = '';
@@ -296,7 +305,17 @@ export class BrandProfileViewComponent implements OnInit {
 
       const data = brand || null;
       if (!data) {
-        this.error = 'Brand not found.';
+        // The click was counted before this page loaded; say why the profile can't
+        // show instead of claiming the brand doesn't exist.
+        if (brandResult?.status === 401) {
+          this.errorKind = 'login';
+          this.error = "Log in to view this brand's profile.";
+        } else if (brandResult?.status === 403) {
+          this.errorKind = 'limit';
+          this.error = brandResult.message || "You've reached today's profile view limit.";
+        } else {
+          this.error = 'Brand not found.';
+        }
         this.brand = null;
         this.setDefaultMetadata();
       } else {

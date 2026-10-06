@@ -245,6 +245,25 @@ export class ConfigService {
   }
 
   // Fetch brand by name (for public profile view)
+  /**
+   * Brand profile for the brand page, keeping WHY it failed: 401 = not logged in,
+   * 403 = daily profile-view limit (server message). getBrandByName swallows both.
+   */
+  getBrandProfileResult(
+    brandName: string,
+  ): Observable<{ brand: any | null; status: number | null; message: string }> {
+    return this.http.get<any>(`${this.apiUrl}/users/brands/name/${encodeURIComponent(brandName)}`).pipe(
+      map((res) => ({ brand: this.extractData<any>(res) || null, status: null, message: '' })),
+      catchError((error) =>
+        of({
+          brand: null,
+          status: typeof error?.status === 'number' ? error.status : null,
+          message: String(error?.error?.message || ''),
+        }),
+      ),
+    );
+  }
+
   getBrandByName(brandName: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/users/brands/name/${encodeURIComponent(brandName)}`).pipe(
       map((res) => this.extractData<any>(res)),
@@ -1034,6 +1053,16 @@ export class ConfigService {
 
   trackBrandProfileClick(brandName: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/users/brands/name/${encodeURIComponent(brandName)}/track-click`, {});
+  }
+
+  /** Photographer profile page loaded (counted like influencer views). */
+  trackPhotographerProfileImpression(username: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/photographers/username/${encodeURIComponent(username)}/track-impression`, {});
+  }
+
+  /** Photographer card clicked in Search / Welcome. */
+  trackPhotographerProfileClick(username: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/photographers/username/${encodeURIComponent(username)}/track-click`, {});
   }
 
   // ── Campaign endpoints ──────────────────────

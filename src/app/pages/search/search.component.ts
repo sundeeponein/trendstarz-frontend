@@ -872,6 +872,7 @@ export class SearchComponent implements OnInit {
     const username = String(photographer?.username || '').trim();
     const id = photographer?._id;
     if (username) {
+      this.config.trackPhotographerProfileClick(username).subscribe({ next: () => {}, error: () => {} });
       this.incrementProfileViewUsage();
       this.router.navigate(['/photographer', username]);
       return;

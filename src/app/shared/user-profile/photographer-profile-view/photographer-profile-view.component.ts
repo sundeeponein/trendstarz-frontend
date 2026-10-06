@@ -381,6 +381,9 @@ export class PhotographerProfileViewComponent implements OnInit {
             this.photographer = data;
             this.updateMetadata(data);
             this.ensureCanonicalProfileUrl(data, username);
+            // Profile view (best-effort), like influencer and brand profiles.
+            const viewed = String(data?.username || username || '').trim();
+            if (viewed) this.config.trackPhotographerProfileImpression(viewed).subscribe({ next: () => {}, error: () => {} });
           }
           this.loading = false;
           this.cd.detectChanges();

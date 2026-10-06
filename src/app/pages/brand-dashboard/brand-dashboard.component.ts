@@ -478,9 +478,11 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
 
   get profileTraffic() {
     const traffic = this.dashboard?.brand?.profileTraffic || {};
+    // The card says "Last 30 days": use the daily history when the server sends it.
+    const last30 = traffic.last30Days;
     return {
-      impressions: Number(traffic.impressions || 0),
-      clicks: Number(traffic.clicks || 0),
+      impressions: Number((last30 ? last30.impressions : traffic.impressions) || 0),
+      clicks: Number((last30 ? last30.clicks : traffic.clicks) || 0),
       lastImpressionAt: traffic.lastImpressionAt || null,
       lastClickAt: traffic.lastClickAt || null,
     };

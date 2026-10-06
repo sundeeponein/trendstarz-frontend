@@ -282,3 +282,44 @@ describe('SearchComponent Follower Tier filter for viewers without social-link a
     expect(c.tierOptions).toEqual([]);
   });
 });
+
+describe('SearchComponent photographer card click is counted', () => {
+  const make = (user: any) => {
+    const config = {
+      trackPhotographerProfileClick: jasmine
+        .createSpy('click')
+        .and.returnValue({ subscribe: () => {} }),
+    };
+    const router = {
+      navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)),
+    };
+    const c = new SearchComponent(
+      config as any,
+      { getUser: () => user } as any,
+      {} as any,
+      {} as any,
+      { detectChanges: () => {} } as any,
+      { snapshot: { queryParamMap: { get: () => null } } } as any,
+      router as any,
+      new CollaborationScoreUiUtilsService(),
+      { onDestroy: () => () => {} } as any,
+      'browser' as any,
+    );
+    (c as any).analytics = { trackSearchProfileCardClick: () => {} };
+    (c as any).incrementProfileViewUsage = () => {};
+    return { c, config, router };
+  };
+
+  it('allowed viewer: counts the click and opens the profile', () => {
+    const { c, config, router } = make({ role: 'influencer' });
+    c.viewPhotographerProfile({ _id: 'p1', username: 'lens' });
+    expect(config.trackPhotographerProfileClick).toHaveBeenCalledWith('lens');
+    expect(router.navigate).toHaveBeenCalledWith(['/photographer', 'lens']);
+  });
+
+  it('blocked viewer (guest): no click counted', () => {
+    const { c, config } = make(null);
+    c.viewPhotographerProfile({ _id: 'p1', username: 'lens' });
+    expect(config.trackPhotographerProfileClick).not.toHaveBeenCalled();
+  });
+});

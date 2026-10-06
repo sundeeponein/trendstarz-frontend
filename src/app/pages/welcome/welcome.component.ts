@@ -523,6 +523,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     const username = String(photographer?.username || '').trim();
     const id = String(photographer?._id || '').trim();
     if (username) {
+      this.config.trackPhotographerProfileClick(username).subscribe({ next: () => {}, error: () => {} });
       this.router.navigate(['/photographer', username]);
       return;
     }
