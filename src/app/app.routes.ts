@@ -76,6 +76,7 @@ export const routes: Routes = [
 			{ path: 'reviews', loadComponent: () => import('./pages/admin/admin-reviews/admin-reviews.component').then(m => m.AdminReviewsComponent) },
 			{ path: 'disputes', loadComponent: () => import('./pages/admin/admin-disputes/admin-disputes.component').then(m => m.AdminDisputesComponent) },
 			{ path: 'link-analytics', loadComponent: () => import('./pages/admin/admin-link-analytics/admin-link-analytics.component').then(m => m.AdminLinkAnalyticsComponent) },
+			{ path: 'matching-evidence', loadComponent: () => import('./pages/admin/matching-evidence/matching-evidence.component').then(m => m.MatchingEvidenceComponent) },
 			{ path: 'collaboration-score-settings', loadComponent: () => import('./pages/admin/collaboration-score-settings/collaboration-score-settings.component').then(m => m.CollaborationScoreSettingsComponent) },
 			// Intentionally not linked from admin-layout's nav — reachable only via the "View Collaboration Details" button in the user table's popup.
 			{ path: 'collaboration-score/:userId', loadComponent: () => import('./pages/admin/collaboration-score-detail/collaboration-score-detail.component').then(m => m.CollaborationScoreDetailComponent) },

@@ -1,0 +1,322 @@
+<div class="me-page">
+  <div class="me-header">
+    <div>
+      <a class="me-back" routerLink="/admin/admin-dashboard"
+        ><i class="bi bi-chevron-left"></i> Back to dashboard</a
+      >
+      <h2>Matching Evidence</h2>
+      <p class="me-subtitle">
+        How much trustworthy creator evidence exists for matching, per platform. Read-only — this
+        page never observes, verifies or changes ranking.
+        <ng-container *ngIf="report">
+          As of {{ report.asOf | date: 'MMM d, y, h:mm a' : 'UTC' }} UTC.</ng-container
+        >
+      </p>
+    </div>
+    <button type="button" class="me-refresh" (click)="load()" [disabled]="loading">
+      <i class="bi bi-arrow-clockwise" [class.spin]="loading"></i> Refresh
+    </button>
+  </div>
+
+  <div *ngIf="loading && !report" class="me-state">Loading evidence…</div>
+  <div *ngIf="error" class="me-state me-state--error">{{ error }}</div>
+
+  <ng-container *ngIf="report && !error">
+    <!-- Population -->
+    <div class="me-tiles">
+      <div class="me-tile">
+        <span class="me-tile-value">{{ report.population.influencers.approvedActive }}</span>
+        <span class="me-tile-label"
+          >Approved influencers
+          <small>of {{ report.population.influencers.evaluated }}</small></span
+        >
+      </div>
+      <div class="me-tile">
+        <span class="me-tile-value">{{ report.population.photographers.approvedActive }}</span>
+        <span class="me-tile-label"
+          >Approved photographers
+          <small>of {{ report.population.photographers.evaluated }}</small></span
+        >
+      </div>
+      <div class="me-tile">
+        <span class="me-tile-value">{{ report.socialEvidence.overall.accounts }}</span>
+        <span class="me-tile-label">Social accounts</span>
+      </div>
+      <div class="me-tile">
+        <span class="me-tile-value">{{
+          pct(report.socialEvidence.overall.usableObservedFollowersPct)
+        }}</span>
+        <span class="me-tile-label">With usable observed followers</span>
+      </div>
+    </div>
+
+    <!-- Social evidence per platform -->
+    <section class="me-card">
+      <h3>Social evidence by platform</h3>
+      <div class="me-table-wrap">
+        <table class="me-table">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Accounts</th>
+              <th>Needs connection</th>
+              <th>Connected</th>
+              <th>Observed (fresh / stale)</th>
+              <th>Usable followers</th>
+              <th>Ownership verified</th>
+              <th>Tier verified</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of platforms; trackBy: trackKey">
+              <td>
+                {{ row.label }}
+                <span class="me-flag" *ngIf="row.p.sample === 'insufficient'">small sample</span>
+              </td>
+              <td>{{ row.p.accounts }}</td>
+              <td>{{ row.p.requiresConnection }}</td>
+              <td>{{ row.p.requiresConnection ? row.p.connected : '—' }}</td>
+              <td>{{ observed(row.p) }}</td>
+              <td>
+                {{ row.p.usableObservedFollowers }} ({{ pct(row.p.usableObservedFollowersPct) }})
+              </td>
+              <td>{{ row.p.ownership.verified }}</td>
+              <td>{{ row.p.tier.verified }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="me-note">
+        Observed = latest successful platform observation is fresh (≤
+        {{ report.definitions.proposedThresholds.observationFreshDays }} days) or stale (≤
+        {{ report.definitions.proposedThresholds.observationExpiredAfterDays }} days). Verified = an
+        admin decision that still matches the current handle/tier. Platforms with fewer than
+        {{ report.definitions.minSampleSize }} accounts are marked as a small sample.
+      </p>
+    </section>
+
+    <!-- YouTube schedule -->
+    <section class="me-card">
+      <h3>YouTube observation schedule</h3>
+      <div *ngIf="scheduleError" class="me-state me-state--error">{{ scheduleError }}</div>
+      <ng-container *ngIf="schedule">
+        <div class="me-kv">
+          <div>
+            <span>Scheduled observation</span>
+            <strong [class.me-on]="schedule.enabled" [class.me-off]="!schedule.enabled">{{
+              schedule.enabled ? 'On' : 'Off'
+            }}</strong>
+          </div>
+          <div>
+            <span>Accounts in scope</span> <strong>{{ schedule.candidates }}</strong>
+          </div>
+          <div>
+            <span>Due now</span> <strong>{{ schedule.dueNow }}</strong>
+          </div>
+          <div>
+            <span>Paused (handle needs review)</span> <strong>{{ schedule.paused.length }}</strong>
+          </div>
+          <div>
+            <span>Last scheduled attempt</span>
+            <strong>{{
+              schedule.lastScheduledAttemptAt
+                ? (schedule.lastScheduledAttemptAt | date: 'MMM d, y, h:mm a' : 'UTC') + ' UTC'
+                : 'Never'
+            }}</strong>
+          </div>
+          <div>
+            <span>Counts older than {{ schedule.retention.maxAgeDays }} days</span>
+            <strong>{{ schedule.retention.countsOlderThanLimit }}</strong>
+          </div>
+        </div>
+        <p class="me-note">
+          Refreshes each account every {{ schedule.schedule.refreshEveryDays }} days ({{
+            schedule.schedule.runsAt
+          }}). Turned on with the server setting <code>{{ schedule.switch }}</code
+          >. YouTube follower counts are cleared after {{ schedule.retention.maxAgeDays }} days,
+          whether or not the schedule is on.
+        </p>
+        <ul class="me-paused" *ngIf="schedule.paused.length">
+          <li *ngFor="let p of schedule.paused">
+            <strong>{{ p.handle || 'unknown handle' }}</strong> — {{ p.consecutiveFailures }} failed
+            lookups ({{ p.lastError || 'unknown' }}); next retry
+            {{ p.nextRetryAt | date: 'MMM d, y' : 'UTC' }}
+          </li>
+        </ul>
+      </ng-container>
+    </section>
+
+    <!-- Creator data -->
+    <section class="me-card" *ngIf="report.creatorData.influencers as inf">
+      <h3>Influencer data ({{ inf.creators }} approved)</h3>
+      <div class="me-grid">
+        <div>
+          <h4>Last active</h4>
+          <table class="me-table me-table--compact">
+            <tr *ngFor="let a of activityRows">
+              <td>{{ a.label }}</td>
+              <td>{{ inf.activity[a.key] || 0 }}</td>
+            </tr>
+          </table>
+        </div>
+        <div>
+          <h4>Categories per creator</h4>
+          <table class="me-table me-table--compact">
+            <tr *ngFor="let c of categoryRows(inf)">
+              <td>{{ c.label }}</td>
+              <td>{{ c.count }}</td>
+            </tr>
+          </table>
+          <p class="me-note">
+            {{ inf.categories.overCurrentCap }} above the current limit of {{ inf.categories.cap }}.
+          </p>
+        </div>
+        <div>
+          <h4>Rates</h4>
+          <table class="me-table me-table--compact">
+            <tr>
+              <td>Priced rows</td>
+              <td>{{ inf.rates.pricedRows }}</td>
+            </tr>
+            <tr>
+              <td>Below ₹{{ report.definitions.proposedThresholds.minimumRateRupees }}</td>
+              <td>{{ inf.rates.belowProposedMinimum }}</td>
+            </tr>
+            <tr>
+              <td>Multiples of ₹500</td>
+              <td>{{ inf.rates.multipleOf500 }} ({{ pct(inf.rates.multipleOf500Pct) }})</td>
+            </tr>
+            <tr>
+              <td>Confirmation date</td>
+              <td>{{ inf.rates.confirmationTracked ? 'Tracked' : 'Not tracked yet' }}</td>
+            </tr>
+          </table>
+        </div>
+        <div>
+          <h4>Availability</h4>
+          <table class="me-table me-table--compact">
+            <tr>
+              <td>Available</td>
+              <td>{{ inf.availability.availableTrue }}</td>
+            </tr>
+            <tr>
+              <td>Off or never set</td>
+              <td>{{ inf.availability.falseOrUnset }}</td>
+            </tr>
+          </table>
+          <p class="me-note" *ngIf="!inf.availability.explicitStateTracked">
+            "Off" and "never set" can't be told apart yet.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Outcomes -->
+    <section class="me-card">
+      <h3>Marketplace events</h3>
+      <div class="me-kv">
+        <div>
+          <span>Total</span> <strong>{{ report.outcomes.total }}</strong>
+        </div>
+        <div>
+          <span>Captured live</span> <strong>{{ report.outcomes.live }}</strong>
+        </div>
+        <div>
+          <span>Backfilled</span> <strong>{{ report.outcomes.backfilled }}</strong>
+        </div>
+        <div>
+          <span>Approved creators with any event</span>
+          <strong>{{ report.outcomes.approvedCreatorsWithAnyEvent }}</strong>
+        </div>
+      </div>
+      <div class="me-table-wrap">
+        <table class="me-table me-table--compact">
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Total</th>
+              <th>Live</th>
+              <th>Backfilled</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of eventRows()">
+              <td>{{ e.type }}</td>
+              <td>{{ e.total }}</td>
+              <td>{{ e.live }}</td>
+              <td>{{ e.backfilled }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="me-note" *ngIf="report.outcomes.sample === 'insufficient'">
+        Too few live events to evaluate creators on outcomes yet.
+      </p>
+    </section>
+
+    <!-- Ranking resolution -->
+    <section class="me-card" *ngIf="report.rankingResolution.overall as o">
+      <h3>Ranking resolution</h3>
+      <p class="me-note">
+        Across {{ o.campaigns }} campaigns and {{ o.ranked }} ranked creators: which ranking rule
+        first tells two eligible creators apart. "Creator ID" means the three signals were tied and
+        the stable tie-break decided — not marketplace evidence.
+      </p>
+      <div class="me-kv">
+        <div>
+          <span>Platform / content</span>
+          <strong>{{ pct(o.decidedPairsPct['platformContent']) }}</strong>
+        </div>
+        <div>
+          <span>Category</span> <strong>{{ pct(o.decidedPairsPct['category']) }}</strong>
+        </div>
+        <div>
+          <span>Activity</span> <strong>{{ pct(o.decidedPairsPct['activity']) }}</strong>
+        </div>
+        <div>
+          <span>Creator ID tie-break</span>
+          <strong>{{ pct(o.decidedPairsPct['creatorId']) }}</strong>
+        </div>
+        <div>
+          <span>Creators sharing all signals</span>
+          <strong>{{ pct(o.creatorsInTieGroupsPct) }}</strong>
+        </div>
+        <div>
+          <span>Top-5 cutoff inside a tie</span> <strong>{{ cutoffText('top5') }}</strong>
+        </div>
+        <div>
+          <span>Top-10 cutoff inside a tie</span> <strong>{{ cutoffText('top10') }}</strong>
+        </div>
+        <div>
+          <span>Top-25 cutoff inside a tie</span> <strong>{{ cutoffText('top25') }}</strong>
+        </div>
+      </div>
+      <div class="me-table-wrap">
+        <table class="me-table me-table--compact">
+          <thead>
+            <tr>
+              <th>Campaign</th>
+              <th>Status</th>
+              <th>Eligible</th>
+              <th>Distinct signal combinations</th>
+              <th>Sharing all signals</th>
+              <th>Largest tie</th>
+              <th>Decided by ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of report.rankingResolution.campaigns; trackBy: trackKey">
+              <td>{{ campaignLabel(c) }}</td>
+              <td>{{ c.status }}</td>
+              <td>{{ c.eligible }}</td>
+              <td>{{ c.distinctSignalCombinations }}</td>
+              <td>{{ pct(c.creatorsInTieGroupsPct) }}</td>
+              <td>{{ c.largestTieGroup }}</td>
+              <td>{{ pct(c.decidedPairsPct.creatorId) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+</div>
