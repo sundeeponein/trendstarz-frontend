@@ -45,12 +45,12 @@
          class="nav-tab">
         Plans
       </a> -->
-      <a routerLink="/admin/reviews" 
+      <!-- <a routerLink="/admin/reviews" 
          routerLinkActive="active" 
          [routerLinkActiveOptions]="{ exact: false }"
          class="nav-tab">
         Reviews
-      </a>
+      </a> -->
       <a routerLink="/admin/disputes"
          routerLinkActive="active"
          [routerLinkActiveOptions]="{ exact: false }"
@@ -117,6 +117,7 @@
             <li><a class="dropdown-item" routerLink="/admin/admin-management" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" >Admin Management</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" routerLink="/admin/plans">Plans</a></li>
+            <li><a routerLink="/admin/reviews" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="dropdown-item">Reviews </a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
           </ul>
