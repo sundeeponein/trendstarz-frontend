@@ -1336,9 +1336,15 @@ export class ConfigService {
   getBrandAttentionCounts(): Observable<{
     disputed: number;
     overdue: number;
+    awaitingReview: number;
     awaitingFulfillment: number;
   }> {
-    return this.http.get<{ disputed: number; overdue: number; awaitingFulfillment: number }>(
+    return this.http.get<{
+      disputed: number;
+      overdue: number;
+      awaitingReview: number;
+      awaitingFulfillment: number;
+    }>(
       `${this.apiUrl}/campaign-invites/brand/attention-counts`,
     );
   }

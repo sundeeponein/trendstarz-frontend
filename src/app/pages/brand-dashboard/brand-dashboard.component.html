@@ -83,13 +83,14 @@
   </div>
 
   <!-- Needs attention -->
-  <div class="needs-attention mb-4" *ngIf="attentionCounts.awaitingFulfillment > 0">
-    <a class="attention-banner" routerLink="/brand-dashboard/invites" [queryParams]="{ filter: 'awaiting-fulfillment' }">
-      <span class="attention-banner__count">{{ attentionCounts.awaitingFulfillment }}</span>
+  <!-- Submissions (invite status "submitted") waiting for the brand's approval; approved in Campaigns. -->
+  <div class="needs-attention mb-4" *ngIf="attentionCounts.awaitingReview > 0">
+    <a class="attention-banner" routerLink="/campaigns">
+      <span class="attention-banner__count">{{ attentionCounts.awaitingReview }}</span>
       <span class="attention-banner__body">
-        <span class="attention-banner__kicker">Awaiting fulfillment</span>
-        <span class="attention-banner__title d-block">Creator {{ attentionCounts.awaitingFulfillment === 1 ? 'submission' : 'submissions' }} ready for review</span>
-        <span class="attention-banner__desc d-block">Review creator deliverables waiting on you in active campaigns.</span>
+        <span class="attention-banner__kicker">Awaiting your review</span>
+        <span class="attention-banner__title d-block">Creator {{ attentionCounts.awaitingReview === 1 ? 'submission' : 'submissions' }} ready for review</span>
+        <span class="attention-banner__desc d-block">Review creator deliverables waiting for your approval in your campaigns.</span>
       </span>
       <span class="attention-banner__cta">Review <i class="bi bi-arrow-right"></i></span>
     </a>

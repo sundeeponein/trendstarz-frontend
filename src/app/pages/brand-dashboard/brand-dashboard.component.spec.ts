@@ -6,11 +6,11 @@ import { ConfigService } from '../../shared/config.service';
 import { MonetizationApiService } from '../../services/monetization-api.service';
 import { PlansService } from '../../shared/plans.service';
 import { ToastService } from '../../shared/toast/toast.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 
 describe('BrandDashboardComponent usage summary', () => {
-  async function createComponent(options?: { includeUsage?: boolean }) {
+  async function createComponent(options?: { includeUsage?: boolean; attention?: any }) {
     const user = {
       role: 'brand',
       brandName: 'Acme Studio',
@@ -29,7 +29,7 @@ describe('BrandDashboardComponent usage summary', () => {
       getSupportContact: () => of({ verificationCallNumber: '' }),
       getBrandProfileById: () => of(user),
       getMyCampaignTransactions: () => of([]),
-      getBrandAttentionCounts: () => of({ data: {} }),
+      getBrandAttentionCounts: () => of({ data: options?.attention ?? {} }),
     };
 
     const dashboardServiceStub = {
@@ -76,7 +76,10 @@ describe('BrandDashboardComponent usage summary', () => {
         { provide: MonetizationApiService, useValue: monetizationStub },
         { provide: PlansService, useValue: plansStub },
         { provide: ToastService, useValue: { info: jasmine.createSpy('info') } },
-        { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
+        // A rendered routerLink (attention banner) needs a real router.
+        options?.attention
+          ? provideRouter([])
+          : { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
         { provide: ActivatedRoute, useValue: { snapshot: {}, params: of({}), queryParams: of({}) } },
       ],
     })
@@ -107,5 +110,37 @@ describe('BrandDashboardComponent usage summary', () => {
 
     expect(text).not.toContain('Daily profile views:');
     expect(text).not.toContain('Daily searches:');
+  });
+
+  describe('submissions awaiting review banner', () => {
+    const banner = (el: HTMLElement) =>
+      el.querySelector('.attention-banner') as HTMLAnchorElement | null;
+
+    it('shows the server count of submissions awaiting review and links to Campaigns', async () => {
+      const fixture = await createComponent({
+        attention: { awaitingReview: 2, awaitingFulfillment: 5 },
+      });
+      const a = banner(fixture.nativeElement)!;
+      expect(a).not.toBeNull();
+      expect(a.querySelector('.attention-banner__count')!.textContent!.trim()).toBe('2');
+      expect(a.textContent).toContain('Creator submissions ready for review');
+      expect(a.textContent).toContain('Awaiting your review');
+      // A real route — not the old non-existent /brand-dashboard/invites.
+      expect(a.getAttribute('href')).toBe('/campaigns');
+    });
+
+    it('singular wording for one submission', async () => {
+      const fixture = await createComponent({ attention: { awaitingReview: 1 } });
+      expect(banner(fixture.nativeElement)!.textContent).toContain(
+        'Creator submission ready for review',
+      );
+    });
+
+    it('accepted invites / products to ship alone never show the review banner', async () => {
+      const fixture = await createComponent({
+        attention: { awaitingReview: 0, awaitingFulfillment: 1 },
+      });
+      expect(banner(fixture.nativeElement)).toBeNull();
+    });
   });
 });

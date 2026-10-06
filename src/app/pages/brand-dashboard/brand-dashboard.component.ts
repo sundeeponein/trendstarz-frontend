@@ -64,7 +64,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   private founderOfferAlreadySeen = true;
   private founderOfferCapsLoaded = false;
   private showingEligibilityUpgradePrompt = false;
-  attentionCounts = { disputed: 0, overdue: 0, awaitingFulfillment: 0 };
+  attentionCounts = { disputed: 0, overdue: 0, awaitingReview: 0, awaitingFulfillment: 0 };
   emailBannerDismissed = false;
   usageSummary: UsageSummary | null = null;
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
@@ -385,6 +385,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
         this.attentionCounts = {
           disputed: Number(data?.disputed || 0),
           overdue: Number(data?.overdue || 0),
+          awaitingReview: Number(data?.awaitingReview || 0),
           awaitingFulfillment: Number(data?.awaitingFulfillment || 0),
         };
         this.cdr.detectChanges();
