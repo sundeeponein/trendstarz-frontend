@@ -1192,6 +1192,13 @@
                   Verified Only
                 </label>
               </div>
+
+              <div class="recipient-filter-group recipient-filter-field host-elig-filter" *ngIf="showInviteEligibility">
+                <label class="recipient-filter-checkbox-label">
+                  <input type="checkbox" [(ngModel)]="inviteMeetsRequirementsOnly" [ngModelOptions]="{standalone: true}" />
+                  Only show creators who meet this campaign's requirements
+                </label>
+              </div>
             </div>
           </div>
 
@@ -1290,6 +1297,12 @@
                     <span class="inf-tag inf-tag--cat" *ngFor="let type of (inf.creatorTypes || []).slice(0, 2)">{{ type }}</span>
                   </div>
                 </ng-template>
+                <ng-container *ngIf="showInviteEligibility && inviteEligibilityBadge(inf) as eb">
+                  <span class="host-elig-badge" [ngClass]="'host-elig-badge--' + eb.status" [title]="eb.title">
+                    <i class="bi" [ngClass]="eb.status === 'meets' ? 'bi-check-circle-fill' : eb.status === 'not_met' ? 'bi-x-circle' : 'bi-question-circle'"></i>
+                    {{ eb.label }}
+                  </span>
+                </ng-container>
               </div>
               <div class="inf-right">
                 <button
@@ -1310,6 +1323,7 @@
                 <ng-container *ngIf="isInfluencerDeclined(inf)">
                   <span class="inf-status-tag inf-status-tag--declined">Previously declined</span>
                 </ng-container>
+                <span class="inf-status-tag" *ngIf="isInfluencerPreviouslyWithdrawn(inf)" title="An earlier invite was withdrawn or expired — you can invite this creator again.">Previously withdrawn</span>
                 <ng-container *ngIf="!isInfluencerInvited(inf) && !isInfluencerDeclined(inf)">
                   <div class="inf-check" [class.inf-check--on]="selectedInfluencerIds.has(getRecipientId(inf))">
                     <i class="bi bi-check2" *ngIf="selectedInfluencerIds.has(getRecipientId(inf))"></i>

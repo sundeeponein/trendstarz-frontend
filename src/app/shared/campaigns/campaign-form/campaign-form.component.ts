@@ -13,6 +13,13 @@ import { CampaignGuideModalComponent } from '../../components/campaign-guide-mod
 import { ConfirmDialogComponent } from '../../confirm-dialog/confirm-dialog.component';
 import { TIER_ORDER, TIER_DESC_MAP, normalizeTierLabel, getInfluencerPrimaryTier } from '../../tiers.constants';
 import { campaignTargetDistrictOf, campaignTargetLocationPayload } from '../campaign-location.util';
+import {
+  HostEligibilityBadge,
+  HostEligibilityView,
+  hostEligibilityBadge,
+  passesHostEligibilityFilter,
+} from '../host-eligibility.util';
+import { primaryInviteFor, recipientInviteState } from '../invite-state.util';
 import { ToastService } from '../../toast/toast.service';
 import { getRequiredFields, CampaignRequiredFieldsCtx } from '../campaign-required-fields';
 import { FREE_CAPABILITIES, PlanCapabilities, PlansService } from '../../plans.service';
@@ -106,6 +113,11 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   filterPlatform = '';
   filterState = '';
   filterDistrict = '';
+  /** Step 3: the campaign's target location pre-fills the location filter once; the host can clear it. */
+  private inviteLocationPrefilled = false;
+  /** Step 3: server labels of who meets this campaign's (unsaved) requirements — informational. */
+  inviteEligibility: HostEligibilityView | null = null;
+  inviteMeetsRequirementsOnly = false;
   filterVerifiedOnly = false;
   inviteFilterDistricts: any[] = [];
   quickViewRecipient: any | null = null;
@@ -655,6 +667,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       this.clearPhotographerSmartMatchingFilters();
       this.loadRecipientCategories();
       if (this.currentStep === 3) {
+        this.loadInviteEligibilityPreview();
         this.loadInviteRecipients();
       }
       this.cd.detectChanges();
@@ -2055,6 +2068,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     }
     this.currentStep = step;
     if (step === 3) {
+      this.prefillInviteLocationFromRequirements();
+      this.loadInviteEligibilityPreview();
       this.loadInviteRecipients();
       // Always fetch invites when entering step 3 in edit mode
       if (this.isEdit && this.campaign?._id) {
@@ -2220,6 +2235,68 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     this.fetchInfluencerInvitePage(true);
   }
 
+  /**
+   * The campaign's own target location (venue for photographer invites — the
+   * same field eligibility checks) pre-fills the step-3 location filter the
+   * first time step 3 opens, so the list starts with creators who can meet it.
+   * The host can clear or change it; it is never re-applied over their choice.
+   */
+  private prefillInviteLocationFromRequirements(): void {
+    if (this.inviteLocationPrefilled) return;
+    this.inviteLocationPrefilled = true;
+    if (this.filterState || this.filterDistrict) return;
+    const v = this.form.value;
+    const invitingPhotographers = this.isInvitingPhotographers;
+    const state = String((invitingPhotographers ? v.venueState || v.targetState : v.targetState) || '').trim();
+    if (!state) return;
+    const district = String((invitingPhotographers ? v.venueDistrict || v.targetDistrict : v.targetDistrict) || '').trim();
+    this.filterState = state;
+    this.filterDistrict = district;
+    this.loadInviteFilterDistrictsFor(state);
+    // A list loaded before (e.g. edit mode) must be refetched with the new filter.
+    if (this.allInfluencers.length && this.inviteRecipientRole !== 'photographer') {
+      this.fetchInfluencerInvitePage(true);
+    }
+  }
+
+  /** Only the fields the server's matching reads — taken from the same builder the save uses. */
+  private requirementsPreviewBody(): Record<string, unknown> {
+    const v = this.form.value;
+    const p = this.buildSavePayload({ ...v });
+    return {
+      inviteRecipientRole: p.inviteRecipientRole,
+      campaignMode: v.campaignMode,
+      campaignType: v.campaignType,
+      platforms: p.platforms,
+      categories: p.categories,
+      targetTiers: p.targetTiers,
+      socialMedia: p.socialMedia,
+      minInfluencerTier: v.minInfluencerTier,
+      ...campaignTargetLocationPayload(v.targetState, v.targetDistrict),
+      venueState: v.venueState,
+      venueDistrict: v.venueDistrict,
+      languages: v.languages,
+    };
+  }
+
+  /** Labels for every approved creator against the requirements set in step 2 (unsaved). */
+  private loadInviteEligibilityPreview(): void {
+    this.inviteEligibility = null;
+    if (this.isInvitingPhotographers) return; // not checkable for photographer recipients yet
+    this.config.previewCampaignCreatorEligibility(this.requirementsPreviewBody()).subscribe((view) => {
+      this.inviteEligibility = view;
+      this.cd.detectChanges();
+    });
+  }
+
+  get showInviteEligibility(): boolean {
+    return !!this.inviteEligibility?.supported && !this.isInvitingPhotographers;
+  }
+
+  inviteEligibilityBadge(recipient: any): HostEligibilityBadge | null {
+    return hostEligibilityBadge(this.inviteEligibility, this.getRecipientId(recipient));
+  }
+
   onInviteStateFilterChange(): void {
     this.filterDistrict = '';
     this.loadInviteFilterDistrictsFor(this.filterState);
@@ -2302,6 +2379,11 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     }
     if (this.showInfluencerSmartMatching && this.hasAnySmartMatchingFilter()) {
       list = list.filter(inf => this.creatorMatchesSmartFilters(inf));
+    }
+    if (this.showInviteEligibility) {
+      list = list.filter(inf =>
+        passesHostEligibilityFilter(this.inviteEligibility, this.getRecipientId(inf), this.inviteMeetsRequirementsOnly),
+      );
     }
     if (this.showPhotographerSmartMatching && this.hasAnyPhotographerSmartMatchingFilter()) {
       list = list.filter(inf => this.photographerMatchesSmartFilters(inf));
@@ -3235,7 +3317,22 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
         ? Array.from(this.selectedInfluencerIds).slice(0, this.inviteSelectionLimit === -1 ? this.selectedInfluencerIds.size : this.inviteSelectionLimit)
         : undefined,
       inviteRecipientRole: this.isPhotographerCreator ? 'influencer' : (this.inviteRecipientRole === 'photographer' ? 'photographer' : 'influencer'),
+      // Display names for the invite results dialog (the page strips this before saving).
+      inviteRecipientNames: this.selectedRecipientNames(),
     };
+  }
+
+  /** id → display name for the currently selected recipients. */
+  private selectedRecipientNames(): Record<string, string> {
+    const names: Record<string, string> = {};
+    for (const r of this.pinnedSelectedRecipients) {
+      const id = this.getRecipientId(r);
+      if (!id) continue;
+      names[id] =
+        this.getInviteRecipientName({ photographerId: r, recipientRole: this.inviteRecipientRole }) ||
+        String(r?.fullName || r?.name || r?.username || '').trim();
+    }
+    return names;
   }
 
   private get campaignImagesFolder(): string {
@@ -3388,37 +3485,29 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     this.save.emit(this.buildSavePayload(payload));
   }
 
+  /** Holds an invite that is still in play (see invite-state.util for the re-invite rule). */
   isInfluencerInvited(inf: any): boolean {
-    return this.campaignInvites.some(i => {
-      const status = String(i?.status || '').toLowerCase();
-      if (status === 'declined' || status === 'withdrawn') return false;
-      const inviteInfId = String(i?.influencerId?._id || i?.influencerId || i?.photographerId?._id || i?.photographerId || '');
-      return inviteInfId === this.getRecipientId(inf);
-    });
+    return recipientInviteState(this.campaignInvites, this.getRecipientId(inf)) === 'active';
   }
 
+  /** Declined this campaign's invite — not re-invitable. */
   isInfluencerDeclined(inf: any): boolean {
-    const recipientId = this.getRecipientId(inf);
-    return this.campaignInvites.some(i => {
-      const status = String(i?.status || '').toLowerCase();
-      if (status !== 'declined' && status !== 'withdrawn') return false;
-      const inviteInfId = String(i?.influencerId?._id || i?.influencerId || i?.photographerId?._id || i?.photographerId || '');
-      return inviteInfId === recipientId;
-    });
+    return recipientInviteState(this.campaignInvites, this.getRecipientId(inf)) === 'declined';
+  }
+
+  /** Only withdrawn/expired invites — can be selected and invited again. */
+  isInfluencerPreviouslyWithdrawn(inf: any): boolean {
+    return recipientInviteState(this.campaignInvites, this.getRecipientId(inf)) === 'withdrawn';
   }
 
   /** Maps a candidate's invite record (if any) to a status label/style for the card. */
   getInviteStatusBadge(inf: any): { label: string; cssClass: string } | null {
-    const recipientId = this.getRecipientId(inf);
-    const invite = this.campaignInvites.find(i => {
-      const inviteInfId = String(i?.influencerId?._id || i?.influencerId || i?.photographerId?._id || i?.photographerId || '');
-      return inviteInfId === recipientId;
-    });
+    // An active invite describes the creator best (a re-invite after a withdrawal).
+    const invite = primaryInviteFor(this.campaignInvites, this.getRecipientId(inf));
     if (!invite) return null;
     const status = String(invite?.status || '').toLowerCase();
-    if (status === 'declined' || status === 'withdrawn') {
-      return { label: 'Declined', cssClass: 'bg-secondary' };
-    }
+    if (status === 'declined') return { label: 'Declined', cssClass: 'bg-secondary' };
+    if (status === 'withdrawn') return { label: 'Withdrawn', cssClass: 'bg-secondary' };
     if (status === 'disputed') {
       return { label: 'Disputed', cssClass: 'bg-danger' };
     }

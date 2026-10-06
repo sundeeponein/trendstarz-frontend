@@ -25,7 +25,63 @@ import { CampaignFormComponent } from '../../shared/campaigns/campaign-form/camp
       (save)="onSave($event)"
       (cancel)="onCancel()"
     ></app-campaign-form>
+
+    <!-- Some invites were not sent: say who and why before leaving the form. -->
+    <div class="invite-results-backdrop" *ngIf="inviteFailures.length">
+      <div class="invite-results" role="dialog" aria-modal="true" aria-labelledby="invite-results-title">
+        <h5 id="invite-results-title">{{ inviteResultsTitle }}</h5>
+        <p class="invite-results-lead">
+          {{ inviteFailures.length === 1 ? 'This invite was' : 'These invites were' }} not sent:
+        </p>
+        <ul class="invite-results-list">
+          <li *ngFor="let f of inviteFailures">
+            <strong>{{ f.name }}</strong>: {{ f.reason }}
+          </li>
+        </ul>
+        <button type="button" class="btn btn-primary" (click)="finishAfterInviteResults()">Done</button>
+      </div>
+    </div>
   `,
+  styles: [
+    `
+      .invite-results-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1080;
+        background: rgba(15, 23, 42, 0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+      .invite-results {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        width: 100%;
+        max-width: 520px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+      .invite-results h5 {
+        font-weight: 700;
+        margin: 0 0 8px;
+      }
+      .invite-results-lead {
+        color: #4b5563;
+        margin: 0 0 8px;
+      }
+      .invite-results-list {
+        padding-left: 1.1rem;
+        margin: 0 0 16px;
+      }
+      .invite-results-list li {
+        margin-bottom: 6px;
+        overflow-wrap: anywhere;
+      }
+    `,
+  ],
 })
 export class CampaignFormPageComponent implements OnInit {
   campaign: Campaign | null = null;
@@ -37,6 +93,9 @@ export class CampaignFormPageComponent implements OnInit {
   slotsFullLimit: number | null = null;
   preSelectedInfluencers: CampaignInfluencer[] = [];
   preSelectedRecipientRole: 'influencer' | 'photographer' | null = null;
+  /** Invites the server refused, with its reason — shown before leaving the form. */
+  inviteFailures: Array<{ name: string; reason: string }> = [];
+  inviteResultsTitle = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -110,6 +169,12 @@ export class CampaignFormPageComponent implements OnInit {
     });
   }
 
+  /** "Done" on the invite results dialog. */
+  finishAfterInviteResults(): void {
+    this.inviteFailures = [];
+    this.router.navigate(['/campaigns']);
+  }
+
   onCancel(): void {
     this.router.navigate(['/campaigns']);
   }
@@ -137,7 +202,9 @@ export class CampaignFormPageComponent implements OnInit {
       return;
     }
 
-    const { inviteInfluencerIds, inviteRecipientIds, inviteRecipientRole, ...campaignData } = payload || {};
+    const { inviteInfluencerIds, inviteRecipientIds, inviteRecipientRole, inviteRecipientNames, ...campaignData } =
+      payload || {};
+    const recipientNames: Record<string, string> = inviteRecipientNames || {};
     const recipientRole = this.resolveRecipientRole(payload);
     const inviteIds: string[] = (Array.isArray(inviteRecipientIds) && inviteRecipientIds.length > 0)
       ? inviteRecipientIds
@@ -168,13 +235,24 @@ export class CampaignFormPageComponent implements OnInit {
           const verb = this.mode === 'create' ? 'created' : 'updated';
           if (sentCount > 0 && failures.length === 0) {
             this.toast.success(`${entityNoun} ${verb} and invites sent!`);
-          } else if (sentCount > 0) {
-            this.toast.success(`${entityNoun} ${verb}. ${sentCount} invite(s) sent, ${failures.length} failed.`);
-          } else {
-            this.toast.error(`${entityNoun} ${verb}, but no invites were sent.`);
+            this.cd.detectChanges();
+            this.router.navigate(['/campaigns']);
+            return;
           }
+          // Some or all invites were refused: the campaign is saved — show who and why, then leave on "Done".
+          this.inviteResultsTitle = sentCount > 0
+            ? `${entityNoun} ${verb}. ${sentCount} invite${sentCount === 1 ? '' : 's'} sent, ${failures.length} not sent.`
+            : `${entityNoun} ${verb}, but no invites were sent.`;
+          this.inviteFailures = failures.length
+            ? failures.map((f: any) => {
+                const id = String(f?.influencerId || f?.photographerId || '').trim();
+                return {
+                  name: recipientNames[id] || (id ? 'Creator' : 'All invites'),
+                  reason: String(f?.reason || 'Could not send the invite.'),
+                };
+              })
+            : [{ name: 'All invites', reason: 'The server did not send any invite.' }];
           this.cd.detectChanges();
-          this.router.navigate(['/campaigns']);
         },
         error: () => {
           this.saving = false;

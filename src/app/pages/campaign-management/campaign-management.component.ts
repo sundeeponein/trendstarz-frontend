@@ -31,6 +31,7 @@ import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../../shared
 import { AppPaginatorComponent } from '../../shared/components/app-paginator/app-paginator.component';
 import { ConfirmActionModalComponent } from '../../shared/components/confirm-action-modal/confirm-action-modal.component';
 import { WriteReviewComponent } from '../../shared/write-review/write-review.component';
+import { canReinvite, inviteRecipientId, recipientInviteState } from '../../shared/campaigns/invite-state.util';
 import {
   HostEligibilityBadge,
   HostEligibilityView,
@@ -341,19 +342,20 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
 
 
+  /**
+   * Creators who can't be invited again from the drawer: an invite still in
+   * play, or one they declined. Creators whose invites were only withdrawn or
+   * expired can be invited again (same rule as the campaign form — invite-state.util).
+   */
   get invitedIds(): Set<string> {
-    if (this.inviteTargetRole === 'photographer') {
-      return new Set(
-        this.filteredInvitesByRole
-          .map((i: any) => String(i?.photographerId?._id || i?.photographerId || i?.influencerId?._id || i?.influencerId || ''))
-          .filter(Boolean),
-      );
-    }
-    return new Set(
-      this.filteredInvitesByRole
-        .map((i: any) => String(i?.influencerId?._id || i?.influencerId || ''))
-        .filter(Boolean),
-    );
+    const invites = this.filteredInvitesByRole;
+    const ids = new Set(invites.map((i: any) => inviteRecipientId(i)).filter(Boolean));
+    return new Set([...ids].filter((id) => !canReinvite(recipientInviteState(invites, id))));
+  }
+
+  /** "Invited" or "Declined" for a creator in invitedIds. */
+  inviteStateLabel(id: string): string {
+    return recipientInviteState(this.filteredInvitesByRole, id) === 'declined' ? 'Declined' : 'Invited';
   }
 
   get inviteTargetSingularLabel(): string {

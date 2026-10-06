@@ -2450,3 +2450,35 @@ $cf-navy: #151729;
 @media (max-width: 768px) {
   .cf-slots-full { margin: 6px 16px 0; }
 }
+
+// Requirements badge in step 3 — same look as the campaign-management invite drawer (Stage 3B-4).
+.host-elig-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.5;
+  border: 1px solid transparent;
+
+  &--meets {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+  }
+
+  &--not_met {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+  }
+
+  &--needs_info {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+  }
+}

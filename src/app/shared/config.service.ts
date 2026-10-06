@@ -1191,6 +1191,19 @@ export class ConfigService {
       );
   }
 
+  /**
+   * Campaign form, invite step: the same eligibility labels for requirements
+   * that are not saved yet (POST campaigns/creator-eligibility/preview). Null on any error.
+   */
+  previewCampaignCreatorEligibility(requirements: Record<string, unknown>): Observable<HostEligibilityView | null> {
+    return this.http
+      .post<any>(`${this.apiUrl}/campaigns/creator-eligibility/preview`, requirements)
+      .pipe(
+        map((res) => (this.extractData<HostEligibilityView>(res) as HostEligibilityView) || null),
+        catchError(() => of(null)),
+      );
+  }
+
   getInvitesByCampaign(campaignId: string): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}`).pipe(
       map(res => { const d = this.extractData<any>(res); return Array.isArray(d) ? d : (d?.data ?? []); }),
