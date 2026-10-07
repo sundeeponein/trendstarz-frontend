@@ -1150,7 +1150,11 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
 
   /** True when the acceptance deadline has passed — no more invites allowed. */
   get isAcceptanceDeadlinePassed(): boolean {
-    const deadline = (this.campaign as any)?.acceptanceDeadline;
+    // A new campaign (including a duplicate) gets its deadline from the start date
+    // chosen in this form — never the deadline copied from the source campaign.
+    const deadline = this.isEdit
+      ? (this.campaign as any)?.acceptanceDeadline
+      : this.computeAcceptanceDeadline(this.f['timelineStart']?.value);
     if (!deadline) return false;
     return new Date(deadline) < new Date();
   }

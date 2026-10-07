@@ -4977,6 +4977,15 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   duplicateCampaign(c: Campaign) {
     const { _id, timelineStart, timelineEnd, image, ...rest } = c as any;
+    // Drop the source campaign's own lifecycle (deadline, number, review/close
+    // history) — the copy starts fresh and takes new dates in the form.
+    for (const key of [
+      'acceptanceDeadline', 'startDate', 'endDate', 'campaignNumber',
+      'createdAt', 'updatedAt', '__v', 'completedAt', 'completedBy', 'moderatedAt',
+      'adminOverrideAction', 'adminOverrideReason', 'adminOverrideBy', 'adminOverrideAt',
+    ]) {
+      delete rest[key];
+    }
     const prefill = { ...rest, status: 'draft', timelineStart: null, timelineEnd: null };
     // Navigate to new campaign page with prefill state
     this.router.navigate(['/campaigns', 'new'], { state: { prefill } });

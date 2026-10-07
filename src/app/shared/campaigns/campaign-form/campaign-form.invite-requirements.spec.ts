@@ -207,6 +207,41 @@ describe('CampaignFormComponent — step 3 respects the campaign requirements', 
     expect(component.filterState).toBe('Goa');
   });
 
+  describe('acceptance deadline', () => {
+    const daysFromNow = (n: number) =>
+      new Date(Date.now() + n * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const setupWith = (campaign: any, mode: 'create' | 'edit') => {
+      fixture = TestBed.createComponent(CampaignFormComponent);
+      component = fixture.componentInstance;
+      component.campaign = campaign;
+      component.mode = mode;
+      fixture.detectChanges();
+    };
+
+    it("a duplicate ignores the source campaign's past deadline and uses its own start date", () => {
+      // Duplicate of a campaign whose acceptance deadline is long gone (CMP-24).
+      setupWith({ title: 'Copy', acceptanceDeadline: '2026-09-30T23:59:59.999Z' }, 'create');
+      component.form.patchValue({ timelineStart: daysFromNow(5) });
+      expect(component.isAcceptanceDeadlinePassed).toBeFalse();
+      expect(component.canSelectMoreInfluencers()).toBeTrue();
+    });
+
+    it('a new campaign whose chosen start date makes the deadline already past is blocked', () => {
+      setupWith(null, 'create');
+      component.form.patchValue({ timelineStart: daysFromNow(-3) });
+      expect(component.isAcceptanceDeadlinePassed).toBeTrue();
+    });
+
+    it("editing a saved campaign still uses that campaign's own deadline", () => {
+      setupWith(
+        { _id: 'c1', title: 'Saved', status: 'active', acceptanceDeadline: '2026-09-30T23:59:59.999Z' },
+        'edit',
+      );
+      expect(component.isAcceptanceDeadlinePassed).toBeTrue();
+      expect(component.canSelectMoreInfluencers()).toBeFalse();
+    });
+  });
+
   it('the save payload carries display names for the selected creators (for the invite results dialog)', () => {
     influencers = [creator('a'), creator('b')];
     setup();
