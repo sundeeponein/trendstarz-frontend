@@ -333,7 +333,7 @@
 
       <app-review-list
         [targetId]="brand._id"
-        [canRead]="isProViewer"
+        [canRead]="isProViewer || isOwner"
       ></app-review-list>
     </div>
 

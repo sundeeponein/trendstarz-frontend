@@ -1,0 +1,167 @@
+<div class="modal-backdrop show" (click)="close.emit()"></div>
+<div class="modal d-block" tabindex="-1" (click)="close.emit()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-xlarge" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal cc-modal">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title">Campaign corrections</h5>
+          <div class="cc-subtitle">
+            <ng-container *ngIf="data?.campaign?.campaignNumber !== null && data?.campaign?.campaignNumber !== undefined">
+              CMP-{{ data?.campaign?.campaignNumber }} ·
+            </ng-container>
+            {{ data?.campaign?.title || campaignTitle || 'Untitled campaign' }}
+          </div>
+        </div>
+        <button type="button" class="btn-close" (click)="close.emit()" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="cc-note">
+          Fixes a host asks support for. Every correction needs a reason, is logged with your name,
+          and notifies the creator. Nothing here pays out money; a payout that was already paid is
+          never changed.
+        </p>
+
+        <div class="cc-loading" *ngIf="loading && !data">Loading…</div>
+        <div class="alert alert-danger" *ngIf="error">{{ error }}</div>
+        <div class="alert alert-success cc-result" *ngIf="lastResult">{{ lastResult }}</div>
+
+        <ng-container *ngIf="data as d">
+          <!-- Campaign -->
+          <section class="cc-campaign">
+            <div class="cc-facts">
+              <span><strong>Status</strong> {{ d.campaign.status }}</span>
+              <span><strong>End date</strong> {{ (d.campaign.endDate || d.campaign.timelineEnd) | date: 'd MMM y' : 'UTC' }}</span>
+              <span *ngIf="d.campaign.endsAt">
+                <strong>Runs until</strong> {{ d.campaign.endsAt | date: 'd MMM y, h:mm a' : '+0530' }} IST
+              </span>
+              <span *ngIf="d.campaign.completedAt">
+                <strong>Completed</strong> {{ d.campaign.completedAt | date: 'd MMM y, h:mm a' : '+0530' }} by {{ d.campaign.completedBy || '—' }}
+              </span>
+            </div>
+            <div class="cc-row-actions">
+              <button type="button" class="cc-btn" [disabled]="!d.actions.extendEndDate.allowed"
+                      [title]="d.actions.extendEndDate.why || ''" (click)="open('endDate')">
+                {{ d.campaign.status === 'completed' ? 'Reopen & extend end date' : 'Extend end date' }}
+              </button>
+              <span class="cc-why" *ngIf="!d.actions.extendEndDate.allowed">{{ d.actions.extendEndDate.why }}</span>
+            </div>
+            <div class="cc-override" *ngIf="d.campaign.adminOverrideAction">
+              Last admin override: {{ d.campaign.adminOverrideAction }}
+              <ng-container *ngIf="d.campaign.adminOverrideAt">({{ d.campaign.adminOverrideAt | date: 'd MMM y, h:mm a' : '+0530' }})</ng-container>
+              — {{ d.campaign.adminOverrideReason }}
+            </div>
+          </section>
+
+          <!-- Action form -->
+          <section class="cc-form" *ngIf="action">
+            <h6>
+              {{ actionLabel(action) }}
+              <ng-container *ngIf="target"> — {{ target.creatorName }}</ng-container>
+            </h6>
+
+            <ng-container [ngSwitch]="action">
+              <div *ngSwitchCase="'endDate'" class="cc-field">
+                <label for="cc-end">New end date (India date)</label>
+                <input id="cc-end" type="date" class="form-control" [(ngModel)]="endDate" />
+                <small>The campaign runs to the end of that day; creators' own deadlines are kept.</small>
+              </div>
+
+              <div *ngSwitchCase="'restore'" class="cc-field">
+                <p class="cc-explain">
+                  Back to <strong>{{ target?.withdrawal?.previousStatus }}</strong>, withdrawal cleared, the payment
+                  set back to pending. If their deadline has passed they get
+                  {{ d.rules.submitHoursAfterPayment }}h from now to submit.
+                </p>
+                <label class="cc-check" *ngIf="isRefundMarked">
+                  <input type="checkbox" [(ngModel)]="hostNotRefunded" />
+                  This payment is marked "refund to host". I confirm the host has <strong>not</strong> been refunded.
+                </label>
+              </div>
+
+              <div *ngSwitchCase="'extendDeadline'" class="cc-field">
+                <label for="cc-until">Creator can submit until (your local time)</label>
+                <input id="cc-until" type="datetime-local" class="form-control" [(ngModel)]="until" />
+                <small>
+                  Current deadline:
+                  {{ target?.submissionClosesAt ? (target?.submissionClosesAt | date: 'd MMM y, h:mm a' : '+0530') + ' IST' : 'none' }}.
+                  At most {{ d.rules.maxExtensionDays }} days from now. The campaign stays open until then.
+                </small>
+              </div>
+
+              <div *ngSwitchCase="'submitOnBehalf'" class="cc-field">
+                <label for="cc-url">Post link the host confirmed</label>
+                <input id="cc-url" type="url" class="form-control" placeholder="https://…" [(ngModel)]="postUrl" />
+                <small>Goes through the normal flow: the host reviews it, then the payout follows.</small>
+              </div>
+
+              <div *ngSwitchCase="'cancel'" class="cc-field">
+                <p class="cc-explain">
+                  Ends this creator's participation. The payment is marked "refund to host" — refund the host
+                  separately. The creator is told no payout will be made.
+                </p>
+              </div>
+            </ng-container>
+
+            <div class="cc-field">
+              <label for="cc-reason">Reason (at least 10 characters)</label>
+              <textarea id="cc-reason" rows="2" class="form-control" [(ngModel)]="reason"
+                        placeholder="e.g. Host asked on WhatsApp — auto-close ran before the post date"></textarea>
+            </div>
+
+            <div class="alert alert-danger" *ngIf="actionError">{{ actionError }}</div>
+            <div class="cc-form-actions">
+              <button type="button" class="cc-btn" (click)="cancelForm()" [disabled]="submitting">Back</button>
+              <button type="button" class="cc-btn cc-btn--primary" [class.cc-btn--danger]="action === 'cancel'"
+                      [disabled]="!canSubmit" (click)="submit()">
+                {{ submitting ? 'Applying…' : 'Apply' }}
+              </button>
+            </div>
+          </section>
+
+          <!-- Creators -->
+          <section class="cc-invites">
+            <h6>Creators ({{ d.invites.length }})</h6>
+            <div class="cc-empty" *ngIf="!d.invites.length">No accepted, submitted or withdrawn creators on this campaign.</div>
+
+            <article class="cc-invite" *ngFor="let inv of d.invites; trackBy: trackInvite">
+              <div class="cc-invite-head">
+                <strong>{{ inv.creatorName }}</strong>
+                <span class="cc-status cc-status--{{ inv.status }}">{{ inv.status }}</span>
+                <span class="cc-role">{{ inv.recipientRole }}</span>
+              </div>
+              <div class="cc-facts">
+                <span *ngIf="inv.selectedPostDate"><strong>Post date</strong> {{ inv.selectedPostDate | date: 'd MMM y' : 'UTC' }}</span>
+                <span *ngIf="inv.paymentConfirmedAt"><strong>Paid</strong> {{ inv.paymentConfirmedAt | date: 'd MMM y, h:mm a' : '+0530' }}</span>
+                <span *ngIf="inv.submissionClosesAt && ['accepted','payment_confirmed','working'].includes(inv.status)">
+                  <strong>Submit by</strong> {{ inv.submissionClosesAt | date: 'd MMM y, h:mm a' : '+0530' }} IST
+                  <em *ngIf="inv.submissionDeadlineExtendedTo">(extended)</em>
+                </span>
+                <span *ngIf="inv.status === 'withdrawn'">
+                  <strong>Withdrawn</strong> {{ withdrawalLabel(inv) || 'reason unknown' }}
+                  <ng-container *ngIf="inv.withdrawal?.previousStatus"> (was {{ inv.withdrawal?.previousStatus }})</ng-container>
+                </span>
+                <span><strong>Payment</strong> {{ paymentText(inv) }}</span>
+              </div>
+
+              <div class="cc-row-actions">
+                <button type="button" class="cc-btn" *ngIf="inv.actions.restore.allowed" (click)="open('restore', inv)">Restore participation</button>
+                <button type="button" class="cc-btn" *ngIf="inv.actions.extendDeadline.allowed" (click)="open('extendDeadline', inv)">Extend deadline</button>
+                <button type="button" class="cc-btn" *ngIf="inv.actions.submitOnBehalf.allowed" (click)="open('submitOnBehalf', inv)">Submit post link</button>
+                <button type="button" class="cc-btn cc-btn--danger-outline" *ngIf="inv.actions.cancel.allowed" (click)="open('cancel', inv)">Cancel participation</button>
+                <span class="cc-why"
+                      *ngIf="inv.status === 'withdrawn' && !inv.actions.restore.allowed">{{ inv.actions.restore.why }}</span>
+              </div>
+
+              <ul class="cc-log" *ngIf="inv.corrections.length">
+                <li *ngFor="let c of inv.corrections">
+                  {{ c.at | date: 'd MMM y, h:mm a' : '+0530' }} — {{ logLabel(c.action) }}: {{ c.reason }}
+                </li>
+              </ul>
+            </article>
+          </section>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

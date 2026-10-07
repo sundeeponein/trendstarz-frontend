@@ -260,6 +260,10 @@
               <button class="cm-act-btn cm-act-btn--view" type="button"
                       title="Which creators meet this campaign's requirements"
                       (click)="openEligibility(c)">Eligibility</button>
+              <button *ngIf="['active', 'completed'].includes((c.status || '').toLowerCase())"
+                      class="cm-act-btn cm-act-btn--view" type="button"
+                      title="Restore, extend or cancel a creator's participation"
+                      (click)="openCorrections(c)">Corrections</button>
             </div>
           </td>
         </tr>
@@ -343,6 +347,15 @@
   [campaignTitle]="eligibilityCampaign.title"
   (close)="closeEligibility()"
 ></app-campaign-eligibility-panel>
+
+<!-- ══ CAMPAIGN CORRECTIONS (admin) ══ -->
+<app-campaign-corrections-panel
+  *ngIf="correctionsCampaign"
+  [campaignId]="correctionsCampaign.id"
+  [campaignTitle]="correctionsCampaign.title"
+  (changed)="loadCampaignApprovals()"
+  (close)="closeCorrections()"
+></app-campaign-corrections-panel>
 
 <!-- ══ MODERATION MODAL ══ -->
 <div class="modal-backdrop show" *ngIf="showModerationModal" (click)="closeModerationModal()"></div>

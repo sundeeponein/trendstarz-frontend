@@ -15,6 +15,9 @@ import { SocialClickTrackerService } from '../../../services/social-click-tracke
 import { environment } from '../../../../environments/environment';
 import { buildSocialProfileUrl } from '../../social-handle.util';
 
+/** Invite statuses from which a creator may review the host — mirrors the server (reviews.service). */
+const CREATOR_REVIEWABLE_STATUSES = ['payment_confirmed', 'working', 'submitted', 'completed', 'approved'];
+
 @Component({
   selector: 'app-brand-profile-view',
   standalone: true,
@@ -336,12 +339,12 @@ export class BrandProfileViewComponent implements OnInit {
             }
           });
         }
-        // Influencer premium: find their completed invite with this brand
+        // Influencer premium: find a paid-or-later invite with this brand (same rule as the server)
         if (this.isInfluencerViewer && this.isProViewer) {
           this.config.getMyInvites().subscribe({
             next: (invites: any[]) => {
               const done = invites.find(
-                (inv: any) => inv.status === 'completed'
+                (inv: any) => CREATOR_REVIEWABLE_STATUSES.includes(String(inv.status || ''))
                   && (String(inv.brandId?._id || inv.brandId) === String(data._id)
                     || String(inv.brandId?._id || inv.brandId) === (data.brandUsername || ''))
               );

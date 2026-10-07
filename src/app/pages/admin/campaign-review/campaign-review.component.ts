@@ -11,6 +11,7 @@ import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/toast/toast.service';
 import { campaignIdLabel as sharedCampaignIdLabel } from '../../../shared/referral-link.util';
 import { CampaignEligibilityPanelComponent } from './campaign-eligibility-panel/campaign-eligibility-panel.component';
+import { CampaignCorrectionsPanelComponent } from './campaign-corrections-panel/campaign-corrections-panel.component';
 
 interface CampaignShareMessages {
   openCampaignMessage: string;
@@ -31,6 +32,7 @@ interface CampaignShareMessages {
     CampaignAlertMessageComponent,
     AppPaginatorComponent,
     CampaignEligibilityPanelComponent,
+    CampaignCorrectionsPanelComponent,
   ],
   templateUrl: './campaign-review.component.html',
   styleUrls: ['./campaign-review.component.scss'],
@@ -107,6 +109,8 @@ export class CampaignReviewComponent implements OnInit {
   alertMessageCopied = false;
   // Stage 3B-3: read-only creator eligibility list for one campaign.
   eligibilityCampaign: { id: string; title: string } | null = null;
+  // Admin corrections (restore / extend / submit / cancel) for one campaign.
+  correctionsCampaign: { id: string; title: string } | null = null;
 
   private readonly isServer: boolean;
 
@@ -131,6 +135,17 @@ export class CampaignReviewComponent implements OnInit {
 
   closeEligibility(): void {
     this.eligibilityCampaign = null;
+  }
+
+  openCorrections(c: any): void {
+    this.correctionsCampaign = {
+      id: String(c?._id || ''),
+      title: c?.title || c?.campaignTitle || '',
+    };
+  }
+
+  closeCorrections(): void {
+    this.correctionsCampaign = null;
   }
 
   @HostListener('document:click', ['$event'])

@@ -4451,10 +4451,10 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  canWriteReviewForInvite(inv: any, campaign: Campaign): boolean {
+  /** Only for finished work (post approved or completed) — a completed campaign alone isn't enough. */
+  canWriteReviewForInvite(inv: any, _campaign: Campaign): boolean {
     const status = String(inv?.status || '').toLowerCase();
-    const campaignStatus = String(campaign?.status || '').toLowerCase();
-    return campaignStatus === 'completed' || status === 'completed' || status === 'approved';
+    return status === 'completed' || status === 'approved';
   }
 
   openWriteReview(inv: any, event?: Event): void {

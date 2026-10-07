@@ -372,7 +372,7 @@
         <!-- Review list (shown to premium influencers and premium brands) -->
         <app-review-list
           [targetId]="influencer._id"
-          [canRead]="isProViewer"
+          [canRead]="isProViewer || isOwnProfile"
         ></app-review-list>
       </div>
     }

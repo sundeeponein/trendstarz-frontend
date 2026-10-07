@@ -74,6 +74,13 @@ export class InfluencerProfileViewComponent implements OnInit {
     return user?.role === 'BRAND' || user?.role === 'brand';
   }
 
+  /** The viewer is this influencer — they can always read reviews written about them. */
+  get isOwnProfile(): boolean {
+    const user: any = this.session.getUser();
+    const me = String(user?.id || user?.userId || user?._id || '');
+    return !!me && !!this.influencer && me === String(this.influencer._id || '');
+  }
+
   get canViewContactDetails(): boolean {
     return !!this.influencer && this.influencer.contactRestricted !== true;
   }

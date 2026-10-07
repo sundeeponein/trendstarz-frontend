@@ -1,3 +1,4 @@
+import { submissionWindow } from '../../shared/campaign-deadlines.util';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -108,6 +109,8 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
   // Insights timing lock
   selectedPostDate: Date | null = null;
+  paymentConfirmedAt: Date | null = null;
+  submissionDeadlineExtendedTo: Date | null = null;
   insightsUnlocksAt: Date | null = null;
   postingDeadlineMode: 'grace_24h' | 'strict' = 'grace_24h';
   insightsCountdown = '';
@@ -153,6 +156,12 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
         next: (res: any) => {
           if (res?.invite?.selectedPostDate) {
             this.selectedPostDate = new Date(res.invite.selectedPostDate);
+          }
+          if (res?.invite?.paymentConfirmedAt) {
+            this.paymentConfirmedAt = new Date(res.invite.paymentConfirmedAt);
+          }
+          if (res?.invite?.submissionDeadlineExtendedTo) {
+            this.submissionDeadlineExtendedTo = new Date(res.invite.submissionDeadlineExtendedTo);
           }
           if (res?.invite?.insightsUnlocksAt) {
             this.insightsUnlocksAt = new Date(res.invite.insightsUnlocksAt);
@@ -577,16 +586,24 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     return new Date(unlockAt.getTime() + this.submissionAutoCompleteGraceHours * 60 * 60 * 1000);
   }
 
-  /** Mirrors the backend's computeGraceDeadline exactly — pure duration arithmetic, no calendar/timezone math. */
+  /** Mirrors the backend's computeGraceDeadline exactly (shared/campaign-deadlines.util). */
+  private get postingWindow() {
+    return submissionWindow(
+      {
+        selectedPostDate: this.selectedPostDate,
+        paymentConfirmedAt: this.paymentConfirmedAt,
+        submissionDeadlineExtendedTo: this.submissionDeadlineExtendedTo,
+      },
+      this.postingDeadlineMode,
+    );
+  }
+
   private get postingStrictDeadline(): Date | null {
-    if (!this.selectedPostDate) return null;
-    return new Date(this.selectedPostDate.getTime() + 24 * 60 * 60 * 1000);
+    return this.postingWindow?.strictDeadline ?? null;
   }
 
   get postingSubmissionClosesAt(): Date | null {
-    const strict = this.postingStrictDeadline;
-    if (!strict) return null;
-    return this.postingDeadlineMode === 'strict' ? strict : new Date(strict.getTime() + 24 * 60 * 60 * 1000);
+    return this.postingWindow?.closesAt ?? null;
   }
 
   /** True once the selected posting date has passed but submission is still open (grace window). */
