@@ -204,14 +204,15 @@ describe('MatchingEvidenceComponent (admin, read-only)', () => {
     reqs[0].flush({ success: true, data: report() });
     reqs[1].flush({ success: true, data: schedule() });
     fixture.detectChanges();
-    expect(text()).toContain('198 Approved influencers of 267');
+    // Labels are styled uppercase.
+    expect(text()).toContain('APPROVED INFLUENCERS Total 267 198 of 267 creators');
     expect(text()).toContain('As of Oct 6, 2026, 6:00 AM UTC');
   });
 
   it('per-platform table in a fixed platform order, with small samples flagged', () => {
     flush();
     const rows = Array.from(
-      el().querySelectorAll('section.me-card:first-of-type tbody tr'),
+      el().querySelectorAll('[data-section="platforms"] tbody tr'),
     ) as HTMLElement[];
     const cells = (r: HTMLElement) =>
       Array.from(r.querySelectorAll('td')).map((td) => td.textContent!.replace(/\s+/g, ' ').trim());
@@ -224,7 +225,7 @@ describe('MatchingEvidenceComponent (admin, read-only)', () => {
 
   it('shows the schedule switch, scope and retention', () => {
     flush();
-    expect(text()).toContain('Scheduled observation Off');
+    expect(text()).toContain('Scheduled observation: Off');
     expect(text()).toContain('Accounts in scope 42');
     expect(text()).toContain('Counts older than 30 days 0');
     expect(text()).toContain('YOUTUBE_OBSERVATION_SCHEDULE_ENABLED');
@@ -233,7 +234,19 @@ describe('MatchingEvidenceComponent (admin, read-only)', () => {
   it('a schedule error never hides the evidence report', () => {
     flush(report(), new Error('boom'));
     expect(text()).toContain('boom');
-    expect(text()).toContain('Social evidence by platform');
+    expect(text()).toContain('SOCIAL EVIDENCE BY PLATFORM');
+  });
+
+  it('highlights the busiest activity window, categories over the cap and a low observed coverage', () => {
+    flush();
+    const rowText = (cls: string) =>
+      Array.from(el().querySelectorAll(`[data-section="creators"] tr.${cls}`)).map((r) =>
+        (r as HTMLElement).innerText.replace(/\s+/g, ' ').trim(),
+      );
+    expect(rowText('adm-row--warn')).toEqual(['31–90 days 105']);
+    expect(rowText('adm-row--danger')).toEqual(['6+ categories 6']);
+    // 1.6% of accounts have a usable count → flagged.
+    expect(text()).toContain('Low coverage');
   });
 
   it('creator data, events and ranking resolution come straight from the report', () => {
@@ -242,8 +255,8 @@ describe('MatchingEvidenceComponent (admin, read-only)', () => {
     expect(text()).toContain('Multiples of ₹500 463 (71.5%)');
     expect(text()).toContain("can't be told apart yet");
     expect(text()).toContain('Captured live 19');
-    expect(text()).toContain('Creator ID tie-break 12.3%');
-    expect(text()).toContain('Top-5 cutoff inside a tie 14 of 17');
+    expect(text()).toContain('CREATOR ID TIE-BREAK 12.3%');
+    expect(text()).toContain('Top-5 cutoff inside a tie: 14 of 17');
     expect(text()).toContain('CMP-24');
     expect(text()).toContain('…4fb2');
     expect(text()).not.toMatch(/match score|ai score|\d+\s*\/\s*100/i);

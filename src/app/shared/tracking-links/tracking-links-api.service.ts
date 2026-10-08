@@ -36,6 +36,10 @@ export interface TrackingLinksAdminAnalytics {
     uniqueClicks: number;
     createdAt: string;
   }[];
+  /** All campaign links (topPerformers holds at most the requested limit, by clicks). */
+  topPerformersTotal?: number;
+  /** All campaign links with no clicks. */
+  zeroActivityTotal?: number;
   zeroActivity: {
     code: string;
     campaignId: string;

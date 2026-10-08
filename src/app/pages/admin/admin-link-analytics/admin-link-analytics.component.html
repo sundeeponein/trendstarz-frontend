@@ -15,6 +15,8 @@
           [(ngModel)]="campaignSearchTerm"
           (focus)="openCampaignDropdown()"
           (blur)="closeCampaignDropdown()"
+          (keydown.enter)="selectFirstMatch()"
+          (keydown.escape)="closeCampaignDropdown()"
         />
         <div class="combobox-panel" *ngIf="campaignDropdownOpen">
           <div class="combobox-option" (mousedown)="$event.preventDefault(); selectCampaign(null)">All campaigns</div>
@@ -25,11 +27,18 @@
           >
             {{ campaignDisplayText(opt) }}
           </div>
-          <div class="combobox-empty" *ngIf="!filteredCampaignOptions.length">No matching campaigns</div>
+          <div class="combobox-empty" *ngIf="!filteredCampaignOptions.length">
+            No campaign with tracked links matches "{{ campaignSearchTerm.trim() }}".
+          </div>
         </div>
       </div>
     </div>
   </header>
+
+  <p class="filter-status">
+    Showing: <strong>{{ selectedCampaignText || 'All campaigns' }}</strong>
+    <span *ngIf="filterNotice" class="filter-notice">— {{ filterNotice }}</span>
+  </p>
 
   <div class="error" *ngIf="error">{{ error }}</div>
   <div *ngIf="loading" class="state">Loading…</div>
@@ -53,7 +62,7 @@
     <div class="link-tabs ts-admin-tabbar" role="tablist" aria-label="Link analytics sections">
       <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'top'" (click)="activeTab = 'top'">
         Top performers
-        <span class="tab-badge">{{ d.topPerformers.length }}</span>
+        <span class="tab-badge">{{ d.topPerformersTotal ?? d.topPerformers.length }}</span>
       </button>
       <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'byCampaign'" (click)="activeTab = 'byCampaign'">
         Campaign summary
@@ -61,7 +70,7 @@
       </button>
       <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'zero'" (click)="activeTab = 'zero'">
         No clicks yet
-        <span class="tab-badge">{{ d.zeroActivity.length }}</span>
+        <span class="tab-badge">{{ d.zeroActivityTotal ?? d.zeroActivity.length }}</span>
       </button>
       <button class="link-tab ts-admin-tab" [class.active]="activeTab === 'referral'" (click)="activeTab = 'referral'">
         Referral performance
@@ -71,6 +80,9 @@
 
     <section class="panel" *ngIf="activeTab === 'top'">
       <h3>Top performers</h3>
+      <p class="hint" *ngIf="(d.topPerformersTotal ?? 0) > d.topPerformers.length">
+        Showing the top {{ d.topPerformers.length }} of {{ d.topPerformersTotal }} links by clicks.
+      </p>
       <div class="table-wrap" *ngIf="d.topPerformers.length; else noTop">
         <table>
           <thead>
@@ -87,7 +99,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let row of d.topPerformers">
+            <tr *ngFor="let row of pageRows(d.topPerformers, 'top')">
               <td class="mono">{{ row.code }}</td>
               <td class="mono">{{ campaignIdLabel(row) }}</td>
               <td>{{ row.hostName || row.hostType }}</td>
@@ -100,6 +112,16 @@
             </tr>
           </tbody>
         </table>
+        <app-paginator
+          *ngIf="d.topPerformers.length > pageSize"
+          [total]="d.topPerformers.length"
+          [pageSize]="pageSize"
+          [currentPage]="pageOf('top')"
+          [pageSizeOptions]="pageSizeOptions"
+          entityLabel="rows"
+          (pageChange)="setPage('top', $event)"
+          (pageSizeChange)="setPageSize($event)"
+        ></app-paginator>
       </div>
       <ng-template #noTop><p class="empty">No tracked links yet.</p></ng-template>
     </section>
@@ -116,13 +138,23 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let row of d.perCampaign">
+            <tr *ngFor="let row of pageRows(d.perCampaign, 'byCampaign')">
               <td class="mono">{{ campaignIdLabel(row) }}</td>
               <td class="num">{{ row.links }}</td>
               <td class="num">{{ row.clicks }}</td>
             </tr>
           </tbody>
         </table>
+        <app-paginator
+          *ngIf="d.perCampaign.length > pageSize"
+          [total]="d.perCampaign.length"
+          [pageSize]="pageSize"
+          [currentPage]="pageOf('byCampaign')"
+          [pageSizeOptions]="pageSizeOptions"
+          entityLabel="rows"
+          (pageChange)="setPage('byCampaign', $event)"
+          (pageSizeChange)="setPageSize($event)"
+        ></app-paginator>
       </div>
       <ng-template #noCampaign><p class="empty">No campaigns with tracked links yet.</p></ng-template>
     </section>
@@ -142,7 +174,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let row of d.zeroActivity">
+            <tr *ngFor="let row of pageRows(d.zeroActivity, 'zero')">
               <td class="mono">{{ row.code }}</td>
               <td class="mono">{{ campaignIdLabel(row) }}</td>
               <td>{{ row.platform || '—' }}</td>
@@ -151,6 +183,16 @@
             </tr>
           </tbody>
         </table>
+        <app-paginator
+          *ngIf="d.zeroActivity.length > pageSize"
+          [total]="d.zeroActivity.length"
+          [pageSize]="pageSize"
+          [currentPage]="pageOf('zero')"
+          [pageSizeOptions]="pageSizeOptions"
+          entityLabel="rows"
+          (pageChange)="setPage('zero', $event)"
+          (pageSizeChange)="setPageSize($event)"
+        ></app-paginator>
       </div>
       <ng-template #noZero><p class="empty">Every tracked link has at least one click.</p></ng-template>
     </section>
@@ -184,7 +226,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let row of d.referralLinks">
+              <tr *ngFor="let row of pageRows(d.referralLinks, 'referral')">
                 <td class="mono">{{ row.code }}</td>
                 <td>{{ row.hostName || row.hostType }}</td>
                 <td>{{ row.destinationRole }}</td>
@@ -196,6 +238,16 @@
               </tr>
             </tbody>
           </table>
+        <app-paginator
+          *ngIf="d.referralLinks.length > pageSize"
+          [total]="d.referralLinks.length"
+          [pageSize]="pageSize"
+          [currentPage]="pageOf('referral')"
+          [pageSizeOptions]="pageSizeOptions"
+          entityLabel="rows"
+          (pageChange)="setPage('referral', $event)"
+          (pageSizeChange)="setPageSize($event)"
+        ></app-paginator>
         </div>
         <ng-template #noReferral><p class="empty">No campaign referrals recorded yet.</p></ng-template>
       </div>
@@ -218,7 +270,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let row of d.referralLinks">
+              <tr *ngFor="let row of pageRows(d.referralLinks, 'referral')">
                 <td>{{ row.hostName || row.hostType }}</td>
                 <td class="mono">{{ row.code }}</td>
                 <td class="num">{{ row.clickCount }}</td>
@@ -232,6 +284,16 @@
               </tr>
             </tbody>
           </table>
+        <app-paginator
+          *ngIf="d.referralLinks.length > pageSize"
+          [total]="d.referralLinks.length"
+          [pageSize]="pageSize"
+          [currentPage]="pageOf('referral')"
+          [pageSizeOptions]="pageSizeOptions"
+          entityLabel="rows"
+          (pageChange)="setPage('referral', $event)"
+          (pageSizeChange)="setPageSize($event)"
+        ></app-paginator>
         </div>
         <ng-template #noUserReferral><p class="empty">No user referrals recorded yet.</p></ng-template>
       </div>

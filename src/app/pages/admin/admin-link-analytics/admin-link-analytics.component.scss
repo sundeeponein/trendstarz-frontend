@@ -146,3 +146,17 @@ table {
 }
 
 .state { color: #64748b; padding: 1rem 0; }
+
+.filter-status {
+  margin: -0.25rem 0 0.75rem;
+  font-size: 0.82rem;
+  color: #64748b;
+
+  strong {
+    color: #1f2937;
+  }
+}
+
+.filter-notice {
+  color: #b45309;
+}

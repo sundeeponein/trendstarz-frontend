@@ -128,6 +128,19 @@ const PLATFORM_LABELS: Record<string, string> = {
 };
 const PLATFORM_ORDER = ['instagram', 'youtube', 'facebook', 'linkedin', 'x', 'tiktok'];
 
+/** Brand colour of each platform's dot in the table. */
+const PLATFORM_COLORS: Record<string, string> = {
+  instagram: '#e1306c',
+  youtube: '#ff0000',
+  facebook: '#1877f2',
+  linkedin: '#0a66c2',
+  x: '#111111',
+  tiktok: '#25f4ee',
+};
+
+/** Below this share of accounts with a usable observed count, the tile is flagged. */
+const LOW_OBSERVED_COVERAGE_PCT = 25;
+
 export const ACTIVITY_ROWS: Array<{ key: string; label: string }> = [
   { key: 'within_7_days', label: 'Within 7 days' },
   { key: 'within_8_30_days', label: '8–30 days' },
@@ -206,6 +219,34 @@ export class MatchingEvidenceComponent implements OnInit {
       .map((key) => ({ key, label: PLATFORM_LABELS[key] || key, p: by[key] }));
   }
 
+  platformColor(key: string): string {
+    return PLATFORM_COLORS[key] || '#9ca3af';
+  }
+
+  /** Approved share of a population, as a whole percentage (0 when empty). */
+  share(p: { evaluated: number; approvedActive: number }): number {
+    return p.evaluated > 0 ? Math.round((100 * p.approvedActive) / p.evaluated) : 0;
+  }
+
+  get lowObservedCoverage(): boolean {
+    const v = this.report?.socialEvidence.overall.usableObservedFollowersPct;
+    return v === null || v === undefined || v < LOW_OBSERVED_COVERAGE_PCT;
+  }
+
+  /** The activity window holding the most creators (highlighted); '' when all are empty. */
+  activityPeak(d: CreatorData): string {
+    let best = '';
+    let max = 0;
+    for (const row of ACTIVITY_ROWS) {
+      const n = d.activity[row.key] || 0;
+      if (n > max) {
+        max = n;
+        best = row.key;
+      }
+    }
+    return best;
+  }
+
   /** Observed (fresh or stale) — what the report counts as current evidence. */
   observed(p: PlatformEvidence): number {
     return p.freshness.fresh + p.freshness.stale;
@@ -219,10 +260,15 @@ export class MatchingEvidenceComponent implements OnInit {
     return c.campaignNumber !== null ? `CMP-${c.campaignNumber}` : `…${c.campaignId.slice(-4)}`;
   }
 
-  categoryRows(d: CreatorData): Array<{ label: string; count: number }> {
+  categoryRows(d: CreatorData): Array<{ label: string; count: number; overCap: boolean }> {
     return Object.entries(d.categories.perCreator)
       .sort(([a], [b]) => parseInt(a, 10) - parseInt(b, 10))
-      .map(([k, count]) => ({ label: k === '1' ? '1 category' : `${k} categories`, count }));
+      .map(([k, count]) => ({
+        label: k === '1' ? '1 category' : `${k} categories`,
+        count,
+        // "6+" (or any number above the cap) is over the current limit.
+        overCap: parseInt(k, 10) > d.categories.cap,
+      }));
   }
 
   eventRows(): Array<{ type: string; total: number; live: number; backfilled: number }> {
