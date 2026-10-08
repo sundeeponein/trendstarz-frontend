@@ -124,6 +124,8 @@ interface SocialAccountObservation {
       observedFollowersCount: number | null;
       externalUrl: string;
       capturedAt: string;
+      /** Set when our 30-day retention cleared the count (not hidden by the platform). */
+      statisticsPurgedAt?: string | null;
     } | null;
   } | null;
 }
@@ -2547,9 +2549,12 @@ export class AdminUserTableComponent implements OnInit {
     const latest = observation?.latest;
     const parts: string[] = [];
     if (latest) {
-      const followers = latest.observedFollowersCount === null
-        ? 'followers hidden'
-        : `${latest.observedFollowersCount.toLocaleString('en-IN')} followers`;
+      // A null count is either cleared by our 30-day retention (YouTube policy) or hidden by the platform.
+      const followers = latest.observedFollowersCount !== null
+        ? `${latest.observedFollowersCount.toLocaleString('en-IN')} followers`
+        : latest.statisticsPurgedAt
+          ? 'follower count cleared after 30 days — fetch again for a current count'
+          : 'followers hidden';
       parts.push(`${followers} · @${latest.observedHandle} · ${latest.source} · ${new Date(latest.capturedAt).toLocaleString()}`);
     }
     if (observation?.status === 'failed') {

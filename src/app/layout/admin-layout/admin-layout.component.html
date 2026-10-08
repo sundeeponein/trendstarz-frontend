@@ -70,6 +70,12 @@
          class="nav-tab">
         Matching Evidence
       </a>
+      <a routerLink="/admin/tier-review"
+         routerLinkActive="active"
+         [routerLinkActiveOptions]="{ exact: false }"
+         class="nav-tab">
+        Tier Review
+      </a>
       
 
     </div>
@@ -188,6 +194,7 @@
         <a routerLink="/admin/disputes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-exclamation-octagon"></i><span>Disputes</span><span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span></a>
         <a routerLink="/admin/link-analytics" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-link-45deg"></i><span>Link Analytics</span></a>
         <a routerLink="/admin/matching-evidence" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-clipboard-data"></i><span>Matching Evidence</span></a>
+        <a routerLink="/admin/tier-review" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-patch-check"></i><span>Tier Review</span></a>
         <a routerLink="/admin/collaboration-score-settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>TrendScore</span></a>
       </div>
 
