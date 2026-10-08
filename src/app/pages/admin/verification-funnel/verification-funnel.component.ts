@@ -68,13 +68,6 @@ export class VerificationFunnelPageComponent implements OnInit {
     this.load();
   }
 
-  private getAuthHeaders() {
-    const token = typeof window !== 'undefined'
-      ? (localStorage.getItem('token') || sessionStorage.getItem('token'))
-      : '';
-    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-  }
-
   setTab(tab: 'combined' | 'influencer' | 'brand' | 'photographer'): void {
     this.activeTab = tab;
   }
@@ -82,7 +75,7 @@ export class VerificationFunnelPageComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.error = '';
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/verification-funnel`, this.getAuthHeaders()).subscribe({
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/verification-funnel`).subscribe({
       next: (res) => {
         const data = res?.data ?? res;
         this.combined = data?.combined ?? null;

@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { NavbarLayoutComponent } from './layout/navbar-layout/navbar-layout.component';
 import { NoNavbarLayoutComponent } from './layout/no-navbar/no-navbar-layout.component';
-import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 import { authGuard } from './core/auth.guard';
 import { guestOnlyGuard, nonAdminSearchGuard } from './core/public-route.guard';
 
@@ -63,7 +62,8 @@ export const routes: Routes = [
 	},
 	{
 		path: 'admin',
-		component: AdminLayoutComponent,
+		// Admin-only shell: loaded when an admin opens /admin, not for every visitor.
+		loadComponent: () => import('./layout/admin-layout/admin-layout.component').then(m => m.AdminLayoutComponent),
 		canActivate: [authGuard],
 		children: [
 			{ path: '', redirectTo: 'admin-dashboard', pathMatch: 'full' },

@@ -7,6 +7,7 @@ import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { FooterComponent } from '../../shared/footer/footer.component';
 import { ImageGuidelinesModalComponent } from '../../shared/components/image-guidelines-modal/image-guidelines-modal.component';
 import { RegistrationConfirmModalComponent } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.component';
+import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { RegistrationConfirmModalService, RegistrationRole } from '../../shared/components/registration-confirm-modal/registration-confirm-modal.service';
 import { environment } from '../../../environments/environment';
 import { filter, interval, Subscription } from 'rxjs';
@@ -20,6 +21,7 @@ import { filter, interval, Subscription } from 'rxjs';
 })
 export class NavbarLayoutComponent implements OnDestroy {
   readonly regConfirm = inject(RegistrationConfirmModalService);
+  readonly imageGuidelines = inject(ImageGuidelinesService);
 
   mobileMenuOpen = false;
   mobileProfileMenuOpen = false;

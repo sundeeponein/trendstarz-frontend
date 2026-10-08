@@ -1,4 +1,4 @@
-import { submissionWindow } from '../../shared/campaign-deadlines.util';
+import { graceHoursFromSettings, submissionWindow } from '../../shared/campaign-deadlines.util';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -111,6 +111,8 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   selectedPostDate: Date | null = null;
   paymentConfirmedAt: Date | null = null;
   submissionDeadlineExtendedTo: Date | null = null;
+  /** Admin grace (hours) a creator paid late still gets to submit — same setting the server reads. */
+  paidSubmitGraceHours = graceHoursFromSettings({});
   insightsUnlocksAt: Date | null = null;
   postingDeadlineMode: 'grace_24h' | 'strict' = 'grace_24h';
   insightsCountdown = '';
@@ -142,6 +144,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
         this.submissionApprovalWaitHours = Number.isFinite(submissionHours) && submissionHours >= 0 ? submissionHours : 24;
         this.submissionAutoCompleteGraceHours = Number.isFinite(autoCompleteHours) && autoCompleteHours >= 0 ? autoCompleteHours : 48;
         this.disputeResponseWaitHours = Number.isFinite(disputeHours) && disputeHours >= 0 ? disputeHours : 12;
+        this.paidSubmitGraceHours = graceHoursFromSettings(settings);
         this.cdr.markForCheck();
       },
       error: () => {
@@ -595,6 +598,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
         submissionDeadlineExtendedTo: this.submissionDeadlineExtendedTo,
       },
       this.postingDeadlineMode,
+      this.paidSubmitGraceHours,
     );
   }
 

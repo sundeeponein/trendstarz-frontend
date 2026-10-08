@@ -66,7 +66,7 @@ export interface CorrectionsView {
     adminOverrideAt: string | null;
   };
   actions: { extendEndDate: ActionCheck };
-  rules: { submitHoursAfterPayment: number; maxExtensionDays: number };
+  rules: { graceHours: number; maxExtensionDays: number };
   invites: CorrectionInvite[];
 }
 
@@ -147,14 +147,6 @@ export class CampaignCorrectionsPanelComponent implements OnInit, OnDestroy {
     this.request?.unsubscribe();
   }
 
-  private authHeaders() {
-    const token =
-      typeof window === 'undefined'
-        ? null
-        : localStorage.getItem('token') || sessionStorage.getItem('token');
-    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-  }
-
   private get base(): string {
     return `${environment.apiBaseUrl}/admin/campaign-corrections`;
   }
@@ -166,8 +158,7 @@ export class CampaignCorrectionsPanelComponent implements OnInit, OnDestroy {
     this.error = '';
     this.request = this.http
       .get<ApiEnvelope<CorrectionsView>>(
-        `${this.base}/campaigns/${encodeURIComponent(this.campaignId)}`,
-        this.authHeaders(),
+        `${this.base}/campaigns/${encodeURIComponent(this.campaignId)}`
       )
       .subscribe({
         next: (res) => {
@@ -293,7 +284,7 @@ export class CampaignCorrectionsPanelComponent implements OnInit, OnDestroy {
     const label = this.action ? ACTION_LABELS[this.action] : '';
     this.submitting = true;
     this.actionError = '';
-    this.http.post<any>(req.url, req.body, this.authHeaders()).subscribe({
+    this.http.post<any>(req.url, req.body).subscribe({
       next: () => {
         this.submitting = false;
         this.lastResult = `${label}: done.`;

@@ -217,14 +217,6 @@ export class CampaignEligibilityPanelComponent implements OnInit, OnDestroy {
     if (this.searchTimer) clearTimeout(this.searchTimer);
   }
 
-  private authHeaders() {
-    const token =
-      typeof window === 'undefined'
-        ? null
-        : localStorage.getItem('token') || sessionStorage.getItem('token');
-    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-  }
-
   buildQuery(): string {
     const params = new URLSearchParams({
       status: this.statuses.filter((s) => this.selectedStatuses.has(s)).join(','),
@@ -243,8 +235,7 @@ export class CampaignEligibilityPanelComponent implements OnInit, OnDestroy {
     this.error = '';
     this.request = this.http
       .get<ApiEnvelope<CampaignEligibilityList>>(
-        `${environment.apiBaseUrl}/admin/matching/eligibility/${encodeURIComponent(this.campaignId)}?${this.buildQuery()}`,
-        this.authHeaders(),
+        `${environment.apiBaseUrl}/admin/matching/eligibility/${encodeURIComponent(this.campaignId)}?${this.buildQuery()}`
       )
       .subscribe({
         next: (res) => {
@@ -426,8 +417,7 @@ export class CampaignEligibilityPanelComponent implements OnInit, OnDestroy {
     this.http
       .post<ApiEnvelope<EligibilityInviteOutcome>>(
         `${environment.apiBaseUrl}/admin/matching/eligibility/${encodeURIComponent(this.campaignId)}/invites`,
-        { creatorIds: [...this.selected.keys()] },
-        this.authHeaders(),
+        { creatorIds: [...this.selected.keys()] }
       )
       .subscribe({
         next: (res) => {

@@ -575,11 +575,6 @@ export class AdminManagementComponent implements OnInit {
     return localStorage.getItem('token') || sessionStorage.getItem('token');
   }
 
-  private getAuthHeaders() {
-    const token = this.getToken();
-    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-  }
-
   get filteredWhatsappCommunities(): any[] {
     const query = this.whatsappCommunitySearch.trim().toLowerCase();
     const list = Array.isArray(this.whatsappCommunities) ? this.whatsappCommunities : [];
@@ -612,7 +607,7 @@ export class AdminManagementComponent implements OnInit {
   loadWhatsappCommunities() {
     this.whatsappCommunitiesLoading = true;
     this.whatsappCommunityError = '';
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/whatsapp-communities`, this.getAuthHeaders()).subscribe({
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/whatsapp-communities`).subscribe({
       next: (res) => {
         const data = res?.data ?? res ?? [];
         this.whatsappCommunities = Array.isArray(data) ? data : [];
@@ -695,13 +690,11 @@ export class AdminManagementComponent implements OnInit {
     const request = this.editingWhatsappCommunityId
       ? this.http.patch<any>(
           `${environment.apiBaseUrl}/admin/whatsapp-communities/${this.editingWhatsappCommunityId}`,
-          payload,
-          this.getAuthHeaders(),
+          payload
         )
       : this.http.post<any>(
           `${environment.apiBaseUrl}/admin/whatsapp-communities`,
-          payload,
-          this.getAuthHeaders(),
+          payload
         );
     request.subscribe({
       next: () => {
@@ -720,7 +713,7 @@ export class AdminManagementComponent implements OnInit {
   deleteWhatsappCommunity(item: any) {
     const id = String(item?._id || '');
     if (!id) return;
-    this.http.delete<any>(`${environment.apiBaseUrl}/admin/whatsapp-communities/${id}`, this.getAuthHeaders()).subscribe({
+    this.http.delete<any>(`${environment.apiBaseUrl}/admin/whatsapp-communities/${id}`).subscribe({
       next: () => this.loadWhatsappCommunities(),
       error: (err) => {
         this.whatsappCommunityError = err?.error?.message || 'Failed to delete WhatsApp community.';
@@ -1216,7 +1209,6 @@ export class AdminManagementComponent implements OnInit {
       }
     });
   }
-
 
   toggleVisible(type: string, idx: number, subIdx?: any) {
     // Only update local state, do not persist yet

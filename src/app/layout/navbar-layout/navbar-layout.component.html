@@ -282,5 +282,10 @@
 
 <app-footer></app-footer>
 
-<app-image-guidelines-modal></app-image-guidelines-modal>
-<app-registration-confirm-modal></app-registration-confirm-modal>
+<!-- Both are loaded the first time they're opened (kept out of the first download). -->
+@defer (when imageGuidelines.isOpen()) {
+  <app-image-guidelines-modal></app-image-guidelines-modal>
+}
+@defer (when regConfirm.isOpen) {
+  <app-registration-confirm-modal></app-registration-confirm-modal>
+}

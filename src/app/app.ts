@@ -12,6 +12,7 @@ import { ConfigService } from './shared/config.service';
 import { ToastHostComponent } from './shared/toast/toast-host.component';
 import { TierInfoModalComponent } from './shared/components/tier-info-modal/tier-info-modal.component';
 import { FlowHelpModalComponent } from './shared/components/flow-help-modal/flow-help-modal.component';
+import { FlowHelpModalService } from './shared/components/flow-help-modal/flow-help-modal.service';
 import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-install-banner.component';
 import { ResetPasswordModalComponent } from './shared/components/reset-password-modal/reset-password-modal.component';
 import { ToastService } from './shared/toast/toast.service';
@@ -28,6 +29,8 @@ export class App implements OnInit {
   private lastPushSubscriptionKey: string | null = null;
   private lastSessionOpenedPing = 0;
   private readonly toast = inject(ToastService);
+  /** Read by the template: the help modal is only loaded once it is opened. */
+  protected readonly flowHelp = inject(FlowHelpModalService);
   /** Logged in with an admin-issued temporary password → must choose a new one before using the app. */
   mustChangePassword = false;
 

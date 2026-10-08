@@ -164,24 +164,16 @@ export class MatchingEvidenceComponent implements OnInit {
     if (this.isBrowser) this.load();
   }
 
-  private authHeaders() {
-    const token =
-      typeof window !== 'undefined'
-        ? localStorage.getItem('token') || sessionStorage.getItem('token')
-        : '';
-    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-  }
-
   load(): void {
     this.loading = true;
     this.error = '';
     this.scheduleError = '';
     const base = environment.apiBaseUrl;
     forkJoin({
-      report: this.http.get<any>(`${base}/admin/matching/evidence-quality`, this.authHeaders()),
+      report: this.http.get<any>(`${base}/admin/matching/evidence-quality`),
       // The schedule card is optional: a failure there never hides the report.
       schedule: this.http
-        .get<any>(`${base}/admin/social-observation/youtube-schedule`, this.authHeaders())
+        .get<any>(`${base}/admin/social-observation/youtube-schedule`)
         .pipe(
           catchError((err) => {
             this.scheduleError = err?.error?.message || 'Schedule status unavailable.';

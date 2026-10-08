@@ -71,7 +71,7 @@
                 <p class="cc-explain">
                   Back to <strong>{{ target?.withdrawal?.previousStatus }}</strong>, withdrawal cleared, the payment
                   set back to pending. If their deadline has passed they get
-                  {{ d.rules.submitHoursAfterPayment }}h from now to submit.
+                  {{ d.rules.graceHours || 24 }}h from now to submit (the admin grace period).
                 </p>
                 <label class="cc-check" *ngIf="isRefundMarked">
                   <input type="checkbox" [(ngModel)]="hostNotRefunded" />

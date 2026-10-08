@@ -53,7 +53,7 @@ const view = (invites: CorrectionInvite[]): CorrectionsView => ({
     adminOverrideAt: null,
   },
   actions: { extendEndDate: allowed },
-  rules: { submitHoursAfterPayment: 48, maxExtensionDays: 7 },
+  rules: { graceHours: 24, maxExtensionDays: 7 },
   invites,
 });
 

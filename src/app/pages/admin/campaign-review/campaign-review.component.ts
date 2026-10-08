@@ -171,7 +171,7 @@ export class CampaignReviewComponent implements OnInit {
   /** Deep-link support (e.g. from the Disputes page) to open one specific campaign's preview directly. */
   private openCampaignById(campaignId: string): void {
     this.http
-      .get<any>(`${environment.apiBaseUrl}/admin/campaigns?${new URLSearchParams({ id: campaignId }).toString()}`, this.getAuthHeaders())
+      .get<any>(`${environment.apiBaseUrl}/admin/campaigns?${new URLSearchParams({ id: campaignId }).toString()}`)
       .subscribe({
         next: (res) => {
           const data = res?.data ?? [];
@@ -205,18 +205,8 @@ export class CampaignReviewComponent implements OnInit {
       : 'Approve, reject, or request changes for campaigns submitted by brands.';
   }
 
-  private getToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('token') || sessionStorage.getItem('token');
-  }
-
-  private getAuthHeaders() {
-    const token = this.getToken();
-    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-  }
-
   loadApprovalMode() {
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/settings`, this.getAuthHeaders()).subscribe({
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/settings`).subscribe({
       next: (res) => {
         const data = res?.data ?? res;
         this.campaignApprovalMode = data?.campaignApprovalMode === 'auto_live' ? 'auto_live' : 'manual';
@@ -245,7 +235,7 @@ export class CampaignReviewComponent implements OnInit {
     this.campaignApprovalsLoading = true;
     this.campaignApprovalsError = '';
     const query = this.buildCampaignsQueryParams();
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?${query}`, this.getAuthHeaders()).subscribe({
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?${query}`).subscribe({
       next: (res) => {
         const data = res?.data ?? [];
         this.campaignApprovals = Array.isArray(data) ? data : [];
@@ -363,7 +353,7 @@ export class CampaignReviewComponent implements OnInit {
   /** Exports every campaign matching the current filters (not just the visible page) — fetches a fresh, high-limit batch from the server. */
   exportData() {
     const query = this.buildCampaignsQueryParams({ page: 1, limit: 10000 });
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?${query}`, this.getAuthHeaders()).subscribe({
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/campaigns?${query}`).subscribe({
       next: (res) => {
         const list = Array.isArray(res?.data) ? res.data : [];
         const rows = list.map((c: any) => ({
@@ -471,7 +461,7 @@ export class CampaignReviewComponent implements OnInit {
     this.http.patch<any>(`${environment.apiBaseUrl}/admin/campaigns/${campaign._id}/moderation`, {
       action,
       moderationNote: note,
-    }, this.getAuthHeaders()).subscribe({
+    }).subscribe({
       next: () => {
         this.isSubmittingModeration = false;
         this.moderatingCampaignId = '';
@@ -524,7 +514,7 @@ export class CampaignReviewComponent implements OnInit {
     this.cdr.detectChanges();
     this.http.patch<any>(`${environment.apiBaseUrl}/admin/campaigns/${campaign._id}/force-complete`, {
       reason,
-    }, this.getAuthHeaders()).subscribe({
+    }).subscribe({
       next: () => {
         this.moderatingCampaignId = '';
         this.closeCampaignPreview();
@@ -551,7 +541,7 @@ export class CampaignReviewComponent implements OnInit {
     this.cdr.detectChanges();
     this.http.patch<any>(`${environment.apiBaseUrl}/admin/campaigns/${campaign._id}/cancel-participation`, {
       reason,
-    }, this.getAuthHeaders()).subscribe({
+    }).subscribe({
       next: () => {
         this.moderatingCampaignId = '';
         this.closeCampaignPreview();
@@ -832,8 +822,7 @@ export class CampaignReviewComponent implements OnInit {
 
   private fetchInvitesByCampaign(campaignId: string) {
     return this.http.get<any>(
-      `${environment.apiBaseUrl}/campaign-invites/campaign/${encodeURIComponent(campaignId)}`,
-      this.getAuthHeaders(),
+      `${environment.apiBaseUrl}/campaign-invites/campaign/${encodeURIComponent(campaignId)}`
     );
   }
 
@@ -853,8 +842,7 @@ export class CampaignReviewComponent implements OnInit {
     }
     this.http
       .get<any>(
-        `${environment.apiBaseUrl}/admin/campaigns/${encodeURIComponent(campaignId)}/share-messages`,
-        this.getAuthHeaders(),
+        `${environment.apiBaseUrl}/admin/campaigns/${encodeURIComponent(campaignId)}/share-messages`
       )
       .subscribe({
         next: (res) => onResult(res?.data ?? res),
@@ -887,8 +875,7 @@ export class CampaignReviewComponent implements OnInit {
     }
     this.http
       .get<any>(
-        `${environment.apiBaseUrl}/admin/campaigns/invites/${encodeURIComponent(inviteId)}/share-messages`,
-        this.getAuthHeaders(),
+        `${environment.apiBaseUrl}/admin/campaigns/invites/${encodeURIComponent(inviteId)}/share-messages`
       )
       .subscribe({
         next: (res) => {
@@ -921,8 +908,7 @@ export class CampaignReviewComponent implements OnInit {
     this.selectedPayoutMessageRecipientPhoneLoading = true;
     this.http
       .get<any>(
-        `${environment.apiBaseUrl}/admin/campaigns/invites/${encodeURIComponent(inviteId)}/share-messages`,
-        this.getAuthHeaders(),
+        `${environment.apiBaseUrl}/admin/campaigns/invites/${encodeURIComponent(inviteId)}/share-messages`
       )
       .subscribe({
         next: (res) => {
@@ -962,7 +948,7 @@ export class CampaignReviewComponent implements OnInit {
     const path = role === 'photographer'
       ? `${environment.apiBaseUrl}/users/photographers/${encodeURIComponent(normalizedId)}`
       : `${environment.apiBaseUrl}/users/influencers/${encodeURIComponent(normalizedId)}`;
-    return this.http.get<any>(path, this.getAuthHeaders()).pipe(
+    return this.http.get<any>(path).pipe(
       map((res) => this.unwrapParticipantProfile(role, res)),
       catchError(() => of(null)),
     );
