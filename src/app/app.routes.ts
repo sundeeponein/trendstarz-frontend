@@ -104,5 +104,9 @@ export const routes: Routes = [
 	{ path: 'reset-password', loadComponent: () => import('./pages/auth/reset-password.component').then(m => m.ResetPasswordComponent) },
 	// Short tracked promo link — logs the click server-side, then redirects to the campaign's destination.
 	{ path: 'r/:code', loadComponent: () => import('./pages/tracking-redirect/tracking-redirect.component').then(m => m.TrackingRedirectComponent) },
+	// Old links still in sent emails/WhatsApp/notifications — the campaigns page is /campaigns
+	// (login required; logged-out visitors log in and come back).
+	{ path: 'campaign-management', redirectTo: '/campaigns', pathMatch: 'full' },
+	{ path: 'influencer-dashboard/campaigns', redirectTo: '/campaigns', pathMatch: 'full' },
 	{ path: '**', redirectTo: '' },
 ];
