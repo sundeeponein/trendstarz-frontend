@@ -14,9 +14,7 @@ import { ProfileSocialPlatformsComponent } from '../profile-social-platforms/pro
 import { SocialClickTrackerService } from '../../../services/social-click-tracker.service';
 import { environment } from '../../../../environments/environment';
 import { buildSocialProfileUrl } from '../../social-handle.util';
-
-/** Invite statuses from which a creator may review the host — mirrors the server (reviews.service). */
-const CREATOR_REVIEWABLE_STATUSES = ['payment_confirmed', 'working', 'submitted', 'completed', 'approved'];
+import { PAID_NOT_DISPUTED } from '../../invite-status';
 
 @Component({
   selector: 'app-brand-profile-view',
@@ -344,7 +342,7 @@ export class BrandProfileViewComponent implements OnInit {
           this.config.getMyInvites().subscribe({
             next: (invites: any[]) => {
               const done = invites.find(
-                (inv: any) => CREATOR_REVIEWABLE_STATUSES.includes(String(inv.status || ''))
+                (inv: any) => PAID_NOT_DISPUTED.includes(String(inv.status || ''))
                   && (String(inv.brandId?._id || inv.brandId) === String(data._id)
                     || String(inv.brandId?._id || inv.brandId) === (data.brandUsername || ''))
               );

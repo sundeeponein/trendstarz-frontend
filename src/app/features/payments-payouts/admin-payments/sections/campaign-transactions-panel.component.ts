@@ -11,6 +11,7 @@ import { buildAdminOfferTrailText } from '../../../../shared/offer-trail.util';
 import { ConfigService } from '../../../../shared/config.service';
 import { AppPaginatorComponent } from '../../../../shared/components/app-paginator/app-paginator.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../../../shared/utils/image-upload.util';
+import { FINISHED } from '../../../../shared/invite-status';
 
 @Component({
   selector: 'app-campaign-transactions-panel',
@@ -626,10 +627,10 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
 
   private isInvitePayoutEligible(tx: CampaignTransaction): boolean {
     const status = String(tx.inviteSnapshot?.status || '').toLowerCase();
-    if (['approved', 'completed'].includes(status)) return true;
+    if (FINISHED.includes(status)) return true;
 
     const workStatus = String(tx.workStatus || '').toLowerCase();
-    if (['approved', 'completed'].includes(workStatus)) return true;
+    if (FINISHED.includes(workStatus)) return true;
 
     // Legacy/non-invite transactions may not have either status.
     if (!status && !workStatus) return true;

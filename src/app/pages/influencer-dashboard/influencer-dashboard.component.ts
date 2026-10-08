@@ -31,6 +31,7 @@ import { promotionUrlTypeLabel } from '../../shared/referral-link.util';
 import { TrackingLinksApiService } from '../../shared/tracking-links/tracking-links-api.service';
 import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
 import { CollaborationScoreSummaryWidgetComponent } from '../../shared/collaboration-score/collaboration-score-summary-widget.component';
+import { FINISHED } from '../../shared/invite-status';
 
 @Component({
   selector: 'app-influencer-dashboard',
@@ -588,7 +589,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   private isPayoutProcessingStage(tx: any): boolean {
     const stage = this.inviteStage(tx);
     const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
-    return ['completed', 'approved'].includes(stage) || workStatus === 'approved';
+    return FINISHED.includes(stage) || workStatus === 'approved';
   }
 
   paymentFlowStatusLabel(tx: any): string {

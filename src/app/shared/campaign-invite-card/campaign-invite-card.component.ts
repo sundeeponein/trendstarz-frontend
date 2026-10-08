@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
 import { TIER_ORDER, normalizeTierLabel } from '../tiers.constants';
+import { ACCEPTED_OR_LATER, PAID_OR_LATER, SUBMITTED_OR_LATER } from '../invite-status';
 
 export interface InvitePayoutDetails {
   upiId: string;
@@ -188,7 +189,7 @@ export class CampaignInviteCardComponent {
   get showWaitingUnlock(): boolean {
     const s = this.status;
     if (this.isUnlocked) return false;
-    if (['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(s)) return false;
+    if (PAID_OR_LATER.includes(s)) return false;
     return s === 'accepted' || s === 'counter_sent';
   }
 
@@ -216,7 +217,7 @@ export class CampaignInviteCardComponent {
   }
   /** Show view submission button */
   get showViewSubmission(): boolean {
-    return ['submitted', 'completed', 'approved', 'disputed'].includes(this.status);
+    return SUBMITTED_OR_LATER.includes(this.status);
   }
   get showSubmissionReviewInfo(): boolean {
     return this.status === 'submitted';
@@ -564,11 +565,11 @@ export class CampaignInviteCardComponent {
   }
 
   private get isLocationPaymentConfirmed(): boolean {
-    const paymentConfirmedOrLater = ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+    const paymentConfirmedOrLater = PAID_OR_LATER
       .includes(this.status);
     if (paymentConfirmedOrLater) return true;
     // For invite_location, accepted + brand unlock is sufficient.
-    return this.isUnlocked && ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+    return this.isUnlocked && ACCEPTED_OR_LATER
       .includes(this.status);
   }
 
@@ -700,7 +701,7 @@ export class CampaignInviteCardComponent {
 
   get yourPayoutText(): string {
     const status = this.status;
-    const acceptedOrLater = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+    const acceptedOrLater = ACCEPTED_OR_LATER
       .includes(status);
     if (acceptedOrLater) {
       const agreedPaise = Number(this.invite?.agreedAmountPaise || 0);

@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { WarmupService } from '../../core/warmup.service';
+import { FINISHED } from '../../shared/invite-status';
 
 @Component({
   selector: 'app-transactions',
@@ -105,7 +106,7 @@ export class TransactionsComponent implements OnInit {
     const payoutProcessingStage = (tx: any) => {
       const inviteStatus = String(tx?.inviteSnapshot?.status || tx?.inviteStatus || '').trim().toLowerCase();
       const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
-      return ['completed', 'approved'].includes(inviteStatus) || workStatus === 'approved';
+      return FINISHED.includes(inviteStatus) || workStatus === 'approved';
     };
 
     if (this.isRecipient) {
@@ -150,7 +151,7 @@ export class TransactionsComponent implements OnInit {
       const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
       const payoutStatus = String(tx?.payoutStatus || '').trim().toLowerCase();
       if (payoutStatus === 'paid') return `Paid ${this.formatPaise(tx.recipientPayout || 0)}`;
-      if (payoutStatus === 'processing' || ['completed', 'approved'].includes(inviteStatus) || workStatus === 'approved') return 'Payout Processing (4-6 hrs)';
+      if (payoutStatus === 'processing' || FINISHED.includes(inviteStatus) || workStatus === 'approved') return 'Payout Processing (4-6 hrs)';
       if (inviteStatus === 'submitted') return 'Under Review (24 hrs)';
       if (inviteStatus === 'working') return 'Complete your Reel/Post';
       if (inviteStatus === 'payment_confirmed') return 'Ready to Start';

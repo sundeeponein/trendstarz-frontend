@@ -39,6 +39,7 @@ import {
   passesHostEligibilityFilter,
 } from '../../shared/campaigns/host-eligibility.util';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
+import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, FINISHED, FINISHED_OR_DISPUTED, OPEN_WORK, PAID_OR_LATER, SUBMITTED_OR_LATER } from '../../shared/invite-status';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
@@ -340,7 +341,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.pendingSearchPrefill = false;
       this.openCreateForm();
     }
-
 
   /**
    * Creators who can't be invited again from the drawer: an invite still in
@@ -1168,8 +1168,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return String(recipient?.username || '').trim();
   }
 
-  private static readonly PROMO_LINK_ACCEPTED_STATUSES = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'];
-
   promotionUrlTypeLabel(campaign: any): string {
     return promotionUrlTypeLabel(campaign?.promotionUrlType);
   }
@@ -1177,7 +1175,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   /** UTM-tagged variant of the campaign's promotion link, unique to this invite's creator. */
   showsPromotionLink(invite: any, campaign: any): boolean {
     return !!campaign?.promotionUrl
-      && CampaignManagementComponent.PROMO_LINK_ACCEPTED_STATUSES.includes(String(invite?.status || '').toLowerCase());
+      && ACCEPTED_NOT_DISPUTED.includes(String(invite?.status || '').toLowerCase());
   }
 
   private trackedLinkCache = new Map<string, string>();
@@ -1447,7 +1445,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
   get myInvitesAccepted(): any[] {
     return this.myInvitesTyped.filter(i =>
-      ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(i.status)
+      ACCEPTED_THROUGH_SUBMITTED.includes(i.status)
     );
   }
   get myInvitesDeclined(): any[] {
@@ -1458,7 +1456,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
   get myInvitesCompleted(): any[] {
     return this.myInvitesTyped.filter(i =>
-      ['completed', 'approved', 'disputed'].includes(i.status)
+      FINISHED_OR_DISPUTED.includes(i.status)
     );
   }
   /** Invites filtered by type chip (all / brand / collab) */
@@ -1563,7 +1561,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private trackingLinksApi: TrackingLinksApiService,
   ) {}
-
 
   private getToken(): string | null {
     if (typeof window === 'undefined') return null;
@@ -1872,7 +1869,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get photographerInboxInvitesAccepted(): any[] {
     return this.photographerInboxInvites.filter((invite: any) =>
-      ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(
+      ACCEPTED_THROUGH_SUBMITTED.includes(
         String(invite?.status || '').toLowerCase(),
       ),
     );
@@ -1887,7 +1884,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get photographerInboxInvitesCompleted(): any[] {
     return this.photographerInboxInvites.filter((invite: any) =>
-      ['completed', 'approved', 'disputed'].includes(String(invite?.status || '').toLowerCase()),
+      FINISHED_OR_DISPUTED.includes(String(invite?.status || '').toLowerCase()),
     );
   }
 
@@ -1901,7 +1898,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get photographerBrandInvitesAccepted(): any[] {
     return this.photographerBrandInvites.filter((invite: any) =>
-      ['accepted', 'payment_confirmed', 'working', 'submitted'].includes(
+      ACCEPTED_THROUGH_SUBMITTED.includes(
         String(invite?.status || '').toLowerCase(),
       ),
     );
@@ -1916,7 +1913,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get photographerBrandInvitesCompleted(): any[] {
     return this.photographerBrandInvites.filter((invite: any) =>
-      ['completed', 'approved', 'disputed'].includes(String(invite?.status || '').toLowerCase()),
+      FINISHED_OR_DISPUTED.includes(String(invite?.status || '').toLowerCase()),
     );
   }
 
@@ -2681,8 +2678,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   /** Invites actively in progress — accepted/paid/working, but not yet submitted or done. */
   getCardWorkingCount(c: Campaign): number {
     const key = this.getCampaignMapKey(c);
-    const workingStatuses = ['accepted', 'payment_confirmed', 'working'];
-    return (this.campaignInvitesMap.get(key) || []).filter((i: any) => workingStatuses.includes(i.status)).length;
+    return (this.campaignInvitesMap.get(key) || []).filter((i: any) => OPEN_WORK.includes(i.status)).length;
   }
 
   timelineProgressText(c: Campaign): string {
@@ -2745,11 +2741,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   /** Statuses where contact unlock is meaningful (i.e., influencer has accepted or beyond). */
   isUnlockableStatus(status: string): boolean {
-    return ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(String(status));
+    return ACCEPTED_OR_LATER.includes(String(status));
   }
 
   private isContactPaymentConfirmedStatus(status: string): boolean {
-    return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(String(status));
+    return PAID_OR_LATER.includes(String(status));
   }
 
   private isLocationCampaign(inv: any, campaign?: any): boolean {
@@ -2943,8 +2939,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (s === 'declined' || s === 'withdrawn') return 'declined';
     if (s === 'counter_sent') return 'pending';
     if (s === 'pending') return 'pending';
-    const accepted = ['accepted', 'payment_confirmed', 'working', 'submitted'];
-    if (accepted.includes(s)) return inv.unlocked ? 'accepted_unlocked' : 'waiting_unlock';
+    if (ACCEPTED_THROUGH_SUBMITTED.includes(s)) return inv.unlocked ? 'accepted_unlocked' : 'waiting_unlock';
     return 'other';
   }
 
@@ -3564,9 +3559,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   getCardAcceptedCount(c: Campaign): number {
-    const activeStatuses = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'];
     return (this.campaignInvitesMap.get(c._id!) || [])
-      .filter((i: any) => activeStatuses.includes(this.getHostInviteEffectiveStatus(i))).length;
+      .filter((i: any) => ACCEPTED_OR_LATER.includes(this.getHostInviteEffectiveStatus(i))).length;
   }
 
   getAcceptanceCloseThreshold(c: Campaign): number {
@@ -3616,15 +3610,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   private getAcceptedRowsCount(rows: any[]): number {
-    const acceptedStatuses = new Set([
-      'accepted',
-      'payment_confirmed',
-      'working',
-      'submitted',
-      'completed',
-      'approved',
-      'disputed',
-    ]);
+    const acceptedStatuses = new Set(ACCEPTED_OR_LATER);
     return (rows || [])
       .filter((r: any) => acceptedStatuses.has(this.getHostInviteEffectiveStatus(r))).length;
   }
@@ -3694,7 +3680,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const key = this.getCampaignMapKey(c);
     // Payout release sets the invite to 'approved', not 'completed' — both
     // are terminal "done" states (see payments-payouts.service.ts).
-    return (this.campaignInvitesMap.get(key) || []).filter((i: any) => ['completed', 'approved'].includes(i.status)).length;
+    return (this.campaignInvitesMap.get(key) || []).filter((i: any) => FINISHED.includes(i.status)).length;
   }
 
   getCardInvitePreview(c: Campaign): any[] {
@@ -4601,15 +4587,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   private isWorkedInviteStatus(status: string): boolean {
-    return [
-      'accepted',
-      'payment_confirmed',
-      'working',
-      'submitted',
-      'approved',
-      'completed',
-      'disputed',
-    ].includes(String(status || '').toLowerCase());
+    return ACCEPTED_OR_LATER.includes(String(status || '').toLowerCase());
   }
 
   getCompletedWorkedInvites(c: Campaign): any[] {
@@ -4631,14 +4609,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   /** Statuses that count as "accepted or beyond" for the mini stat chip */
   getExpandAcceptedOrBeyond(c: Campaign): number {
-    const activeStatuses = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'];
     return this.getExpandInvites(c)
-      .filter((i: any) => activeStatuses.includes(this.getHostInviteEffectiveStatus(i))).length;
+      .filter((i: any) => ACCEPTED_OR_LATER.includes(this.getHostInviteEffectiveStatus(i))).length;
   }
 
   /** Returns true when the invite has moved past accepted (payment made) */
   isPaidStatus(status: string): boolean {
-    return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(status);
+    return PAID_OR_LATER.includes(status);
   }
 
   /**
@@ -4649,9 +4626,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   isConfirmedNoShow(inv: any, campaign?: Campaign | null): boolean {
     if (!inv || !campaign) return false;
     const status = this.getHostInviteEffectiveStatus(inv);
-    const noSubmissionCloseoutStatuses = ['submitted', 'disputed', 'approved', 'completed', 'accepted', 'payment_confirmed', 'working'];
     const campaignClosed = String(campaign?.status || '').toLowerCase() === 'completed';
-    return campaignClosed && noSubmissionCloseoutStatuses.includes(status) && !this.getSubmissionForInvite(campaign, inv);
+    return campaignClosed && ACCEPTED_OR_LATER.includes(status) && !this.getSubmissionForInvite(campaign, inv);
   }
 
   /** Human-readable invite status label for brand's view of an influencer */
@@ -4680,7 +4656,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
         if (payoutStatus === 'frozen') return 'Dispute open';
         if (payoutStatus === 'paid') return `Paid ₹${((tx?.recipientPayout || 0) / 100).toLocaleString('en-IN')}`;
-        if (payoutStatus === 'processing' || ['completed', 'approved'].includes(status) || workStatus === 'approved') {
+        if (payoutStatus === 'processing' || FINISHED.includes(status) || workStatus === 'approved') {
           return 'Payout Processing (4-6 hrs)';
         }
       }
@@ -5026,9 +5002,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   get summaryAccepted(): number {
-    const activeStatuses = ['accepted', 'payment_confirmed', 'working', 'submitted', 'approved', 'completed', 'disputed'];
     let total = 0;
-    this.campaignInvitesMap.forEach(v => total += v.filter((i: any) => activeStatuses.includes(i.status)).length);
+    this.campaignInvitesMap.forEach(v => total += v.filter((i: any) => ACCEPTED_OR_LATER.includes(i.status)).length);
     return total;
   }
 
@@ -5061,7 +5036,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   shouldShowSubmissionToggle(c: Campaign, inv: any): boolean {
     const status = this.getHostInviteEffectiveStatus(inv);
-    const statusSuggestsSubmission = ['submitted', 'approved', 'completed', 'disputed'].includes(status);
+    const statusSuggestsSubmission = SUBMITTED_OR_LATER.includes(status);
     if (!statusSuggestsSubmission) return !!this.getSubmissionForInvite(c, inv);
     // A 'disputed' invite can come from a plain "report an issue" flag with no post ever
     // submitted (e.g. reported for missing the posting deadline entirely). Once this

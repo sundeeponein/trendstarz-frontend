@@ -24,6 +24,7 @@ import { RegistrationNoticeComponent } from '../../shared/components/registratio
 import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
 import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
 import { CollaborationScoreSummaryWidgetComponent } from '../../shared/collaboration-score/collaboration-score-summary-widget.component';
+import { ACCEPTED_THROUGH_SUBMITTED, FINISHED } from '../../shared/invite-status';
 
 @Component({
   selector: 'app-photographer-dashboard',
@@ -184,7 +185,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   }
 
   private completedStarterCampaignCountThisMonth(): number {
-    const completedStatuses = new Set(['completed', 'approved']);
+    const completedStatuses = new Set(FINISHED);
     const completedIds = new Set<string>();
 
     for (const invite of this.brandInvites) {
@@ -474,7 +475,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   private isPayoutProcessingStage(tx: any): boolean {
     const stage = this.inviteStage(tx);
     const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
-    return ['completed', 'approved'].includes(stage) || workStatus === 'approved';
+    return FINISHED.includes(stage) || workStatus === 'approved';
   }
 
   paymentFlowStatusLabel(tx: any): string {
@@ -517,7 +518,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
 
   /** Accepted invites that are in progress — accepted through submitted, not yet completed */
   get activeCollaborations(): any[] {
-    const activeStatuses = new Set(['accepted', 'payment_confirmed', 'working', 'submitted']);
+    const activeStatuses = new Set(ACCEPTED_THROUGH_SUBMITTED);
     return this.brandInvites.filter((inv: any) => activeStatuses.has(String(inv?.status || '').toLowerCase()));
   }
 

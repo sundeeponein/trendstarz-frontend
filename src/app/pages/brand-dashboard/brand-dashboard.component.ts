@@ -20,6 +20,7 @@ import { ProfileReviewSummaryComponent } from '../../shared/profile-verification
 import { RegistrationNoticeComponent } from '../../shared/components/registration-notice/registration-notice.component';
 import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
 import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
+import { FINISHED } from '../../shared/invite-status';
 // import { CollaborationScoreCardComponent } from '../../shared/collaboration-score/collaboration-score-card.component';
 
 @Component({
@@ -240,7 +241,7 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     for (const tx of this.paymentHistory) {
       if (tx?.payerRole !== 'brand') continue;
       const stage = String(tx?.inviteSnapshot?.status || tx?.inviteStatus || tx?.workStatus || '').toLowerCase();
-      if (!['completed', 'approved'].includes(stage)) continue;
+      if (!FINISHED.includes(stage)) continue;
       if (!this.isInCurrentMonth(tx?.completedAt || tx?.paidOutAt || tx?.updatedAt || tx?.createdAt)) continue;
       completedIds.add(String(tx?.inviteId || tx?.campaignId || tx?._id || completedIds.size));
     }

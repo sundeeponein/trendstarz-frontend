@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { copyTextToClipboard } from '../referral-link.util';
 import { buildWhatsAppLink } from '../whatsapp-messages.util';
+import { ACCEPTED_NOT_DISPUTED } from '../invite-status';
 
 @Component({
   selector: 'app-campaign-alert-message',
@@ -32,9 +33,6 @@ export class CampaignAlertMessageComponent {
   openMessageExpanded = false;
   reminderMessageExpanded = false;
   approvedMessageExpanded = false;
-
-  /** Mirrors CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES — a creator in any of these has accepted to work. */
-  private static readonly ACCEPTED_OR_LATER_STATUSES = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'];
 
   get ownerApprovedWhatsAppLink(): string | null {
     return buildWhatsAppLink(this.ownerPhone, this.ownerApprovedMessage);
@@ -68,7 +66,7 @@ export class CampaignAlertMessageComponent {
   /** At least one creator has accepted and moved past the invite stage (accepted to work). */
   get hasAcceptedInvite(): boolean {
     return this.inviteProgress.some((row) =>
-      CampaignAlertMessageComponent.ACCEPTED_OR_LATER_STATUSES.includes(String(row?.status || '').toLowerCase())
+      ACCEPTED_NOT_DISPUTED.includes(String(row?.status || '').toLowerCase())
     );
   }
 

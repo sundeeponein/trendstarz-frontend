@@ -12,6 +12,7 @@ import { ToastService } from '../../../shared/toast/toast.service';
 import { campaignIdLabel as sharedCampaignIdLabel } from '../../../shared/referral-link.util';
 import { CampaignEligibilityPanelComponent } from './campaign-eligibility-panel/campaign-eligibility-panel.component';
 import { CampaignCorrectionsPanelComponent } from './campaign-corrections-panel/campaign-corrections-panel.component';
+import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, PAID_NOT_DISPUTED } from '../../../shared/invite-status';
 
 interface CampaignShareMessages {
   openCampaignMessage: string;
@@ -1279,15 +1280,7 @@ export class CampaignReviewComponent implements OnInit {
 
   getProgressedInviteCount(campaign: any): number {
     const rows = Array.isArray(campaign?.inviteProgress) ? campaign.inviteProgress : [];
-    const progressed = new Set([
-      'accepted',
-      'payment_confirmed',
-      'working',
-      'submitted',
-      'completed',
-      'approved',
-      'disputed',
-    ]);
+    const progressed = new Set(ACCEPTED_OR_LATER);
     return rows.filter((row: any) => progressed.has(String(row?.status || '').toLowerCase())).length;
   }
 
@@ -1346,8 +1339,8 @@ export class CampaignReviewComponent implements OnInit {
     const statuses = rows.map((r: any) => String(r?.status || '').toLowerCase());
     const isActive = ['active', 'completed'].includes(status);
     const isDone = status === 'completed';
-    const hasAccepted = statuses.some((s: string) => ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(s));
-    const hasPaymentConfirmed = statuses.some((s: string) => ['payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(s));
+    const hasAccepted = statuses.some((s: string) => ACCEPTED_NOT_DISPUTED.includes(s));
+    const hasPaymentConfirmed = statuses.some((s: string) => PAID_NOT_DISPUTED.includes(s));
     const hasWorking = statuses.some((s: string) => ['working', 'submitted', 'completed', 'approved'].includes(s));
     return [
       { label: 'Created', done: true, current: false },

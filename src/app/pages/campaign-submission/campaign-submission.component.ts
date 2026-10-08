@@ -11,6 +11,7 @@ import { CampaignStatusBarComponent } from '../../shared/campaign-status-bar/cam
 import { AnalyticsService } from '../../core/analytics.service';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { ConfirmActionModalComponent } from '../../shared/components/confirm-action-modal/confirm-action-modal.component';
+import { SUBMITTED_OR_LATER } from '../../shared/invite-status';
 
 type PostType = 'reel' | 'video' | 'photo' | 'short' | 'story' | 'thread';
 
@@ -427,7 +428,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   }
 
   get isReadOnly(): boolean {
-    return ['submitted', 'completed', 'approved', 'disputed'].includes(this.inviteStatus) && !this.canResubmitDispute;
+    return SUBMITTED_OR_LATER.includes(this.inviteStatus) && !this.canResubmitDispute;
   }
 
   get isAwaitingPaymentConfirmation(): boolean {

@@ -1,3 +1,4 @@
+import { ACCEPTED_OR_LATER, FINISHED_OR_DISPUTED } from './invite-status';
 export type CampaignStatusTab = 'active' | 'pending' | 'completed' | 'draft';
 
 export function resolveCampaignStatusTab(
@@ -10,10 +11,10 @@ export function resolveCampaignStatusTab(
     String(inviteStatus || '').trim().toLowerCase(),
   );
   const hasStartedWork = normalizedInviteStatuses.some((inviteStatus) =>
-    ['accepted', 'payment_confirmed', 'working', 'submitted', 'approved', 'completed', 'disputed'].includes(inviteStatus),
+    ACCEPTED_OR_LATER.includes(inviteStatus),
   );
   const hasCompletedWork = normalizedInviteStatuses.some((inviteStatus) =>
-    ['completed', 'approved', 'disputed'].includes(inviteStatus),
+    FINISHED_OR_DISPUTED.includes(inviteStatus),
   );
 
   if (normalizedStatus === 'completed' || hasCompletedWork) return 'completed';

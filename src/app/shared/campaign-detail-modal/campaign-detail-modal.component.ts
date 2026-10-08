@@ -12,6 +12,7 @@ import { campaignIdLabel, copyTextToClipboard } from '../referral-link.util';
 import { paymentReleaseMessage as buildPaymentReleaseMessage, buildWhatsAppLink } from '../whatsapp-messages.util';
 import { TrackingLinksApiService, TrackingLink } from '../tracking-links/tracking-links-api.service';
 import { PromoLinkCardComponent } from '../promo-link-card/promo-link-card.component';
+import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, PAID_NOT_DISPUTED, PAID_OR_LATER, SUBMITTED_OR_LATER } from '../invite-status';
 
 export type HostShareMessageType = 'accepted' | 'submitted' | 'startWork' | 'inviteOnly' | 'postingReminder';
 
@@ -205,22 +206,19 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     });
   }
 
-  private static readonly SUBMITTED_OR_LATER_STATUSES = ['submitted', 'completed', 'approved', 'disputed'];
-  private static readonly WORK_STARTED_OR_LATER_STATUSES = ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'];
-
   isHostAcceptedMessageAvailable(item: any): boolean {
-    return CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(this.adminInviteStatusKey(item?.status));
+    return ACCEPTED_NOT_DISPUTED.includes(this.adminInviteStatusKey(item?.status));
   }
 
   isHostSubmittedMessageAvailable(item: any): boolean {
-    return CampaignDetailModalComponent.SUBMITTED_OR_LATER_STATUSES.includes(this.adminInviteStatusKey(item?.status));
+    return SUBMITTED_OR_LATER.includes(this.adminInviteStatusKey(item?.status));
   }
 
   /** Relevant from payment confirmation up to the point the creator has started/posted — hidden once submitted, since starting work is moot by then. */
   isHostStartWorkMessageAvailable(item: any): boolean {
     const status = this.adminInviteStatusKey(item?.status);
-    return CampaignDetailModalComponent.WORK_STARTED_OR_LATER_STATUSES.includes(status)
-      && !CampaignDetailModalComponent.SUBMITTED_OR_LATER_STATUSES.includes(status);
+    return PAID_OR_LATER.includes(status)
+      && !SUBMITTED_OR_LATER.includes(status);
   }
 
   /** Mirrors campaign-invite-card.component.ts's acceptanceDeadline getter — same campaign-level field, no per-invite override. */
@@ -240,7 +238,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     if (this.campaign?.campaignMode === 'tier_filtered_open' || !item) return false;
     if (this.isAcceptanceDeadlinePassed) return false;
     const status = this.adminInviteStatusKey(item?.status);
-    const responded = CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(status)
+    const responded = ACCEPTED_NOT_DISPUTED.includes(status)
       || ['declined', 'rejected', 'withdrawn'].includes(status);
     return !responded;
   }
@@ -248,8 +246,8 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   /** Relevant between acceptance and the post going up — hidden once submitted, since the reminder no longer applies. */
   isPostingReminderMessageAvailable(item: any): boolean {
     const status = this.adminInviteStatusKey(item?.status);
-    return CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(status)
-      && !CampaignDetailModalComponent.SUBMITTED_OR_LATER_STATUSES.includes(status);
+    return ACCEPTED_NOT_DISPUTED.includes(status)
+      && !SUBMITTED_OR_LATER.includes(status);
   }
 
   openHostShareMessage(item: any, type: HostShareMessageType, ev?: Event): void {
@@ -533,10 +531,8 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
   get statusKey(): string { return (this.invite?.status || 'pending').toLowerCase(); }
 
-  private static readonly ACCEPTED_OR_LATER_STATUSES = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'];
-
   get isAcceptedOrLater(): boolean {
-    return CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(this.statusKey);
+    return ACCEPTED_NOT_DISPUTED.includes(this.statusKey);
   }
 
   private trackedLinkCache = new Map<string, TrackingLink>();
@@ -580,7 +576,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   adminInviteShowsPromotionLink(item: any): boolean {
     return !!this.resourcePromotionUrl
-      && CampaignDetailModalComponent.ACCEPTED_OR_LATER_STATUSES.includes(this.adminInviteStatusKey(item?.status));
+      && ACCEPTED_NOT_DISPUTED.includes(this.adminInviteStatusKey(item?.status));
   }
 
   get statusFooterLabel(): string {
@@ -647,7 +643,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
 
   get canRevealBrandContact(): boolean {
-    return ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed'].includes(this.statusKey);
+    return PAID_OR_LATER.includes(this.statusKey);
   }
 
   get brandEmail(): string {
@@ -864,10 +860,10 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   get isUnlocked(): boolean { return !!this.invite?.unlocked; }
 
   private get isLocationPaymentConfirmed(): boolean {
-    const paymentConfirmedOrLater = ['payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+    const paymentConfirmedOrLater = PAID_OR_LATER
       .includes(this.statusKey);
     if (paymentConfirmedOrLater) return true;
-    return this.isUnlocked && ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+    return this.isUnlocked && ACCEPTED_OR_LATER
       .includes(this.statusKey);
   }
 
@@ -963,7 +959,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   get yourPayoutText(): string {
     const status = this.statusKey;
-    const acceptedOrLater = ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved', 'disputed']
+    const acceptedOrLater = ACCEPTED_OR_LATER
       .includes(status);
     if (acceptedOrLater) {
       const agreedPaise = Number(this.invite?.agreedAmountPaise || 0);
@@ -1079,7 +1075,6 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       .map((item: unknown) => String(item || '').trim())
       .filter(Boolean);
   }
-
 
   get lockedPlatform(): string {
     if (this.isPending && (this.isTierFilteredCampaign || this.hasMultiplePlatformChoices)) return '';
@@ -1352,7 +1347,6 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return `₹${safe.toLocaleString('en-IN')}`;
   }
 
-
   get specialInstructions(): string {
     return this.formatBriefText(this.campaign?.specialInstructions || '');
   }
@@ -1393,8 +1387,8 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     const statuses = this.adminInviteProgress.map((r: any) => String(r?.status || '').toLowerCase());
     const isActive = ['active', 'completed'].includes(status);
     const isDone = status === 'completed';
-    const hasAccepted = statuses.some((s: string) => ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(s));
-    const hasPaymentConfirmed = statuses.some((s: string) => ['payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(s));
+    const hasAccepted = statuses.some((s: string) => ACCEPTED_NOT_DISPUTED.includes(s));
+    const hasPaymentConfirmed = statuses.some((s: string) => PAID_NOT_DISPUTED.includes(s));
     const hasWorking = statuses.some((s: string) => ['working', 'submitted', 'completed', 'approved'].includes(s));
     const hasSubmitted = statuses.some((s: string) => ['submitted', 'approved'].includes(s));
     return [
@@ -1415,7 +1409,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   get filteredAdminInviteProgress(): any[] {
     if (this.adminInviteStatusFilter === 'all') return this.adminInviteProgress;
     if (this.adminInviteStatusFilter === 'actionable') {
-      const actionable = new Set(['accepted', 'payment_confirmed', 'working', 'submitted']);
+      const actionable = new Set(ACCEPTED_THROUGH_SUBMITTED);
       return this.adminInviteProgress.filter((row) => actionable.has(this.adminInviteStatusKey(row?.status)));
     }
     return this.adminInviteProgress.filter(
@@ -1453,7 +1447,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
 
   get adminInviteFilterOptions(): Array<{ key: string; label: string; count: number }> {
-    const actionable = new Set(['accepted', 'payment_confirmed', 'working', 'submitted']);
+    const actionable = new Set(ACCEPTED_THROUGH_SUBMITTED);
     const actionableCount = this.adminInviteProgress.filter((row) =>
       actionable.has(this.adminInviteStatusKey(row?.status)),
     ).length;
@@ -1782,7 +1776,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   adminInviteWorkingFromDate(item: any): string {
     const status = String(item?.status || '').toLowerCase();
-    const isWorkConfirmed = ['payment_confirmed', 'working', 'submitted', 'approved', 'completed', 'disputed'].includes(status);
+    const isWorkConfirmed = PAID_OR_LATER.includes(status);
     const d = item?.paymentConfirmedAt
       || (status === 'payment_confirmed' ? item?.updatedAt : null)
       || (isWorkConfirmed ? item?.acceptedAt : null);

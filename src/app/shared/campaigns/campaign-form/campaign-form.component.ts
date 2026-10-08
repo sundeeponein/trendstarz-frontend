@@ -27,6 +27,7 @@ import { ChipSelectionGroupComponent } from '../../chip-selection-group/chip-sel
 import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handle.util';
 import { MobileBottomActionsComponent } from '../../components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../utils/image-upload.util';
+import { ACCEPTED_NOT_DISPUTED } from '../../invite-status';
 
 
 
@@ -1091,7 +1092,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   /** True once at least one influencer has confirmed (accepted) participation. */
   get hasAcceptedInvite(): boolean {
     return (this.campaignInvites || []).some(i =>
-      ['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved']
+      ACCEPTED_NOT_DISPUTED
         .includes(String(i?.status || '').toLowerCase())
     );
   }
@@ -3515,7 +3516,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     if (status === 'disputed') {
       return { label: 'Disputed', cssClass: 'bg-danger' };
     }
-    if (['accepted', 'payment_confirmed', 'working', 'submitted', 'completed', 'approved'].includes(status)) {
+    if (ACCEPTED_NOT_DISPUTED.includes(status)) {
       return { label: 'Accepted', cssClass: 'bg-success' };
     }
     return { label: 'Invited', cssClass: 'bg-success' };
