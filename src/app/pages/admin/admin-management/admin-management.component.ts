@@ -570,11 +570,6 @@ export class AdminManagementComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  private getToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('token') || sessionStorage.getItem('token');
-  }
-
   get filteredWhatsappCommunities(): any[] {
     const query = this.whatsappCommunitySearch.trim().toLowerCase();
     const list = Array.isArray(this.whatsappCommunities) ? this.whatsappCommunities : [];
@@ -723,9 +718,7 @@ export class AdminManagementComponent implements OnInit {
   }
 
   loadSettings() {
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/settings`, headers).subscribe({
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/settings`).subscribe({
       next: (res) => {
         // ResponseInterceptor wraps responses as { success: true, data: {...} }
         // unless they already contain a 'success' field
@@ -828,11 +821,9 @@ export class AdminManagementComponent implements OnInit {
   }
 
   loadPendingUnverifiedReport() {
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.pendingUnverifiedReportLoading = true;
     this.http
-      .get<any>(`${environment.apiBaseUrl}/admin/pending-unverified-report?days=7&limit=25`, headers)
+      .get<any>(`${environment.apiBaseUrl}/admin/pending-unverified-report?days=7&limit=25`)
       .subscribe({
         next: (res) => {
           this.pendingUnverifiedReport = res?.data ?? res;
@@ -847,12 +838,10 @@ export class AdminManagementComponent implements OnInit {
   }
 
   previewPendingUserCleanup() {
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.pendingUserCleanupPreviewLoading = true;
     this.pendingUserCleanupMessage = '';
     this.http
-      .get<any>(`${environment.apiBaseUrl}/admin/pending-user-cleanup/preview`, headers)
+      .get<any>(`${environment.apiBaseUrl}/admin/pending-user-cleanup/preview`)
       .subscribe({
         next: (res) => {
           this.pendingUserCleanupPreview = res?.data ?? res;
@@ -868,12 +857,10 @@ export class AdminManagementComponent implements OnInit {
   }
 
   runPendingUserCleanupNow() {
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.pendingUserCleanupRunning = true;
     this.pendingUserCleanupMessage = '';
     this.http
-      .post<any>(`${environment.apiBaseUrl}/admin/pending-user-cleanup/run`, {}, headers)
+      .post<any>(`${environment.apiBaseUrl}/admin/pending-user-cleanup/run`, {})
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
@@ -894,12 +881,10 @@ export class AdminManagementComponent implements OnInit {
   }
 
   previewPendingUploadCleanup() {
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.pendingUploadCleanupPreviewLoading = true;
     this.pendingUploadCleanupMessage = '';
     this.http
-      .get<any>(`${environment.apiBaseUrl}/admin/pending-upload-cleanup/preview`, headers)
+      .get<any>(`${environment.apiBaseUrl}/admin/pending-upload-cleanup/preview`)
       .subscribe({
         next: (res) => {
           this.pendingUploadCleanupPreview = res?.data ?? res;
@@ -915,12 +900,10 @@ export class AdminManagementComponent implements OnInit {
   }
 
   runPendingUploadCleanupNow() {
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.pendingUploadCleanupRunning = true;
     this.pendingUploadCleanupMessage = '';
     this.http
-      .post<any>(`${environment.apiBaseUrl}/admin/pending-upload-cleanup/run`, {}, headers)
+      .post<any>(`${environment.apiBaseUrl}/admin/pending-upload-cleanup/run`, {})
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
@@ -942,12 +925,10 @@ export class AdminManagementComponent implements OnInit {
   }
 
   runFirebaseEmailSync() {
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     this.firebaseEmailSyncRunning = true;
     this.firebaseEmailSyncMessage = '';
     this.http
-      .post<any>(`${environment.apiBaseUrl}/admin/firebase-email-sync/run`, {}, headers)
+      .post<any>(`${environment.apiBaseUrl}/admin/firebase-email-sync/run`, {})
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
@@ -990,8 +971,6 @@ export class AdminManagementComponent implements OnInit {
     this.settingsSaving = true;
     this.settingsSaved = false;
     this.cdr.detectChanges();
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
     // Safety: if the request hangs (backend down / network), unstick the button after 15s.
     const safetyTimer = setTimeout(() => {
@@ -1014,7 +993,7 @@ export class AdminManagementComponent implements OnInit {
       ),
     };
 
-    this.http.patch<any>(`${environment.apiBaseUrl}/admin/settings`, payload, headers).subscribe({
+    this.http.patch<any>(`${environment.apiBaseUrl}/admin/settings`, payload).subscribe({
       next: (res) => {
         clearTimeout(safetyTimer);
         // Confirm the saved doc actually contains our support fields. If the
@@ -1066,25 +1045,23 @@ export class AdminManagementComponent implements OnInit {
 
   loadConfig() {
     const baseUrl = environment.apiBaseUrl;
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
-    this.http.get(baseUrl + '/admin/social-media', headers).subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/social-media').subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.socialMediaPlatforms = this.normalizeSocialMediaPlatforms(data);
     });
-    this.http.get(baseUrl + '/admin/categories', headers).subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/categories').subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.categories = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
-    this.http.get(baseUrl + '/admin/equipment-options', headers).subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/equipment-options').subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.equipmentOptions = (data.length ? data : DEFAULT_EQUIPMENT_OPTIONS)
         .map((item: any) => ({ ...item, visible: item.visible !== false }));
     }, () => {
       this.config.equipmentOptions = DEFAULT_EQUIPMENT_OPTIONS.map((item: any) => ({ ...item }));
     });
-    this.http.get(baseUrl + '/admin/pricing-options', headers).subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/pricing-options').subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.pricingOptions = (data.length ? data : DEFAULT_PRICING_OPTIONS)
         .map((item: any) => ({ ...item, visible: item.visible !== false }));
@@ -1092,20 +1069,20 @@ export class AdminManagementComponent implements OnInit {
       this.config.pricingOptions = DEFAULT_PRICING_OPTIONS.map((item: any) => ({ ...item }));
     });
     this.loadCreatorTypeOptionsConfig();
-    this.http.get(baseUrl + '/admin/states', headers).subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/states').subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.locations = data.map((state: any) => ({ ...state, visible: !!state.showInFrontend }));
     });
-    this.http.get(baseUrl + '/admin/languages', headers).subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/languages').subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.languages = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
-    this.http.get(baseUrl + '/admin/tiers', headers).subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/tiers').subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.tiers = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
       this.loadTierUsageCounts();
     });
-    this.http.get(baseUrl + '/admin/districts', headers).subscribe((res: any) => {
+    this.http.get(baseUrl + '/admin/districts').subscribe((res: any) => {
       const data = Array.isArray(res) ? res : (res?.data || []);
       this.config.districts = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
     });
@@ -1116,12 +1093,10 @@ export class AdminManagementComponent implements OnInit {
 
   loadTierUsageCounts() {
     const baseUrl = environment.apiBaseUrl;
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     const requests = [
-      this.http.get<any>(`${baseUrl}/admin/influencers?limit=1000`, headers),
-      this.http.get<any>(`${baseUrl}/admin/brands?limit=1000`, headers),
-      this.http.get<any>(`${baseUrl}/admin/photographers?limit=1000`, headers),
+      this.http.get<any>(`${baseUrl}/admin/influencers?limit=1000`),
+      this.http.get<any>(`${baseUrl}/admin/brands?limit=1000`),
+      this.http.get<any>(`${baseUrl}/admin/photographers?limit=1000`),
     ];
     forkJoin(requests).subscribe({
       next: (responses) => {
@@ -1157,9 +1132,7 @@ export class AdminManagementComponent implements OnInit {
   }
 
   loadCollaborationAvailabilityConfig() {
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/collaboration-availability-config`, headers).subscribe({
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/collaboration-availability-config`).subscribe({
       next: (res) => {
         this.config.collaborationAvailability = res?.data ?? res ?? {};
         this.cdr.detectChanges();
@@ -1172,9 +1145,7 @@ export class AdminManagementComponent implements OnInit {
   }
 
   loadUserTagsConfig() {
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/user-tags-config`, headers).subscribe({
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/user-tags-config`).subscribe({
       next: (res) => {
         const data = res?.data ?? res ?? {};
         const defaults = this.getDefaultUserTags();
@@ -1194,9 +1165,7 @@ export class AdminManagementComponent implements OnInit {
   }
 
   loadCreatorTypeOptionsConfig() {
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/creator-type-options-config`, headers).subscribe({
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/creator-type-options-config`).subscribe({
       next: (res) => {
         const data = res?.data ?? res ?? [];
         this.config.creatorTypeOptions = (Array.isArray(data) && data.length ? data : DEFAULT_CREATOR_TYPE_OPTIONS)
@@ -1290,7 +1259,7 @@ export class AdminManagementComponent implements OnInit {
       case 'tiers':
         payload = { tiers: this.config.tiers.map((t: any) => ({ _id: t._id, showInFrontend: t.visible })) };
         reloadFn = () => {
-          this.http.get(baseUrl + '/admin/tiers', headers).subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/tiers').subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.tiers = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
           });
@@ -1299,7 +1268,7 @@ export class AdminManagementComponent implements OnInit {
       case 'socialMedia':
         payload = { socialMedia: this.config.socialMediaPlatforms.map((s: any) => ({ _id: s._id, showInFrontend: s.visible })) };
         reloadFn = () => {
-          this.http.get(baseUrl + '/admin/social-media', headers).subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/social-media').subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.socialMediaPlatforms = this.normalizeSocialMediaPlatforms(data);
           });
@@ -1323,16 +1292,16 @@ export class AdminManagementComponent implements OnInit {
           })).filter((item: any) => !!item.name),
         };
         reloadFn = () => {
-          this.http.get(baseUrl + '/admin/categories', headers).subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/categories').subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.categories = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
           });
-          this.http.get(baseUrl + '/admin/equipment-options', headers).subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/equipment-options').subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.equipmentOptions = (data.length ? data : DEFAULT_EQUIPMENT_OPTIONS)
               .map((item: any) => ({ ...item, visible: item.visible !== false }));
           });
-          this.http.get(baseUrl + '/admin/pricing-options', headers).subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/pricing-options').subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.pricingOptions = (data.length ? data : DEFAULT_PRICING_OPTIONS)
               .map((item: any) => ({ ...item, visible: item.visible !== false }));
@@ -1343,7 +1312,7 @@ export class AdminManagementComponent implements OnInit {
       case 'languages':
         payload = { languages: this.config.languages.map((l: any) => ({ _id: l._id, showInFrontend: l.visible })) };
         reloadFn = () => {
-          this.http.get(baseUrl + '/admin/languages', headers).subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/languages').subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.languages = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
           });
@@ -1355,11 +1324,11 @@ export class AdminManagementComponent implements OnInit {
           districts: this.config.districts.map((d: any) => ({ _id: d._id, showInFrontend: d.visible }))
         };
         reloadFn = () => {
-          this.http.get(baseUrl + '/admin/states', headers).subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/states').subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.locations = data.map((state: any) => ({ ...state, visible: !!state.showInFrontend }));
           });
-          this.http.get(baseUrl + '/admin/districts', headers).subscribe((res: any) => {
+          this.http.get(baseUrl + '/admin/districts').subscribe((res: any) => {
             const data = Array.isArray(res) ? res : (res?.data || []);
             this.config.districts = data.map((item: any) => ({ ...item, visible: !!item.showInFrontend }));
           });
@@ -1436,9 +1405,7 @@ export class AdminManagementComponent implements OnInit {
         reloadFn = () => this.loadConfig();
     }
     // debug: batch update payload
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.post(baseUrl + '/admin/batch-update-visibility', payload, headers)
+    this.http.post(baseUrl + '/admin/batch-update-visibility', payload)
       .subscribe({
         next: () => {
           alert('Visibility updated successfully!');
@@ -1453,8 +1420,6 @@ export class AdminManagementComponent implements OnInit {
   }
 
   loadCommissionCounts() {
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
     const base = environment.apiBaseUrl;
 
     const influencerBadges: (keyof typeof this.commissionCounts.influencer)[] =
@@ -1463,7 +1428,7 @@ export class AdminManagementComponent implements OnInit {
       ['early_access_brand', 'partner_brand', 'internal_test_brand'];
 
     influencerBadges.forEach(badge => {
-      this.http.get<any>(`${base}/admin/users-by-commission-badge/influencer/${badge}`, headers).subscribe({
+      this.http.get<any>(`${base}/admin/users-by-commission-badge/influencer/${badge}`).subscribe({
         next: (res) => {
           const data = res?.data ?? res;
           this.commissionCounts.influencer[badge] = data.count || 0;
@@ -1474,7 +1439,7 @@ export class AdminManagementComponent implements OnInit {
     });
 
     brandBadges.forEach(badge => {
-      this.http.get<any>(`${base}/admin/users-by-commission-badge/brand/${badge}`, headers).subscribe({
+      this.http.get<any>(`${base}/admin/users-by-commission-badge/brand/${badge}`).subscribe({
         next: (res) => {
           const data = res?.data ?? res;
           this.commissionCounts.brand[badge] = data.count || 0;
@@ -1488,7 +1453,7 @@ export class AdminManagementComponent implements OnInit {
       ['early_access_photographer', 'partner_photographer', 'internal_test_photographer'];
 
     photographerBadges.forEach(badge => {
-      this.http.get<any>(`${base}/admin/users-by-commission-badge/photographer/${badge}`, headers).subscribe({
+      this.http.get<any>(`${base}/admin/users-by-commission-badge/photographer/${badge}`).subscribe({
         next: (res) => {
           const data = res?.data ?? res;
           this.commissionCounts.photographer[badge] = data.count || 0;
@@ -1512,9 +1477,7 @@ export class AdminManagementComponent implements OnInit {
     this.earlyAccessRefillMessage = '';
     this.cdr.detectChanges();
 
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.post<any>(`${environment.apiBaseUrl}/admin/early-access/auto-assign`, {}, headers)
+    this.http.post<any>(`${environment.apiBaseUrl}/admin/early-access/auto-assign`, {})
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
@@ -1551,9 +1514,7 @@ export class AdminManagementComponent implements OnInit {
     this.earlyAccessPreviewLoading = true;
     this.cdr.detectChanges();
 
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.get<any>(`${environment.apiBaseUrl}/admin/early-access/auto-assign/preview`, headers)
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/early-access/auto-assign/preview`)
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
@@ -1660,9 +1621,7 @@ export class AdminManagementComponent implements OnInit {
     this.earlyAccessNormalizeMessage = '';
     this.cdr.detectChanges();
 
-    const token = this.getToken();
-    const headers = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    this.http.post<any>(`${environment.apiBaseUrl}/admin/early-access/normalize-existing-tags`, {}, headers)
+    this.http.post<any>(`${environment.apiBaseUrl}/admin/early-access/normalize-existing-tags`, {})
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
