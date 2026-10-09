@@ -29,6 +29,7 @@
         }
 
         .nav-dropdown-toggle {
+          gap: 0.3rem;
           border: none;
           background: transparent;
           color: shared.$text-muted;
@@ -61,7 +62,9 @@
         }
 
         .nav-submenu-item {
-          display: block;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
           padding: 0.55rem 0.7rem;
           border-radius: 8px;
           color: shared.$text-muted !important;
@@ -199,6 +202,19 @@
   .mobile-link-sub {
     margin-left: 1.2rem;
     opacity: 0.9;
+  }
+
+  .mobile-group-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.7;
   }
 }
 

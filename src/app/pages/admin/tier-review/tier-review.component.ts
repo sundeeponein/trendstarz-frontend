@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { buildSocialProfileUrl } from '../../../shared/social-handle.util';
 
 /**
  * Stage 3D-1b — Tier review queue (admin).
@@ -49,9 +50,13 @@ export interface TierReviewItem {
     requiresConnection: boolean;
     connected: boolean | null;
     lastAttemptFailed: boolean;
+    /** The exact page the platform resolved the account to (e.g. the YouTube channel). */
+    externalUrl?: string | null;
   };
   declaredVsObserved: 'match' | 'mismatch' | 'not_available';
   observedUsable: boolean;
+  /** The creator's saved profile link, when it is a web link. */
+  profileUrl?: string | null;
 }
 export interface TierReviewPage {
   asOf: string;
@@ -182,6 +187,23 @@ export class TierReviewComponent implements OnInit {
     if (o.capturedAt) return 'count not available';
     if (o.requiresConnection && !o.connected) return 'not connected';
     return 'not observed';
+  }
+
+  /** The account's page: the creator's saved link, else built from the handle (same as the user pop-up). */
+  accountLink(item: TierReviewItem): string {
+    return item.profileUrl || buildSocialProfileUrl(item.platform, item.handle) || '';
+  }
+
+  platformIcon(item: TierReviewItem): string {
+    const key = String(item.platformKey || '').toLowerCase();
+    const icons: Record<string, string> = {
+      instagram: 'bi-instagram',
+      youtube: 'bi-youtube',
+      facebook: 'bi-facebook',
+      linkedin: 'bi-linkedin',
+      x: 'bi-twitter-x',
+    };
+    return icons[key] || 'bi-link-45deg';
   }
 
   freshnessText(item: TierReviewItem): string {

@@ -85,6 +85,39 @@ describe('TierReviewComponent (Stage 3D-1b)', () => {
     expect(text()).toContain('different tier');
   });
 
+  it('links the account to its page (like the user pop-up) and the observed channel', () => {
+    load([
+      item({
+        observed: {
+          ...item().observed,
+          externalUrl: 'https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv',
+        },
+      }),
+      item({
+        socialAccountId: 'ig1',
+        platform: 'Instagram',
+        platformKey: 'instagram',
+        handle: 'insta_asha',
+        profileUrl: null,
+      }),
+    ]);
+    const hrefs = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('a.tr-link'),
+    ).map((a) => [a.getAttribute('href'), a.getAttribute('target')]);
+    expect(hrefs).toContain(['https://www.youtube.com/@asha', '_blank']);
+    expect(hrefs).toContain([
+      'https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv',
+      '_blank',
+    ]);
+    expect(hrefs).toContain(['https://instagram.com/insta_asha', '_blank']);
+  });
+
+  it('prefers the link the creator saved on the account', () => {
+    load([item({ profileUrl: 'https://youtube.com/c/AshaOfficial' })]);
+    const first = (fixture.nativeElement as HTMLElement).querySelector('a.tr-link');
+    expect(first?.getAttribute('href')).toBe('https://youtube.com/c/AshaOfficial');
+  });
+
   it('verifies through the existing tier route, with the tier the admin saw and the evidence basis', () => {
     load([item()]);
     const c = fixture.componentInstance;

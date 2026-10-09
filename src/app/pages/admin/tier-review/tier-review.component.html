@@ -75,7 +75,17 @@
       <div class="tr-facts">
         <div>
           <span class="tr-label">Account</span>
-          {{ item.platform }} · {{ item.handle || '—' }}
+          <i class="bi tr-platform-icon" [ngClass]="platformIcon(item)"></i> {{ item.platform }} ·
+          <a
+            *ngIf="accountLink(item) as href; else plainHandle"
+            [href]="href"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="tr-link"
+            title="Open this account on {{ item.platform }} to check it"
+            >{{ item.handle || 'open profile' }} <i class="bi bi-box-arrow-up-right"></i
+          ></a>
+          <ng-template #plainHandle>{{ item.handle || '—' }}</ng-template>
         </div>
         <div>
           <span class="tr-label">Declared tier</span>
@@ -95,6 +105,15 @@
             {{ freshnessText(item) }} · {{ item.observed.capturedAt | date: 'MMM d, y' }}
           </span>
           <span *ngIf="item.observed.lastAttemptFailed" class="tr-muted"> · last fetch failed</span>
+          <a
+            *ngIf="item.observed.externalUrl"
+            [href]="item.observed.externalUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="tr-link tr-observed-link"
+            title="The exact channel the follower count came from"
+            >· open observed channel <i class="bi bi-box-arrow-up-right"></i
+          ></a>
         </div>
         <div *ngIf="item.declaredVsObserved !== 'not_available'">
           <span class="tr-label">Declared vs observed</span>

@@ -333,3 +333,26 @@
     flex-direction: column;
   }
 }
+
+.tr-platform-icon {
+  color: #6b7280;
+}
+
+.tr-link {
+  color: #2563eb;
+  text-decoration: none;
+  word-break: break-all;
+
+  i {
+    font-size: 0.75em;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.tr-observed-link {
+  margin-left: 4px;
+  font-size: 0.85em;
+}
