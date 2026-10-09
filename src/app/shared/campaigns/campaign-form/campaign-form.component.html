@@ -1297,6 +1297,9 @@
                     <span class="inf-tag inf-tag--cat" *ngFor="let type of (inf.creatorTypes || []).slice(0, 2)">{{ type }}</span>
                   </div>
                 </ng-template>
+<span class="busy-note" *ngIf="busyUntilText(inf) as busy" title="The creator marked themselves not available; you can still invite them">
+                  <i class="bi bi-hourglass-split"></i> {{ busy }}
+                </span>
                 <ng-container *ngIf="showInviteEligibility && inviteEligibilityBadge(inf) as eb">
                   <span class="host-elig-badge" [ngClass]="'host-elig-badge--' + eb.status" [title]="eb.title">
                     <i class="bi" [ngClass]="eb.status === 'meets' ? 'bi-check-circle-fill' : eb.status === 'not_met' ? 'bi-x-circle' : 'bi-question-circle'"></i>

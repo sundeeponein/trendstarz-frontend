@@ -29,6 +29,23 @@
   <p class="ca-choice-hint" *ngIf="availabilityChoice === 'unset'">
     Not set yet — choose one so brands know whether to invite you.
   </p>
+  <div class="ca-duration" *ngIf="availabilityChoice === 'not_available'">
+    <span class="ca-duration-label">For how long?</span>
+    <button
+      type="button"
+      class="ca-chip"
+      *ngFor="let d of durations"
+      [class.selected]="selectedDurationDays === d.days"
+      [disabled]="availabilityLocked"
+      (click)="chooseDuration(d.days)"
+    >
+      {{ d.label }}
+    </button>
+    <p class="ca-duration-note" *ngIf="notAvailableEnd as end">
+      Not available until <strong>{{ end | date: 'd MMM y' }}</strong>. After that we'll ask you
+      again — brands can still send you invites meanwhile.
+    </p>
+  </div>
 
   <ng-container *ngIf="form.get('enabled')?.value">
     <div class="ca-field" *ngIf="role === 'influencer' && (!readonly || optionsForField('collaborationTypes', influencerOptions.collaborationTypes || []).length)">

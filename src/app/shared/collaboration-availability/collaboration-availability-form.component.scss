@@ -151,3 +151,25 @@
   font-size: 0.85rem;
   color: #b45309;
 }
+
+// Option B: how long "not available" lasts.
+.ca-duration {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ca-duration-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.ca-duration-note {
+  width: 100%;
+  margin: 2px 0 0;
+  font-size: 0.82rem;
+  color: #4b5563;
+}

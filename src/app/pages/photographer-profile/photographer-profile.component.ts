@@ -569,6 +569,7 @@ export class PhotographerProfileComponent implements OnInit {
       collaborationAvailability: this.fb.group({
         enabled: [{ value: false, disabled: true }],
         state: [{ value: null, disabled: true }],
+        notAvailableUntil: [{ value: null, disabled: true }],
         availableFor: [{ value: [], disabled: true }],
         preference: [{ value: '', disabled: true }],
         openToTravel: [{ value: false, disabled: true }],

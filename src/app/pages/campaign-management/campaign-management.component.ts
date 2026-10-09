@@ -40,6 +40,7 @@ import {
 } from '../../shared/campaigns/host-eligibility.util';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, FINISHED, FINISHED_OR_DISPUTED, OPEN_WORK, PAID_OR_LATER, SUBMITTED_OR_LATER } from '../../shared/invite-status';
+import { busyUntilText } from '../../shared/availability.util';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
@@ -55,6 +56,9 @@ type CollaborationSubview = 'invited' | 'created';
   styleUrls: ['./campaign-management.component.scss']
 })
 export class CampaignManagementComponent implements OnInit, OnDestroy {
+  /** Option B (3D-1d): "May be busy until …" on creators marked not available (they can still be invited). */
+  readonly busyUntilText = busyUntilText;
+
   private static readonly REFRESH_TIMEOUT_MS = 10000;
   submissionApprovalWaitHours = 24;
   submissionAutoCompleteGraceHours = 48;

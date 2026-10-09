@@ -254,6 +254,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       collaborationAvailability: this.fb.group({
         enabled: [false],
         state: [null],
+        notAvailableUntil: [null],
         availableFor: [[]],
         preference: [''],
         openToTravel: [false],

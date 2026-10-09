@@ -28,6 +28,7 @@ import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handl
 import { MobileBottomActionsComponent } from '../../components/mobile-bottom-actions/mobile-bottom-actions.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../utils/image-upload.util';
 import { ACCEPTED_NOT_DISPUTED } from '../../invite-status';
+import { busyUntilText } from '../../availability.util';
 
 
 
@@ -39,6 +40,9 @@ import { ACCEPTED_NOT_DISPUTED } from '../../invite-status';
   styleUrls: ['./campaign-form.component.scss']
 })
 export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
+  /** Option B (3D-1d): "May be busy until …" on creators marked not available (they can still be invited). */
+  readonly busyUntilText = busyUntilText;
+
   /** When true, render the form as a full page (no modal backdrop) */
   @Input() asPage = false;
   private static readonly MS_PER_DAY = 24 * 60 * 60 * 1000;

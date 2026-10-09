@@ -361,6 +361,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       collaborationAvailability: this.fb.group({
         enabled: [false],
         state: [null],
+        notAvailableUntil: [null],
         collaborationTypes: [[]],
         preference: [''],
         availableFor: [[]],

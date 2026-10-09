@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { NOT_AVAILABLE_DURATIONS, notAvailableUntil } from '../availability.util';
 
 type AvailabilityRole = 'influencer' | 'photographer';
 
@@ -36,12 +37,39 @@ export class CollaborationAvailabilityFormComponent {
     return this.readonly || !!this.form?.get('enabled')?.disabled;
   }
 
+  readonly durations = NOT_AVAILABLE_DURATIONS;
+
   /** Sets the explicit state and keeps `enabled` (read everywhere else) in step. */
   chooseAvailability(choice: 'available' | 'not_available'): void {
     if (this.availabilityLocked) return;
     this.form.get('state')?.setValue(choice);
     this.form.get('enabled')?.setValue(choice === 'available');
+    if (choice === 'available') {
+      this.form.get('notAvailableUntil')?.setValue(null);
+    } else if (!this.notAvailableEnd) {
+      this.chooseDuration(14); // default 2 weeks; the creator can change it
+    }
     this.form.markAsDirty();
+  }
+
+  /** "Not available" always ends (Option B): 1 week, 2 weeks or 1 month from today. */
+  chooseDuration(days: number): void {
+    if (this.availabilityLocked) return;
+    const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    this.form.get('notAvailableUntil')?.setValue(until.toISOString());
+    this.selectedDurationDays = days;
+    this.form.markAsDirty();
+  }
+
+  /** Days picked in this session (highlights the button); a loaded end date shows as the date only. */
+  selectedDurationDays: number | null = null;
+
+  /** End of the current "not available" period, if any. */
+  get notAvailableEnd(): Date | null {
+    return notAvailableUntil({
+      state: this.form?.get('state')?.value,
+      notAvailableUntil: this.form?.get('notAvailableUntil')?.value,
+    });
   }
 
   get influencerOptions(): any {

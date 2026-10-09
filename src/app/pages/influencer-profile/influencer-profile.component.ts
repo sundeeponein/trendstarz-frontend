@@ -616,6 +616,7 @@ export class InfluencerProfileComponent implements OnInit {
       collaborationAvailability: this.fb.group({
         enabled: [{ value: false, disabled: true }],
         state: [{ value: null, disabled: true }],
+        notAvailableUntil: [{ value: null, disabled: true }],
         collaborationTypes: [{ value: [], disabled: true }],
         preference: [{ value: '', disabled: true }],
         availableFor: [{ value: [], disabled: true }],
