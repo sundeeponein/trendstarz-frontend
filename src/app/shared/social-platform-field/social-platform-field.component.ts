@@ -6,6 +6,7 @@ import { TierInfoService } from '../components/tier-info-modal/tier-info.service
 import { ToastService } from '../toast/toast.service';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../social-handle.util';
 import { tierOptionsWithCurrent } from '../tiers.constants';
+import { MINIMUM_RATE_RUPEES, isBelowMinimumRate } from '../rates.util';
 
 export interface SocialPlatformFieldForm {
   handle: string;
@@ -28,6 +29,10 @@ export interface SocialPlatformFieldForm {
   styleUrls: ['./social-platform-field.component.scss'],
 })
 export class SocialPlatformFieldComponent implements OnInit {
+  /** 3D-1d: rates below this are refused on save (shared/rates.util). */
+  readonly minimumRate = MINIMUM_RATE_RUPEES;
+  readonly isBelowMinimumRate = isBelowMinimumRate;
+
   @Input({ required: true }) platform: any;
   @Input({ required: true }) form!: SocialPlatformFieldForm;
   @Input() tiers: any[] = [];

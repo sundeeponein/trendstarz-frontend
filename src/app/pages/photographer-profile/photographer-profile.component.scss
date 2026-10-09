@@ -140,3 +140,11 @@
 	font-size: 0.8rem;
 }
 
+
+// 3D-1d: shown under a rate below the ₹50 minimum.
+.rate-min-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: #b45309;
+}

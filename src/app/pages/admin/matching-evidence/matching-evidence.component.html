@@ -249,8 +249,10 @@
                   <td class="num">{{ inf.rates.multipleOf500 }} ({{ pct(inf.rates.multipleOf500Pct) }})</td>
                 </tr>
                 <tr>
-                  <td>Confirmation date</td>
-                  <td class="num">{{ inf.rates.confirmationTracked ? 'Tracked' : 'Not tracked yet' }}</td>
+                  <td>Confirmed by creator</td>
+                  <td class="num">
+                    {{ inf.rates.confirmedRows ?? 0 }} ({{ pct(inf.rates.confirmedPct) }})
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -259,12 +261,13 @@
             <div class="adm-column-head"><h4>Availability</h4><span>Status</span></div>
             <table class="adm-table adm-table--list">
               <tbody>
-                <tr class="adm-row--ok"><td>Available</td><td class="num">{{ inf.availability.availableTrue }}</td></tr>
-                <tr><td>Off or never set</td><td class="num">{{ inf.availability.falseOrUnset }}</td></tr>
+                <tr class="adm-row--ok"><td>Available</td><td class="num">{{ inf.availability.available }}</td></tr>
+                <tr><td>Not available</td><td class="num">{{ inf.availability.notAvailable }}</td></tr>
+                <tr><td>Not set</td><td class="num">{{ inf.availability.notSet }}</td></tr>
               </tbody>
             </table>
-            <div class="adm-callout" *ngIf="!inf.availability.explicitStateTracked">
-              "Off" and "never set" can't be told apart yet.
+            <div class="adm-callout">
+              "Not set" includes profiles saved before creators could choose "not available".
             </div>
           </div>
         </div>

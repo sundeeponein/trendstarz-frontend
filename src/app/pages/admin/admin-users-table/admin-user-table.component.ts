@@ -32,6 +32,7 @@ import { SessionService } from '../../../core/session.service';
 import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 import { ImageCropModalComponent } from '../../../shared/components/image-crop-modal/image-crop-modal.component';
 import { CollaborationScoreApiService, CollaborationAudit } from '../../../services/collaboration-score-api.service';
+import { MINIMUM_RATE_RUPEES, isBelowMinimumRate } from '../../../shared/rates.util';
 
 type AdminUserRole = 'influencer' | 'brand' | 'photographer';
 
@@ -149,6 +150,10 @@ interface SocialAccountObservation {
   styleUrls: ['./admin-user-table.component.scss']
 })
 export class AdminUserTableComponent implements OnInit {
+  /** 3D-1d: flags rates saved below the minimum (kept until the creator changes them). */
+  readonly minimumRate = MINIMUM_RATE_RUPEES;
+  readonly isBelowMinimumRate = isBelowMinimumRate;
+
   filtersExpanded = true;
   searchQuery = '';
   currentPage = 1;

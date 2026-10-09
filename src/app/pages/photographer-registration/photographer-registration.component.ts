@@ -21,6 +21,7 @@ import { captureSignupAttribution } from '../../shared/signup-attribution.util';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
+import { MINIMUM_RATE_RUPEES, isBelowMinimumRate } from '../../shared/rates.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -42,6 +43,10 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
   styleUrls: ['./photographer-registration.component.scss'],
 })
 export class PhotographerRegistrationComponent implements OnInit {
+  /** 3D-1d: rates below this are refused on save (shared/rates.util). */
+  readonly minimumRate = MINIMUM_RATE_RUPEES;
+  readonly isBelowMinimumRate = isBelowMinimumRate;
+
   skillOptions: string[] = [];
   equipmentOptions: any[] = [];
   pricingOptions: any[] = [];
@@ -248,6 +253,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       }, { validators: [atLeastOneContactRequired] }),
       collaborationAvailability: this.fb.group({
         enabled: [false],
+        state: [null],
         availableFor: [[]],
         preference: [''],
         openToTravel: [false],

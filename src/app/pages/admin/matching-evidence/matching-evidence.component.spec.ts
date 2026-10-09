@@ -77,9 +77,11 @@ const report = (): EvidenceQualityReport => ({
         belowProposedMinimum: 3,
         multipleOf500: 463,
         multipleOf500Pct: 71.5,
-        confirmationTracked: false,
+        confirmationTracked: true,
+        confirmedRows: 12,
+        confirmedPct: 1.9,
       },
-      availability: { availableTrue: 178, falseOrUnset: 20, explicitStateTracked: false },
+      availability: { available: 170, notAvailable: 8, notSet: 20, explicitStateTracked: true },
     },
     photographers: {
       creators: 3,
@@ -93,9 +95,11 @@ const report = (): EvidenceQualityReport => ({
         belowProposedMinimum: 0,
         multipleOf500: 0,
         multipleOf500Pct: null,
-        confirmationTracked: false,
+        confirmationTracked: true,
+        confirmedRows: 0,
+        confirmedPct: null,
       },
-      availability: { availableTrue: 3, falseOrUnset: 0, explicitStateTracked: false },
+      availability: { available: 3, notAvailable: 0, notSet: 0, explicitStateTracked: true },
     },
   },
   outcomes: {
@@ -253,7 +257,9 @@ describe('MatchingEvidenceComponent (admin, read-only)', () => {
     flush();
     expect(text()).toContain('More than 90 days 75');
     expect(text()).toContain('Multiples of ₹500 463 (71.5%)');
-    expect(text()).toContain("can't be told apart yet");
+    // 3D-1d: three explicit availability states and confirmed rates.
+    expect(text()).toContain('Available 170 Not available 8 Not set 20');
+    expect(text()).toContain('Confirmed by creator 12 (1.9%)');
     expect(text()).toContain('Captured live 19');
     expect(text()).toContain('CREATOR ID TIE-BREAK 12.3%');
     expect(text()).toContain('Top-5 cutoff inside a tie: 14 of 17');

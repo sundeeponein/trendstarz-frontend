@@ -4,6 +4,9 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 type AvailabilityRole = 'influencer' | 'photographer';
 
+/** 3D-1d: what the creator chose; 'unset' = never chosen (older profiles, new signups). */
+export type AvailabilityChoice = 'available' | 'not_available' | 'unset';
+
 @Component({
   selector: 'app-collaboration-availability-form',
   standalone: true,
@@ -18,6 +21,28 @@ export class CollaborationAvailabilityFormComponent {
   @Input() readonly = false;
   @Input() maxCollaborationTypes = 0;
   @Input() maxAvailableFor = 0;
+
+  /**
+   * The current choice. Profiles saved before 3D-1d have no `state`: switched on
+   * → available, otherwise not chosen yet ("off" was also the untouched default).
+   */
+  get availabilityChoice(): AvailabilityChoice {
+    const state = this.form?.get('state')?.value;
+    if (state === 'available' || state === 'not_available') return state;
+    return this.form?.get('enabled')?.value === true ? 'available' : 'unset';
+  }
+
+  get availabilityLocked(): boolean {
+    return this.readonly || !!this.form?.get('enabled')?.disabled;
+  }
+
+  /** Sets the explicit state and keeps `enabled` (read everywhere else) in step. */
+  chooseAvailability(choice: 'available' | 'not_available'): void {
+    if (this.availabilityLocked) return;
+    this.form.get('state')?.setValue(choice);
+    this.form.get('enabled')?.setValue(choice === 'available');
+    this.form.markAsDirty();
+  }
 
   get influencerOptions(): any {
     return this.options?.influencer || {};

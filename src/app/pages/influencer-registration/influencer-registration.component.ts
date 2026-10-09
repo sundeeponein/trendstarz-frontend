@@ -360,6 +360,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       }, { validators: [atLeastOneContactRequired] }),
       collaborationAvailability: this.fb.group({
         enabled: [false],
+        state: [null],
         collaborationTypes: [[]],
         preference: [''],
         availableFor: [[]],

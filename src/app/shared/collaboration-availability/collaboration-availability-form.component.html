@@ -4,10 +4,31 @@
     Improve your visibility and receive better collaboration invites from brands, photographers and agencies.
   </small>
 
-  <label class="ca-toggle mt-4">
-    <input type="checkbox" formControlName="enabled" [disabled]="readonly" />
-    <span>{{ role === 'influencer' ? 'Open for Collaborations & Shoots' : 'Open for Collaborations' }}</span>
-  </label>
+  <div class="ca-choice mt-4" role="radiogroup" aria-label="Collaboration availability">
+    <label class="ca-choice-option" [class.selected]="availabilityChoice === 'available'">
+      <input
+        type="radio"
+        name="caAvailability"
+        [checked]="availabilityChoice === 'available'"
+        [disabled]="availabilityLocked"
+        (change)="chooseAvailability('available')"
+      />
+      <span>{{ role === 'influencer' ? 'Open for Collaborations & Shoots' : 'Open for Collaborations' }}</span>
+    </label>
+    <label class="ca-choice-option" [class.selected]="availabilityChoice === 'not_available'">
+      <input
+        type="radio"
+        name="caAvailability"
+        [checked]="availabilityChoice === 'not_available'"
+        [disabled]="availabilityLocked"
+        (change)="chooseAvailability('not_available')"
+      />
+      <span>Not available right now</span>
+    </label>
+  </div>
+  <p class="ca-choice-hint" *ngIf="availabilityChoice === 'unset'">
+    Not set yet — choose one so brands know whether to invite you.
+  </p>
 
   <ng-container *ngIf="form.get('enabled')?.value">
     <div class="ca-field" *ngIf="role === 'influencer' && (!readonly || optionsForField('collaborationTypes', influencerOptions.collaborationTypes || []).length)">

@@ -874,7 +874,13 @@
                 <ng-container *ngIf="(selectedRole) === 'influencer'">
                   <div class="rate-row" *ngFor="let ct of sm?.contentTypes">
                     <ng-container *ngIf="ct?.enabled && ct?.price > 0">
-                      <span>{{ ct?.name || ct?.label }}</span>
+                      <span>
+                        {{ ct?.name || ct?.label }}
+                        <span class="rate-flag" *ngIf="isBelowMinimumRate(ct.price)"
+                          title="Set before the ₹{{ minimumRate }} minimum; the creator must raise it next time they change it"
+                          >below ₹{{ minimumRate }}</span>
+                        <small class="rate-confirmed" *ngIf="ct?.priceConfirmedAt">set {{ ct.priceConfirmedAt | date: 'd MMM y' }}</small>
+                      </span>
                       <strong>₹{{ ct.price | number:'1.0-0' }}</strong>
                     </ng-container>
                   </div>

@@ -29,6 +29,7 @@ import { MobileBottomActionsComponent } from '../../shared/components/mobile-bot
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
+import { MINIMUM_RATE_RUPEES, isBelowMinimumRate } from '../../shared/rates.util';
 
 @Component({
   selector: 'app-photographer-profile',
@@ -38,6 +39,10 @@ import { ProfileVisibilitySelectorComponent } from '../../shared/components/prof
   styleUrls: ['./photographer-profile.component.scss'],
 })
 export class PhotographerProfileComponent implements OnInit {
+  /** 3D-1d: rates below this are refused on save (shared/rates.util). */
+  readonly minimumRate = MINIMUM_RATE_RUPEES;
+  readonly isBelowMinimumRate = isBelowMinimumRate;
+
   skillOptions: string[] = [];
   equipmentOptions: any[] = [];
   pricingOptions: any[] = [];
@@ -563,6 +568,7 @@ export class PhotographerProfileComponent implements OnInit {
       }),
       collaborationAvailability: this.fb.group({
         enabled: [{ value: false, disabled: true }],
+        state: [{ value: null, disabled: true }],
         availableFor: [{ value: [], disabled: true }],
         preference: [{ value: '', disabled: true }],
         openToTravel: [{ value: false, disabled: true }],

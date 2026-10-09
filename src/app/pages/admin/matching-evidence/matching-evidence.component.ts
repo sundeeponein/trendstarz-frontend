@@ -50,8 +50,17 @@ interface CreatorData {
     multipleOf500: number;
     multipleOf500Pct: number | null;
     confirmationTracked: boolean;
+    /** 3D-1d: rates the creator set or changed since tracking began. */
+    confirmedRows?: number;
+    confirmedPct?: number | null;
   };
-  availability: { availableTrue: number; falseOrUnset: number; explicitStateTracked: boolean };
+  /** 3D-1d: explicit states; "not set" = never chosen (older "off" lands here). */
+  availability: {
+    available: number;
+    notAvailable: number;
+    notSet: number;
+    explicitStateTracked: boolean;
+  };
 }
 interface CampaignResolution {
   campaignId: string;
