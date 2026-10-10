@@ -25,25 +25,23 @@ import { ProfileReviewSummaryComponent } from '../../shared/profile-verification
 import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-card/whatsapp-community-card.component';
 import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-offer-modal.component';
 import { environment } from '../../../environments/environment';
-import { TIER_ORDER, normalizeTierLabel, tierWithRange } from '../../shared/tiers.constants';
+import { TIER_ORDER, normalizeTierLabel } from '../../shared/tiers.constants';
 import { PromoLinkCardComponent } from '../../shared/promo-link-card/promo-link-card.component';
 import { promotionUrlTypeLabel } from '../../shared/referral-link.util';
 import { TrackingLinksApiService } from '../../shared/tracking-links/tracking-links-api.service';
 import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
 import { CollaborationScoreSummaryWidgetComponent } from '../../shared/collaboration-score/collaboration-score-summary-widget.component';
 import { FINISHED } from '../../shared/invite-status';
+import { AdminSocialNoticeComponent } from '../../shared/admin-social-notice/admin-social-notice.component';
 
 @Component({
   selector: 'app-influencer-dashboard',
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, PromoLinkCardComponent, CollaborationScoreSummaryWidgetComponent]
+  imports: [AdminSocialNoticeComponent, CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, PromoLinkCardComponent, CollaborationScoreSummaryWidgetComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
-  /** Tier change notice: "Micro (1,001–10,000 followers)". */
-  readonly tierWithRange = tierWithRange;
-
   dashboard: any;
   invites: any[] = [];
   collaborationRequests: any[] = [];
@@ -1038,10 +1036,6 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       sessionStorage.setItem('emailVerifDismissed', '1');
     }
     this.cdr.markForCheck();
-  }
-
-  dismissAdminSocialNotifications() {
-    this.respondToAdminSocialNotifications();
   }
 
   respondToAdminSocialNotifications(action?: 'confirmed' | 'cancelled') {

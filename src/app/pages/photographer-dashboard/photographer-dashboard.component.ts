@@ -25,15 +25,35 @@ import { FounderOfferModalComponent } from '../../shared/founder-offer/founder-o
 import { CollaborationScoreApiService, CollaborationAudit } from '../../services/collaboration-score-api.service';
 import { CollaborationScoreSummaryWidgetComponent } from '../../shared/collaboration-score/collaboration-score-summary-widget.component';
 import { ACCEPTED_THROUGH_SUBMITTED, FINISHED } from '../../shared/invite-status';
+import { AdminSocialNoticeComponent } from '../../shared/admin-social-notice/admin-social-notice.component';
 
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreSummaryWidgetComponent],
+  imports: [AdminSocialNoticeComponent, CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreSummaryWidgetComponent],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })
 export class PhotographerDashboardComponent implements OnInit, OnDestroy {
+  /** Unanswered "your social media details were updated" notices (admin or automatic YouTube tier). */
+  adminSocialNotifications: any[] = [];
+
+  respondToAdminSocialNotifications(action?: 'confirmed' | 'cancelled') {
+    this.adminSocialNotifications = [];
+    this.cdr.markForCheck();
+    this.config.dismissPhotographerSocialNotices(action).subscribe({
+      next: () => {
+        if (action === 'confirmed') this.toast.success('Social media update confirmed.');
+        if (action === 'cancelled') this.toast.info('Social media update dismissed. You can edit your profile anytime.');
+      },
+      error: () => {},
+    });
+  }
+
+  editAdminSocialDetails() {
+    this.router.navigate(['/photographer-profile']);
+  }
+
   photographer: any = null;
   brandCampaigns: any[] = [];
   brandCampaignsLoading = false;
@@ -334,6 +354,9 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         }
 
         this.photographer = profile;
+        this.adminSocialNotifications = Array.isArray(profile.adminSocialNotifications)
+          ? profile.adminSocialNotifications
+          : [];
         this.founderOfferAlreadySeen = !!profile?.founderOfferSeenAt;
         this.maybeShowFounderOfferModal();
         this.defaultPayout = {

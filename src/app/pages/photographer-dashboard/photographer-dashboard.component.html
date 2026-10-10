@@ -19,6 +19,12 @@
   </div>
 
   <!-- No-guarantee notice -->
+  <app-admin-social-notice
+    class="mb-4 d-block"
+    [notifications]="adminSocialNotifications"
+    (respond)="respondToAdminSocialNotifications($event)"
+    (edit)="editAdminSocialDetails()"
+  ></app-admin-social-notice>
   <app-registration-notice role="photographer" [showRoleNotice]="true" class="dashboard-notice mb-4"></app-registration-notice>
 
   <div *ngIf="loading" class="text-center py-5">

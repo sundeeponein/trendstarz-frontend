@@ -997,6 +997,14 @@ export class ConfigService {
     );
   }
 
+  /** Photographer answers / dismisses the "your social media details were updated" notices. */
+  dismissPhotographerSocialNotices(action?: 'confirmed' | 'cancelled'): Observable<any> {
+    return this.http.patch(
+      `${this.apiUrl}/users/photographers/me/admin-social-notifications/dismiss`,
+      action ? { action } : {},
+    );
+  }
+
   getPhotographerProfileById(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/users/photographers/me/profile`).pipe(
       map((res) => this.extractData<any>(res)),
