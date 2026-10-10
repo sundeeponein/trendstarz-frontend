@@ -432,6 +432,14 @@
       <div class="submitted-badge mt-2" *ngIf="c.inviteStatus === 'submitted'">
         <i class="bi bi-hourglass-split"></i> 24-hour review period — auto-completes if no issue is reported
       </div>
+      <app-paid-collab-notice
+        *ngIf="c.campaignType === 'paid_collab' && (c.inviteStatus === 'payment_confirmed' || c.inviteStatus === 'working' || c.inviteStatus === 'submitted')"
+        [inviteId]="c.inviteId"
+        role="creator"
+        [termsAccepted]="!!c.creatorTermsAccepted"
+        (termsAcceptedChange)="c.creatorTermsAccepted = $event"
+        [reported]="!!c.openReport">
+      </app-paid-collab-notice>
     </div>
     <div class="txn-see-all" *ngIf="activeCampaigns.length">
       <a routerLink="/campaigns" class="txn-see-all__link">
@@ -513,6 +521,7 @@
       <div class="active-camp-meta mt-2">
         <span><i class="bi bi-calendar3"></i> {{ formatDateRange(c.timelineStart, c.timelineEnd) }}</span>
       </div>
+      <app-late-post-submit *ngIf="c.latePostWindow" [inviteId]="c.inviteId" [window]="c.latePostWindow"></app-late-post-submit>
     </div>
   </div>
 

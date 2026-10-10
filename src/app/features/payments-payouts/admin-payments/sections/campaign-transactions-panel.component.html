@@ -15,6 +15,15 @@
     <div class="tx-label">Paid Out</div>
     <div class="tx-value">{{ ui.formatPaise(txSummary.paidOut) }}</div>
   </div>
+  <div class="tx-card" *ngIf="txSummary.refundDue || txSummary.refundOnHold">
+    <div class="tx-label">Refund owed / on hold</div>
+    <div class="tx-value">{{ ui.formatPaise(txSummary.refundDue || 0) }}</div>
+    <small class="tx-payout-subtext">+ {{ ui.formatPaise(txSummary.refundOnHold || 0) }} under review</small>
+  </div>
+  <div class="tx-card" *ngIf="txSummary.refunded">
+    <div class="tx-label">Refunded (sent)</div>
+    <div class="tx-value">{{ ui.formatPaise(txSummary.refunded || 0) }}</div>
+  </div>
   <div class="tx-card tx-card--accent">
     <div class="tx-label">Net Balance</div>
     <div class="tx-value">{{ ui.formatPaise(txSummary.netBalance) }}</div>

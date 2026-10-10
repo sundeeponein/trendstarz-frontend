@@ -1198,8 +1198,26 @@ export class ConfigService {
     );
   }
 
-  submitCampaignPaymentProof(campaignId: string, data: { utrNumber: string; paymentProofUrl?: string }): Observable<any> {
+  submitCampaignPaymentProof(
+    campaignId: string,
+    data: { utrNumber: string; paymentProofUrl?: string; acceptTerms?: boolean },
+  ): Observable<any> {
     return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/submit-proof`, data);
+  }
+
+  /** Creator or host accepts the paid-collaboration terms on an invite. */
+  acceptPaidCollabTerms(inviteId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/accept-terms`, {});
+  }
+
+  /** "Asked to skip posting / deal outside TrendStarZ" — either side. */
+  reportOffPlatform(inviteId: string, details: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/report-offplatform`, { details });
+  }
+
+  /** Creator submits a post link after the deadline, while the refund is on hold. */
+  submitLatePost(inviteId: string, postUrl: string, note?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/late-post`, { postUrl, note });
   }
 
   getCampaignTransactionStatus(campaignId: string): Observable<any[]> {

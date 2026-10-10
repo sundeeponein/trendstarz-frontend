@@ -981,6 +981,13 @@
                       </button>
                     </div>
 
+                    <app-paid-collab-notice
+                      *ngIf="c.campaignType === 'paid_collab' && ['payment_confirmed','working','submitted'].includes(inv.status)"
+                      [inviteId]="inv._id"
+                      role="host"
+                      [reported]="!!inv.reportedIssue?.reportedAt && !inv.reportedIssue?.resolvedAt">
+                    </app-paid-collab-notice>
+
                     <ng-container
                       [ngTemplateOutlet]="hostCounterOfferActions"
                       [ngTemplateOutletContext]="{ $implicit: inv, campaign: c }">

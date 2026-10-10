@@ -92,8 +92,84 @@ export interface TransactionSummary {
   fees: number;
   pendingPayouts: number;
   paidOut: number;
+  /** Money actually transferred back (UTR recorded). */
   refunded?: number;
+  /** Classified as owed — not yet transferred. */
+  refundDue?: number;
+  refundDueCount?: number;
+  /** Under the 7-day review — not owed yet. */
+  refundOnHold?: number;
+  refundOnHoldCount?: number;
+  /** Old "refund to host" rows whose real payment history is unconfirmed. */
+  legacyUnconfirmed?: number;
+  legacyUnconfirmedCount?: number;
+  settlementPending?: number;
+  settlementPendingCount?: number;
   netBalance: number;
+}
+
+export type RefundState = 'on_hold' | 'owed' | 'sent' | 'settlement' | 'legacy_unconfirmed';
+
+export interface RefundHistoryEntry {
+  at: string;
+  action: string;
+  by?: string | null;
+  byRole: 'admin' | 'system' | 'host' | 'creator';
+  note?: string;
+  amount?: number;
+  utr?: string;
+  url?: string;
+}
+
+/** One row of the admin Refunds queue (GET campaign-transactions/admin/refunds). */
+export interface RefundQueueItem {
+  _id: string;
+  state: RefundState;
+  campaignId: string;
+  campaignTitle: string;
+  campaignNumber?: string | number | null;
+  inviteId: string;
+  inviteStatus: string | null;
+  withdrawnAt?: string | null;
+  withdrawnReason?: string | null;
+  selectedPlatform?: string | null;
+  hostName: string;
+  hostRole: string;
+  creatorName: string;
+  creatorRole: string;
+  creatorSocial: { platform: string; platformKey?: string; handle: string }[];
+  agreedAmount: number;
+  platformFee: number;
+  payerTotal: number;
+  refundAmount?: number | null;
+  refundHoldUntil?: string | null;
+  refundOwedAt?: string | null;
+  refundUtr?: string | null;
+  refundTransferDate?: string | null;
+  refundSentAt?: string | null;
+  latePost?: {
+    url?: string;
+    note?: string;
+    submittedAt?: string;
+    originalDeadline?: string;
+    status?: 'pending' | 'approved' | 'rejected';
+    reviewNote?: string;
+  } | null;
+  settlement?: {
+    status?: 'awaiting_host_repayment' | 'repaid' | 'exception_approved';
+    amount?: number;
+    hostRepaymentUtr?: string;
+    exceptionReason?: string;
+  } | null;
+  openReport: boolean;
+  reportCategory?: string | null;
+  reportReason?: string | null;
+  termsAcceptance?: {
+    host?: { acceptedAt?: string; version?: string };
+    creator?: { acceptedAt?: string; version?: string };
+  } | null;
+  flags: ('repeat_pair' | 'host_repeat_refunds' | 'creator_repeat_no_post')[];
+  history: RefundHistoryEntry[];
 }
 
 export interface PremiumPayment {

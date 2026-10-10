@@ -145,7 +145,40 @@ export class TransactionsComponent implements OnInit {
     return tx.transactionType || '—';
   }
 
+  /** Refund / settlement wording (from the server's refundView) — null when no refund applies. */
+  refundLabel(tx: any): string | null {
+    const v = tx?.refundView;
+    if (!v?.state || v.state === 'cancelled') {
+      return v?.state === 'cancelled' && !this.isRecipient ? 'Post verified — no refund' : null;
+    }
+    if (this.isRecipient) {
+      if (v.state === 'pending_settlement') return 'Payout pending settlement';
+      if (v.state === 'closed_no_post') {
+        return v.latePostStatus === 'pending' ? 'Late post under review' : 'Closed — no post submitted';
+      }
+      return null;
+    }
+    const date = (d: any) =>
+      d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+    switch (v.state) {
+      case 'on_hold':
+        return `Refund under review until ${date(v.holdUntil)} (not yet approved)`;
+      case 'owed':
+        return `Refund approved — ${this.formatPaise(v.amount || 0)} to be sent`;
+      case 'sent':
+        return `Refunded ${this.formatPaise(v.amount || 0)}${v.utr ? ' · UTR ' + v.utr : ''}${v.transferDate ? ' · ' + date(v.transferDate) : ''}`;
+      case 'settlement':
+        return `Repayment needed: ${this.formatPaise(v.settlementAmount || 0)} (post verified after refund)`;
+      case 'under_review':
+        return 'Refund under review';
+      default:
+        return null;
+    }
+  }
+
   statusLabel(tx: any): string {
+    const refund = this.refundLabel(tx);
+    if (refund) return refund;
     if (this.isRecipient) {
       const inviteStatus = String(tx?.inviteSnapshot?.status || tx?.inviteStatus || '').trim().toLowerCase();
       const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
@@ -170,6 +203,12 @@ export class TransactionsComponent implements OnInit {
   statusClass(tx: any): string {
     const s = tx.payoutStatus;
     const c = tx.collectionStatus;
+    const refundState = tx?.refundView?.state;
+    if (refundState && this.refundLabel(tx)) {
+      if (refundState === 'sent' || refundState === 'cancelled') return 'status--green';
+      if (refundState === 'settlement' || refundState === 'pending_settlement') return 'status--red';
+      return 'status--amber';
+    }
     if (this.isRecipient) {
       const label = this.statusLabel(tx).toLowerCase();
       if (label.includes('paid')) return 'status--green';

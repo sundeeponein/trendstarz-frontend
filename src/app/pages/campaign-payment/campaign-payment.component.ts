@@ -8,6 +8,7 @@ import { ConfigService } from '../../shared/config.service';
 import { PaymentsPayoutsApiService } from '../../features/payments-payouts/payments-payouts-api.service';
 import { CampaignTransaction } from '../../features/payments-payouts/payments-payouts.models';
 import { PaymentCheckoutComponent } from '../../shared/payment-checkout/payment-checkout.component';
+import { PaidCollabTermsComponent } from '../../shared/paid-collab-terms/paid-collab-terms.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 
 type Tab = 'summary' | 'pay' | 'status';
@@ -17,7 +18,7 @@ type RazorpayOrder = { orderId: string; amount: number; currency: string; keyId:
 @Component({
   selector: 'app-campaign-payment',
   standalone: true,
-  imports: [CommonModule, FormsModule, PaymentCheckoutComponent],
+  imports: [CommonModule, FormsModule, PaymentCheckoutComponent, PaidCollabTermsComponent],
   templateUrl: './campaign-payment.component.html',
   styleUrls: ['./campaign-payment.component.scss']
 })
@@ -36,6 +37,8 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   activeTab: Tab = 'summary';
 
   utrNumber = '';
+  /** Host ticked the paid-collaboration terms (required to pay, except pay-to-join). */
+  termsAccepted = false;
   paymentProofFile: File | null = null;
   paymentProofUrl = '';
   paymentProofPreview: string | null = null;
@@ -175,8 +178,16 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     return Number(this.calculated.payerTotal || 0) + this.gstAmount;
   }
 
+  get needsTerms(): boolean {
+    return !this.isPayToJoin;
+  }
+
+  get termsOk(): boolean {
+    return !this.needsTerms || this.termsAccepted;
+  }
+
   get canSubmit(): boolean {
-    return !!this.utrNumber.trim() && !this.submitting;
+    return !!this.utrNumber.trim() && !this.submitting && this.termsOk;
   }
 
   // ── File handling ────────────────────────────────────
@@ -273,7 +284,11 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
           return;
         }
       }
-      const payload = { utrNumber: this.utrNumber.trim(), paymentProofUrl: this.paymentProofUrl };
+      const payload = {
+        utrNumber: this.utrNumber.trim(),
+        paymentProofUrl: this.paymentProofUrl,
+        acceptTerms: this.termsOk,
+      };
       await firstValueFrom(this.config.submitCampaignPaymentProof(this.campaignId, payload));
       this.successMessage = 'Payment proof submitted! Verification usually takes 6–10 hours. We\'ll notify you once confirmed.';
       await this.fetchStatus();
@@ -314,7 +329,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
       }
       const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
       const orderRes = await firstValueFrom(
-        this.txApi.createCampaignRazorpayOrder(this.campaignId, headers),
+        this.txApi.createCampaignRazorpayOrder(this.campaignId, headers, this.termsOk),
       );
       const order: RazorpayOrder | undefined = orderRes?.order;
       if (!order?.orderId || !order?.keyId) {

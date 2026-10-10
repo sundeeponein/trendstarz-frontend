@@ -94,6 +94,15 @@ export class AdminDisputesComponent implements OnInit {
     return !!inv?.reportedIssue?.resolvedAt;
   }
 
+  /** "Asked to skip posting / deal outside TrendStarZ" — resolving it needs a written note. */
+  isOffPlatform(inv: any): boolean {
+    return inv?.reportedIssue?.category === 'offplatform';
+  }
+
+  noteMissing(inv: any): boolean {
+    return this.isOffPlatform(inv) && !this.notes[inv._id]?.trim();
+  }
+
   isAdminReviewRequested(inv: any): boolean {
     return !!inv?.reportedIssue?.adminReviewRequestedAt;
   }

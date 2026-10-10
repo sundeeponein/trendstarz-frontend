@@ -1,4 +1,6 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-collab-notice.component';
+import { LatePostSubmitComponent } from '../../shared/late-post-submit/late-post-submit.component';
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
@@ -39,7 +41,7 @@ import { AdminSocialNoticeComponent } from '../../shared/admin-social-notice/adm
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [AdminSocialNoticeComponent, CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, PromoLinkCardComponent, CollaborationScoreSummaryWidgetComponent]
+  imports: [AdminSocialNoticeComponent, PaidCollabNoticeComponent, LatePostSubmitComponent, CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, PromoLinkCardComponent, CollaborationScoreSummaryWidgetComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
@@ -1102,14 +1104,21 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     return promotionUrlTypeLabel(campaign?.promotionUrlType);
   }
 
+  /** Closed by the system (deadline / grace period) or by TrendStarZ — not by the host. */
+  private closedBySystem(c: any): boolean {
+    return /deadline|grace period|no submission|no response|TrendStarZ/i.test(String(c?.withdrawnReason || ''));
+  }
+
   withdrawnLabel(c: any): string {
-    return c?.autoClosed ? 'Slots Filled' : 'Withdrawn';
+    if (c?.autoClosed) return 'Slots Filled';
+    return this.closedBySystem(c) ? 'Closed' : 'Withdrawn';
   }
 
   withdrawnMessage(c: any): string {
     if (c?.autoClosed) {
       return "This campaign's accepted-creator slots filled up before your invite could be confirmed — you weren't selected this time.";
     }
+    if (this.closedBySystem(c)) return `Closed: ${c.withdrawnReason}`;
     return c?.withdrawnReason
       ? `Withdrawn by the host: ${c.withdrawnReason}`
       : 'This invite was withdrawn by the host.';

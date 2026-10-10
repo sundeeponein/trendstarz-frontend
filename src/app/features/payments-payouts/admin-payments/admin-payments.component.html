@@ -11,6 +11,7 @@
     <div class="mode-tabs ts-admin-tabbar" aria-label="Payment admin sections">
       <button class="mode-tab ts-admin-tab" [class.active]="viewMode === 'premium'" (click)="setViewMode('premium')">Premium</button>
       <button class="mode-tab ts-admin-tab" [class.active]="viewMode === 'transactions'" (click)="setViewMode('transactions')">Transactions</button>
+      <button class="mode-tab ts-admin-tab" [class.active]="viewMode === 'refunds'" (click)="setViewMode('refunds')">Refunds</button>
     </div>
   </div>
 
@@ -35,4 +36,10 @@
     (errorMessage)="onError($event)"
     (successMessage)="onSuccess($event)">
   </app-campaign-transactions-panel>
+
+  <app-refunds-panel
+    *ngIf="viewMode === 'refunds'"
+    (errorMessage)="onError($event)"
+    (successMessage)="onSuccess($event)">
+  </app-refunds-panel>
 </div>

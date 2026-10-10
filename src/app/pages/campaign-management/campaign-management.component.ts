@@ -41,6 +41,7 @@ import {
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, FINISHED, FINISHED_OR_DISPUTED, OPEN_WORK, PAID_OR_LATER, SUBMITTED_OR_LATER } from '../../shared/invite-status';
 import { busyUntilText } from '../../shared/availability.util';
+import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-collab-notice.component';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
@@ -51,7 +52,7 @@ type CollaborationSubview = 'invited' | 'created';
 @Component({
   selector: 'app-campaign-management',
   standalone: true,
-  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent, ConfirmActionModalComponent, WriteReviewComponent, PromoLinkCardComponent],
+  imports: [CommonModule, DecimalPipe, FormsModule, RouterModule, CampaignDetailModalComponent, CampaignInviteCardComponent, UpgradeBannerComponent, SupportBannerComponent, CampaignPaymentComponent, UserAvatarComponent, ShippingAddressModalComponent, OfferTrailComponent, AppPaginatorComponent, ConfirmActionModalComponent, WriteReviewComponent, PromoLinkCardComponent, PaidCollabNoticeComponent],
   templateUrl: './campaign-management.component.html',
   styleUrls: ['./campaign-management.component.scss']
 })
@@ -4942,8 +4943,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         this.endCampaignTarget = null;
         this.cd.detectChanges();
       },
-      error: () => {
+      error: (err: any) => {
         this.isEndCampaignSubmitting = false;
+        this.endCampaignModalOpen = false;
+        this.endCampaignTarget = null;
+        // e.g. "Paid creators are still within their posting window. Contact TrendStarZ…"
+        this.toast.error(err?.error?.message || 'Could not end the campaign. Please try again.');
         this.cd.detectChanges();
       },
     });

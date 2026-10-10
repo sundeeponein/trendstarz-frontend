@@ -128,8 +128,10 @@
       </div>
 
 
+      <app-paid-collab-terms *ngIf="needsTerms" [(accepted)]="termsAccepted"></app-paid-collab-terms>
+
       <div class="cp-actions" style="margin-top: 0; margin-bottom: 14px;">
-        <button type="button" class="cp-btn cp-btn--primary w-100" (click)="payWithRazorpay()" [disabled]="processingRazorpay || submitting">
+        <button type="button" class="cp-btn cp-btn--primary w-100" (click)="payWithRazorpay()" [disabled]="processingRazorpay || submitting || !termsOk">
           <span *ngIf="processingRazorpay" class="spinner-border spinner-border-sm"></span>
           <i class="bi bi-lightning-charge-fill" *ngIf="!processingRazorpay"></i>
           {{ processingRazorpay ? 'Opening Razorpay…' : 'Pay with Razorpay (Recommended)' }}

@@ -193,6 +193,8 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
           pendingPayouts: Number(d.pendingPayouts || 0),
           paidOut: Number(d.paidOut || 0),
           refunded: Number(d.refunded || 0),
+          refundDue: Number(d.refundDue || 0),
+          refundOnHold: Number(d.refundOnHold || 0),
           netBalance: Number(d.netBalance || 0),
         };
       },
@@ -203,14 +205,19 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
   private recomputeTransactionSummary(rows: CampaignTransaction[]) {
     const verified = rows.filter((r) => r.collectionStatus === 'verified');
     const paid = rows.filter((r) => r.payoutStatus === 'paid');
-    const refundedRows = rows.filter((r) => r.resolveOutcome === 'refund_to_brand');
+    // Only a refund with a recorded transfer counts as refunded; owed / on hold are separate.
+    const refundedRows = rows.filter((r: any) => r.refundStatus === 'sent');
+    const owedRows = rows.filter((r: any) => r.refundStatus === 'owed');
+    const onHoldRows = rows.filter((r: any) => r.refundStatus === 'on_hold');
     const payoutPending = rows.filter((r) => r.payoutStatus === 'pending' || r.payoutStatus === 'processing');
 
     const collected = verified.reduce((sum, r) => sum + (r.payerTotal || 0), 0);
     const fees = verified.reduce((sum, r) => sum + (r.platformFee || 0), 0);
     const pendingPayouts = payoutPending.reduce((sum, r) => sum + (r.recipientPayout || 0), 0);
     const paidOut = paid.reduce((sum, r) => sum + (r.recipientPayout || 0), 0);
-    const refunded = refundedRows.reduce((sum, r) => sum + (r.payerTotal || 0), 0);
+    const refunded = refundedRows.reduce((sum, r: any) => sum + (r.refundAmount ?? r.payerTotal ?? 0), 0);
+    const refundDue = owedRows.reduce((sum, r) => sum + (r.payerTotal || 0), 0);
+    const refundOnHold = onHoldRows.reduce((sum, r) => sum + (r.payerTotal || 0), 0);
 
     this.txSummary = {
       collected,
@@ -218,7 +225,9 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
       pendingPayouts,
       paidOut,
       refunded,
-      netBalance: collected - paidOut - pendingPayouts - refunded,
+      refundDue,
+      refundOnHold,
+      netBalance: collected - paidOut - pendingPayouts - refunded - refundDue - refundOnHold,
     };
   }
 

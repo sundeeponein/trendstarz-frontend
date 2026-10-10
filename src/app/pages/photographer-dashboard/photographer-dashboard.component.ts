@@ -1,4 +1,6 @@
 import { Component, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
+import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-collab-notice.component';
+import { LatePostSubmitComponent } from '../../shared/late-post-submit/late-post-submit.component';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -30,7 +32,7 @@ import { AdminSocialNoticeComponent } from '../../shared/admin-social-notice/adm
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [AdminSocialNoticeComponent, CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreSummaryWidgetComponent],
+  imports: [AdminSocialNoticeComponent, PaidCollabNoticeComponent, LatePostSubmitComponent, CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreSummaryWidgetComponent],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })
@@ -540,6 +542,11 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
   }
 
   /** Accepted invites that are in progress — accepted through submitted, not yet completed */
+  /** Closed without a post while the host's refund is on hold — the creator can submit the link. */
+  get latePostReviews(): any[] {
+    return this.brandInvites.filter((i) => i?.status === 'withdrawn' && i?.latePostWindow);
+  }
+
   get activeCollaborations(): any[] {
     const activeStatuses = new Set(ACCEPTED_THROUGH_SUBMITTED);
     return this.brandInvites.filter((inv: any) => activeStatuses.has(String(inv?.status || '').toLowerCase()));

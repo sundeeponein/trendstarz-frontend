@@ -8,6 +8,7 @@ import { ConfigService } from '../../shared/config.service';
 import { PaymentsPayoutsApiService } from '../../features/payments-payouts/payments-payouts-api.service';
 import { CampaignTransaction } from '../../features/payments-payouts/payments-payouts.models';
 import { payoutReleasedMessage } from '../../shared/whatsapp-messages.util';
+import { PaidCollabTermsComponent } from '../../shared/paid-collab-terms/paid-collab-terms.component';
 
 type Tab = 'summary' | 'pay' | 'status';
 
@@ -16,7 +17,7 @@ type RazorpayOrder = { orderId: string; amount: number; currency: string; keyId:
 @Component({
   selector: 'app-campaign-payment-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PaidCollabTermsComponent],
   templateUrl: './campaign-payment-page.component.html',
   styleUrls: ['./campaign-payment-page.component.scss'],
 })
@@ -35,6 +36,8 @@ export class CampaignPaymentPageComponent implements OnInit {
 
   calculatedPayment: any = null;
   utrNumber = '';
+  /** Host ticked the paid-collaboration terms (required to pay, except pay-to-join). */
+  termsAccepted = false;
   submitting = false;
   processingRazorpay = false;
   successMessage = '';
@@ -158,8 +161,16 @@ export class CampaignPaymentPageComponent implements OnInit {
     done();
   }
 
+  get needsTerms(): boolean {
+    return String(this.campaign?.campaignType || '').toLowerCase() !== 'pay_to_join';
+  }
+
+  get termsOk(): boolean {
+    return !this.needsTerms || this.termsAccepted;
+  }
+
   get canSubmit(): boolean {
-    return !!this.utrNumber.trim() && !this.submitting;
+    return !!this.utrNumber.trim() && !this.submitting && this.termsOk;
   }
 
   async submitProof() {
@@ -172,7 +183,10 @@ export class CampaignPaymentPageComponent implements OnInit {
     this.submitError = '';
     try {
       const res: any = await firstValueFrom(
-        this.config.submitCampaignPaymentProof(this.campaignId, { utrNumber: this.utrNumber.trim() })
+        this.config.submitCampaignPaymentProof(this.campaignId, {
+          utrNumber: this.utrNumber.trim(),
+          acceptTerms: this.termsOk,
+        })
       );
       const tx = res?.data || res;
       if (tx) this.statusTransactions = [tx, ...this.statusTransactions];
@@ -215,7 +229,7 @@ export class CampaignPaymentPageComponent implements OnInit {
       }
       const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
       const orderRes = await firstValueFrom(
-        this.txApi.createCampaignRazorpayOrder(this.campaignId, headers),
+        this.txApi.createCampaignRazorpayOrder(this.campaignId, headers, this.termsOk),
       );
       const order: RazorpayOrder | undefined = orderRes?.order;
       if (!order?.orderId || !order?.keyId) {

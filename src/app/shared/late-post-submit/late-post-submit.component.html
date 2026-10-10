@@ -1,0 +1,41 @@
+<div class="lps" *ngIf="window">
+  <ng-container [ngSwitch]="window.status">
+    <div *ngSwitchCase="'pending'" class="lps-status lps-status--pending">
+      <i class="bi bi-hourglass-split"></i>
+      Your post link is with TrendStarZ for review. You'll be notified of the decision.
+      <a *ngIf="window.url" [href]="window.url" target="_blank" rel="noopener noreferrer">View link</a>
+    </div>
+    <div *ngSwitchCase="'approved'" class="lps-status lps-status--ok">
+      <i class="bi bi-check-circle-fill"></i> Your late post was verified.
+    </div>
+    <ng-container *ngSwitchDefault>
+      <div class="lps-status lps-status--rejected" *ngIf="window.status === 'rejected'">
+        <i class="bi bi-x-circle"></i> Your earlier link was not approved{{ window.reviewNote ? ': ' + window.reviewNote : '.' }}
+      </div>
+      <div *ngIf="window.canSubmit">
+        <div class="lps-title">
+          Already published the post? Submit the link by
+          <strong>{{ window.until | date: 'd MMM, h:mm a' }}</strong> for review.
+        </div>
+        <div class="lps-form">
+          <input
+            class="form-control form-control-sm"
+            type="url"
+            [(ngModel)]="url"
+            placeholder="https://www.instagram.com/reel/…" />
+          <input
+            class="form-control form-control-sm"
+            type="text"
+            maxlength="500"
+            [(ngModel)]="note"
+            placeholder="Note for TrendStarZ (optional)" />
+          <button type="button" class="btn btn-sm btn-primary" [disabled]="!validUrl || busy" (click)="submit()">
+            {{ busy ? 'Submitting…' : 'Submit for review' }}
+          </button>
+        </div>
+        <small class="lps-hint">TrendStarZ checks the post and the agreed deliverables before any payout.</small>
+      </div>
+    </ng-container>
+  </ng-container>
+  <div class="lps-error" *ngIf="error">{{ error }}</div>
+</div>

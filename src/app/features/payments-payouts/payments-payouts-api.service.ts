@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CampaignTransaction } from './payments-payouts.models';
+import { CampaignTransaction, RefundQueueItem } from './payments-payouts.models';
 
 @Injectable({ providedIn: 'root' })
 export class PaymentsPayoutsApiService {
@@ -70,6 +70,53 @@ export class PaymentsPayoutsApiService {
     );
   }
 
+  // ── Refunds (admin) — on hold → owed → sent, settlement, late posts ──────
+
+  listRefunds(state?: string): Observable<{ success: boolean; data: RefundQueueItem[] }> {
+    const q = state ? `?state=${encodeURIComponent(state)}` : '';
+    return this.http.get<{ success: boolean; data: RefundQueueItem[] }>(
+      `${environment.apiBaseUrl}/campaign-transactions/admin/refunds${q}`,
+    );
+  }
+
+  markRefundSent(
+    id: string,
+    payload: { refundUtr: string; refundAmount?: number; transferDate?: string; notes?: string },
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-transactions/${id}/mark-refund-sent`,
+      payload,
+    );
+  }
+
+  recordHostRepayment(
+    id: string,
+    payload: { utr: string; amount?: number; repaidAt?: string; notes?: string },
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-transactions/${id}/settlement/host-repaid`,
+      payload,
+    );
+  }
+
+  approveSettlementException(id: string, reason: string): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-transactions/${id}/settlement/exception`,
+      { reason },
+    );
+  }
+
+  /** Admin verifies (approve) or rejects a late post on an invite. */
+  reviewLatePost(
+    inviteId: string,
+    payload: { action: 'approve' | 'reject'; note: string; postUrl?: string },
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-invites/admin/${inviteId}/late-post-review`,
+      payload,
+    );
+  }
+
   // ── Campaign-level payment status (brand polls after UTR submission) ──────
 
   /** Get all transaction records for a campaign (brand uses this to check status). */
@@ -83,6 +130,7 @@ export class PaymentsPayoutsApiService {
   createCampaignRazorpayOrder(
     campaignId: string,
     headers: HttpHeaders,
+    acceptTerms = false,
   ): Observable<{
     success: boolean;
     order: { orderId: string; amount: number; currency: string; keyId: string };
@@ -92,7 +140,7 @@ export class PaymentsPayoutsApiService {
       order: { orderId: string; amount: number; currency: string; keyId: string };
     }>(
       `${environment.apiBaseUrl}/campaign-transactions/${campaignId}/razorpay/order`,
-      {},
+      { acceptTerms },
       { headers },
     );
   }
