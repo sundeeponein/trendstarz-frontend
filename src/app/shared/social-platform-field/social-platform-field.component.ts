@@ -7,6 +7,10 @@ import { ToastService } from '../toast/toast.service';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../social-handle.util';
 import { tierOptionsWithCurrent } from '../tiers.constants';
 import { MINIMUM_RATE_RUPEES, isBelowMinimumRate } from '../rates.util';
+import { YoutubeCheck } from '../youtube-check.util';
+import { YoutubeCheckNoteComponent } from '../youtube-check-note.component';
+import { RateReview } from '../rate-review.util';
+import { RateReviewNoteComponent } from '../rate-review-note.component';
 
 export interface SocialPlatformFieldForm {
   handle: string;
@@ -24,7 +28,7 @@ export interface SocialPlatformFieldForm {
 @Component({
   selector: 'app-social-platform-field',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [RateReviewNoteComponent, YoutubeCheckNoteComponent, CommonModule, FormsModule],
   templateUrl: './social-platform-field.component.html',
   styleUrls: ['./social-platform-field.component.scss'],
 })
@@ -36,6 +40,12 @@ export class SocialPlatformFieldComponent implements OnInit {
   @Input({ required: true }) platform: any;
   @Input({ required: true }) form!: SocialPlatformFieldForm;
   @Input() tiers: any[] = [];
+  /** The creator's own checked YouTube count for this account, if any. */
+  @Input() youtubeCheck: YoutubeCheck | null = null;
+  /** Rates set before an admin/automatic tier change (review prompt), if any. */
+  @Input() rateReview: RateReview | null = null;
+  @Input() rateReviewBusy = false;
+  @Output() confirmRates = new EventEmitter<string>();
   @Input() readonly = false;
   @Input() submitted = false;
   /** Registration stays manual-only (no JWT yet to OAuth with) — profile-edit sets this true. */

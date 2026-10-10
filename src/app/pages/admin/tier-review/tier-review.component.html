@@ -86,6 +86,14 @@
             >{{ item.handle || 'open profile' }} <i class="bi bi-box-arrow-up-right"></i
           ></a>
           <ng-template #plainHandle>{{ item.handle || '—' }}</ng-template>
+          <span class="tr-tag tr-tag--warn" *ngIf="item.observed.handleChangedTo"
+            title="The channel was found by its permanent id under a new handle — the creator should update it"
+            >Handle changed on YouTube → &#64;{{ item.observed.handleChangedTo }}</span
+          >
+          <span class="tr-tag tr-tag--danger" *ngIf="item.observed.notFound"
+            title="The last 2+ lookups found no YouTube channel for this handle"
+            >Channel not found</span
+          >
         </div>
         <div>
           <span class="tr-label">Declared tier</span>
@@ -134,13 +142,35 @@
         </div>
       </div>
 
-      <div class="tr-actions" *ngIf="!isOpen(item)">
+      <div class="tr-actions" *ngIf="!isOpen(item) && !isMoving(item)">
+        <button
+          type="button"
+          class="tr-btn tr-btn--move"
+          *ngIf="observedTierToApply(item) as tier"
+          (click)="askMove(item)"
+        >
+          Change to {{ tier }} &amp; verify
+        </button>
         <button type="button" class="tr-btn tr-btn--verify" (click)="open(item, 'verified')">
           Verify tier
         </button>
         <button type="button" class="tr-btn tr-btn--reject" (click)="open(item, 'rejected')">
           Reject tier
         </button>
+      </div>
+
+      <div class="tr-move" *ngIf="isMoving(item)">
+        <p>
+          Change <strong>{{ item.declaredTierRef?.label || item.declaredTier }}</strong> →
+          <strong>{{ observedTierToApply(item) }}</strong> (observed
+          {{ item.observed.followers | number }} followers) and verify it? The creator is told about the
+          change, as with an edit in the user pop-up.
+        </p>
+        <div class="tr-error" *ngIf="movingError">{{ movingError }}</div>
+        <button type="button" class="tr-btn tr-btn--move" [disabled]="movingSaving" (click)="confirmMove()">
+          {{ movingSaving ? 'Saving…' : 'Change & verify' }}
+        </button>
+        <button type="button" class="tr-btn" [disabled]="movingSaving" (click)="cancelMove()">Cancel</button>
       </div>
 
       <form class="tr-decide" *ngIf="isOpen(item)" (ngSubmit)="save()">

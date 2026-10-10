@@ -95,6 +95,16 @@
     </div>
   </div><!-- /cic-main -->
 
+  <!-- Tier changed after this invite was sent (open invites only; agreed amounts never change) -->
+  <div class="cic-tier-change" *ngIf="isActionable && tierChangesSinceInvite.length">
+    <i class="bi bi-arrow-up-right-circle"></i>
+    <span *ngFor="let c of tierChangesSinceInvite; let last = last">
+      Your {{ c.platform }} tier changed to <strong>{{ c.tier }}</strong> on {{ c.changedAt | date: 'd MMM' }}<ng-container *ngIf="!last">; </ng-container>
+    </span>
+    — after this invite was sent.
+    <ng-container *ngIf="canSendCounterOffer">If the offer no longer fits, you can send a counter-offer.</ng-container>
+  </div>
+
   <!-- ── STATUS / INFO BAR (non-actionable states) ─────────── -->
   <div class="cic-status-bar" *ngIf="!isActionable && (showPaymentConfirmed || showPaymentAwaited || showPayoutPendingInfo || showPayoutReleasedInfo || showWaitingUnlock || showMissedAcceptance || status === 'disputed')">
     <div class="cic-status-item cic-status-item--success" *ngIf="showPaymentConfirmed">

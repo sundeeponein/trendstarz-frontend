@@ -30,15 +30,49 @@ import { WhatsappCommunityCardComponent } from '../../shared/whatsapp-community-
 import { ImageCropModalComponent } from '../../shared/components/image-crop-modal/image-crop-modal.component';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 import { MINIMUM_RATE_RUPEES, isBelowMinimumRate } from '../../shared/rates.util';
+import { YoutubeCheck, youtubeCheckFor } from '../../shared/youtube-check.util';
+import { YoutubeCheckNoteComponent } from '../../shared/youtube-check-note.component';
+import { markRatesConfirmed, rateReviewFor } from '../../shared/rate-review.util';
+import { RateReviewNoteComponent } from '../../shared/rate-review-note.component';
 
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
+  imports: [RateReviewNoteComponent, YoutubeCheckNoteComponent, CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
 export class PhotographerProfileComponent implements OnInit {
+  /** The saved social accounts as loaded (for the "review your rates" prompt). */
+  savedSocialMedia: any[] = [];
+  confirmingRates = false;
+  readonly rateReviewFor = rateReviewFor;
+
+  /** "These rates are still right" — confirm one account's rates unchanged. */
+  confirmRates(socialAccountId: string): void {
+    if (!socialAccountId || this.confirmingRates) return;
+    this.confirmingRates = true;
+    this.config.confirmMyRates(socialAccountId).subscribe({
+      next: (res) => {
+        this.savedSocialMedia = markRatesConfirmed(
+          this.savedSocialMedia,
+          socialAccountId,
+          String(res?.confirmedAt || new Date().toISOString()),
+        );
+        this.confirmingRates = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.confirmingRates = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  /** The creator's own checked YouTube counts (shown under the tier). */
+  youtubeChecks: YoutubeCheck[] = [];
+  readonly youtubeCheckFor = youtubeCheckFor;
+
   /** 3D-1d: rates below this are refused on save (shared/rates.util). */
   readonly minimumRate = MINIMUM_RATE_RUPEES;
   readonly isBelowMinimumRate = isBelowMinimumRate;
@@ -525,6 +559,10 @@ export class PhotographerProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.config.getMyYoutubeChecks().subscribe((checks) => {
+      this.youtubeChecks = checks;
+      this.cdr.detectChanges();
+    });
     this.config.getAppSettings().subscribe((settings) => {
       this.otpVerificationEnabled = !!settings.otpVerificationEnabled;
       if (typeof settings.photographerFeePercent === 'number') this.platformCommissionPercent = settings.photographerFeePercent;
@@ -713,6 +751,7 @@ export class PhotographerProfileComponent implements OnInit {
 
         // Social media
         if (Array.isArray(profile.socialMedia)) {
+          this.savedSocialMedia = profile.socialMedia;
           profile.socialMedia.forEach((sm: any) => {
             const platform = this.socialMediaList.find(p => p.name === sm.platform || p._id === sm.platform);
             if (platform) {

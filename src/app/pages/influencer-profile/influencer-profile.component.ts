@@ -33,6 +33,8 @@ import { ImageCropModalComponent } from '../../shared/components/image-crop-moda
 import { SessionService } from '../../core/session.service';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 import { SocialPlatformFieldComponent } from '../../shared/social-platform-field/social-platform-field.component';
+import { YoutubeCheck, youtubeCheckFor } from '../../shared/youtube-check.util';
+import { markRatesConfirmed, rateReviewFor } from '../../shared/rate-review.util';
 
 @Component({
   selector: 'app-influencer-registration',
@@ -42,6 +44,36 @@ import { SocialPlatformFieldComponent } from '../../shared/social-platform-field
   styleUrls: ['./influencer-profile.component.scss']
 })
 export class InfluencerProfileComponent implements OnInit {
+  /** The saved social accounts as loaded (for the "review your rates" prompt). */
+  savedSocialMedia: any[] = [];
+  confirmingRates = false;
+  readonly rateReviewFor = rateReviewFor;
+
+  /** "These rates are still right" — confirm one account's rates unchanged. */
+  confirmRates(socialAccountId: string): void {
+    if (!socialAccountId || this.confirmingRates) return;
+    this.confirmingRates = true;
+    this.configService.confirmMyRates(socialAccountId).subscribe({
+      next: (res) => {
+        this.savedSocialMedia = markRatesConfirmed(
+          this.savedSocialMedia,
+          socialAccountId,
+          String(res?.confirmedAt || new Date().toISOString()),
+        );
+        this.confirmingRates = false;
+        this.cd.detectChanges();
+      },
+      error: () => {
+        this.confirmingRates = false;
+        this.cd.detectChanges();
+      },
+    });
+  }
+
+  /** The creator's own checked YouTube counts (shown under the tier). */
+  youtubeChecks: YoutubeCheck[] = [];
+  readonly youtubeCheckFor = youtubeCheckFor;
+
   readonly maxCategories = 5;
   readonly maxCreatorTypes = 3;
   readonly maxCollaborationTypes = 3;
@@ -557,6 +589,10 @@ export class InfluencerProfileComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.configService.getMyYoutubeChecks().subscribe((checks) => {
+      this.youtubeChecks = checks;
+      this.cd.detectChanges();
+    });
     this.loadPriceSuggestion();
     this.loadProfileVerificationDashboard();
     this.loadPremiumMonthlyPrice();
@@ -781,6 +817,7 @@ export class InfluencerProfileComponent implements OnInit {
           this.galleryImagesPreview = gallerySource.map((img: any) => this.normalizeImageUrl(img.url) || img.url);
           // Patch socialMedia into platformForms
           this.platformForms = {};
+          this.savedSocialMedia = profile.socialMedia || [];
           (profile.socialMedia || []).forEach((sm: any) => {
             const platformObj = this.socialMediaList.find(s => s.name === sm.platform);
             if (platformObj) {
@@ -1655,6 +1692,7 @@ export class InfluencerProfileComponent implements OnInit {
               }
               // Patch socialMedia into platformForms
               this.platformForms = {};
+              this.savedSocialMedia = profile.socialMedia || [];
               (profile.socialMedia || []).forEach((sm: any) => {
                 const platformObj = (this.socialMediaList || []).find((s: any) => s.name === sm.platform);
                 if (platformObj) {

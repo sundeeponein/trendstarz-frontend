@@ -74,12 +74,14 @@
           <option value="" disabled>Select tier</option>
           <option *ngFor="let t of tierOptions" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
         </select>
+        <app-youtube-check-note [check]="youtubeCheck"></app-youtube-check-note>
         <small class="text-muted d-block mt-1">Followers/Subscribers range</small>
       </div>
     </div>
 
     <div class="content-types-section">
       <label>Content & Starting Rates</label>
+      <app-rate-review-note [review]="rateReview" [busy]="rateReviewBusy" (confirm)="confirmRates.emit($event)"></app-rate-review-note>
       <div class="content-types-list">
         <ng-container *ngFor="let ct of platform.contentTypes">
           <div class="content-type-item" *ngIf="ct.visible">

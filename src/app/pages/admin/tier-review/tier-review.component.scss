@@ -356,3 +356,55 @@
   margin-left: 4px;
   font-size: 0.85em;
 }
+
+// "Change to the observed tier & verify" (observation disagrees).
+.tr-btn--move {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.tr-move {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #f8fbff;
+
+  p {
+    margin: 0 0 8px;
+    font-size: 0.85rem;
+  }
+
+  .tr-btn + .tr-btn {
+    margin-left: 6px;
+  }
+}
+
+.tr-error {
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+  color: #b91c1c;
+}
+
+// Rename / not-found tags on the account.
+.tr-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+
+  &--warn {
+    border: 1px solid #fde68a;
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  &--danger {
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+}

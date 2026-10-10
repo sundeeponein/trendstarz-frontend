@@ -485,6 +485,11 @@ export class CampaignInviteCardComponent {
     return status === 'sent' || status === 'brand_sent' || status === 'accepted' || status === 'declined';
   }
 
+  /** Tier changes since this invite was sent (server-computed, open invites only). */
+  get tierChangesSinceInvite(): Array<{ platform: string; tier: string; changedAt: string }> {
+    return Array.isArray(this.invite?.tierChangedSinceInvite) ? this.invite.tierChangedSinceInvite : [];
+  }
+
   get canSendCounterOffer(): boolean {
     return this.isActionable && !this.hasUsedCounterOffer;
   }

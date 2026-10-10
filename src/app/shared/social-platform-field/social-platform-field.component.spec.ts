@@ -49,6 +49,30 @@ describe('SocialPlatformFieldComponent', () => {
     return { fixture, component };
   }
 
+  it("shows the creator's own checked YouTube count under the tier", () => {
+    const { fixture } = createComponent({
+      platform: youtubePlatform,
+      youtubeCheck: {
+        socialAccountId: 'a1',
+        platform: 'YouTube',
+        subscribers: 815,
+        capturedAt: '2026-10-09T00:00:00.000Z',
+        tier: 'Nano',
+        declaredTier: 'Nano',
+        status: 'matches',
+        tierAutoUpdatedAt: '2026-10-10T00:00:00.000Z',
+      },
+    });
+    const note = (fixture.nativeElement as HTMLElement).querySelector('.yt-check')!.textContent!.replace(/\s+/g, ' ');
+    expect(note).toContain('TrendStarZ checked your channel: 815 subscribers on 9 Oct 2026 → Nano tier.');
+    expect(note).toContain('Your tier was updated to match on 10 Oct 2026');
+  });
+
+  it('no note without a check', () => {
+    const { fixture } = createComponent({ platform: youtubePlatform });
+    expect((fixture.nativeElement as HTMLElement).querySelector('.yt-check')).toBeNull();
+  });
+
   it('does not call getConnections when allowConnect is false (registration)', () => {
     createComponent({ allowConnect: false, supportsOAuth: true });
     expect(apiSpy.getConnections).not.toHaveBeenCalled();

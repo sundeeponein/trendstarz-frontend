@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { buildSocialProfileUrl } from '../../../shared/social-handle.util';
+import { SessionService } from '../../../core/session.service';
 
 /**
  * Stage 3D-1b — Tier review queue (admin).
@@ -52,6 +53,10 @@ export interface TierReviewItem {
     lastAttemptFailed: boolean;
     /** The exact page the platform resolved the account to (e.g. the YouTube channel). */
     externalUrl?: string | null;
+    /** Same channel found by its id under this new handle (renamed on YouTube). */
+    handleChangedTo?: string | null;
+    /** 2+ lookups in a row found no channel for the creator's handle. */
+    notFound?: boolean;
   };
   declaredVsObserved: 'match' | 'mismatch' | 'not_available';
   observedUsable: boolean;
@@ -118,12 +123,18 @@ export class TierReviewComponent implements OnInit {
   decisionError = '';
   lastDone = '';
 
+  /** Row awaiting confirmation of "change to the observed tier & verify". */
+  moving: TierReviewItem | null = null;
+  movingSaving = false;
+  movingError = '';
+
   private readonly isBrowser: boolean;
 
   constructor(
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) platformId: object,
+    private session: SessionService,
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
@@ -270,6 +281,92 @@ export class TierReviewComponent implements OnInit {
           this.cdr.markForCheck();
         },
       });
+  }
+
+  // ── Change the declared tier to the observed one, then verify it ──
+
+  /**
+   * Offered only when a fresh/stale observation puts the account in a different,
+   * real tier (not "below starter" — there is no tier to move to).
+   */
+  observedTierToApply(item: TierReviewItem): string | null {
+    const t = item.observed.tier;
+    if (!item.observedUsable || item.declaredVsObserved !== 'mismatch' || !t) return null;
+    if (t.key === 'below_starter') return null;
+    return t.label;
+  }
+
+  isMoving(item: TierReviewItem): boolean {
+    return this.trackItem(0, item) === (this.moving ? this.trackItem(0, this.moving) : '');
+  }
+
+  askMove(item: TierReviewItem): void {
+    this.moving = item;
+    this.deciding = null;
+    this.movingError = '';
+    this.cdr.markForCheck();
+  }
+
+  cancelMove(): void {
+    this.moving = null;
+    this.movingError = '';
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Two existing admin routes, in order: the user pop-up's tier edit (logged, and the
+   * creator gets the usual "admin changed your tier" notice), then a tier verification
+   * on the observed evidence. If the second step fails, the tier is already changed
+   * and the row stays in the queue to verify by hand.
+   */
+  confirmMove(): void {
+    const item = this.moving;
+    const tier = item ? this.observedTierToApply(item) : null;
+    if (!item || !tier || this.movingSaving) return;
+    this.movingSaving = true;
+    this.movingError = '';
+    const admin: any = this.session.getUser() || {};
+    const account =
+      `${this.base}/admin/users/${item.profileType.toLowerCase()}/${encodeURIComponent(item.profileId)}` +
+      `/social-accounts/${encodeURIComponent(item.socialAccountId)}`;
+    const from = item.declaredTierRef?.label || item.declaredTier;
+    this.http
+      .patch<any>(account, {
+        tier,
+        changedBy: String(admin.id || admin._id || ''),
+        changedByName: String(admin.name || admin.email || 'Admin'),
+      })
+      .subscribe({
+        next: () => {
+          this.http
+            .patch<any>(`${account}/tier-verification`, {
+              status: 'verified',
+              evidenceBasis: 'observed',
+              expectedTier: tier,
+              note: `Changed from ${from} to the observed tier (${tier}).`,
+            })
+            .subscribe({
+              next: () => this.moveDone(item, `tier changed ${from} → ${tier} and verified.`),
+              error: (err) =>
+                this.moveDone(
+                  item,
+                  `tier changed ${from} → ${tier}, but not verified (${err?.error?.message || 'error'}) — verify it in the queue.`,
+                ),
+            });
+        },
+        error: (err) => {
+          this.movingSaving = false;
+          this.movingError = err?.error?.message || 'The tier could not be changed.';
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  private moveDone(item: TierReviewItem, text: string): void {
+    this.movingSaving = false;
+    this.moving = null;
+    this.lastDone = `${item.creatorName || item.username} · ${item.platform}: ${text}`;
+    this.load();
   }
 
   trackItem(_: number, item: TierReviewItem): string {

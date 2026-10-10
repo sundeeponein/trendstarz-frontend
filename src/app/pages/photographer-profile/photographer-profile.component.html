@@ -384,10 +384,12 @@
                             <option *ngFor="let t of tierOptionsFor(platformForms[platform._id].tier)" [value]="t.name">{{ getTierOptionLabel(t) }}</option>
                           </select>
                           <small class="text-muted d-block mt-1">Followers/Subscribers range</small>
+                          <app-youtube-check-note [check]="youtubeCheckFor(platform, youtubeChecks)"></app-youtube-check-note>
                         </div>
                       </div>
                       <div class="content-types-section">
                         <label>Content & Starting Rates</label>
+                        <app-rate-review-note [review]="rateReviewFor(platform, savedSocialMedia)" [busy]="confirmingRates" (confirm)="confirmRates($event)"></app-rate-review-note>
                         <div class="content-types-list">
                           <ng-container *ngFor="let ct of platform.contentTypes">
                             <div class="content-type-item" *ngIf="ct.visible">

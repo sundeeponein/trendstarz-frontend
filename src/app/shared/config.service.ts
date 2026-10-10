@@ -8,6 +8,7 @@ import { environment } from '../../environments/environment';
 import {
   buildDefaultUserTagOptions,
 } from './constants/user-tag-options.constants';
+import { YoutubeCheck } from './youtube-check.util';
 
 export type ProfileVisibility = 'PUBLIC' | 'MEMBERS_ONLY' | 'PRIVATE';
 
@@ -312,6 +313,21 @@ export class ConfigService {
           public_id: data?.public_id || data?.publicId || '',
         };
       }),
+    );
+  }
+
+  /** "These rates are still right": confirm all rates on one of the creator's own accounts. */
+  confirmMyRates(socialAccountId: string): Observable<{ confirmedAt: string }> {
+    return this.http
+      .post<any>(`${this.apiUrl}/creator/rates/confirm`, { socialAccountId })
+      .pipe(map((res) => (res?.data ?? res) as { confirmedAt: string }));
+  }
+
+  /** The logged-in creator's own checked YouTube counts (≤ 30 days old). */
+  getMyYoutubeChecks(): Observable<YoutubeCheck[]> {
+    return this.http.get<any>(`${this.apiUrl}/creator/social-observations/mine`).pipe(
+      map((res) => (res?.data?.accounts ?? res?.accounts ?? []) as YoutubeCheck[]),
+      catchError(() => of([] as YoutubeCheck[])),
     );
   }
 

@@ -45,9 +45,10 @@
           <span *ngIf="n.oldTier !== n.newTier" class="admin-social-notif-change">
             Tier: <span class="notif-old">{{ n.oldTier }}</span>
             <i class="bi bi-arrow-right mx-1"></i>
-            <span class="notif-new">{{ n.newTier }}</span>
+            <span class="notif-new">{{ tierWithRange(n.newTier) }}</span>
           </span>
-          <span class="admin-social-notif-by">by {{ n.changedByName || 'Admin' }} &middot; {{ n.changedAt | date:'dd MMM yyyy' }}</span>
+          <span class="admin-social-notif-by">by {{ n.changedByName || 'Admin' }} &middot; {{ n.changedAt | date:'dd MMM yyyy, h:mm a' }}</span>
+          <span *ngIf="n.oldTier !== n.newTier" class="admin-social-notif-rates">Your tier changed — review your rates on your profile so they fit {{ n.newTier }}.</span>
         </div>
         <div class="admin-social-notif-actions">
           <button type="button" class="admin-social-action admin-social-action--confirm" (click)="respondToAdminSocialNotifications('confirmed')">

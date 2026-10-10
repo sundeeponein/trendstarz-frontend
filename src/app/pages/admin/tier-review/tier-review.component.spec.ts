@@ -118,6 +118,75 @@ describe('TierReviewComponent (Stage 3D-1b)', () => {
     expect(first?.getAttribute('href')).toBe('https://youtube.com/c/AshaOfficial');
   });
 
+  it('tags a channel renamed on YouTube and one that can\'t be found', () => {
+    load([
+      item({ observed: { ...item().observed, handleChangedTo: 'asha_new' } }),
+      item({ socialAccountId: 's2', observed: { ...item().observed, notFound: true } }),
+    ]);
+    const tags = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.tr-tag')).map((t) =>
+      t.textContent!.replace(/\s+/g, ' ').trim(),
+    );
+    expect(tags).toEqual(['Handle changed on YouTube → @asha_new', 'Channel not found']);
+  });
+
+  describe('change to the observed tier & verify', () => {
+    const component_ = () => fixture.componentInstance;
+    const buttons = () =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button')).map((b) =>
+        b.textContent!.trim(),
+      );
+
+    it('is offered only when a usable observation puts the account in another real tier', () => {
+      load([
+        item(),
+        item({ socialAccountId: 's2', declaredVsObserved: 'match' }),
+        item({
+          socialAccountId: 's3',
+          observed: { ...item().observed, followers: 0, tier: { key: 'below_starter', label: 'Below Starter (0)' } },
+        }),
+        item({ socialAccountId: 's4', observedUsable: false }),
+      ]);
+      expect(buttons().filter((t) => t.startsWith('Change to'))).toEqual(['Change to Mid-Tier & verify']);
+    });
+
+    it('edits the tier through the user pop-up route, then verifies it on observed evidence', () => {
+      load([item()]);
+      const btn = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button'),
+      ).find((b) => b.textContent!.includes('Change to'))!;
+      btn.click();
+      fixture.detectChanges();
+      expect((fixture.nativeElement as HTMLElement).innerText).toContain('Micro → Mid-Tier');
+      component_().confirmMove();
+
+      const edit = http.expectOne((r) => r.method === 'PATCH' && /social-accounts\/[^/]+$/.test(r.url));
+      expect(edit.request.url).toContain('/admin/users/influencer/');
+      expect(edit.request.body).toEqual(jasmine.objectContaining({ tier: 'Mid-Tier' }));
+      edit.flush({ message: 'Social media updated' });
+
+      const verify = http.expectOne((r) => r.url.endsWith('/tier-verification'));
+      expect(verify.request.body).toEqual(
+        jasmine.objectContaining({ status: 'verified', evidenceBasis: 'observed', expectedTier: 'Mid-Tier' }),
+      );
+      verify.flush({ message: 'Social account review saved' });
+      queue().flush({ success: true, data: page([]) }); // the queue reloads
+      fixture.detectChanges();
+      expect(component_().lastDone).toContain('Micro → Mid-Tier and verified');
+    });
+
+    it('a failed tier change shows the server message and verifies nothing', () => {
+      load([item()]);
+      component_().askMove(component_().data!.items[0]);
+      component_().confirmMove();
+      http
+        .expectOne((r) => r.method === 'PATCH' && /social-accounts\/[^/]+$/.test(r.url))
+        .flush({ message: 'Social account not found' }, { status: 404, statusText: 'Not Found' });
+      fixture.detectChanges();
+      expect(component_().movingError).toBe('Social account not found');
+      http.expectNone((r) => r.url.endsWith('/tier-verification'));
+    });
+  });
+
   it('verifies through the existing tier route, with the tier the admin saw and the evidence basis', () => {
     load([item()]);
     const c = fixture.componentInstance;

@@ -81,3 +81,10 @@ export function tierOptionsWithCurrent(tiers: any[] | null | undefined, current:
   const canonical = normalizeTierLabel(value);
   return [...list, { name: value, desc: TIER_DESC_MAP[canonical.toLowerCase()] ?? '', hiddenCurrent: true }];
 }
+
+/** "Micro (1,001–10,000 followers)" — the tier with its follower range, for notices. */
+export function tierWithRange(tier: string): string {
+  const name = normalizeTierLabel(tier) || String(tier || '').trim();
+  const range = TIER_DESC_MAP[name.toLowerCase()];
+  return range ? `${name} (${range} followers)` : name;
+}
