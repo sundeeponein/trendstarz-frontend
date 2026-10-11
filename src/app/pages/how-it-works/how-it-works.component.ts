@@ -18,13 +18,37 @@ type UserRole = 'influencer' | 'brand' | 'admin' | 'guest';
 export class HowItWorksComponent implements OnDestroy {
   user: any = null;
   role: UserRole = 'guest';
-  audienceMode: 'all' | 'influencer' | 'brand' = 'all';
+  audienceMode: 'all' | 'influencer' | 'brand' | 'photographer' = 'all';
   routeBasePath = '/how-it-works';
   routeSource = 'how-it-works';
 
   get pageEyebrow(): string {
     return this.routeBasePath === '/features' ? 'Features' : 'How It Works';
   }
+
+  readonly dealLifecycleSteps = [
+    {
+      icon: 'bi-megaphone-fill',
+      tint: 'peach',
+      title: 'Brand Offers',
+      description: 'A lifestyle brand offers Rs 3,000 for a dedicated reel and story set.',
+      status: 'Initiated',
+    },
+    {
+      icon: 'bi-tag-fill',
+      tint: 'blue',
+      title: 'Influencer Accepts',
+      description: 'The creator reviews terms, portfolio match, and clicks "Accept Offer".',
+      status: 'Agreed',
+    },
+    {
+      icon: 'bi-check-circle-fill',
+      tint: 'purple',
+      title: 'Done',
+      description: 'Content is uploaded, brand approves, and payment is released instantly.',
+      status: 'Completed',
+    },
+  ];
 
   influencerSignupParams = {
     source: this.routeSource,
@@ -34,6 +58,11 @@ export class HowItWorksComponent implements OnDestroy {
   brandSignupParams = {
     source: this.routeSource,
     audience: 'brand',
+  };
+
+  photographerSignupParams = {
+    source: this.routeSource,
+    audience: 'photographer',
   };
 
   influencerCampaignParams = {
@@ -82,8 +111,14 @@ export class HowItWorksComponent implements OnDestroy {
 
   private resolveAudience(
     audience: unknown,
-  ): 'all' | 'influencer' | 'brand' {
-    if (audience === 'influencer' || audience === 'brand') return audience;
+  ): 'all' | 'influencer' | 'brand' | 'photographer' {
+    if (
+      audience === 'influencer' ||
+      audience === 'brand' ||
+      audience === 'photographer'
+    ) {
+      return audience;
+    }
     return 'all';
   }
 

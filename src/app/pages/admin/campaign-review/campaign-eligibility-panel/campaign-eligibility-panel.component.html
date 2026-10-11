@@ -1,0 +1,331 @@
+<div class="modal-backdrop show" (click)="close.emit()"></div>
+<div class="modal d-block" tabindex="-1" (click)="close.emit()">
+  <div
+    class="modal-dialog modal-dialog-centered ts-dialog-xlarge"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-content ts-modal ce-modal">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title">Creator eligibility</h5>
+          <div class="ce-subtitle">
+            {{ data?.campaign?.title || campaignTitle || 'Untitled campaign' }}
+          </div>
+        </div>
+        <button type="button" class="btn-close" (click)="close.emit()" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="ce-note">
+          Checks each creator against this campaign's requirements, grouped by eligibility. Eligible
+          creators also show an informational rank — no scores. Eligible creators can be invited on
+          the owner's behalf.
+        </p>
+
+        <div class="ce-req-chips" *ngIf="data">
+          <span class="ce-req-chip" *ngFor="let chip of requirementChips()">
+            <span class="ce-req-label">{{ chip.label }}</span> {{ chip.value }}
+          </span>
+        </div>
+
+        <div class="ce-groups" *ngIf="data">
+          <button
+            type="button"
+            class="ce-group ce-group--all"
+            [class.ce-group--active]="allStatusesSelected"
+            [attr.aria-pressed]="allStatusesSelected"
+            (click)="showAllStatuses()"
+          >
+            <span class="ce-group-count">{{ data.scope.evaluated }}</span>
+            <span class="ce-group-label">All</span>
+          </button>
+          <button
+            *ngFor="let s of statuses"
+            type="button"
+            class="ce-group"
+            [ngClass]="'ce-group--' + s.toLowerCase()"
+            [class.ce-group--active]="selectedStatuses.has(s)"
+            [attr.aria-pressed]="selectedStatuses.has(s)"
+            (click)="toggleStatus(s)"
+          >
+            <span class="ce-group-count">{{ data.counts[s] }}</span>
+            <span class="ce-group-label">{{ statusLabel(s) }}</span>
+          </button>
+          <span class="ce-scope">{{
+            data.scope.creatorType === 'Photographer' ? 'photographers' : 'influencers'
+          }}</span>
+        </div>
+
+        <div class="ce-ranking" *ngIf="data?.ranking as ranking">
+          <div class="ce-ranking-head">
+            <span class="ce-ranking-title">Deterministic ranking</span>
+            <span class="ce-ranking-count" *ngIf="ranking.rankedCount > 0; else noneRanked"
+              >{{ ranking.rankedCount }} eligible
+              {{ ranking.rankedCount === 1 ? 'creator' : 'creators' }} ranked</span
+            >
+            <ng-template #noneRanked>
+              <span class="ce-ranking-count">No eligible creators are currently ranked.</span>
+            </ng-template>
+            <span class="ce-ranking-asof"
+              >As of {{ ranking.asOf | date: 'MMM d, y, h:mm a' : 'UTC' }} UTC</span
+            >
+          </div>
+          <p class="ce-ranking-help">
+            Ranking is deterministic and informational. Eligible creators are ordered by
+            platform/content coverage, category coverage, recent activity, and a stable creator ID
+            tie-break. It does not use AI, randomness, follower counts, Premium status, or
+            TrendScore. Ranks are across all eligible creators, so they stay the same when you
+            filter, search or page; the list itself keeps its usual order.
+          </p>
+        </div>
+
+        <div class="ce-toolbar">
+          <input
+            class="form-control form-control-sm ce-search"
+            type="text"
+            placeholder="Search name, username or ID"
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchChange()"
+          />
+          <select
+            class="form-select form-select-sm ce-select"
+            [(ngModel)]="requirementFilter"
+            (ngModelChange)="onRequirementFilterChange()"
+          >
+            <option value="">Any requirement</option>
+            <option *ngFor="let r of requirements" [value]="r.key">
+              Not met: {{ r.label
+              }}<ng-container *ngIf="data">
+                ({{ data.requirementCounts[r.key].FAIL }} fail ·
+                {{ data.requirementCounts[r.key].UNKNOWN }} unknown)</ng-container
+              >
+            </option>
+          </select>
+        </div>
+
+        <div class="ce-invite-bar" *ngIf="data">
+          <ng-container *ngIf="canInvite; else notLive">
+            <label class="ce-check" *ngIf="selectableOnPage.length">
+              <input type="checkbox" [checked]="allOnPageSelected" (change)="toggleSelectPage()" />
+              Select eligible on this page
+            </label>
+            <span class="ce-invite-count"
+              >{{ selected.size }} selected<ng-container *ngIf="data.scope.alreadyInvited">
+                · {{ data.scope.alreadyInvited }} already invited</ng-container
+              ></span
+            >
+            <ng-container *ngIf="selected.size">
+              <button
+                *ngIf="!confirmingInvite"
+                type="button"
+                class="btn btn-sm btn-primary"
+                (click)="confirmingInvite = true"
+              >
+                Invite selected ({{ selected.size }})
+              </button>
+              <button
+                *ngIf="!confirmingInvite"
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                (click)="clearSelection()"
+              >
+                Clear
+              </button>
+            </ng-container>
+          </ng-container>
+          <ng-template #notLive>
+            <span class="ce-invite-count">{{
+              data.campaign.invitesClosedReason || 'This campaign is not accepting invites.'
+            }}</span>
+          </ng-template>
+        </div>
+
+        <div class="ce-confirm" *ngIf="confirmingInvite && selected.size">
+          <p>
+            Send {{ selected.size }} invite{{ selected.size === 1 ? '' : 's' }} on behalf of the
+            campaign owner? Creators get the usual invite notification, and the owner's plan invite
+            limits apply. Eligibility is re-checked before each invite.
+          </p>
+          <button
+            type="button"
+            class="btn btn-sm btn-primary"
+            [disabled]="sendingInvites"
+            (click)="sendInvites()"
+          >
+            {{ sendingInvites ? 'Sending…' : 'Send invites' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            [disabled]="sendingInvites"
+            (click)="confirmingInvite = false"
+          >
+            Cancel
+          </button>
+        </div>
+
+        <div class="ce-outcome" *ngIf="inviteOutcome">
+          <strong>{{ inviteOutcome.invited.length }} invited</strong
+          ><ng-container *ngIf="inviteOutcome.skipped.length">
+            · {{ inviteOutcome.skipped.length }} not sent</ng-container
+          >
+          <ul *ngIf="inviteOutcome.skipped.length">
+            <li *ngFor="let s of inviteOutcome.skipped">
+              <strong>{{ inviteName(s.creatorId) }}:</strong> {{ s.reason }}
+              <span class="ce-review-tag" *ngIf="needsReview(s.code)">needs review</span>
+            </li>
+          </ul>
+          <button type="button" class="ce-link" (click)="inviteOutcome = null">Dismiss</button>
+        </div>
+        <div class="ce-state--error ce-invite-error" *ngIf="inviteError">{{ inviteError }}</div>
+
+        <div *ngIf="loading" class="ce-state">Loading creators…</div>
+        <div *ngIf="error && !loading" class="ce-state ce-state--error">{{ error }}</div>
+
+        <ng-container *ngIf="data && !loading && !error">
+          <div *ngIf="data.rows.length === 0" class="ce-state">
+            No creators in the selected groups.
+          </div>
+
+          <div class="ce-row" *ngFor="let row of data.rows; trackBy: trackRow">
+            <div class="ce-row-head">
+              <input
+                *ngIf="canInvite"
+                type="checkbox"
+                class="ce-row-check"
+                [disabled]="!isSelectable(row)"
+                [title]="row.inviteBlockedReason || 'Can be invited'"
+                [checked]="selected.has(row.creatorId)"
+                [attr.aria-label]="'Select ' + (row.name || row.creatorId)"
+                (change)="toggleSelected(row)"
+              />
+              <div
+                class="ce-rank"
+                [class.ce-rank--none]="rankOf(row) === null"
+                [attr.aria-label]="rankOf(row) !== null ? 'Rank ' + rankOf(row) : 'Not ranked'"
+              >
+                <span class="ce-rank-label">Rank</span>
+                <span class="ce-rank-value">{{
+                  rankOf(row) !== null ? '#' + rankOf(row) : '—'
+                }}</span>
+              </div>
+              <div class="ce-creator">
+                <span class="ce-name">{{ row.name || 'Unnamed creator' }}</span>
+                <span class="ce-meta">
+                  <span *ngIf="row.username">&#64;{{ row.username }}</span>
+                  <span *ngIf="row.publicId"> · {{ row.publicId }}</span>
+                </span>
+                <span class="ce-rank-summary" *ngIf="rankingSummary(row)">{{
+                  rankingSummary(row)
+                }}</span>
+              </div>
+              <span class="ce-invited-tag" *ngIf="row.invited">Invited</span>
+              <span class="ce-pill" [ngClass]="'ce-pill--' + row.overall.toLowerCase()">{{
+                statusLabel(row.overall)
+              }}</span>
+            </div>
+            <div class="ce-chips">
+              <span
+                *ngFor="let r of requirements"
+                class="ce-chip"
+                [ngClass]="
+                  row.requirements[r.key].configured
+                    ? 'ce-chip--' + row.requirements[r.key].status.toLowerCase()
+                    : 'ce-chip--unset'
+                "
+                [title]="row.requirements[r.key].reason"
+              >
+                <i
+                  class="bi"
+                  [ngClass]="
+                    !row.requirements[r.key].configured
+                      ? 'bi-dash'
+                      : row.requirements[r.key].status === 'PASS'
+                        ? 'bi-check-lg'
+                        : row.requirements[r.key].status === 'FAIL'
+                          ? 'bi-x-lg'
+                          : 'bi-question-lg'
+                  "
+                ></i>
+                {{ r.label }}
+              </span>
+            </div>
+            <details
+              class="ce-rank-details"
+              *ngIf="rankOf(row) !== null && row.rankingEvidence as evidence"
+            >
+              <summary>Why rank #{{ rankOf(row) }}?</summary>
+              <ul class="ce-rank-reasons" *ngIf="row.rankingReasons?.length">
+                <li *ngFor="let reason of row.rankingReasons">{{ reason }}</li>
+              </ul>
+              <dl class="ce-rank-evidence">
+                <dt>Platform / content</dt>
+                <dd>
+                  {{ coverageLabel(evidence.platformContent) }}
+                  <span *ngIf="evidence.platformContent.matched.length" class="ce-rank-muted"
+                    >({{ matchedList(evidence.platformContent.matched) }})</span
+                  >
+                </dd>
+                <dt>Categories</dt>
+                <dd>
+                  {{ coverageLabel(evidence.category) }}
+                  <span *ngIf="evidence.category.matched.length" class="ce-rank-muted"
+                    >({{ matchedList(evidence.category.matched) }})</span
+                  >
+                </dd>
+                <dt>Activity</dt>
+                <dd>
+                  {{ activityLabel(evidence) }}
+                  <span *ngIf="evidence.activity.lastActiveAt" class="ce-rank-muted"
+                    >(last active
+                    {{ evidence.activity.lastActiveAt | date: 'MMM d, y' : 'UTC' }})</span
+                  >
+                </dd>
+                <dt>Creator ID</dt>
+                <dd>Final tie-break only</dd>
+              </dl>
+            </details>
+            <ul class="ce-reasons" *ngIf="openIssues(row).length">
+              <li
+                *ngFor="let issue of openIssues(row)"
+                [ngClass]="'ce-reason--' + issue.status.toLowerCase()"
+              >
+                <strong>{{ issue.label }}:</strong> {{ issue.reason }}
+              </li>
+            </ul>
+          </div>
+
+          <p class="ce-legend" *ngIf="data.rows.length">
+            <span class="ce-chip ce-chip--pass"><i class="bi bi-check-lg"></i> met</span>
+            <span class="ce-chip ce-chip--fail"><i class="bi bi-x-lg"></i> not met</span>
+            <span class="ce-chip ce-chip--unknown"
+              ><i class="bi bi-question-lg"></i> can't be checked</span
+            >
+            <span class="ce-chip ce-chip--unset"
+              ><i class="bi bi-dash"></i> no requirement set on this campaign</span
+            >
+          </p>
+
+          <app-paginator
+            [total]="data.total"
+            [pageSize]="pageSize"
+            [currentPage]="currentPage"
+            [pageSizeOptions]="pageSizeOptions"
+            entityLabel="creators"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+          ></app-paginator>
+
+          <button type="button" class="ce-link" (click)="showNotEvaluated = !showNotEvaluated">
+            {{ showNotEvaluated ? 'Hide' : 'Show' }} what is not checked
+          </button>
+          <ul class="ce-not-evaluated" *ngIf="showNotEvaluated">
+            <li *ngFor="let n of data.notEvaluated">
+              <strong>{{ n.input }}:</strong> {{ n.reason }}
+            </li>
+          </ul>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

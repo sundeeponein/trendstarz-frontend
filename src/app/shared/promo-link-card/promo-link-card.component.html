@@ -1,0 +1,37 @@
+<div class="plc-card" *ngIf="destinationUrl || url">
+  <div class="plc-header">
+    <span class="plc-title"><i class="bi bi-link-45deg"></i> Campaign Tracking Link</span>
+    <span class="plc-status" *ngIf="showShortLink" [class.plc-status--inactive]="!active">
+      <span class="plc-status-dot"></span>{{ active ? 'Active' : 'Inactive' }}
+    </span>
+  </div>
+
+  <!-- Audit mode (admin/host): show the real destination for moderation/monitoring context. -->
+  <div class="plc-row" *ngIf="!showShortLink && destinationDisplay">
+    <span class="plc-label">Destination</span>
+    <span class="plc-value">
+      {{ destinationDisplay }}
+      <span class="plc-type" *ngIf="typeLabel && typeLabel !== 'Link'">· {{ typeLabel }}</span>
+    </span>
+  </div>
+
+  <ng-container *ngIf="showShortLink; else statusAndClicks">
+    <p class="plc-instruction">Share this link in your post/story/bio.</p>
+    <div class="plc-url-row">{{ url || 'Generating…' }}</div>
+    <button type="button" class="plc-copy-btn" (click)="copy()" [disabled]="!url">
+      <i class="bi" [ngClass]="copied ? 'bi-check-lg' : 'bi-clipboard'"></i>
+      {{ copied ? 'Copied!' : 'Copy Tracking Link' }}
+    </button>
+  </ng-container>
+
+  <ng-template #statusAndClicks>
+    <div class="plc-row">
+      <span class="plc-label">Status</span>
+      <span class="plc-value">{{ url ? 'Generated' : 'Generating…' }}</span>
+    </div>
+    <div class="plc-row">
+      <span class="plc-label">Clicks</span>
+      <span class="plc-value plc-clicks">{{ clickCount ?? 0 }}</span>
+    </div>
+  </ng-template>
+</div>

@@ -1,0 +1,58 @@
+<section class="crp" *ngIf="loading || items.length || error">
+  <h3 class="crp-title">
+    Cancel / pause requests
+    <span class="crp-count">{{ items.length }}</span>
+  </h3>
+  <p class="crp-hint">
+    Only TrendStarZ can cancel or pause a paid collaboration. Until you decide, the creator's deadline and payout stay
+    as they are (the automatic closure waits).
+  </p>
+  <div class="crp-error" *ngIf="error">{{ error }}</div>
+  <div class="crp-ok" *ngIf="message">{{ message }}</div>
+  <div *ngIf="loading" class="crp-hint">Loading…</div>
+
+  <div class="crp-card" *ngFor="let item of items">
+    <div class="crp-head">
+      <strong>{{ item.campaignTitle || 'Campaign' }}</strong>
+      <span class="crp-tag" *ngIf="item.campaignNumber">CMP-{{ item.campaignNumber }}</span>
+      <span class="crp-type" [class.crp-type--pause]="item.request.type === 'pause'">
+        {{ item.request.type === 'pause' ? 'Pause' : 'Cancel' }} · requested by {{ item.request.requestedByRole }}
+      </span>
+    </div>
+    <div class="crp-meta">
+      {{ item.hostName || 'Host' }} → {{ item.creatorName || 'Creator' }} · agreed {{ rupees(item.agreedAmount) }}
+      · {{ item.status }} · asked {{ item.request.at | date: 'd MMM, h:mm a' }}
+      <span *ngIf="item.selectedPostDate">· post date {{ item.selectedPostDate | date: 'd MMM' }}</span>
+    </div>
+    <blockquote class="crp-reason">{{ item.request.reason }}</blockquote>
+
+    <div class="crp-form">
+      <div class="crp-row" *ngIf="item.request.type === 'cancel'">
+        <label>
+          Compensation to creator (₹, if they started work)
+          <input type="number" min="0" class="form-control form-control-sm" [(ngModel)]="drafts[item.inviteId].compensationRupees" placeholder="0" />
+        </label>
+        <small>Paid to the creator and taken from the host's refund. Max {{ rupees(item.agreedAmount) }}.</small>
+      </div>
+      <div class="crp-row" *ngIf="item.request.type === 'pause'">
+        <label>
+          Pause for (days, 1–14)
+          <input type="number" min="1" max="14" class="form-control form-control-sm" [(ngModel)]="drafts[item.inviteId].pauseDays" />
+        </label>
+      </div>
+      <textarea
+        class="form-control form-control-sm"
+        rows="2"
+        [(ngModel)]="drafts[item.inviteId].note"
+        placeholder="Reason for your decision (required, 10+ characters) — both sides are told"></textarea>
+      <div class="crp-actions">
+        <button type="button" class="btn btn-sm btn-outline-secondary" [disabled]="!canDecide(item)" (click)="decide(item, 'reject')">
+          Reject
+        </button>
+        <button type="button" class="btn btn-sm btn-primary" [disabled]="!canDecide(item)" (click)="decide(item, 'approve')">
+          {{ item.request.type === 'pause' ? 'Approve pause' : 'Approve cancel' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

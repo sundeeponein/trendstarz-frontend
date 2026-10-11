@@ -17,9 +17,13 @@ import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { PlansService, Plan } from '../../shared/plans.service';
+import { FREE_CAPABILITIES, PlansService, Plan, PlanFeature, PlanLimit, visiblePlanLimits } from '../../shared/plans.service';
 import { PaymentCheckoutComponent, BreakdownRow } from '../../shared/payment-checkout/payment-checkout.component';
+import { MonetizationApiService } from '../../services/monetization-api.service';
+import { ConfigService } from '../../shared/config.service';
+import { matchesFounderOfferAudience } from '../../shared/founder-offer/founder-offer.util';
 
 
 
@@ -36,6 +40,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     selectedDuration: any = null;
     selectedRole: string = 'influencer';
     upgrading = false;
+    processingRazorpay = false;
     upgradeError = '';
     upiCopied = false;
     upiRef: string = '';
@@ -44,8 +49,35 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     couponError = '';
     discountAmount = 0;
     planDiscountPercent = 0;
+    /** Admin-configured standing bonus months for the selected duration (e.g. "pay 1 month, get 2"), granted to every purchase of this cycle. */
+    bonusMonths = 0;
+    /** Extra Founder Offer bonus months, stacked on top of bonusMonths above — only shown if this user still matches the audience checkboxes. */
+    founderBonusMonths = 0;
+    /** This user's registration date, used only to preview Founder Offer eligibility — the backend re-checks independently at payment approval. */
+    registeredAt: string | Date | null = null;
     myPayments: any[] = [];
     discountLabel?: string;
+
+    // Admin-configured gateway mode + actual key-presence on the server.
+    paymentGatewayMode: 'manual' | 'razorpay_fallback' | 'razorpay_only' = 'razorpay_fallback';
+    razorpayConfigured = false;
+    paymentMethodTab: 'razorpay' | 'manual' = 'razorpay';
+
+    // Razorpay can never be shown if the server has no keys configured, regardless
+    // of the admin setting — avoids rendering a button that would just error out.
+    get effectiveGatewayMode(): 'manual' | 'razorpay_fallback' | 'razorpay_only' {
+      return this.razorpayConfigured ? this.paymentGatewayMode : 'manual';
+    }
+
+    selectPaymentMethodTab(tab: 'razorpay' | 'manual') {
+      this.paymentMethodTab = tab;
+    }
+
+    // Razorpay-sourced payments store `amount` in paise; manual UPI/QR payments store it in plain rupees.
+    getPaymentDisplayAmount(payment: any): number {
+      const amount = payment?.amount || 0;
+      return payment?.gatewayProvider === 'razorpay' ? amount / 100 : amount;
+    }
     readonly upiId = 'trendstarzin@kotak';
     readonly isProduction = environment.production;
 
@@ -71,11 +103,20 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
       private router: Router,
       private cdr: ChangeDetectorRef,
       private plansService: PlansService,
+      private monetizationApi: MonetizationApiService,
+      private configService: ConfigService,
       @Inject(PLATFORM_ID) private platformId: object,
     ) {}
 
     ngOnInit(): void {
       this.loadMyPayments();
+      this.loadMyRegistration();
+      this.configService.getAppSettings().subscribe(settings => {
+        this.paymentGatewayMode = settings.paymentGatewayMode;
+        this.razorpayConfigured = settings.razorpayConfigured;
+        this.paymentMethodTab = this.effectiveGatewayMode === 'manual' ? 'manual' : 'razorpay';
+        this.cdr.markForCheck();
+      });
       // Set selectedRole based on logged-in user
       const user = this.getCurrentUser();
       if (user?.role === 'brand') {
@@ -102,6 +143,92 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   paymentTab: 'upi' | 'qr' = 'upi';
   plans: Plan[] = [];
   selectedPlan: Plan | null = null;
+
+  get freePlan(): Plan | null {
+    return this.plans.find(plan => plan.price.monthly === 0) ?? null;
+  }
+
+  get paidPlans(): Plan[] {
+    return this.plans.filter(plan => plan.price.monthly > 0);
+  }
+
+  get displayPaidPlan(): Plan | null {
+    if (this.selectedPlan?.price.monthly && this.selectedPlan.price.monthly > 0) {
+      return this.selectedPlan;
+    }
+    return this.paidPlans[0] ?? this.selectedPlan ?? null;
+  }
+
+  get roleDisplayName(): string {
+    if (this.selectedRole === 'brand') return 'Brand';
+    if (this.selectedRole === 'photographer') return 'Photographer';
+    return 'Creator';
+  }
+
+  get freePlanName(): string {
+    const type = this.selectedRole === 'photographer'
+      ? 'Photographer'
+      : this.selectedRole === 'brand'
+        ? 'Brand'
+        : 'Creator';
+    return `${type} Free`;
+  }
+
+  get proPlanName(): string {
+    const type = this.selectedRole === 'photographer'
+      ? 'Photographer'
+      : this.selectedRole === 'brand'
+        ? 'Brand'
+        : 'Creator';
+    return `${type} Pro`;
+  }
+
+  get freeFeatures(): PlanFeature[] {
+    return this.freePlan?.features?.length
+      ? this.freePlan.features
+      : [
+          { key: 'publicProfile', label: `Public ${this.roleDisplayName.toLowerCase()} profile`, value: true },
+          ...FREE_CAPABILITIES.features,
+        ];
+  }
+
+  get freeLimits(): PlanLimit[] {
+    return visiblePlanLimits(
+      this.freePlan?.limits?.length ? this.freePlan.limits : FREE_CAPABILITIES.limits,
+    );
+  }
+
+  get paidFeatures(): PlanFeature[] {
+    const plan = this.displayPaidPlan;
+    if (!plan?.features?.length) return [];
+    return plan.features;
+  }
+
+  get paidLimits(): PlanLimit[] {
+    return visiblePlanLimits(this.displayPaidPlan?.limits);
+  }
+
+  get freeImageRetentionDays(): number {
+    return this.freePlan?.policies?.imageRetentionDaysAfterExpiry
+      ?? FREE_CAPABILITIES.policies.imageRetentionDaysAfterExpiry;
+  }
+
+  get selectedDurationPrice(): number {
+    return this.selectedDuration?.price ?? this.displayPaidPlan?.price.monthly ?? 0;
+  }
+
+  get durationPeriodLabel(): string {
+    if (this.selectedDurationKey === '3m') return '3mo';
+    if (this.selectedDurationKey === '1y') return 'yr';
+    return 'mo';
+  }
+
+  get bestOfferLabel(): string {
+    if (this.discountLabel) return this.discountLabel;
+    if (this.planDiscountPercent > 0) return 'Limited Time Offer';
+    if (this.bonusMonths > 0 || this.founderBonusMonths > 0) return 'Bonus Duration Offer';
+    return 'Limited Time Offer';
+  }
 
   // Select a plan and duration
   selectPlan(plan: Plan, duration: any) {
@@ -133,52 +260,78 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     let price = 0;
     let label = '';
     let offerKey = '';
+    let bonusKey = '';
+    let founderBonusKey = '';
+    let baseMonths = 1;
     if (this.selectedDurationKey === '1y') {
       price = plan.price.yearly;
       label = 'Yearly';
       offerKey = 'discountYearly';
+      bonusKey = 'bonusMonthsYearly';
+      founderBonusKey = 'founderBonusMonthsYearly';
+      baseMonths = 12;
     } else if (this.selectedDurationKey === '3m') {
       price = plan.price.quarterly;
       label = '3 Months';
       offerKey = 'discountQuarterly';
+      bonusKey = 'bonusMonthsQuarterly';
+      founderBonusKey = 'founderBonusMonthsQuarterly';
+      baseMonths = 3;
     } else {
       price = plan.price.monthly;
       label = 'Monthly';
       offerKey = 'discountMonthly';
+      bonusKey = 'bonusMonthsMonthly';
+      founderBonusKey = 'founderBonusMonthsMonthly';
+      baseMonths = 1;
     }
     this.selectedDuration = { key: this.selectedDurationKey, label, price };
+    this.baseMonths = baseMonths;
 
     // Find admin-configured discount for this duration
     let discountPercent = 0;
+    let bonusMonths = 0;
+    let founderBonusMonths = 0;
     if (plan.offers && Array.isArray(plan.offers)) {
       // Look for a matching offer key (e.g., discountMonthly, discountQuarterly, discountYearly)
       const offer = plan.offers.find((o: any) => o.key === offerKey);
       if (offer && offer.value > 0) {
         discountPercent = offer.value;
       }
+      const bonus = plan.offers.find((o: any) => o.key === bonusKey);
+      if (bonus && bonus.value > 0) {
+        bonusMonths = bonus.value;
+      }
+      // Founder Offer bonus stacks on top of the standing bonus above, but only
+      // for users who still match the audience checkboxes — the backend
+      // re-checks this independently at payment-approval time.
+      if (matchesFounderOfferAudience(plan, this.registeredAt)) {
+        const founderBonus = plan.offers.find((o: any) => o.key === founderBonusKey);
+        if (founderBonus && founderBonus.value > 0) {
+          founderBonusMonths = founderBonus.value;
+        }
+      }
     }
     // Store the discount percent for use in calculation
     this.planDiscountPercent = discountPercent;
+    this.bonusMonths = bonusMonths;
+    this.founderBonusMonths = founderBonusMonths;
     this.applyPlanDiscount();
   }
 
+  /** Months actually paid for at the selected duration (1/3/12), before any bonus. */
+  baseMonths = 1;
+
+  get totalMonths(): number {
+    return this.baseMonths + this.bonusMonths + this.founderBonusMonths;
+  }
+
   applyPlanDiscount() {
-    // Reset discount
-    this.planDiscountPercent = 0;
+    // planDiscountPercent is already set by updateDuration() for the currently
+    // selected duration (discountMonthly/discountQuarterly/discountYearly).
     this.discountLabel = this.selectedPlan?.discountLabel || '';
-    if (!this.selectedPlan || !this.selectedPlan.offers) return;
-    // Robust: check both discount keys for both roles
-    const discountKeys = ["discountOnBrandPro", "discountOnInfluencerPro", "discountOnPhotographerPro"];
-    let offer = this.selectedPlan.offers.find((o: any) => discountKeys.includes(o.key) && o.value > 0);
-    if (offer) {
-      this.planDiscountPercent = offer.value;
-      // Only apply if no coupon is applied
-      if (!this.couponApplied) {
-        this.discountAmount = Math.round((this.selectedDuration?.price ?? 0) * (offer.value / 100));
-      }
-    } else if (!this.couponApplied) {
-      this.discountAmount = 0;
-    }
+    if (this.couponApplied) return;
+    this.discountAmount = Math.round((this.selectedDuration?.price ?? 0) * (this.planDiscountPercent / 100));
   }
 
   get finalPrice(): number {
@@ -197,6 +350,12 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
         ? 'Coupon discount'
         : (this.discountLabel || `Discount (${this.planDiscountPercent}%)`);
       rows.push({ label, value: '− ₹' + this.discountAmount, free: true });
+    }
+    if (this.bonusMonths > 0) {
+      rows.push({ label: 'Bonus duration', value: `+${this.bonusMonths} month${this.bonusMonths > 1 ? 's' : ''} free`, free: true });
+    }
+    if (this.founderBonusMonths > 0) {
+      rows.push({ label: 'Founder Offer bonus', value: `+${this.founderBonusMonths} month${this.founderBonusMonths > 1 ? 's' : ''} free`, free: true });
     }
     rows.push({ label: 'Total', value: '₹' + this.finalPrice, strong: true });
     return rows;
@@ -242,6 +401,19 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     this.applyPlanDiscount();
   }
 
+
+  private loadMyRegistration() {
+    const token = this.getToken();
+    if (!token) return;
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.http.get(`${environment.apiBaseUrl}/auth/me/registration`, { headers }).subscribe({
+      next: (res: any) => {
+        this.registeredAt = res?.firstRegisteredAt || null;
+        this.updateDuration();
+      },
+      error: () => { this.registeredAt = null; },
+    });
+  }
 
   loadMyPayments() {
     const token = this.getToken();
@@ -351,6 +523,94 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
       });
   }
 
+  private async ensureRazorpayLoaded(): Promise<boolean> {
+    if (!isPlatformBrowser(this.platformId)) return false;
+    if ((window as any).Razorpay) return true;
+
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Razorpay checkout script'));
+      document.body.appendChild(script);
+    });
+
+    return !!(window as any).Razorpay;
+  }
+
+  async payByRazorpay() {
+    if (!this.selectedPlan) {
+      this.upgradeError = 'Please select a plan first.';
+      return;
+    }
+    this.processingRazorpay = true;
+    this.upgradeError = '';
+    try {
+      const billingCycle =
+        this.selectedDurationKey === '1y'
+          ? 'yearly'
+          : this.selectedDurationKey === '3m'
+            ? 'quarterly'
+            : 'monthly';
+      const orderRes = await firstValueFrom(
+        this.monetizationApi.createSubscriptionOrder(
+          String((this.selectedPlan as any)?._id || ''),
+          billingCycle,
+          this.finalPrice,
+        ),
+      );
+      const order = orderRes?.order;
+      if (!order?.orderId || !order?.keyId) {
+        this.upgradeError = 'Failed to initialize Razorpay order.';
+        return;
+      }
+
+      const loaded = await this.ensureRazorpayLoaded();
+      if (!loaded) {
+        this.upgradeError = 'Failed to load Razorpay checkout.';
+        return;
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const rz = new (window as any).Razorpay({
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency || 'INR',
+          name: 'TrendstarZ',
+          description: 'Premium subscription',
+          order_id: order.orderId,
+          handler: async (resp: any) => {
+            try {
+              await firstValueFrom(
+                this.monetizationApi.verifyRazorpayPayment({
+                  orderId: resp?.razorpay_order_id,
+                  paymentId: resp?.razorpay_payment_id,
+                  signature: resp?.razorpay_signature,
+                  paymentType: 'subscription',
+                }),
+              );
+              this.onSuccess();
+              resolve();
+            } catch (e: any) {
+              reject(new Error(e?.error?.message || 'Payment verification failed'));
+            }
+          },
+          modal: {
+            ondismiss: () => reject(new Error('Payment cancelled.')),
+          },
+          theme: { color: '#f59e0b' },
+        });
+        rz.open();
+      });
+    } catch (err: any) {
+      this.upgradeError = err?.message || err?.error?.message || 'Razorpay payment failed. Please use manual UPI.';
+    } finally {
+      this.processingRazorpay = false;
+      this.cdr.detectChanges();
+    }
+  }
+
   // ─── Helpers ──────────────────────────────────────────────────────────────
   private onSuccess() {
     this.upgrading = false;
@@ -403,4 +663,3 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     this.router.navigate(['/influencer-profile']);
   }
 }
-

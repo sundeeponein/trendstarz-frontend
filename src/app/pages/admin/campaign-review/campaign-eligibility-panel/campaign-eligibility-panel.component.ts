@@ -1,0 +1,455 @@
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+} from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
+import { AppPaginatorComponent } from '../../../../shared/components/app-paginator/app-paginator.component';
+import { environment } from '../../../../../environments/environment';
+
+// Stage 3B-3: GET admin/matching/eligibility/:campaignId — grouped by eligibility.
+// Stage 3C-1 adds a server-calculated, informational rank to PASS rows; this
+// panel only displays it (Stage 3C-2) and never re-ranks, re-orders or selects.
+export type EligibilityStatus = 'PASS' | 'UNKNOWN' | 'FAIL';
+export type EligibilityRequirementKey =
+  | 'accountApproval'
+  | 'creatorType'
+  | 'platformContent'
+  | 'category'
+  | 'minimumTier'
+  | 'location'
+  | 'language';
+
+/** Stage 3C-1 activity buckets, as sent by the server. */
+export type RankingActivityBucket =
+  'within_7_days' | 'within_8_30_days' | 'within_31_90_days' | 'over_90_days' | 'unknown';
+
+export interface RankingCoverage {
+  matched: string[];
+  total: number;
+}
+
+export interface RankingEvidence {
+  platformContent: RankingCoverage;
+  category: RankingCoverage;
+  activity: {
+    bucket: RankingActivityBucket;
+    lastActiveAt: string | null;
+    daysSinceActive: number | null;
+  };
+}
+
+const ACTIVITY_SHORT: Record<RankingActivityBucket, string> = {
+  within_7_days: 'active ≤7d',
+  within_8_30_days: 'active 8–30d',
+  within_31_90_days: 'active 31–90d',
+  over_90_days: 'inactive >90d',
+  unknown: 'activity unknown',
+};
+
+const ACTIVITY_LONG: Record<RankingActivityBucket, string> = {
+  within_7_days: 'Active within the last 7 days',
+  within_8_30_days: 'Active within the last 8–30 days',
+  within_31_90_days: 'Active within the last 31–90 days',
+  over_90_days: 'Last active more than 90 days ago',
+  unknown: 'Unknown — treated as neutral',
+};
+
+interface StatusCounts {
+  PASS: number;
+  UNKNOWN: number;
+  FAIL: number;
+}
+
+export interface CampaignEligibilityRow {
+  creatorId: string;
+  creatorType: 'Influencer' | 'Photographer';
+  name: string;
+  username: string;
+  publicId: string;
+  overall: EligibilityStatus;
+  requirements: Record<
+    EligibilityRequirementKey,
+    { status: EligibilityStatus; reason: string; configured: boolean }
+  >;
+  /** Already holds an invite for this campaign (any status). Separate from eligibility. */
+  invited: boolean;
+  /** Decided by the backend (live campaign + PASS + not invited); re-checked again at send time. */
+  invitable: boolean;
+  inviteBlockedReason: string | null;
+  /** Stage 3C-1 — position among ALL eligible creators (server-calculated); null unless PASS. */
+  rank?: number | null;
+  /** Server-written plain-language reasons for the rank; empty unless PASS. */
+  rankingReasons?: string[];
+  /** The ranking keys behind `rank`; null unless PASS. */
+  rankingEvidence?: RankingEvidence | null;
+}
+
+// Stage 3B-4: POST admin/matching/eligibility/:campaignId/invites
+export interface EligibilityInviteOutcome {
+  requested: number;
+  invited: Array<{ creatorId: string; inviteId: string }>;
+  skipped: Array<{
+    creatorId: string;
+    code:
+      | 'invalid_id'
+      | 'unavailable'
+      | 'already_invited'
+      | 'not_eligible'
+      | 'eligibility_unknown'
+      | 'invite_rejected';
+    reason: string;
+  }>;
+}
+
+export const MAX_INVITES_PER_REQUEST = 50;
+
+export interface CampaignEligibilityList {
+  campaign: {
+    campaignId: string;
+    title: string;
+    status: string;
+    invitesOpen: boolean;
+    invitesClosedReason: string | null;
+    recipientRole: 'influencer' | 'photographer';
+    ownerType: 'brand' | 'photographer';
+    requirements: {
+      platforms: string[];
+      contentTypes: string[];
+      categories: string[];
+      targetCreatorCategories: string[];
+      minimumTier: string | null;
+      location: { state: string | null; district: string | null };
+      languages: string[];
+    };
+  };
+  scope: {
+    creatorType: 'Influencer' | 'Photographer';
+    evaluated: number;
+    alreadyInvited: number;
+  };
+  counts: StatusCounts;
+  requirementCounts: Record<EligibilityRequirementKey, StatusCounts & { configured: boolean }>;
+  /** Stage 3C-1 — one request-level clock and how many eligible creators were ranked. */
+  ranking?: {
+    asOf: string;
+    rankedCount: number;
+    order: string[];
+  };
+  total: number;
+  rows: CampaignEligibilityRow[];
+  notEvaluated: Array<{ input: string; reason: string }>;
+}
+
+type ApiEnvelope<T> = { success?: boolean; data?: T } & Partial<T>;
+function unwrapApiData<T>(res: ApiEnvelope<T> | null | undefined): T | undefined {
+  if (!res) return undefined;
+  return (res.data ?? res) as T;
+}
+
+export const ELIGIBILITY_REQUIREMENTS: Array<{ key: EligibilityRequirementKey; label: string }> = [
+  { key: 'accountApproval', label: 'Approval' },
+  { key: 'creatorType', label: 'Creator type' },
+  { key: 'platformContent', label: 'Platform / content' },
+  { key: 'category', label: 'Category' },
+  { key: 'minimumTier', label: 'Tier' },
+  { key: 'location', label: 'Location' },
+  { key: 'language', label: 'Language' },
+];
+
+@Component({
+  selector: 'app-campaign-eligibility-panel',
+  standalone: true,
+  imports: [CommonModule, FormsModule, AppPaginatorComponent],
+  templateUrl: './campaign-eligibility-panel.component.html',
+  styleUrls: ['./campaign-eligibility-panel.component.scss'],
+})
+export class CampaignEligibilityPanelComponent implements OnInit, OnDestroy {
+  @Input({ required: true }) campaignId = '';
+  @Input() campaignTitle = '';
+  @Output() close = new EventEmitter<void>();
+
+  readonly statuses: EligibilityStatus[] = ['PASS', 'UNKNOWN', 'FAIL'];
+  readonly requirements = ELIGIBILITY_REQUIREMENTS;
+  readonly pageSizeOptions = [10, 25, 50, 100];
+
+  selectedStatuses = new Set<EligibilityStatus>(['PASS', 'UNKNOWN']);
+  requirementFilter: EligibilityRequirementKey | '' = '';
+  searchQuery = '';
+  currentPage = 1;
+  pageSize = 25;
+
+  data: CampaignEligibilityList | null = null;
+  loading = false;
+  error = '';
+  showNotEvaluated = false;
+
+  // Stage 3B-4: admin picks eligible creators and invites them as the campaign owner.
+  /** creatorId → display name, kept across pages until sent. */
+  selected = new Map<string, string>();
+  confirmingInvite = false;
+  sendingInvites = false;
+  inviteOutcome: EligibilityInviteOutcome | null = null;
+  inviteError = '';
+  private inviteNames = new Map<string, string>();
+
+  private request: Subscription | null = null;
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+  ) {}
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  ngOnDestroy(): void {
+    this.request?.unsubscribe();
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+  }
+
+  buildQuery(): string {
+    const params = new URLSearchParams({
+      status: this.statuses.filter((s) => this.selectedStatuses.has(s)).join(','),
+      page: String(this.currentPage),
+      pageSize: String(this.pageSize),
+    });
+    if (this.requirementFilter) params.set('requirement', this.requirementFilter);
+    if (this.searchQuery.trim()) params.set('q', this.searchQuery.trim());
+    return params.toString();
+  }
+
+  load(): void {
+    if (!this.campaignId) return;
+    this.request?.unsubscribe();
+    this.loading = true;
+    this.error = '';
+    this.request = this.http
+      .get<ApiEnvelope<CampaignEligibilityList>>(
+        `${environment.apiBaseUrl}/admin/matching/eligibility/${encodeURIComponent(this.campaignId)}?${this.buildQuery()}`
+      )
+      .subscribe({
+        next: (res) => {
+          this.data = unwrapApiData(res) ?? null;
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.error = err?.error?.message || 'Could not load creator eligibility.';
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  get allStatusesSelected(): boolean {
+    return this.statuses.every((s) => this.selectedStatuses.has(s));
+  }
+
+  showAllStatuses(): void {
+    if (this.allStatusesSelected) return;
+    this.statuses.forEach((s) => this.selectedStatuses.add(s));
+    this.currentPage = 1;
+    this.load();
+  }
+
+  toggleStatus(status: EligibilityStatus): void {
+    if (this.selectedStatuses.has(status)) {
+      // Keep at least one group selected (the backend would fall back to its default).
+      if (this.selectedStatuses.size === 1) return;
+      this.selectedStatuses.delete(status);
+    } else {
+      this.selectedStatuses.add(status);
+    }
+    this.currentPage = 1;
+    this.load();
+  }
+
+  onRequirementFilterChange(): void {
+    this.currentPage = 1;
+    this.load();
+  }
+
+  onSearchChange(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => {
+      this.currentPage = 1;
+      this.load();
+    }, 300);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.load();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.load();
+  }
+
+  statusLabel(status: EligibilityStatus): string {
+    return status === 'PASS' ? 'Eligible' : status === 'UNKNOWN' ? 'Unknown' : 'Not eligible';
+  }
+
+  /** Requirements the row does not pass, with the backend's reason. */
+  openIssues(
+    row: CampaignEligibilityRow,
+  ): Array<{ label: string; status: EligibilityStatus; reason: string }> {
+    return this.requirements
+      .map(({ key, label }) => ({ label, ...row.requirements[key] }))
+      .filter((r) => r.status !== 'PASS')
+      .map(({ label, status, reason }) => ({ label, status, reason }));
+  }
+
+  requirementChips(): Array<{ label: string; value: string }> {
+    const r = this.data?.campaign.requirements;
+    if (!r) return [];
+    const list = (values: string[]) => (values.length ? values.join(', ') : 'Any');
+    const location = [r.location.district, r.location.state].filter(Boolean).join(', ');
+    const photographerOwned = this.data?.campaign.ownerType === 'photographer';
+    return [
+      {
+        label: 'Creators',
+        value: this.data?.scope.creatorType === 'Photographer' ? 'Photographers' : 'Influencers',
+      },
+      { label: 'Platforms', value: list(r.platforms) },
+      { label: 'Content', value: list(r.contentTypes.map((c) => c.replace(':', ' · '))) },
+      {
+        label: 'Categories',
+        value: list(photographerOwned ? r.targetCreatorCategories : r.categories),
+      },
+      { label: 'Tier', value: r.minimumTier ? `${r.minimumTier} or above` : 'Any' },
+      { label: 'Location', value: location || 'Any' },
+      { label: 'Languages', value: list(r.languages) },
+    ];
+  }
+
+  // ── Stage 3C-2: ranking display only (the server ranks; nothing here re-ranks) ──
+
+  /** The server's rank, shown only for an eligible row; anything else is unranked. */
+  rankOf(row: CampaignEligibilityRow): number | null {
+    return row.overall === 'PASS' && typeof row.rank === 'number' ? row.rank : null;
+  }
+
+  coverageLabel(c: RankingCoverage | undefined): string {
+    return c && c.total > 0 ? `${c.matched.length}/${c.total}` : 'none set';
+  }
+
+  /** e.g. "2/2 platform · 5/6 categories · active ≤7d" */
+  rankingSummary(row: CampaignEligibilityRow): string {
+    const e = row.rankingEvidence;
+    if (this.rankOf(row) === null || !e) return '';
+    return [
+      `${this.coverageLabel(e.platformContent)} platform`,
+      `${this.coverageLabel(e.category)} categories`,
+      ACTIVITY_SHORT[e.activity.bucket] ?? ACTIVITY_SHORT.unknown,
+    ].join(' · ');
+  }
+
+  activityLabel(e: RankingEvidence): string {
+    return ACTIVITY_LONG[e.activity.bucket] ?? ACTIVITY_LONG.unknown;
+  }
+
+  matchedList(values: string[]): string {
+    return values.map((v) => v.replace(':', ' · ')).join(', ');
+  }
+
+  /** From the backend: campaign status + acceptance deadline. */
+  get canInvite(): boolean {
+    return !!this.data?.campaign.invitesOpen;
+  }
+
+  /** The backend decides; the browser only mirrors it (and the server re-checks at send). */
+  isSelectable(row: CampaignEligibilityRow): boolean {
+    return this.canInvite && row.invitable === true;
+  }
+
+  toggleSelected(row: CampaignEligibilityRow): void {
+    if (!this.isSelectable(row)) return;
+    if (this.selected.has(row.creatorId)) this.selected.delete(row.creatorId);
+    else if (this.selected.size < MAX_INVITES_PER_REQUEST)
+      this.selected.set(row.creatorId, this.displayName(row));
+    this.confirmingInvite = false;
+  }
+
+  get selectableOnPage(): CampaignEligibilityRow[] {
+    return (this.data?.rows || []).filter((r) => this.isSelectable(r));
+  }
+
+  get allOnPageSelected(): boolean {
+    const rows = this.selectableOnPage;
+    return rows.length > 0 && rows.every((r) => this.selected.has(r.creatorId));
+  }
+
+  toggleSelectPage(): void {
+    const rows = this.selectableOnPage;
+    if (this.allOnPageSelected) rows.forEach((r) => this.selected.delete(r.creatorId));
+    else
+      for (const r of rows) {
+        if (this.selected.size >= MAX_INVITES_PER_REQUEST) break;
+        this.selected.set(r.creatorId, this.displayName(r));
+      }
+    this.confirmingInvite = false;
+  }
+
+  clearSelection(): void {
+    this.selected.clear();
+    this.confirmingInvite = false;
+  }
+
+  sendInvites(): void {
+    if (!this.selected.size || this.sendingInvites) return;
+    this.sendingInvites = true;
+    this.inviteError = '';
+    this.inviteOutcome = null;
+    this.inviteNames = new Map(this.selected);
+    this.http
+      .post<ApiEnvelope<EligibilityInviteOutcome>>(
+        `${environment.apiBaseUrl}/admin/matching/eligibility/${encodeURIComponent(this.campaignId)}/invites`,
+        { creatorIds: [...this.selected.keys()] }
+      )
+      .subscribe({
+        next: (res) => {
+          this.inviteOutcome = unwrapApiData(res) ?? null;
+          this.sendingInvites = false;
+          this.confirmingInvite = false;
+          this.selected.clear();
+          this.load();
+        },
+        error: (err) => {
+          this.inviteError = err?.error?.message || 'Could not send invites.';
+          this.sendingInvites = false;
+          this.confirmingInvite = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  /** Selection went stale: eligibility or invite state changed after the list was loaded. */
+  needsReview(code: EligibilityInviteOutcome['skipped'][number]['code']): boolean {
+    return code === 'not_eligible' || code === 'eligibility_unknown' || code === 'unavailable';
+  }
+
+  inviteName(creatorId: string): string {
+    return this.inviteNames.get(creatorId) || creatorId;
+  }
+
+  private displayName(row: CampaignEligibilityRow): string {
+    return row.name || (row.username ? `@${row.username}` : row.creatorId);
+  }
+
+  trackRow(_: number, row: CampaignEligibilityRow): string {
+    return row.creatorId;
+  }
+}

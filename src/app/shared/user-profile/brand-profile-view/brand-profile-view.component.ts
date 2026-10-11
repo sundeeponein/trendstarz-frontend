@@ -1,6 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser, DOCUMENT } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
 import { ConfigService } from '../../config.service';
 import { SessionService } from '../../../core/session.service';
@@ -10,12 +10,16 @@ import { CampaignCardComponent } from '../../campaigns/campaign-card/campaign-ca
 import { CampaignDetailModalComponent } from '../../campaign-detail-modal/campaign-detail-modal.component';
 import { WriteReviewComponent } from '../../write-review/write-review.component';
 import { ReviewListComponent } from '../../review-list/review-list.component';
+import { ProfileSocialPlatformsComponent } from '../profile-social-platforms/profile-social-platforms.component';
+import { SocialClickTrackerService } from '../../../services/social-click-tracker.service';
 import { environment } from '../../../../environments/environment';
+import { buildSocialProfileUrl } from '../../social-handle.util';
+import { PAID_NOT_DISPUTED } from '../../invite-status';
 
 @Component({
   selector: 'app-brand-profile-view',
   standalone: true,
-  imports: [CommonModule, CampaignListComponent, CampaignCardComponent, CampaignDetailModalComponent, WriteReviewComponent, ReviewListComponent],
+  imports: [CommonModule, RouterLink, CampaignListComponent, CampaignCardComponent, CampaignDetailModalComponent, WriteReviewComponent, ReviewListComponent, ProfileSocialPlatformsComponent],
   templateUrl: './brand-profile-view.component.html',
   styleUrls: ['./brand-profile-view.component.scss']
 })
@@ -161,6 +165,10 @@ export class BrandProfileViewComponent implements OnInit {
       : [];
   }
 
+  get isTrendstarzVerified(): boolean {
+    return !!this.brand?.verifiedByTrendStarz || String(this.brand?.verificationStatus || '').toLowerCase() === 'approved';
+  }
+
   formatFollowers(count: number): string {
     if (count >= 1_000_000) return (count / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
     if (count >= 1_000) return (count / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
@@ -196,15 +204,7 @@ export class BrandProfileViewComponent implements OnInit {
   }
 
   getSocialUrl(sm: any): string {
-    const p = (sm?.platform || '').toLowerCase();
-    const handle = sm?.handle || '';
-    if (p.includes('insta')) return 'https://instagram.com/' + handle;
-    if (p.includes('youtube')) return 'https://youtube.com/' + handle;
-    if (p.includes('face')) return 'https://facebook.com/' + handle;
-    if (p.includes('twitter') || p.includes('x')) return 'https://x.com/' + handle;
-    if (p.includes('tiktok')) return 'https://tiktok.com/@' + handle;
-    if (p.includes('linkedin')) return 'https://linkedin.com/in/' + handle;
-    return sm?.url || '#';
+    return buildSocialProfileUrl(sm?.platform || '', sm?.handle) || sm?.url || '#';
   }
 
   tagBadgeClass(tag: string): string {
@@ -216,6 +216,7 @@ export class BrandProfileViewComponent implements OnInit {
   }
 
   getMainSocialLink(): string {
+    if (!this.canOpenSocialProfiles) return '#';
     if (this.brand?.socialMedia?.length) {
       return this.getSocialUrl(this.brand.socialMedia[0]);
     }
@@ -226,6 +227,32 @@ export class BrandProfileViewComponent implements OnInit {
 
   get hasFollowLink(): boolean {
     return this.getMainSocialLink() !== '#';
+  }
+
+  get canOpenSocialProfiles(): boolean {
+    return !!this.brand && this.brand.socialMediaRestricted !== true;
+  }
+
+  onFollowClick(): void {
+    const first = this.brand?.socialMedia?.[0] || null;
+    this.trackSocialClick(first, this.getMainSocialLink(), 'brand_profile_follow');
+  }
+
+  onPlatformClick(sm: any): void {
+    this.trackSocialClick(sm, this.getSocialUrl(sm), 'brand_profile_platform');
+  }
+
+  private trackSocialClick(sm: any, url: string, source: string): void {
+    if (!this.isLoggedIn || !this.canOpenSocialProfiles || !this.brand?._id) return;
+    if (!url || url === '#') return;
+    const platform = String(sm?.platform || 'website').trim() || 'website';
+    this.socialClickTracker.track({
+      targetUserId: String(this.brand._id),
+      targetRole: 'brand',
+      platform,
+      url,
+      source,
+    });
   }
 
   get displayCompanySize(): string {
@@ -241,9 +268,17 @@ export class BrandProfileViewComponent implements OnInit {
     return labels[raw] ? `${labels[raw]} (${raw})` : raw;
   }
 
+  /** Why the profile could not be shown: needs login, daily limit, or not found. */
+  errorKind: 'none' | 'login' | 'limit' = 'none';
+
+  get loginReturnUrl(): string {
+    return typeof window !== 'undefined' ? window.location.pathname : '/';
+  }
+
   constructor(
     private route: ActivatedRoute,
     private config: ConfigService,
+    private socialClickTracker: SocialClickTrackerService,
     private session: SessionService,
     private cd: ChangeDetectorRef,
     private titleService: Title,
@@ -253,7 +288,9 @@ export class BrandProfileViewComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.data.subscribe(({ brand }) => {
+    this.route.data.subscribe(({ brandResult }) => {
+      const brand = brandResult?.brand || null;
+      this.errorKind = 'none';
       const routeBrandName = this.route.snapshot.paramMap.get('brandName') || this.route.parent?.snapshot.paramMap.get('brandName');
       this.brand = null;
       this.error = '';
@@ -269,7 +306,17 @@ export class BrandProfileViewComponent implements OnInit {
 
       const data = brand || null;
       if (!data) {
-        this.error = 'Brand not found.';
+        // The click was counted before this page loaded; say why the profile can't
+        // show instead of claiming the brand doesn't exist.
+        if (brandResult?.status === 401) {
+          this.errorKind = 'login';
+          this.error = "Log in to view this brand's profile.";
+        } else if (brandResult?.status === 403) {
+          this.errorKind = 'limit';
+          this.error = brandResult.message || "You've reached today's profile view limit.";
+        } else {
+          this.error = 'Brand not found.';
+        }
         this.brand = null;
         this.setDefaultMetadata();
       } else {
@@ -290,12 +337,12 @@ export class BrandProfileViewComponent implements OnInit {
             }
           });
         }
-        // Influencer premium: find their completed invite with this brand
+        // Influencer premium: find a paid-or-later invite with this brand (same rule as the server)
         if (this.isInfluencerViewer && this.isProViewer) {
           this.config.getMyInvites().subscribe({
             next: (invites: any[]) => {
               const done = invites.find(
-                (inv: any) => inv.status === 'completed'
+                (inv: any) => PAID_NOT_DISPUTED.includes(String(inv.status || ''))
                   && (String(inv.brandId?._id || inv.brandId) === String(data._id)
                     || String(inv.brandId?._id || inv.brandId) === (data.brandUsername || ''))
               );

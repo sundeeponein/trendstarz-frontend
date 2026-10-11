@@ -1,15 +1,15 @@
 <div class="brand-card" (click)="viewProfileClick.emit()">
   <!-- Image + overlays -->
   <div class="brand-card__img-wrap">
-    <img [src]="displayBrandLogo" (error)="onImgError($event)" class="brand-card__img" />
+    <img [src]="displayBrandLogo" (error)="onImgError($event)" class="brand-card__img" {{ brandName }} />
 
-    <!-- Admin badges on image -->
-    <div class="brand-card__img-tags" *ngIf="displayTags.length">
-      <span
-        *ngFor="let tag of displayTags"
-        class="brand-card__img-tag badge rounded-pill"
-        [ngClass]="tagBadgeClass(tag)">
-        {{ tag }}
+    <!-- Trust badges -->
+    <div class="brand-card__img-tags" *ngIf="isTrendstarzVerified || isPremium || trendstarzRecommended">
+      <span class="brand-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium"  tooltip="Premium" title="Premium">
+        <i class="bi bi-star-fill"></i>
+      </span>
+      <span class="brand-card__img-tag badge rounded-pill badge--recommended" *ngIf="trendstarzRecommended" title="TrendStarz Recommended">
+        <i class="bi bi-award-fill"></i>
       </span>
     </div>
 
@@ -19,8 +19,10 @@
   <div class="brand-card__body">
     <!-- Name -->
     <div class="brand-card__name">
-      {{ brandName }}
-      <i class="bi bi-patch-check-fill brand-card__verified" *ngIf="isPremium" title="Verified"></i>
+      {{ brandName }} 
+      <span class="text-success" *ngIf="isTrendstarzVerified"  tooltip="Verified" title="Verified">
+        <i class="bi bi-patch-check-fill"></i>
+      </span>
     </div>
 
     <!-- Categories -->
@@ -30,6 +32,12 @@
     <div class="brand-card__location" *ngIf="location?.state">
       <i class="bi bi-geo-alt"></i>
       <ng-container *ngIf="location?.district">{{ location.district }}, </ng-container>{{ location.state }}
+    </div>
+
+    <!-- TrendScore: cards show only the positive "Campaign Ready" signal; the score
+         and full readiness live on the profile page (logged-in viewers). -->
+    <div class="brand-card__score-row" *ngIf="campaignReady === 'Campaign Ready'">
+      <span class="card-ready-badge"><i class="bi bi-rocket-takeoff"></i> Campaign Ready</span>
     </div>
 
     <div class="brand-card__meta" *ngIf="showWelcomeCampaignMeta && welcomeCampaignStatus">

@@ -1,0 +1,235 @@
+<div class="tr-page">
+  <div class="tr-header">
+    <div>
+      <a class="tr-back" routerLink="/admin/admin-dashboard"
+        ><i class="bi bi-chevron-left"></i> Back to dashboard</a
+      >
+      <h2>Tier review</h2>
+      <p class="tr-subtitle">
+        Social accounts of approved creators whose declared tier needs a decision. Observed follower
+        counts are evidence only — your decision is what counts.
+      </p>
+    </div>
+    <button type="button" class="tr-refresh" (click)="load()" [disabled]="loading">
+      <i class="bi bi-arrow-clockwise" [class.spin]="loading"></i> Refresh
+    </button>
+  </div>
+
+  <div *ngIf="lastDone" class="tr-done"><i class="bi bi-check-circle"></i> {{ lastDone }}</div>
+
+  <ng-container *ngIf="data">
+    <div class="tr-chips">
+      <button
+        type="button"
+        class="tr-chip"
+        [class.tr-chip--active]="reason === ''"
+        (click)="setReason('')"
+      >
+        All <span>{{ data.total }}</span>
+      </button>
+      <button
+        *ngFor="let r of reasons"
+        type="button"
+        class="tr-chip"
+        [ngClass]="'tr-chip--' + r"
+        [class.tr-chip--active]="reason === r"
+        (click)="setReason(r)"
+      >
+        {{ reasonLabels[r] }} <span>{{ data.counts[r] }}</span>
+      </button>
+    </div>
+
+    <form class="tr-filters" (ngSubmit)="applyFilters()">
+      <select [(ngModel)]="platform" name="platform" (change)="applyFilters()" aria-label="Platform">
+        <option value="">All platforms</option>
+        <option *ngFor="let p of platformOptions" [value]="p">{{ p }} ({{ data.platforms[p] }})</option>
+      </select>
+      <input
+        type="search"
+        [(ngModel)]="q"
+        name="q"
+        placeholder="Search name, username or handle"
+        aria-label="Search"
+      />
+      <button type="submit" class="tr-btn">Search</button>
+    </form>
+  </ng-container>
+
+  <div *ngIf="loading && !data" class="tr-state">Loading queue…</div>
+  <div *ngIf="error" class="tr-state tr-state--error">{{ error }}</div>
+  <div *ngIf="data && !data.items.length && !loading" class="tr-state">
+    Nothing to review here.
+  </div>
+
+  <div class="tr-list" *ngIf="data">
+    <article class="tr-item" *ngFor="let item of data.items; trackBy: trackItem">
+      <div class="tr-item-head">
+        <span class="tr-reason" [ngClass]="'tr-reason--' + item.reason">{{
+          reasonLabels[item.reason]
+        }}</span>
+        <strong>{{ item.creatorName || 'Unnamed creator' }}</strong>
+        <span class="tr-muted" *ngIf="item.username">&#64;{{ item.username }}</span>
+        <span class="tr-muted">· {{ item.profileType }}</span>
+      </div>
+
+      <div class="tr-facts">
+        <div>
+          <span class="tr-label">Account</span>
+          <i class="bi tr-platform-icon" [ngClass]="platformIcon(item)"></i> {{ item.platform }} ·
+          <a
+            *ngIf="accountLink(item) as href; else plainHandle"
+            [href]="href"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="tr-link"
+            title="Open this account on {{ item.platform }} to check it"
+            >{{ item.handle || 'open profile' }} <i class="bi bi-box-arrow-up-right"></i
+          ></a>
+          <ng-template #plainHandle>{{ item.handle || '—' }}</ng-template>
+          <span class="tr-tag tr-tag--warn" *ngIf="item.observed.handleChangedTo"
+            title="The channel was found by its permanent id under a new handle — the creator should update it"
+            >Handle changed on YouTube → &#64;{{ item.observed.handleChangedTo }}</span
+          >
+          <span class="tr-tag tr-tag--danger" *ngIf="item.observed.notFound"
+            title="The last 2+ lookups found no YouTube channel for this handle"
+            >Channel not found</span
+          >
+        </div>
+        <div>
+          <span class="tr-label">Declared tier</span>
+          <strong>{{ item.declaredTierRef?.label || item.declaredTier }}</strong>
+        </div>
+        <div>
+          <span class="tr-label">Observed</span>
+          {{ followersText(item) }}
+          <ng-container *ngIf="item.observed.tier">
+            → <strong>{{ item.observed.tier.label }}</strong></ng-container
+          >
+          <span
+            *ngIf="item.observed.capturedAt"
+            class="tr-fresh"
+            [ngClass]="'tr-fresh--' + item.observed.freshness"
+          >
+            {{ freshnessText(item) }} · {{ item.observed.capturedAt | date: 'MMM d, y' }}
+          </span>
+          <span *ngIf="item.observed.lastAttemptFailed" class="tr-muted"> · last fetch failed</span>
+          <a
+            *ngIf="item.observed.externalUrl"
+            [href]="item.observed.externalUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="tr-link tr-observed-link"
+            title="The exact channel the follower count came from"
+            >· open observed channel <i class="bi bi-box-arrow-up-right"></i
+          ></a>
+        </div>
+        <div *ngIf="item.declaredVsObserved !== 'not_available'">
+          <span class="tr-label">Declared vs observed</span>
+          <span [class.tr-mismatch]="item.declaredVsObserved === 'mismatch'">{{
+            item.declaredVsObserved === 'match' ? 'match' : 'different tier'
+          }}</span>
+        </div>
+        <div *ngIf="item.decision.decidedTier">
+          <span class="tr-label">Last decision</span>
+          {{ item.decision.decidedTier }}
+          <span class="tr-muted"
+            >· {{ item.decision.decidedByName || 'admin' }} ·
+            {{ item.decision.decidedAt | date: 'MMM d, y' }}
+            <ng-container *ngIf="basisText(item.decision.evidenceBasis)">
+              · {{ basisText(item.decision.evidenceBasis) }}</ng-container
+            ></span
+          >
+        </div>
+      </div>
+
+      <div class="tr-actions" *ngIf="!isOpen(item) && !isMoving(item)">
+        <button
+          type="button"
+          class="tr-btn tr-btn--move"
+          *ngIf="observedTierToApply(item) as tier"
+          (click)="askMove(item)"
+        >
+          Change to {{ tier }} &amp; verify
+        </button>
+        <button type="button" class="tr-btn tr-btn--verify" (click)="open(item, 'verified')">
+          Verify tier
+        </button>
+        <button type="button" class="tr-btn tr-btn--reject" (click)="open(item, 'rejected')">
+          Reject tier
+        </button>
+      </div>
+
+      <div class="tr-move" *ngIf="isMoving(item)">
+        <p>
+          Change <strong>{{ item.declaredTierRef?.label || item.declaredTier }}</strong> →
+          <strong>{{ observedTierToApply(item) }}</strong> (observed
+          {{ item.observed.followers | number }} followers) and verify it? The creator is told about the
+          change, as with an edit in the user pop-up.
+        </p>
+        <div class="tr-error" *ngIf="movingError">{{ movingError }}</div>
+        <button type="button" class="tr-btn tr-btn--move" [disabled]="movingSaving" (click)="confirmMove()">
+          {{ movingSaving ? 'Saving…' : 'Change & verify' }}
+        </button>
+        <button type="button" class="tr-btn" [disabled]="movingSaving" (click)="cancelMove()">Cancel</button>
+      </div>
+
+      <form class="tr-decide" *ngIf="isOpen(item)" (ngSubmit)="save()">
+        <p class="tr-decide-title">
+          {{ draft.status === 'verified' ? 'Verify' : 'Reject' }} declared tier
+          <strong>{{ item.declaredTierRef?.label || item.declaredTier }}</strong>
+        </p>
+        <fieldset class="tr-basis">
+          <legend>Based on</legend>
+          <label [class.tr-disabled]="!item.observedUsable">
+            <input
+              type="radio"
+              name="basis"
+              value="observed"
+              [(ngModel)]="draft.basis"
+              [attr.disabled]="item.observedUsable ? null : true"
+            />
+            The observed follower count
+          </label>
+          <label>
+            <input type="radio" name="basis" value="manual_check" [(ngModel)]="draft.basis" />
+            A manual check (I opened the profile)
+          </label>
+          <small *ngIf="!item.observedUsable"
+            >No fresh observation for this account, so only a manual check is possible.</small
+          >
+        </fieldset>
+        <label class="tr-note">
+          Note (optional)
+          <textarea [(ngModel)]="draft.note" name="note" rows="2" maxlength="500"></textarea>
+        </label>
+        <div *ngIf="decisionError" class="tr-state tr-state--error">{{ decisionError }}</div>
+        <div class="tr-decide-actions">
+          <button type="button" class="tr-btn" (click)="cancel()" [disabled]="saving">Cancel</button>
+          <button
+            type="submit"
+            class="tr-btn"
+            [ngClass]="draft.status === 'verified' ? 'tr-btn--verify' : 'tr-btn--reject'"
+            [disabled]="saving"
+          >
+            {{ saving ? 'Saving…' : draft.status === 'verified' ? 'Verify' : 'Reject' }}
+          </button>
+        </div>
+      </form>
+    </article>
+  </div>
+
+  <div class="tr-pager" *ngIf="data && data.totalPages > 1">
+    <button type="button" class="tr-btn" (click)="goToPage(page - 1)" [disabled]="page <= 1">
+      Previous
+    </button>
+    <span>Page {{ data.page }} of {{ data.totalPages }} · {{ data.filtered }} accounts</span>
+    <button
+      type="button"
+      class="tr-btn"
+      (click)="goToPage(page + 1)"
+      [disabled]="page >= data.totalPages"
+    >
+      Next
+    </button>
+  </div>
+</div>

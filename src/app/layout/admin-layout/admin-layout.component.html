@@ -3,62 +3,56 @@
     <!-- Logo and Brand -->
     <div class="navbar-brand">
       <a routerLink="/admin/admin-dashboard" class="logo-link">
-        <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" />
+        <img src="assets/logo-trendstarz-logo-text.png" alt="TrendStarz" class="logo-image" width="200" height="40" />
       </a>
     </div>
 
-    <!-- Navigation Tabs -->
+    <!-- Navigation: grouped dropdowns + direct links (groups: ADMIN_NAV_GROUPS) -->
     <div class="navbar-tabs">
-        <a routerLink="/admin/admin-user-table"
-           routerLinkActive="active"
-           [routerLinkActiveOptions]="{ exact: false }"
-         class="nav-tab">
-          User Management
-        </a>
-          <a routerLink="/admin/deleted-users"
-             routerLinkActive="active"
-             [routerLinkActiveOptions]="{ exact: false }"
-         class="nav-tab">
-            Deleted Users
+      <div
+        *ngFor="let group of navGroups"
+        class="nav-dropdown"
+        [class.open]="openNavGroup === group.key"
+        [class.active]="isNavGroupActive(group)"
+      >
+        <button
+          type="button"
+          class="nav-tab nav-tab-parent nav-dropdown-toggle"
+          [class.active]="isNavGroupActive(group)"
+          [attr.aria-expanded]="openNavGroup === group.key"
+          aria-haspopup="true"
+          (click)="toggleNavGroup(group.key, $event)"
+        >
+          {{ group.label }}
+          <i class="bi" [ngClass]="openNavGroup === group.key ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+        </button>
+        <div class="nav-submenu" *ngIf="openNavGroup === group.key" role="menu">
+          <a
+            *ngFor="let item of group.items"
+            [routerLink]="item.link"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="nav-submenu-item"
+            role="menuitem"
+            (click)="closeNavGroup()"
+          >
+            <i class="bi" [ngClass]="item.icon"></i> {{ item.label }}
           </a>
-      <a routerLink="/admin/campaign-review"
-         routerLinkActive="active"
-         [routerLinkActiveOptions]="{ exact: false }"
-         class="nav-tab">
-        Campaign Review
-      </a>
-      <a routerLink="/admin/collaboration-review"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: false }"
-        class="nav-tab">
-        Collaboration Review
-      </a>
-      <a routerLink="/admin/payments" 
-         routerLinkActive="active" 
-         [routerLinkActiveOptions]="{ exact: false }"
-         class="nav-tab">
+        </div>
+      </div>
+      <a routerLink="/admin/payments" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
         Payments
       </a>
-      <a routerLink="/admin/plans" 
-         routerLinkActive="active" 
-         [routerLinkActiveOptions]="{ exact: false }"
-         class="nav-tab">
-        Plans
-      </a>
-      <a routerLink="/admin/reviews" 
-         routerLinkActive="active" 
-         [routerLinkActiveOptions]="{ exact: false }"
-         class="nav-tab">
-        Reviews
-      </a>
-      <a routerLink="/admin/disputes" 
-         routerLinkActive="active" 
-         [routerLinkActiveOptions]="{ exact: false }"
-         class="nav-tab">
+      <a routerLink="/admin/disputes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
         Disputes
         <span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span>
       </a>
-      
+      <a routerLink="/admin/link-analytics" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
+        Link Analytics
+      </a>
+      <a routerLink="/admin/reviews" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-tab">
+        Reviews
+      </a>
     </div>
 
     <!-- Search and Icons -->
@@ -91,14 +85,19 @@
           <button class="profile-btn" (click)="dropdownOpen = !dropdownOpen" [attr.aria-expanded]="dropdownOpen">
             <img [src]="adminUser.profileImage || 'assets/default-profile.png'" 
                  [alt]="adminUser.name" 
-                 class="profile-avatar" />
+               class="profile-avatar"
+               width="40"
+               height="40" />
           </button>
           <ul class="dropdown-menu dropdown-menu-end" *ngIf="dropdownOpen" (click)="dropdownOpen = false">
             <li><span class="dropdown-header">{{ adminUser.name }}</span></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" routerLink="/admin/admin-dashboard">Profile Settings</a></li>
-            <li><a class="dropdown-item" routerLink="/admin/admin-management">Account Settings</a></li>
+            <!-- <li><a class="dropdown-item" routerLink="/admin/admin-management">Account Settings</a></li> -->
+            <li><a class="dropdown-item" routerLink="/admin/collaboration-score-settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }"> TrendScore </a></li>
             <li><a class="dropdown-item" routerLink="/admin/admin-management" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" >Admin Management</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" routerLink="/admin/plans">Plans</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" (click)="logout()">Logout</a></li>
           </ul>
@@ -159,14 +158,24 @@
       </div>
 
       <div class="mobile-link-list">
-        <a routerLink="/admin/admin-user-table" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-people"></i><span>User Management</span></a>
-        <a routerLink="/admin/deleted-users" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link mobile-link-sub" (click)="closeMobileMenu()"><i class="bi bi-trash3"></i><span>Deleted Users</span></a>
-        <a routerLink="/admin/campaign-review" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-kanban"></i><span>Campaign Review</span></a>
-        <a routerLink="/admin/collaboration-review" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-camera-reels"></i><span>Collaboration Review</span></a>
+        <ng-container *ngFor="let group of navGroups">
+          <div class="mobile-group-label"><i class="bi" [ngClass]="group.icon"></i><span>{{ group.label }}</span></div>
+          <a
+            *ngFor="let item of group.items"
+            [routerLink]="item.link"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="mobile-link mobile-link-sub"
+            (click)="closeMobileMenu()"
+            ><i class="bi" [ngClass]="item.icon"></i><span>{{ item.label }}</span></a
+          >
+        </ng-container>
         <a routerLink="/admin/payments" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-wallet2"></i><span>Payments</span></a>
-        <a routerLink="/admin/plans" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gem"></i><span>Plans</span></a>
-        <a routerLink="/admin/reviews" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-chat-left-text"></i><span>Reviews</span></a>
         <a routerLink="/admin/disputes" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-exclamation-octagon"></i><span>Disputes</span><span class="dispute-badge" *ngIf="openDisputesCount > 0">{{ openDisputesCount }}</span></a>
+        <a routerLink="/admin/link-analytics" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-link-45deg"></i><span>Link Analytics</span></a>
+        <a routerLink="/admin/reviews" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-chat-left-text"></i><span>Reviews</span></a>
+        <a routerLink="/admin/plans" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-gem"></i><span>Plans</span></a>
+        <a routerLink="/admin/collaboration-score-settings" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="mobile-link" (click)="closeMobileMenu()"><i class="bi bi-graph-up-arrow"></i><span>TrendScore</span></a>
       </div>
 
       <div class="mobile-upgrade">

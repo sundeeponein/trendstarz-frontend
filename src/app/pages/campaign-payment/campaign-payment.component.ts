@@ -7,13 +7,18 @@ import { environment } from '../../../environments/environment';
 import { ConfigService } from '../../shared/config.service';
 import { PaymentsPayoutsApiService } from '../../features/payments-payouts/payments-payouts-api.service';
 import { CampaignTransaction } from '../../features/payments-payouts/payments-payouts.models';
+import { PaymentCheckoutComponent } from '../../shared/payment-checkout/payment-checkout.component';
+import { PaidCollabTermsComponent } from '../../shared/paid-collab-terms/paid-collab-terms.component';
+import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 
 type Tab = 'summary' | 'pay' | 'status';
+
+type RazorpayOrder = { orderId: string; amount: number; currency: string; keyId: string };
 
 @Component({
   selector: 'app-campaign-payment',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaymentCheckoutComponent, PaidCollabTermsComponent],
   templateUrl: './campaign-payment.component.html',
   styleUrls: ['./campaign-payment.component.scss']
 })
@@ -25,12 +30,15 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
 
   loading = false;
   submitting = false;
+  processingRazorpay = false;
   error = '';
   successMessage = '';
   calculated: any = null;
   activeTab: Tab = 'summary';
 
   utrNumber = '';
+  /** Host ticked the paid-collaboration terms (required to pay, except pay-to-join). */
+  termsAccepted = false;
   paymentProofFile: File | null = null;
   paymentProofUrl = '';
   paymentProofPreview: string | null = null;
@@ -42,7 +50,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
 
   // current transaction status (polled after modal opens)
   statusTransactions: CampaignTransaction[] = [];
-  copied = false;
+  manualPayOpen = false;
 
   constructor(
     private http: HttpClient,
@@ -80,9 +88,12 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     this.paymentProofPreview = null;
     this.statusTransactions = [];
     this.activeTab = this.initialTab || 'summary';
+    this.manualPayOpen = false;
   }
 
   setTab(t: Tab) { this.activeTab = t; }
+
+  toggleManualPay() { this.manualPayOpen = !this.manualPayOpen; }
 
   // ── Status helpers ──────────────────────────────────
   get primaryTx(): CampaignTransaction | null {
@@ -123,19 +134,12 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     return 'cp-status--muted';
   }
 
-  openPayInNewTab() {
-    if (!this.campaignId) return;
-    const url = `/campaign-pay/${this.campaignId}`;
-    window.open(url, '_blank', 'noopener');
-    this.setTab('pay');
+  get totalToPayRupees(): number {
+    return this.totalToPay / 100;
   }
 
-  copyUpi() {
-    navigator.clipboard.writeText(this.paymentUpiId).then(() => {
-      this.copied = true;
-      setTimeout(() => { this.copied = false; this.cd.markForCheck(); }, 2000);
-      this.cd.markForCheck();
-    }).catch(() => {});
+  get transactionNote(): string {
+    return `Campaign payment ${(this.campaignId || '').slice(-6).toUpperCase()}`;
   }
 
   close() {
@@ -144,6 +148,10 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   }
 
   // ── Helpers / display ──────────────────────────────────
+  get isPayToJoin(): boolean {
+    return (this.calculated?.campaignType || '').toLowerCase() === 'pay_to_join';
+  }
+
   get campaignTypeLabel(): string {
     const m: Record<string, string> = {
       paid_collab: 'Paid Collaboration',
@@ -165,27 +173,53 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     return Math.round(fee * (this.gstPercent / 100));
   }
 
+  /** TrendStarZ credit applied to the platform fee (UPI payments only). */
+  get creditToApply(): number {
+    return Number(this.calculated?.creditToApply || 0);
+  }
+
   get totalToPay(): number {
     if (!this.calculated) return 0;
-    return Number(this.calculated.payerTotal || 0) + this.gstAmount;
+    return Number(this.calculated.payerTotal || 0) - this.creditToApply + this.gstAmount;
+  }
+
+  get needsTerms(): boolean {
+    return !this.isPayToJoin;
+  }
+
+  get termsOk(): boolean {
+    return !this.needsTerms || this.termsAccepted;
   }
 
   get canSubmit(): boolean {
-    return !!this.utrNumber.trim() && !this.submitting;
+    return !!this.utrNumber.trim() && !this.submitting && this.termsOk;
   }
 
   // ── File handling ────────────────────────────────────
-  onFileSelected(ev: Event) {
+  async onFileSelected(ev: Event) {
     const el = ev.target as HTMLInputElement;
     if (!el.files?.length) return;
     const file = el.files[0];
-    this.paymentProofFile = file;
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      this.error = validationError;
+      el.value = '';
+      return;
+    }
+    this.error = '';
+    const compressedFile = await compressImageFile(file, 'screenshot');
+    if (isOversizedAfterCompression(compressedFile)) {
+      this.error = OVERSIZE_MESSAGE;
+      el.value = '';
+      return;
+    }
+    this.paymentProofFile = compressedFile;
     const reader = new FileReader();
     reader.onload = e => {
       this.paymentProofPreview = (e.target?.result as string) || null;
       this.cd.markForCheck();
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(compressedFile);
   }
 
   clearFile() {
@@ -255,7 +289,11 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
           return;
         }
       }
-      const payload = { utrNumber: this.utrNumber.trim(), paymentProofUrl: this.paymentProofUrl };
+      const payload = {
+        utrNumber: this.utrNumber.trim(),
+        paymentProofUrl: this.paymentProofUrl,
+        acceptTerms: this.termsOk,
+      };
       await firstValueFrom(this.config.submitCampaignPaymentProof(this.campaignId, payload));
       this.successMessage = 'Payment proof submitted! Verification usually takes 6–10 hours. We\'ll notify you once confirmed.';
       await this.fetchStatus();
@@ -263,6 +301,93 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
       this.error = err?.error?.message || err?.message || 'Failed to submit proof';
     } finally {
       this.submitting = false;
+      this.cd.markForCheck();
+    }
+  }
+
+  private async ensureRazorpayLoaded(): Promise<boolean> {
+    if (typeof window === 'undefined') return false;
+    if ((window as any).Razorpay) return true;
+
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Razorpay checkout script'));
+      document.body.appendChild(script);
+    });
+
+    return !!(window as any).Razorpay;
+  }
+
+  async payWithRazorpay() {
+    if (!this.campaignId) return;
+    this.processingRazorpay = true;
+    this.error = '';
+
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+      if (!token) {
+        this.error = 'Not authenticated';
+        return;
+      }
+      const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+      const orderRes = await firstValueFrom(
+        this.txApi.createCampaignRazorpayOrder(this.campaignId, headers, this.termsOk),
+      );
+      const order: RazorpayOrder | undefined = orderRes?.order;
+      if (!order?.orderId || !order?.keyId) {
+        this.error = 'Failed to initialize Razorpay order.';
+        return;
+      }
+
+      const loaded = await this.ensureRazorpayLoaded();
+      if (!loaded) {
+        this.error = 'Failed to load Razorpay checkout.';
+        return;
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        const rz = new (window as any).Razorpay({
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency || 'INR',
+          name: 'TrendstarZ',
+          description: 'Campaign payment',
+          order_id: order.orderId,
+          handler: async (resp: any) => {
+            try {
+              await firstValueFrom(
+                this.txApi.verifyCampaignRazorpayPayment(
+                  this.campaignId!,
+                  {
+                    orderId: resp?.razorpay_order_id,
+                    paymentId: resp?.razorpay_payment_id,
+                    signature: resp?.razorpay_signature,
+                  },
+                  headers,
+                ),
+              );
+              this.successMessage = 'Razorpay payment verified. Influencers can now start work.';
+              await this.fetchStatus();
+              this.activeTab = 'status';
+              resolve();
+            } catch (e: any) {
+              reject(new Error(e?.error?.message || 'Payment verification failed'));
+            }
+          },
+          modal: {
+            ondismiss: () => reject(new Error('Payment cancelled.')),
+          },
+          theme: { color: '#f59e0b' },
+        });
+        rz.open();
+      });
+    } catch (err: any) {
+      this.error = err?.message || err?.error?.message || 'Razorpay payment failed';
+    } finally {
+      this.processingRazorpay = false;
       this.cd.markForCheck();
     }
   }

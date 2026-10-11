@@ -1,0 +1,388 @@
+<div class="adm-page">
+  <div class="adm-page-head">
+    <div>
+      <a class="adm-back" routerLink="/admin/admin-dashboard"
+        ><i class="bi bi-arrow-left"></i> Back to dashboard</a
+      >
+      <h2 class="adm-title">
+        Matching Evidence <span class="adm-badge">READ-ONLY</span>
+      </h2>
+      <p class="adm-subtitle">
+        How much trustworthy creator evidence exists for matching, per platform. This page never
+        observes, verifies or changes ranking.
+        <ng-container *ngIf="report">
+          <strong>As of {{ report.asOf | date: 'MMM d, y, h:mm a' : 'UTC' }} UTC.</strong>
+        </ng-container>
+      </p>
+    </div>
+    <button type="button" class="adm-btn" (click)="load()" [disabled]="loading">
+      <i class="bi bi-arrow-clockwise" [class.spin]="loading"></i> Refresh evidence
+    </button>
+  </div>
+
+  <div *ngIf="loading && !report" class="adm-state">Loading evidence…</div>
+  <div *ngIf="error" class="adm-state adm-state--error">{{ error }}</div>
+
+  <ng-container *ngIf="report && !error">
+    <!-- ══ Population ══ -->
+    <div class="adm-stats">
+      <div class="adm-stat" *ngIf="report.population.influencers as p">
+        <div class="adm-stat-head">
+          <span class="adm-stat-label">Approved influencers</span>
+          <span class="adm-badge">Total {{ p.evaluated }}</span>
+        </div>
+        <div class="adm-stat-value">
+          {{ p.approvedActive }} <small>of {{ p.evaluated }} creators</small>
+        </div>
+        <div class="adm-bar">
+          <span class="adm-bar-fill adm-bar-fill--orange" [style.width.%]="share(p)"></span>
+        </div>
+      </div>
+
+      <div class="adm-stat" *ngIf="report.population.photographers as p">
+        <div class="adm-stat-head">
+          <span class="adm-stat-label">Approved photographers</span>
+          <span class="adm-badge" [class.adm-badge--ok]="share(p) === 100"
+            >{{ share(p) }}% approved</span
+          >
+        </div>
+        <div class="adm-stat-value">
+          {{ p.approvedActive }} <small>of {{ p.evaluated }} photographers</small>
+        </div>
+        <div class="adm-bar">
+          <span class="adm-bar-fill adm-bar-fill--green" [style.width.%]="share(p)"></span>
+        </div>
+      </div>
+
+      <div class="adm-stat">
+        <div class="adm-stat-head">
+          <span class="adm-stat-label">Social accounts</span>
+          <span class="adm-badge adm-badge--info">{{ platforms.length }} platforms</span>
+        </div>
+        <div class="adm-stat-value">
+          {{ report.socialEvidence.overall.accounts }} <small>accounts</small>
+        </div>
+        <div class="adm-bar"><span class="adm-bar-fill adm-bar-fill--blue" style="width: 100%"></span></div>
+      </div>
+
+      <div class="adm-stat" *ngIf="report.socialEvidence.overall as o">
+        <div class="adm-stat-head">
+          <span class="adm-stat-label">Usable observed followers</span>
+          <span class="adm-badge adm-badge--warn" *ngIf="lowObservedCoverage">Low coverage</span>
+        </div>
+        <div class="adm-stat-value" [class.adm-text--red]="lowObservedCoverage">
+          {{ pct(o.usableObservedFollowersPct) }}
+          <small>{{ o.usableObservedFollowers }} with a current count</small>
+        </div>
+        <div class="adm-bar">
+          <span
+            class="adm-bar-fill adm-bar-fill--red"
+            [style.width.%]="o.usableObservedFollowersPct || 0"
+          ></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ Social evidence per platform ══ -->
+    <section class="adm-card" data-section="platforms">
+      <div class="adm-card-head">
+        <div>
+          <h3 class="adm-section-title"><span class="adm-dot adm-dot--orange"></span> Social evidence by platform</h3>
+          <p class="adm-section-sub">Creator social accounts, connections and observation state.</p>
+        </div>
+      </div>
+      <div class="adm-table-wrap">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th class="num">Accounts</th>
+              <th class="num">Needs connection</th>
+              <th class="num">Connected</th>
+              <th class="num">Observed (fresh / stale)</th>
+              <th class="num">Usable followers</th>
+              <th class="num">Ownership verified</th>
+              <th class="num">Tier verified</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of platforms; trackBy: trackKey">
+              <td>
+                <span class="adm-dot me-platform-dot" [style.background]="platformColor(row.key)"></span>
+                {{ row.label }}
+                <span class="adm-badge adm-badge--warn" *ngIf="row.p.sample === 'insufficient'"
+                  >small sample</span
+                >
+              </td>
+              <td class="num">{{ row.p.accounts }}</td>
+              <td class="num" [class.adm-text--orange]="row.p.requiresConnection > 0" [class.is-zero]="!row.p.requiresConnection">
+                {{ row.p.requiresConnection }}
+              </td>
+              <td class="num" [class.is-zero]="!row.p.connected">
+                {{ row.p.requiresConnection ? row.p.connected : '—' }}
+              </td>
+              <td class="num" [class.is-zero]="!observed(row.p)">{{ observed(row.p) }}</td>
+              <td class="num" [class.is-zero]="!row.p.usableObservedFollowers">
+                {{ row.p.usableObservedFollowers }} ({{ pct(row.p.usableObservedFollowersPct) }})
+              </td>
+              <td class="num" [class.is-zero]="!row.p.ownership.verified">{{ row.p.ownership.verified }}</td>
+              <td class="num" [class.adm-text--green]="row.p.tier.verified > 0" [class.is-zero]="!row.p.tier.verified">
+                {{ row.p.tier.verified }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="adm-note">
+        <strong>Observed</strong> = latest successful platform observation is fresh (≤
+        {{ report.definitions.proposedThresholds.observationFreshDays }} days) or stale (≤
+        {{ report.definitions.proposedThresholds.observationExpiredAfterDays }} days).
+        <strong>Verified</strong> = an admin decision that still matches the current handle/tier.
+        Platforms with fewer than {{ report.definitions.minSampleSize }} accounts are marked as a
+        small sample.
+      </p>
+    </section>
+
+    <!-- ══ YouTube schedule ══ -->
+    <section class="adm-card" data-section="schedule">
+      <div class="adm-card-head">
+        <h3 class="adm-section-title">
+          <i class="bi bi-youtube me-youtube"></i> YouTube observation schedule
+        </h3>
+        <span class="me-switch" *ngIf="schedule">
+          Scheduled observation:
+          <span class="adm-pill" [class.adm-pill--ok]="schedule.enabled" [class.adm-pill--off]="!schedule.enabled"
+            ><span class="adm-dot" [class.adm-dot--green]="schedule.enabled"></span>
+            {{ schedule.enabled ? 'On' : 'Off' }}</span
+          >
+        </span>
+      </div>
+      <div class="adm-card-body">
+        <div *ngIf="scheduleError" class="adm-state adm-state--error">{{ scheduleError }}</div>
+        <div class="adm-kv" *ngIf="schedule">
+          <div><span>Accounts in scope</span> <strong>{{ schedule.candidates }}</strong></div>
+          <div>
+            <span>Due now</span>
+            <strong [class.adm-text--orange]="schedule.dueNow > 0">{{ schedule.dueNow }}</strong>
+          </div>
+          <div><span>Paused (handle needs review)</span> <strong>{{ schedule.paused.length }}</strong></div>
+          <div>
+            <span>Last scheduled attempt</span>
+            <strong>{{
+              schedule.lastScheduledAttemptAt
+                ? (schedule.lastScheduledAttemptAt | date: 'MMM d, y, h:mm a' : 'UTC') + ' UTC'
+                : 'Never'
+            }}</strong>
+          </div>
+          <div>
+            <span>Counts older than {{ schedule.retention.maxAgeDays }} days</span>
+            <strong>{{ schedule.retention.countsOlderThanLimit }}</strong>
+          </div>
+        </div>
+      </div>
+      <ng-container *ngIf="schedule">
+        <p class="adm-note">
+          Refreshes each account every {{ schedule.schedule.refreshEveryDays }} days ({{
+            schedule.schedule.runsAt
+          }}). Turned on with the server setting
+          <code class="adm-code">{{ schedule.switch }}</code>. YouTube follower counts are cleared
+          after {{ schedule.retention.maxAgeDays }} days, whether or not the schedule is on.
+        </p>
+        <ul class="me-paused" *ngIf="schedule.paused.length">
+          <li *ngFor="let p of schedule.paused">
+            <strong>{{ p.handle || 'unknown handle' }}</strong> — {{ p.consecutiveFailures }} failed
+            lookups ({{ p.lastError || 'unknown' }}); next retry
+            {{ p.nextRetryAt | date: 'MMM d, y' : 'UTC' }}
+          </li>
+        </ul>
+      </ng-container>
+    </section>
+
+    <!-- ══ Creator data ══ -->
+    <section class="adm-card" *ngIf="report.creatorData.influencers as inf" data-section="creators">
+      <div class="adm-card-head">
+        <h3 class="adm-section-title">
+          <span class="adm-dot adm-dot--blue"></span> Influencer data
+          <small>({{ inf.creators }} approved)</small>
+        </h3>
+      </div>
+      <div class="adm-card-body">
+        <div class="adm-columns">
+          <div>
+            <div class="adm-column-head"><h4>Last active</h4><span>Window</span></div>
+            <table class="adm-table adm-table--list">
+              <tbody>
+                <tr *ngFor="let a of activityRows" [class.adm-row--warn]="a.key === activityPeak(inf)">
+                  <td>{{ a.label }}</td>
+                  <td class="num">{{ inf.activity[a.key] || 0 }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <div class="adm-column-head"><h4>Categories per creator</h4><span>Breakdown</span></div>
+            <table class="adm-table adm-table--list">
+              <tbody>
+                <tr *ngFor="let c of categoryRows(inf)" [class.adm-row--danger]="c.overCap">
+                  <td>{{ c.label }}</td>
+                  <td class="num">{{ c.count }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="adm-callout" [class.adm-callout--warn]="inf.categories.overCurrentCap > 0">
+              {{ inf.categories.overCurrentCap }} above the current limit of {{ inf.categories.cap }}.
+            </div>
+          </div>
+          <div>
+            <div class="adm-column-head"><h4>Rates</h4><span>Distribution</span></div>
+            <table class="adm-table adm-table--list">
+              <tbody>
+                <tr><td>Priced rows</td><td class="num">{{ inf.rates.pricedRows }}</td></tr>
+                <tr>
+                  <td>Below ₹{{ report.definitions.proposedThresholds.minimumRateRupees }}</td>
+                  <td class="num" [class.adm-text--red]="inf.rates.belowProposedMinimum > 0">
+                    {{ inf.rates.belowProposedMinimum }}
+                  </td>
+                </tr>
+                <tr>
+                  <td>Multiples of ₹500</td>
+                  <td class="num">{{ inf.rates.multipleOf500 }} ({{ pct(inf.rates.multipleOf500Pct) }})</td>
+                </tr>
+                <tr>
+                  <td>Confirmed by creator</td>
+                  <td class="num">
+                    {{ inf.rates.confirmedRows ?? 0 }} ({{ pct(inf.rates.confirmedPct) }})
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <div class="adm-column-head"><h4>Availability</h4><span>Status</span></div>
+            <table class="adm-table adm-table--list">
+              <tbody>
+                <tr class="adm-row--ok"><td>Available</td><td class="num">{{ inf.availability.available }}</td></tr>
+                <tr><td>Not available</td><td class="num">{{ inf.availability.notAvailable }}</td></tr>
+                <tr><td>Not set</td><td class="num">{{ inf.availability.notSet }}</td></tr>
+              </tbody>
+            </table>
+            <div class="adm-callout">
+              "Not set" includes profiles saved before creators could choose "not available".
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ Outcomes ══ -->
+    <section class="adm-card" data-section="events">
+      <div class="adm-card-head">
+        <div>
+          <h3 class="adm-section-title"><span class="adm-dot adm-dot--green"></span> Marketplace events</h3>
+          <p class="adm-section-sub">
+            What happened in the marketplace — recorded live, or rebuilt from older records.
+          </p>
+        </div>
+        <div class="adm-chips">
+          <span class="adm-chip">Total <b>{{ report.outcomes.total }}</b></span>
+          <span class="adm-chip adm-chip--ok">Captured live <b>{{ report.outcomes.live }}</b></span>
+          <span class="adm-chip">Backfilled <b>{{ report.outcomes.backfilled }}</b></span>
+          <span class="adm-chip adm-chip--accent"
+            >Approved creators with any event <b>{{ report.outcomes.approvedCreatorsWithAnyEvent }}</b></span
+          >
+        </div>
+      </div>
+      <div class="adm-table-wrap">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th class="num">Total</th>
+              <th class="num">Live</th>
+              <th class="num">Backfilled</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of eventRows()">
+              <td>{{ e.type }}</td>
+              <td class="num">{{ e.total }}</td>
+              <td class="num" [class.adm-text--green]="e.live > 0" [class.is-zero]="!e.live">{{ e.live }}</td>
+              <td class="num" [class.is-zero]="!e.backfilled">{{ e.backfilled }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="adm-note" *ngIf="report.outcomes.sample === 'insufficient'">
+        Too few live events to evaluate creators on outcomes yet.
+      </p>
+    </section>
+
+    <!-- ══ Ranking resolution ══ -->
+    <section class="adm-card" *ngIf="report.rankingResolution.overall as o" data-section="ranking">
+      <div class="adm-card-head">
+        <div>
+          <h3 class="adm-section-title"><span class="adm-dot adm-dot--purple"></span> Ranking resolution</h3>
+          <p class="adm-section-sub">
+            Across {{ o.campaigns }} campaigns and {{ o.ranked | number }} ranked creators: which
+            ranking rule first tells two eligible creators apart. <em>"Creator ID"</em> means the
+            three signals were tied and the stable tie-break decided — not marketplace evidence.
+          </p>
+        </div>
+      </div>
+      <div class="adm-card-body">
+        <div class="adm-metrics">
+          <div class="adm-metric">
+            <span>Platform / content</span>
+            <strong class="adm-text--blue">{{ pct(o.decidedPairsPct['platformContent']) }}</strong>
+          </div>
+          <div class="adm-metric">
+            <span>Category</span>
+            <strong class="adm-text--orange">{{ pct(o.decidedPairsPct['category']) }}</strong>
+          </div>
+          <div class="adm-metric">
+            <span>Activity</span>
+            <strong class="adm-text--blue">{{ pct(o.decidedPairsPct['activity']) }}</strong>
+          </div>
+          <div class="adm-metric">
+            <span>Creator ID tie-break</span>
+            <strong class="adm-text--red">{{ pct(o.decidedPairsPct['creatorId']) }}</strong>
+          </div>
+        </div>
+        <div class="adm-facts me-facts">
+          <span>Creators sharing all signals: <b>{{ pct(o.creatorsInTieGroupsPct) }}</b></span>
+          <span>Top-5 cutoff inside a tie: <b class="adm-text--orange">{{ cutoffText('top5') }}</b></span>
+          <span>Top-10 cutoff inside a tie: <b class="adm-text--orange">{{ cutoffText('top10') }}</b></span>
+          <span>Top-25 cutoff inside a tie: <b class="adm-text--orange">{{ cutoffText('top25') }}</b></span>
+        </div>
+      </div>
+      <div class="adm-table-wrap">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>Campaign</th>
+              <th>Status</th>
+              <th class="num">Eligible</th>
+              <th class="num">Distinct combinations</th>
+              <th class="num">Sharing all signals</th>
+              <th class="num">Largest tie</th>
+              <th class="num">Decided by ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of report.rankingResolution.campaigns; trackBy: trackKey">
+              <td class="adm-mono adm-text--blue">{{ campaignLabel(c) }}</td>
+              <td>
+                <span class="adm-pill" [class.adm-pill--ok]="c.status === 'active'">{{ c.status }}</span>
+              </td>
+              <td class="num">{{ c.eligible }}</td>
+              <td class="num">{{ c.distinctSignalCombinations }}</td>
+              <td class="num">{{ pct(c.creatorsInTieGroupsPct) }}</td>
+              <td class="num">{{ c.largestTieGroup }}</td>
+              <td class="num">{{ pct(c.decidedPairsPct.creatorId) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </ng-container>
+</div>

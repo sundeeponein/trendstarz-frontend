@@ -1,0 +1,233 @@
+import { Injectable } from '@angular/core';
+import { CollaborationAudit, CollaborationScoreThresholds, CollaborationScoreWeights } from './collaboration-score-api.service';
+
+/** Mirrors the backend defaults (collaboration-score-settings.default.json → thresholds). */
+/** Mirrors the backend defaults (collaboration-score-settings.default.json → scoreWeights). */
+export const DEFAULT_SCORE_WEIGHTS: CollaborationScoreWeights = {
+  profileCompletion: 15,
+  contentQuality: 25,
+  postingConsistency: 20,
+  professionalBranding: 20,
+  campaignReadiness: 20,
+};
+
+export const DEFAULT_SCORE_THRESHOLDS: CollaborationScoreThresholds = {
+  trendstarzRecommendedMinScore: 80,
+  campaignReadyMinScore: 70,
+  partiallyReadyMinScore: 40,
+};
+
+export type ScoreConfidenceLevel = 'High' | 'Medium' | 'Low';
+
+export interface ScoreConfidenceBasedOnItem {
+  met: boolean;
+  label: string;
+  absentLabel: string;
+}
+
+export interface ScoreConfidence {
+  level: ScoreConfidenceLevel;
+  basedOn: ScoreConfidenceBasedOnItem[];
+}
+
+export interface SubScoreRow {
+  label: string;
+  value: number;
+  weight: string;
+  contribution: number;
+  /** True only for platform-derived rows (Content Quality, Posting
+   * Consistency) when zero platforms are connected — their value is a
+   * genuine 0 from confidenceWeightedAverage([]), but that reads as "your
+   * content is bad" when the real story is "no data exists yet." */
+  noData?: boolean;
+  /** 'Profile' = computed from the TrendStarz profile itself, unaffected by
+   * connected platforms. 'Platform' = computed only from connected social
+   * platform data (confidenceWeightedAverage over collectedPlatforms) — lets
+   * the UI group the breakdown into "your profile" vs. "your platforms" so
+   * it's clear which half a low score is coming from. */
+  group: 'Profile' | 'Platform';
+}
+
+// Badge/label formatting only — mirrors AdminPaymentsUiUtilsService's
+// bg-*-subtle/text-*-emphasis convention. Vocabulary is deliberately never
+// "Premium" for a score tier — that word is reserved for subscription
+// status only.
+@Injectable({ providedIn: 'root' })
+export class CollaborationScoreUiUtilsService {
+  // Single source of truth for the score-tier label/badge shown everywhere
+  // (creator's own card, Score Center, search cards, admin detail, the free
+  // check and the /trendstarz-score page). The bands use the SAME
+  // admin-configurable thresholds the backend uses to award
+  // campaignReadiness and trendstarzRecommended, so a tier label never
+  // disagrees with the badge a creator actually earned. Defaults mirror
+  // collaboration-score-settings.default.json; setThresholds() applies the
+  // live admin values (loaded once at app start from /audit/platform-flags).
+  private thresholds: CollaborationScoreThresholds = { ...DEFAULT_SCORE_THRESHOLDS };
+
+  setThresholds(t: Partial<CollaborationScoreThresholds> | null | undefined): void {
+    if (!t) return;
+    const next = { ...this.thresholds };
+    (Object.keys(next) as Array<keyof CollaborationScoreThresholds>).forEach((k) => {
+      const v = Number(t[k]);
+      if (Number.isFinite(v) && v >= 0 && v <= 100) next[k] = v;
+    });
+    this.thresholds = next;
+  }
+
+  get scoreThresholds(): CollaborationScoreThresholds {
+    return this.thresholds;
+  }
+
+  // Live admin weights (Collaboration Score Settings → Score Weights), so the
+  // breakdown's Weight/Contribution columns match how the score is computed.
+  private weights: CollaborationScoreWeights = { ...DEFAULT_SCORE_WEIGHTS };
+
+  setWeights(w: Partial<CollaborationScoreWeights> | null | undefined): void {
+    if (!w) return;
+    const next = { ...this.weights };
+    (Object.keys(next) as Array<keyof CollaborationScoreWeights>).forEach((k) => {
+      const v = Number(w[k]);
+      if (Number.isFinite(v) && v >= 0 && v <= 100) next[k] = v;
+    });
+    this.weights = next;
+  }
+
+  get scoreWeights(): CollaborationScoreWeights {
+    return this.weights;
+  }
+
+  private tier(score: number): 0 | 1 | 2 | 3 {
+    const t = this.thresholds;
+    if (score >= t.trendstarzRecommendedMinScore && score >= t.campaignReadyMinScore) return 3;
+    if (score >= t.campaignReadyMinScore) return 2;
+    if (score >= t.partiallyReadyMinScore) return 1;
+    return 0;
+  }
+
+  scoreTierLabel(score: number): string {
+    return ['Needs Improvement', 'Growing', 'Campaign Ready', 'TrendStarz Recommended ⭐'][this.tier(score)];
+  }
+
+  scoreTierClass(score: number): string {
+    return [
+      'bg-danger-subtle text-danger-emphasis',
+      'bg-warning-subtle text-warning-emphasis',
+      'bg-primary-subtle text-primary-emphasis',
+      'bg-success-subtle text-success-emphasis',
+    ][this.tier(score)];
+  }
+
+  campaignReadinessClass(readiness: CollaborationAudit['campaignReadiness']): string {
+    if (readiness === 'Campaign Ready') return 'bg-success-subtle text-success-emphasis';
+    if (readiness === 'Partially Ready') return 'bg-warning-subtle text-warning-emphasis';
+    return 'bg-danger-subtle text-danger-emphasis';
+  }
+
+  formatPricing(audit: Pick<CollaborationAudit, 'pricingSuggestion'>): string {
+    const p = audit?.pricingSuggestion;
+    if (!p || p.reelPrice == null) return 'Not available yet';
+    return `₹${p.reelPrice.toLocaleString('en-IN')} / Reel`;
+  }
+
+  /** Solid color (not a Bootstrap class) for the score-ring's conic-gradient — same 4 tiers as scoreTierClass/scoreTierLabel. */
+  scoreRingColor(score: number): string {
+    return ['#c92a2a', '#c2650a', '#3b5bdb', '#1a7f4e'][this.tier(score)];
+  }
+
+  /**
+   * The 5 weighted criteria behind a single collaborationScore total, each
+   * with its point Contribution (weight × score ÷ 100) — single source of
+   * truth shared by the creator's own Score Center and the admin detail
+   * page, so both always show identical numbers. Weight percentages are the
+   * live admin scoreWeights (setWeights, loaded at app start) — not persisted
+   * per-audit, so Contribution reflects the current settings rather than
+   * whatever was configured at the moment a given audit ran.
+   */
+  subScores(audit: CollaborationAudit | null): SubScoreRow[] {
+    if (!audit || audit.profileCompletenessScore == null) return [];
+    const hasPlatforms = (audit.platformsCollected?.length ?? 0) > 0;
+    const w = this.weights;
+    const rows = [
+      { label: 'Profile Completeness', value: audit.profileCompletenessScore ?? 0, weightPercent: w.profileCompletion, noData: false, group: 'Profile' as const },
+      { label: 'Content Quality', value: audit.contentQualityScore ?? 0, weightPercent: w.contentQuality, noData: !hasPlatforms, group: 'Platform' as const },
+      { label: 'Posting Consistency', value: audit.postingConsistencyScore ?? 0, weightPercent: w.postingConsistency, noData: !hasPlatforms, group: 'Platform' as const },
+      { label: 'Professional Branding', value: audit.professionalBrandingScore ?? 0, weightPercent: w.professionalBranding, noData: false, group: 'Profile' as const },
+      { label: 'Campaign Readiness', value: audit.campaignReadinessScore ?? 0, weightPercent: w.campaignReadiness, noData: false, group: 'Profile' as const },
+    ];
+    return rows.map((r) => ({
+      label: r.label,
+      value: r.value,
+      weight: `${r.weightPercent}%`,
+      contribution: Math.round(r.value * r.weightPercent) / 100,
+      group: r.group,
+      noData: r.noData,
+    }));
+  }
+
+  /** Sum of each row's Contribution — the pre-rounding total; audit.collaborationScore is this, rounded server-side. */
+  subScoresTotal(subScores: SubScoreRow[]): number {
+    return Math.round(subScores.reduce((sum, s) => sum + s.contribution, 0) * 100) / 100;
+  }
+
+  /**
+   * Points actually earned within one group ('Profile' or 'Platform') out of
+   * that group's max possible (its rows' weights summed) — e.g. "7.5 / 45"
+   * for Platform when no platform is connected. Lets the breakdown show, at
+   * a glance, how much of the total score came from the profile side vs.
+   * the platform side, without the reader having to add up rows themselves.
+   */
+  subScoreGroupSummary(subScores: SubScoreRow[], group: 'Profile' | 'Platform'): { earned: number; max: number } {
+    const rows = subScores.filter((s) => s.group === group);
+    const earned = Math.round(rows.reduce((sum, s) => sum + s.contribution, 0) * 100) / 100;
+    const max = rows.reduce((sum, s) => sum + parseFloat(s.weight), 0);
+    return { earned, max };
+  }
+
+  /** "Verified" = real API data; "Beta" = self-reported (capped, unverified); "Not available" = no usable data. */
+  confidenceLabel(confidence: number): string {
+    if (confidence >= 90) return 'Verified';
+    if (confidence > 0) return 'Beta';
+    return 'Not available';
+  }
+
+  /**
+   * How much real (API-verified or self-reported) data the current score is
+   * actually based on — a rich, connected platform should read as more
+   * trustworthy than a bare, unconnected one, for both the creator and any
+   * brand/admin who eventually sees this. Derived entirely from
+   * audit.platformsCollected confidence values — no new backend field.
+   */
+  scoreConfidence(audit: CollaborationAudit | null): ScoreConfidence | null {
+    if (!audit) return null;
+    const platforms = audit.platformsCollected || [];
+    const maxConfidence = platforms.length ? Math.max(...platforms.map((p) => p.confidence || 0)) : 0;
+    const level: ScoreConfidenceLevel = maxConfidence >= 85 ? 'High' : maxConfidence >= 50 ? 'Medium' : 'Low';
+
+    // Confidence > 0 required, not just "present in platformsCollected" — a
+    // platform with 0% confidence (e.g. self-reported with no stats filled
+    // in) is excluded from the score entirely by the rules engine, so
+    // showing it as "met" here would contradict the Platform Confidence
+    // section, which correctly calls it out as unavailable.
+    const hasPlatform = (name: string) => platforms.some((p) => p.platform === name && (p.confidence || 0) > 0);
+    const basedOn: ScoreConfidenceBasedOnItem[] = [
+      { met: true, label: 'TrendStarz Profile', absentLabel: 'TrendStarz Profile' },
+      { met: hasPlatform('YouTube'), label: 'YouTube', absentLabel: 'YouTube not added' },
+      { met: hasPlatform('Instagram'), label: 'Instagram', absentLabel: 'Instagram not connected' },
+      { met: hasPlatform('Facebook'), label: 'Facebook', absentLabel: 'Facebook not connected' },
+      // LinkedIn has no OAuth support at all yet — never "met", always shown
+      // as its own informational state rather than a real absent/connected pair.
+      { met: false, label: 'LinkedIn', absentLabel: 'LinkedIn (Coming Soon)' },
+    ];
+    return { level, basedOn };
+  }
+
+  /** "Today, 14:22" / "29 Jul 2026, 14:22" — date+time for the mockup's LAST ANALYSIS line. */
+  lastAnalysisDateTime(audit: Pick<CollaborationAudit, 'createdAt'> | null): string {
+    if (!audit?.createdAt) return '';
+    const date = new Date(audit.createdAt);
+    const time = date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const isToday = new Date().toDateString() === date.toDateString();
+    const day = isToday ? 'Today' : date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `${day}, ${time}`;
+  }
+}
