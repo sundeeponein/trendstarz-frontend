@@ -160,6 +160,9 @@
           [showEngagement]="false"
           [showContentTypes]="true"
           (platformClick)="onPlatformClick($event)"
+          [reportProfileType]="isLoggedIn ? 'Photographer' : null"
+          [reportProfileId]="isLoggedIn ? photographer?._id : null"
+          [linkStatus]="socialLinkStatus"
         ></app-profile-social-platforms>
       }
 

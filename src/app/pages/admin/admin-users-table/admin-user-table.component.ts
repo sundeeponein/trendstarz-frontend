@@ -95,13 +95,24 @@ interface SocialDecision {
   decidedByName?: string;
   note?: string;
   invalidatedAt?: string;
+  invalidatedReason?: string;
   stale?: boolean;
   lastDecision?: SocialDecision;
+}
+/** Hosts reported that the account's link doesn't open. */
+interface SocialLinkReport {
+  status: 'open' | 'confirmed' | 'dismissed' | 'resolved';
+  handle: string;
+  count: number;
+  firstReportedAt: string | null;
+  lastReportedAt: string | null;
+  resolvedByName?: string;
 }
 interface SocialAccountVerification {
   socialAccountId: string | null;
   ownershipVerification: SocialDecision;
   tierVerification: SocialDecision;
+  linkReport?: SocialLinkReport | null;
 }
 
 // Stage 3A-2: latest platform observation as returned by
@@ -1001,7 +1012,7 @@ export class AdminUserTableComponent implements OnInit {
       if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) return rawUrl;
       return `https://${rawUrl}`;
     }
-    return buildSocialProfileUrl(platform, sm?.handle);
+    return buildSocialProfileUrl(platform, sm?.handle, sm?.platformAccountId);
   }
 
   private getSocialTierLabel(sm: any): string {
@@ -2689,8 +2700,75 @@ export class AdminUserTableComponent implements OnInit {
     const previous = decision.lastDecision;
     if (!previous?.status || previous.status === 'pending') return '';
     const value = reviewType === 'ownership' ? `@${previous.decidedHandle || ''}` : previous.decidedTier || '';
-    const changed = reviewType === 'ownership' ? 'handle changed' : 'tier changed';
+    const changed =
+      decision.invalidatedReason === 'link_broken'
+        ? 'link doesn\'t open (confirmed)'
+        : reviewType === 'ownership'
+          ? 'handle changed'
+          : 'tier changed';
     return `${changed} — was ${previous.status === 'verified' ? 'Verified' : 'Rejected'} (${value})`;
+  }
+
+  /** Open / confirmed broken-link report for this account (from the verification view). */
+  socialLinkReport(sm: any): SocialLinkReport | null {
+    const report = this.socialVerificationByAccount[String(sm?.socialAccountId || '')]?.linkReport;
+    return report && (report.status === 'open' || report.status === 'confirmed') ? report : null;
+  }
+
+  socialLinkReportText(report: SocialLinkReport): string {
+    const when = report.firstReportedAt
+      ? new Date(report.firstReportedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+      : '';
+    return report.status === 'open'
+      ? `Hosts say @${report.handle} doesn't open — ${report.count} report${report.count === 1 ? '' : 's'} since ${when}. Open the link to check.`
+      : `Confirmed not opening by ${report.resolvedByName || 'admin'} — waiting for the creator to update the handle.`;
+  }
+
+  socialLinkResolving: string | null = null;
+
+  resolveSocialLinkReport(sm: any, action: 'confirm' | 'dismiss'): void {
+    const socialAccountId = String(sm?.socialAccountId || '');
+    const userType = this.selectedUserType;
+    const userId = String(this.selectedUser?._id || '');
+    if (!socialAccountId || !userType || !userId || this.socialLinkResolving) return;
+    const go = () => {
+      this.socialLinkResolving = socialAccountId;
+      this.http
+        .post(
+          `${environment.apiBaseUrl}/admin/social-links/resolve`,
+          { profileType: userType, profileId: userId, socialAccountId, action },
+          this.getAuthHeaders(),
+        )
+        .subscribe({
+          next: () => {
+            this.socialLinkResolving = null;
+            this.loadSocialAccountVerifications();
+          },
+          error: (err: any) => {
+            this.socialLinkResolving = null;
+            alert('Could not save: ' + (err?.error?.message || err?.message || 'Unknown error'));
+            this.loadSocialAccountVerifications();
+          },
+        });
+    };
+    if (action === 'confirm') {
+      this.showConfirm(
+        `Confirm the ${this.getSocialLabelForPlatform(sm?.platform)} link @${sm?.handle || ''} doesn't open? Ownership goes back to pending and the creator is asked to update it.`,
+        go,
+      );
+    } else {
+      go();
+    }
+  }
+
+  /** The creator ignored the 90-day "are these still your accounts?" check for 14+ days. */
+  get socialConfirmOverdueText(): string {
+    const u: any = this.selectedUser;
+    const prompted = u?.socialConfirmPromptedAt ? new Date(u.socialConfirmPromptedAt).getTime() : 0;
+    if (!prompted) return '';
+    const confirmed = u?.socialConfirmedAt ? new Date(u.socialConfirmedAt).getTime() : 0;
+    if (confirmed >= prompted || Date.now() - prompted < 14 * 24 * 60 * 60 * 1000) return '';
+    return `Hasn't confirmed their social accounts since ${new Date(prompted).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} — check the links.`;
   }
 
   socialVerificationTitle(sm: any, reviewType: SocialReviewType): string {

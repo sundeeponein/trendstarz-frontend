@@ -43,6 +43,16 @@
               <span class="platform-handle-text" *ngIf="canOpen">&#64;{{ handle }}</span>
               <span class="detail-locked" *ngIf="!canOpen"><i class="bi bi-lock-fill"></i> Handle hidden on free plan</span>
             </ng-template>
+            <span class="link-outdated" *ngIf="canOpen && linkOutdated(sm)">
+              <i class="bi bi-exclamation-triangle"></i> Link may be outdated
+            </span>
+            <button type="button" class="link-report-btn"
+                    *ngIf="canReport(sm) && !linkOutdated(sm) && !reported.has(sm.socialAccountId)"
+                    [disabled]="reporting === sm.socialAccountId"
+                    (click)="reportLink(sm, $event)">Link not working?</button>
+            <span class="link-reported" *ngIf="reported.has(sm.socialAccountId)">
+              <i class="bi bi-check2"></i> Thanks — we've asked the creator to update it
+            </span>
           </div>
         </div>
 

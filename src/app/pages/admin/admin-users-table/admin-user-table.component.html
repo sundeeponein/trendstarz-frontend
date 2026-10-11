@@ -754,6 +754,9 @@
               <!-- Social media: unified rows with Edit button (all user types) -->
               <div *ngIf="!selectedUser?.socialMedia?.length" class="text-muted small py-1">No social media platforms added.</div>
 
+              <div class="sm-confirm-overdue" *ngIf="socialConfirmOverdueText">
+                <i class="bi bi-hourglass-split"></i> {{ socialConfirmOverdueText }}
+              </div>
               <div class="rate-platform" *ngFor="let sm of selectedUser?.socialMedia; let smIdx = index">
                 <!-- Platform header: icon · label · tier(range) · handle · Edit -->
                 <div class="rate-platform-name">
@@ -797,6 +800,20 @@
                       <button type="button" class="sm-verify-link" (click)="toggleSocialDecisionChange(sm, rt)">Change</button>
                     </ng-template>
                   </div>
+                </div>
+                <!-- Hosts reported the link doesn't open: confirm (→ re-review) or dismiss -->
+                <div class="sm-observe-row sm-link-report" *ngIf="socialLinkReport(sm) as lr">
+                  <span class="sm-verify-label">Link</span>
+                  <span class="sm-observe-text" [class.sm-link-report--open]="lr.status === 'open'">{{ socialLinkReportText(lr) }}</span>
+                  <a *ngIf="resolveSocialHrefForPlatform(sm) as reportHref" [href]="reportHref" target="_blank" rel="noopener noreferrer" class="sm-observe-link">open</a>
+                  <ng-container *ngIf="lr.status === 'open'">
+                    <button type="button" class="sm-verify-btn sm-verify-btn--reject"
+                            [disabled]="socialLinkResolving === sm.socialAccountId"
+                            (click)="resolveSocialLinkReport(sm, 'confirm')">Doesn't open</button>
+                    <button type="button" class="sm-verify-btn"
+                            [disabled]="socialLinkResolving === sm.socialAccountId"
+                            (click)="resolveSocialLinkReport(sm, 'dismiss')">Works — dismiss</button>
+                  </ng-container>
                 </div>
                 <!-- Stage 3A-2: what the platform reports (admin only; observation, not verification) -->
                 <div class="sm-observe-row" *ngIf="sm?.socialAccountId && isSocialAccountObservable(sm)">

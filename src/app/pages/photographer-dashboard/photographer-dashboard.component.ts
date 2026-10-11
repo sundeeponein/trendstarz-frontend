@@ -2,6 +2,7 @@ import { Component, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
 import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-collab-notice.component';
 import { LatePostSubmitComponent } from '../../shared/late-post-submit/late-post-submit.component';
 import { ClosureQuestionComponent } from '../../shared/closure-question/closure-question.component';
+import { SocialConfirmBannerComponent } from '../../shared/social-confirm-banner/social-confirm-banner.component';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -33,7 +34,7 @@ import { AdminSocialNoticeComponent } from '../../shared/admin-social-notice/adm
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [AdminSocialNoticeComponent, PaidCollabNoticeComponent, LatePostSubmitComponent, ClosureQuestionComponent, CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreSummaryWidgetComponent],
+  imports: [AdminSocialNoticeComponent, SocialConfirmBannerComponent, PaidCollabNoticeComponent, LatePostSubmitComponent, ClosureQuestionComponent, CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreSummaryWidgetComponent],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })

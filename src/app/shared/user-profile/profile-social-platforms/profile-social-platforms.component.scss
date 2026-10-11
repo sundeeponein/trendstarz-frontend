@@ -320,3 +320,26 @@
   font-size: 0.75rem;
   color: #aaa;
 }
+
+.link-report-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin-left: 8px;
+  font-size: 11px;
+  color: #64748b;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link-outdated {
+  margin-left: 8px;
+  font-size: 11px;
+  color: #b45309;
+}
+
+.link-reported {
+  margin-left: 8px;
+  font-size: 11px;
+  color: #15803d;
+}

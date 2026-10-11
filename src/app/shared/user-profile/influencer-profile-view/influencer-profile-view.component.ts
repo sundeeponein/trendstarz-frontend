@@ -40,6 +40,8 @@ export class InfluencerProfileViewComponent implements OnInit {
   error = '';
   /** Completed vs missed paid collaborations (shown to signed-in viewers; display only). */
   paidRecord: { completed: number; missed: number } | null = null;
+  /** Links hosts reported as not opening (socialAccountId → status). */
+  socialLinkStatus: Record<string, { status: string; since: string | null }> = {};
   showContactInfo = false;
   galleryModalOpen = false;
   galleryModalIndex = 0;
@@ -242,7 +244,7 @@ export class InfluencerProfileViewComponent implements OnInit {
   }
 
   getSocialUrl(sm: any): string {
-    return buildSocialProfileUrl(sm?.platform || '', sm?.handle) || sm?.url || '#';
+    return buildSocialProfileUrl(sm?.platform || '', sm?.handle, sm?.platformAccountId) || sm?.url || '#';
   }
 
   tagBadgeClass(tag: string): string {
@@ -425,6 +427,13 @@ export class InfluencerProfileViewComponent implements OnInit {
   private loadPaidRecord(creatorId: string) {
     this.paidRecord = null;
     if (!this.isLoggedIn || !creatorId) return;
+    this.config.getSocialLinkStatus('Influencer', String(creatorId)).subscribe({
+      next: (m) => {
+        this.socialLinkStatus = m || {};
+        this.cd.markForCheck();
+      },
+      error: () => undefined,
+    });
     this.config.getCreatorRecord(String(creatorId)).subscribe({
       next: (r) => {
         this.paidRecord = r && r.completed + r.missed > 0 ? r : null;

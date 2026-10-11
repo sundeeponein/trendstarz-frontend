@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ConfigService } from '../../config.service';
 import { buildSocialProfileUrl, normalizeSocialHandle } from '../../social-handle.util';
 import { TIER_DESC_MAP } from '../../tiers.constants';
 
@@ -24,6 +25,47 @@ export class ProfileSocialPlatformsComponent {
   @Input() showContentTypes = false;
 
   @Output() platformClick = new EventEmitter<any>();
+
+  /** Set by profile pages so signed-in viewers can report a link that doesn't open. */
+  @Input() reportProfileType: 'Influencer' | 'Photographer' | null = null;
+  @Input() reportProfileId: string | null = null;
+  /** socialAccountId → open/confirmed broken-link report. */
+  @Input() linkStatus: Record<string, { status: string; since: string | null }> = {};
+
+  reported = new Set<string>();
+  reporting: string | null = null;
+
+  constructor(
+    private config: ConfigService,
+    private cdr: ChangeDetectorRef,
+  ) {}
+
+  linkOutdated(sm: any): boolean {
+    return !!this.linkStatus?.[String(sm?.socialAccountId || '')];
+  }
+
+  canReport(sm: any): boolean {
+    return !!this.reportProfileType && !!this.reportProfileId && !!sm?.socialAccountId && this.canOpen;
+  }
+
+  reportLink(sm: any, ev: Event): void {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const id = String(sm?.socialAccountId || '');
+    if (!this.canReport(sm) || this.reporting || this.reported.has(id)) return;
+    this.reporting = id;
+    this.config.reportSocialLink(this.reportProfileType!, this.reportProfileId!, id).subscribe({
+      next: () => {
+        this.reporting = null;
+        this.reported.add(id);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.reporting = null;
+        this.cdr.markForCheck();
+      },
+    });
+  }
 
   get hasPlatforms(): boolean {
     return Array.isArray(this.platforms) && this.platforms.length > 0;
@@ -52,7 +94,7 @@ export class ProfileSocialPlatformsComponent {
   }
 
   getSocialUrl(sm: any): string {
-    return buildSocialProfileUrl(sm?.platform || '', sm?.handle) || sm?.url || '#';
+    return buildSocialProfileUrl(sm?.platform || '', sm?.handle, sm?.platformAccountId) || sm?.url || '#';
   }
 
   getSocialHandle(sm: any): string {

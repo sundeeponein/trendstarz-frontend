@@ -217,6 +217,9 @@
           [showEngagement]="true"
           [showContentTypes]="true"
           (platformClick)="onPlatformClick($event)"
+          [reportProfileType]="isLoggedIn ? 'Influencer' : null"
+          [reportProfileId]="isLoggedIn ? influencer?._id : null"
+          [linkStatus]="socialLinkStatus"
         ></app-profile-social-platforms>
       }
 

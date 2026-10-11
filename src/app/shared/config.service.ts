@@ -1235,6 +1235,27 @@ export class ConfigService {
       .pipe(map((res) => res?.data || null));
   }
 
+  /** Report that a creator's social link doesn't open (renamed / deleted account). */
+  reportSocialLink(profileType: 'Influencer' | 'Photographer', profileId: string, socialAccountId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/social-links/report`, { profileType, profileId, socialAccountId });
+  }
+
+  /** Which links of a profile were reported as not opening (socialAccountId → status). */
+  getSocialLinkStatus(profileType: 'Influencer' | 'Photographer', profileId: string): Observable<Record<string, { status: string; since: string | null }>> {
+    return this.http
+      .get<any>(`${this.apiUrl}/social-links/status/${profileType}/${profileId}`)
+      .pipe(map((res) => res?.data || {}));
+  }
+
+  /** The creator's 90-day "are these still your accounts?" check. */
+  getSocialConfirmStatus(): Observable<{ due: boolean; accounts: any[] }> {
+    return this.http.get<any>(`${this.apiUrl}/creator/social-confirm`).pipe(map((res) => res?.data || res || { due: false, accounts: [] }));
+  }
+
+  confirmSocialAccounts(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/creator/social-confirm`, {});
+  }
+
   /** The signed-in host's TrendStarZ credit balance and ledger. */
   getMyCredit(): Observable<any> {
     return this.http

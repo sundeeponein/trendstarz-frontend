@@ -2674,7 +2674,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   getSocialUrl(sm: any): string {
-    return buildSocialProfileUrl(sm?.platform || '', sm?.handle) || sm?.url || '#';
+    return buildSocialProfileUrl(sm?.platform || '', sm?.handle, sm?.platformAccountId) || sm?.url || '#';
   }
 
   getSocialHandle(sm: any): string {

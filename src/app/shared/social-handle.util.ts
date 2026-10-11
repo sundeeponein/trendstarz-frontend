@@ -58,10 +58,19 @@ export function validateSocialHandle(value: unknown, platformName = ''): string 
   return null;
 }
 
-export function buildSocialProfileUrl(platformName: string, handle: unknown): string {
+/**
+ * Link to a creator's profile. For YouTube, a known permanent channel id ("UC…",
+ * learned by TrendStarZ's check of this exact handle) gives a link that keeps working
+ * after the creator renames the channel.
+ */
+export function buildSocialProfileUrl(platformName: string, handle: unknown, platformAccountId?: unknown): string {
+  const platform = String(platformName || '').toLowerCase();
+  const channelId = typeof platformAccountId === 'string' ? platformAccountId : '';
+  if (platform.includes('youtube') && /^UC[A-Za-z0-9_-]{22}$/.test(channelId)) {
+    return `https://www.youtube.com/channel/${channelId}`;
+  }
   const clean = normalizeSocialHandle(handle, platformName);
   if (!clean) return '';
-  const platform = String(platformName || '').toLowerCase();
   if (platform.includes('instagram')) return `https://instagram.com/${clean}`;
   if (platform.includes('youtube')) return `https://www.youtube.com/@${clean}`;
   if (platform.includes('twitter') || platform === 'x') return `https://x.com/${clean}`;

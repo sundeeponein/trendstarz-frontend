@@ -51,10 +51,19 @@ export class PhotographerProfileViewComponent implements OnInit {
 
   /** Completed vs missed paid collaborations (shown to signed-in viewers; display only). */
   paidRecord: { completed: number; missed: number } | null = null;
+  /** Links hosts reported as not opening (socialAccountId → status). */
+  socialLinkStatus: Record<string, { status: string; since: string | null }> = {};
 
   private loadPaidRecord(creatorId: unknown) {
     this.paidRecord = null;
     if (!this.isLoggedIn || !creatorId) return;
+    this.config.getSocialLinkStatus('Photographer', String(creatorId)).subscribe({
+      next: (m) => {
+        this.socialLinkStatus = m || {};
+        this.cd.markForCheck();
+      },
+      error: () => undefined,
+    });
     this.config.getCreatorRecord(String(creatorId)).subscribe({
       next: (r) => {
         this.paidRecord = r && r.completed + r.missed > 0 ? r : null;
@@ -246,7 +255,7 @@ export class PhotographerProfileViewComponent implements OnInit {
   }
 
   getSocialUrl(sm: any): string {
-    return buildSocialProfileUrl(sm?.platform || '', sm?.handle) || sm?.url || '#';
+    return buildSocialProfileUrl(sm?.platform || '', sm?.handle, sm?.platformAccountId) || sm?.url || '#';
   }
 
   getMainSocialLink(): string {
