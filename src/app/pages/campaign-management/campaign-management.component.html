@@ -870,6 +870,11 @@
                       *ngIf="c.campaignType === 'paid_collab' && isPaidStatus(inv.status) && !isConfirmedNoShow(inv, c)">
                       <i class="bi bi-check-circle-fill"></i> Payment Verified
                     </span>
+                    <small class="locked-hint d-block"
+                      *ngIf="c.campaignType === 'paid_collab' && isPaidStatus(inv.status) && !isConfirmedNoShow(inv, c)">
+                      <i class="bi bi-shield-lock"></i>
+                      Contact details aren't shared for online-post campaigns — the brief, deadline and post submission all run in TrendStarZ.
+                    </small>
                     <!-- Paid collab: per-invite awaiting payment chip → click opens Pay Now -->
                     <button class="inv-pay-chip" type="button"
                       *ngIf="canShowConfirmCollaboration(inv, c)"
@@ -985,7 +990,9 @@
                       *ngIf="c.campaignType === 'paid_collab' && ['payment_confirmed','working','submitted'].includes(inv.status)"
                       [inviteId]="inv._id"
                       role="host"
-                      [reported]="!!inv.reportedIssue?.reportedAt && !inv.reportedIssue?.resolvedAt">
+                      [reported]="!!inv.reportedIssue?.reportedAt && !inv.reportedIssue?.resolvedAt"
+                      [allowCancel]="inv.status !== 'submitted'"
+        [cancelRequestStatus]="inv.cancelRequest?.requestedByRole === 'host' ? inv.cancelRequest?.status : null">
                     </app-paid-collab-notice>
 
                     <ng-container

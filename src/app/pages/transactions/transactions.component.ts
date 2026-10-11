@@ -5,11 +5,12 @@ import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { WarmupService } from '../../core/warmup.service';
 import { FINISHED } from '../../shared/invite-status';
+import { ClosureQuestionComponent } from '../../shared/closure-question/closure-question.component';
 
 @Component({
   selector: 'app-transactions',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ClosureQuestionComponent],
   templateUrl: './transactions.component.html',
   styleUrls: ['./transactions.component.scss'],
 })
@@ -22,6 +23,8 @@ export class TransactionsComponent implements OnInit {
 
   /** Summary values in paise */
   summary = { totalEarned: 0, totalPending: 0, totalPaid: 0 };
+  /** TrendStarZ credit (platform fees returned on no-post refunds). */
+  credit: { balance: number; nextExpiry: string | null } | null = null;
 
   constructor(
     private config: ConfigService,
@@ -33,7 +36,25 @@ export class TransactionsComponent implements OnInit {
 
   ngOnInit() {
     if (!isPlatformBrowser(this.platformId)) return;
-    this.warmup.ready.then(() => this.load());
+    this.warmup.ready.then(() => {
+      this.load();
+      this.config.getMyCredit().subscribe({
+        next: (c) => {
+          this.credit = c && Number(c.balance) > 0 ? { balance: Number(c.balance), nextExpiry: c.nextExpiry || null } : null;
+          this.cdr.markForCheck();
+        },
+        error: () => undefined,
+      });
+    });
+  }
+
+  /** Groups are rebuilt on every check — keep their DOM (and child forms) by key. */
+  trackGroup = (_: number, g: { key: string }) => g.key;
+  trackTx = (_: number, tx: any) => String(tx?._id || '');
+
+  /** Rows of a group whose private "what happened?" question is still open. */
+  closureRows(rows: any[]): any[] {
+    return (rows || []).filter((tx) => tx?.refundView?.canAnswerClosure && tx?.refundView?.inviteId);
   }
 
   get role(): string {
@@ -55,8 +76,14 @@ export class TransactionsComponent implements OnInit {
     return this.groupTransactions(this.transactions).length;
   }
 
+  /** A refund / settlement still in progress keeps the row in "Pending" for both sides. */
+  private refundOpen(tx: any): boolean {
+    return ['on_hold', 'owed', 'settlement', 'pending_settlement'].includes(String(tx?.refundView?.state || ''));
+  }
+
   get pendingTab(): any[] {
     return this.transactions.filter(tx => {
+      if (this.refundOpen(tx)) return true;
       if (this.isRecipient) {
         // recipient is influencer/photographer; pending = collection verified but payout not yet paid
         return tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing'
@@ -69,6 +96,7 @@ export class TransactionsComponent implements OnInit {
 
   get completedTab(): any[] {
     return this.transactions.filter(tx => {
+      if (this.refundOpen(tx)) return false;
       if (this.isRecipient) {
         return tx.payoutStatus === 'paid';
       }
@@ -160,13 +188,25 @@ export class TransactionsComponent implements OnInit {
     }
     const date = (d: any) =>
       d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+    // Terms v2: the platform fee comes back as TrendStarZ credit, not cash.
+    const credit = Number(v.creditAmount || 0);
+    const creditNote =
+      credit > 0
+        ? v.creditStatus === 'issued'
+          ? ` + ${this.formatPaise(credit)} credit`
+          : v.creditStatus === 'needs_review'
+            ? ` · fee credit under review`
+            : v.creditStatus === 'withheld'
+              ? ''
+              : ` + ${this.formatPaise(credit)} as credit`
+        : '';
     switch (v.state) {
       case 'on_hold':
         return `Refund under review until ${date(v.holdUntil)} (not yet approved)`;
       case 'owed':
-        return `Refund approved — ${this.formatPaise(v.amount || 0)} to be sent`;
+        return `Refund approved — ${this.formatPaise(v.amount || 0)} to be sent${creditNote}`;
       case 'sent':
-        return `Refunded ${this.formatPaise(v.amount || 0)}${v.utr ? ' · UTR ' + v.utr : ''}${v.transferDate ? ' · ' + date(v.transferDate) : ''}`;
+        return `Refunded ${this.formatPaise(v.amount || 0)}${v.utr ? ' · UTR ' + v.utr : ''}${v.transferDate ? ' · ' + date(v.transferDate) : ''}${creditNote}`;
       case 'settlement':
         return `Repayment needed: ${this.formatPaise(v.settlementAmount || 0)} (post verified after refund)`;
       case 'under_review':

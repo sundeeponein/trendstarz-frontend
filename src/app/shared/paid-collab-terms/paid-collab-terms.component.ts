@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { PAID_COLLAB_TERMS } from './paid-collab-terms';
+import { PAID_COLLAB_TERMS, PAID_COLLAB_TERMS_V2_ADDITIONS } from './paid-collab-terms';
 
 /** Checkbox + summary of the paid-collaboration terms (host when paying, creator when accepting). */
 @Component({
@@ -11,6 +11,9 @@ import { PAID_COLLAB_TERMS } from './paid-collab-terms';
     <div class="pct" [class.pct--compact]="compact">
       <ul class="pct-list">
         <li *ngFor="let t of terms">{{ t }}</li>
+        <ng-container *ngIf="v2">
+          <li *ngFor="let t of v2Terms">{{ t }}</li>
+        </ng-container>
       </ul>
       <label class="pct-check">
         <input type="checkbox" [checked]="accepted" (change)="toggle($event)" />
@@ -25,7 +28,8 @@ import { PAID_COLLAB_TERMS } from './paid-collab-terms';
         padding: 10px 12px;
         border: 1px solid var(--ts-border, #e2e8f0);
         border-radius: 10px;
-        background: var(--ts-surface-muted, #f8fafc);
+        background: #f8fafc;
+        color: #1e293b;
         font-size: 13px;
         text-align: left;
       }
@@ -52,6 +56,7 @@ import { PAID_COLLAB_TERMS } from './paid-collab-terms';
         font-size: 12px;
       }
       :host-context([data-theme='dark']) .pct {
+        color: #e2e8f0;
         background: rgba(148, 163, 184, 0.08);
         border-color: rgba(148, 163, 184, 0.25);
       }
@@ -61,6 +66,9 @@ import { PAID_COLLAB_TERMS } from './paid-collab-terms';
 export class PaidCollabTermsComponent {
   @Input() accepted = false;
   @Input() compact = false;
+  /** Terms v2 is active: also show the paid-slot and fee-credit rules. */
+  @Input() v2 = false;
+  readonly v2Terms = PAID_COLLAB_TERMS_V2_ADDITIONS;
   @Output() acceptedChange = new EventEmitter<boolean>();
   readonly terms = PAID_COLLAB_TERMS;
 

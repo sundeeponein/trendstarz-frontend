@@ -168,8 +168,46 @@ export interface RefundQueueItem {
     host?: { acceptedAt?: string; version?: string };
     creator?: { acceptedAt?: string; version?: string };
   } | null;
-  flags: ('repeat_pair' | 'host_repeat_refunds' | 'creator_repeat_no_post')[];
+  flags: (
+    | 'repeat_pair'
+    | 'host_repeat_refunds'
+    | 'creator_repeat_no_post'
+    | 'replaced_after_no_post'
+    | 'host_no_post_rate'
+  )[];
+  /** "fee_credit" = terms v2: creator amount back by UPI, platform fee as credit. */
+  refundPolicy?: 'full_refund' | 'fee_credit';
+  cashRefundDue?: number;
+  feeCredit?: { status?: 'needs_review' | 'issued' | 'withheld' | 'reversed'; amount?: number; note?: string } | null;
+  feeCreditAmount?: number;
+  creditApplied?: number;
+  compensation?: { amount?: number; note?: string } | null;
+  closureAnswers?: {
+    creator?: { answer?: string; details?: string; link?: string; at?: string };
+    host?: { answer?: string; details?: string; link?: string; at?: string };
+  } | null;
+  slotRestored?: { at?: string; reason?: string } | null;
+  missExcused?: { at?: string; reason?: string } | null;
+  paidSlot?: boolean;
   history: RefundHistoryEntry[];
+}
+
+export interface CancelRequestItem {
+  inviteId: string;
+  status: string;
+  campaignTitle: string;
+  campaignNumber?: number | string | null;
+  hostName: string;
+  creatorName: string;
+  selectedPostDate?: string | null;
+  agreedAmount: number;
+  request: {
+    type: 'cancel' | 'pause';
+    requestedByRole: 'host' | 'creator';
+    reason: string;
+    at: string;
+    status: string;
+  };
 }
 
 export interface PremiumPayment {

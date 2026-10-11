@@ -418,6 +418,8 @@ export class AdminManagementComponent implements OnInit {
     payoutReleaseWaitHours: 24,
     disputeResponseWaitHours: 12,
     campaignAutoCloseGraceHours: 24,
+    /** Paid-collab terms v2 start (datetime-local text; '' = not active). */
+    paidCollabTermsV2EffectiveAt: '' as string,
     minCampaignStartDays: 3,
     maxCampaignDurationDays: 15,
     earlyAccessAssignmentMode: 'manual',
@@ -787,6 +789,7 @@ export class AdminManagementComponent implements OnInit {
           this.settings.payoutReleaseWaitHours = typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24;
           this.settings.disputeResponseWaitHours = typeof data?.disputeResponseWaitHours === 'number' ? data.disputeResponseWaitHours : 12;
           this.settings.campaignAutoCloseGraceHours = typeof data?.campaignAutoCloseGraceHours === 'number' ? data.campaignAutoCloseGraceHours : 24;
+          this.settings.paidCollabTermsV2EffectiveAt = this.toLocalInput(data?.paidCollabTermsV2EffectiveAt);
           this.settings.minCampaignStartDays = typeof data?.minCampaignStartDays === 'number' ? data.minCampaignStartDays : 3;
           this.settings.maxCampaignDurationDays = typeof data?.maxCampaignDurationDays === 'number' ? data.maxCampaignDurationDays : 15;
           this.settings.earlyAccessAssignmentMode = data?.earlyAccessAssignmentMode === 'auto' ? 'auto' : 'manual';
@@ -967,6 +970,20 @@ export class AdminManagementComponent implements OnInit {
     }, 4000);
   }
 
+  /** ISO date → value for <input type="datetime-local"> in the admin's local time. */
+  private toLocalInput(value: unknown): string {
+    if (!value) return '';
+    const d = new Date(String(value));
+    if (Number.isNaN(d.getTime())) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  get termsV2Active(): boolean {
+    const v = this.settings.paidCollabTermsV2EffectiveAt;
+    return !!v && new Date(v).getTime() <= Date.now();
+  }
+
   saveSettings() {
     this.settingsSaving = true;
     this.settingsSaved = false;
@@ -983,6 +1000,9 @@ export class AdminManagementComponent implements OnInit {
 
     const payload = {
       ...this.settings,
+      paidCollabTermsV2EffectiveAt: this.settings.paidCollabTermsV2EffectiveAt
+        ? new Date(this.settings.paidCollabTermsV2EffectiveAt).toISOString()
+        : null,
       campaignTypeConfigs: this.normalizeCampaignTypeConfigs(
         this.settings.campaignTypeConfigs,
         this.campaignTypeConfigDefaults,

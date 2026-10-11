@@ -180,3 +180,50 @@
 .rf-table td.col-actions {
   min-width: 190px;
 }
+
+.rf-credit {
+  display: inline-block;
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  background: #ecfeff;
+  color: #155e75;
+
+  &--needs_review {
+    background: #fef9c3;
+    color: #854d0e;
+  }
+  &--withheld,
+  &--reversed {
+    background: #f1f5f9;
+    color: #475569;
+  }
+}
+
+.rf-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+}
+
+.rf-link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--ts-primary, #4f46e5);
+  cursor: pointer;
+  text-align: left;
+}
+
+:host-context([data-theme='dark']) .rf-answers {
+  background: rgba(168, 85, 247, 0.08);
+  border-color: rgba(168, 85, 247, 0.25);
+}

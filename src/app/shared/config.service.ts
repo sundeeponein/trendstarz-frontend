@@ -1215,6 +1215,33 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/report-offplatform`, { details });
   }
 
+  /** Private "what happened?" answer after a no-post closure (host or creator). */
+  submitClosureAnswer(
+    inviteId: string,
+    body: { answer: string; details?: string; link?: string },
+  ): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/closure-answer`, body);
+  }
+
+  /** Host or creator asks TrendStarZ to cancel or pause a paid collaboration. */
+  requestCancelOrPause(inviteId: string, type: 'cancel' | 'pause', reason: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/cancel-request`, { type, reason });
+  }
+
+  /** A creator's completed vs missed paid collaborations (display only). */
+  getCreatorRecord(creatorId: string): Observable<{ completed: number; missed: number } | null> {
+    return this.http
+      .get<any>(`${this.apiUrl}/campaign-invites/creator/${creatorId}/record`)
+      .pipe(map((res) => res?.data || null));
+  }
+
+  /** The signed-in host's TrendStarZ credit balance and ledger. */
+  getMyCredit(): Observable<any> {
+    return this.http
+      .get<any>(`${this.apiUrl}/campaign-transactions/my/credit`)
+      .pipe(map((res) => res?.data || null));
+  }
+
   /** Creator submits a post link after the deadline, while the refund is on hold. */
   submitLatePost(inviteId: string, postUrl: string, note?: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/late-post`, { postUrl, note });

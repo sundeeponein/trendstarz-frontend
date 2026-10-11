@@ -22,6 +22,10 @@ export class PaidCollabNoticeComponent {
   /** Creator only: whether this creator already accepted the terms. */
   @Input() termsAccepted = true;
   @Input() reported = false;
+  /** Status of this user's own cancel / pause request, if any. */
+  /** Cancel / pause can be requested only before a post is submitted. */
+  @Input() allowCancel = true;
+  @Input() cancelRequestStatus: 'pending' | 'approved' | 'rejected' | null | undefined = null;
   @Output() termsAcceptedChange = new EventEmitter<boolean>();
 
   readonly terms = PAID_COLLAB_TERMS;
@@ -29,6 +33,9 @@ export class PaidCollabNoticeComponent {
   showTerms = false;
   reportOpen = false;
   details = '';
+  cancelOpen = false;
+  cancelType: 'cancel' | 'pause' = 'cancel';
+  cancelReason = '';
   busy = false;
   error = '';
 
@@ -60,6 +67,34 @@ export class PaidCollabNoticeComponent {
       error: (err) => {
         this.busy = false;
         this.error = err?.error?.message || 'Could not save. Please try again.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  toggleCancel(ev: Event) {
+    ev.stopPropagation();
+    this.cancelOpen = !this.cancelOpen;
+    this.error = '';
+  }
+
+  sendCancel(ev: Event) {
+    ev.stopPropagation();
+    const reason = this.cancelReason.trim();
+    if (reason.length < 15 || this.busy) return;
+    this.busy = true;
+    this.error = '';
+    this.config.requestCancelOrPause(this.inviteId, this.cancelType, reason).subscribe({
+      next: () => {
+        this.busy = false;
+        this.cancelOpen = false;
+        this.cancelReason = '';
+        this.cancelRequestStatus = 'pending';
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.busy = false;
+        this.error = err?.error?.message || 'Could not send the request. Please try again.';
         this.cdr.markForCheck();
       },
     });

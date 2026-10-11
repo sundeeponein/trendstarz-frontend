@@ -7,7 +7,8 @@ describe('PaidCollabNoticeComponent', () => {
   let config: jasmine.SpyObj<ConfigService>;
 
   const render = (inputs: Partial<PaidCollabNoticeComponent>) => {
-    config = jasmine.createSpyObj<ConfigService>('ConfigService', ['acceptPaidCollabTerms', 'reportOffPlatform']);
+    config = jasmine.createSpyObj<ConfigService>('ConfigService', ['acceptPaidCollabTerms', 'reportOffPlatform', 'requestCancelOrPause']);
+    config.requestCancelOrPause.and.returnValue(of({ success: true }));
     config.acceptPaidCollabTerms.and.returnValue(of({ success: true }));
     config.reportOffPlatform.and.returnValue(of({ success: true }));
     TestBed.configureTestingModule({
@@ -55,5 +56,26 @@ describe('PaidCollabNoticeComponent', () => {
     fixture.detectChanges();
     expect(config.reportOffPlatform).toHaveBeenCalledWith('inv1', 'Creator asked me to cancel and pay directly on WhatsApp');
     expect(el.textContent).toContain('Reported — TrendStarZ will review it.');
+  });
+
+  it('request to pause goes to TrendStarZ and then shows it is pending', () => {
+    const fixture = render({ role: 'creator', termsAccepted: true });
+    const el = fixture.nativeElement as HTMLElement;
+    click(el, 'Request to cancel or pause');
+    fixture.detectChanges();
+    (el.querySelector('input[value="pause"]') as HTMLInputElement).click();
+    const box = el.querySelectorAll('textarea')[0] as HTMLTextAreaElement;
+    box.value = 'I am unwell this week, need a few days';
+    box.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    click(el, 'Send request');
+    fixture.detectChanges();
+    expect(config.requestCancelOrPause).toHaveBeenCalledWith('inv1', 'pause', 'I am unwell this week, need a few days');
+    expect(el.textContent).toContain('request is with TrendStarZ');
+  });
+
+  it('no cancel link once the post is submitted', () => {
+    const el = render({ role: 'host', allowCancel: false }).nativeElement as HTMLElement;
+    expect(el.textContent).not.toContain('Request to cancel or pause');
   });
 });

@@ -82,8 +82,15 @@
             </td>
             <td>
               <div class="tx-financials-cell">
-                <strong>{{ ui.formatPaise(row.refundAmount ?? row.payerTotal) }}</strong>
+                <strong>{{ ui.formatPaise(row.refundAmount ?? row.cashRefundDue ?? row.payerTotal) }}</strong>
                 <span>Agreed {{ ui.formatPaise(row.agreedAmount) }} + fee {{ ui.formatPaise(row.platformFee) }}</span>
+                <span *ngIf="row.refundPolicy === 'fee_credit'" class="rf-muted">
+                  Cash refund (agreed amount) · fee {{ ui.formatPaise(row.feeCreditAmount || 0) }} as credit
+                </span>
+                <span *ngIf="row.creditApplied" class="rf-muted">Paid {{ ui.formatPaise(row.creditApplied) }} with credit</span>
+                <span *ngIf="row.compensation?.amount" class="rf-muted">
+                  Compensation to creator {{ ui.formatPaise(row.compensation?.amount || 0) }}
+                </span>
               </div>
             </td>
             <td>
@@ -105,6 +112,11 @@
                 <span class="rf-flag" *ngFor="let flag of row.flags" [title]="'A pattern, not proof'">
                   <i class="bi bi-exclamation-triangle"></i> {{ flagLabel(flag) }}
                 </span>
+                <span class="rf-credit" *ngIf="row.feeCredit?.status" [ngClass]="'rf-credit--' + row.feeCredit?.status">
+                  {{ creditLabel(row.feeCredit?.status) }} · {{ ui.formatPaise(row.feeCredit?.amount || 0) }}
+                </span>
+                <small class="rf-muted" *ngIf="row.missExcused">Not counted against creator: {{ row.missExcused.reason }}</small>
+                <small class="rf-muted" *ngIf="row.slotRestored">Slot restored: {{ row.slotRestored.reason }}</small>
               </div>
             </td>
             <td>
@@ -118,6 +130,18 @@
                   <i class="bi bi-box-arrow-up-right"></i> {{ s.platform }} · {{ s.handle }}
                 </a>
                 <span *ngIf="!row.creatorSocial.length" class="rf-muted">No social handles</span>
+                <div class="rf-answers" *ngIf="row.closureAnswers?.creator || row.closureAnswers?.host">
+                  <span class="rf-late-label">Private answers</span>
+                  <small *ngIf="row.closureAnswers?.creator">
+                    <b>Creator:</b> {{ answerLabel(row.closureAnswers?.creator?.answer) }}
+                    <span *ngIf="row.closureAnswers?.creator?.details"> — “{{ row.closureAnswers?.creator?.details }}”</span>
+                  </small>
+                  <small *ngIf="row.closureAnswers?.host">
+                    <b>Host:</b> {{ answerLabel(row.closureAnswers?.host?.answer) }}
+                    <a *ngIf="row.closureAnswers?.host?.link" [href]="row.closureAnswers?.host?.link" target="_blank" rel="noopener noreferrer">link</a>
+                    <span *ngIf="row.closureAnswers?.host?.details"> — “{{ row.closureAnswers?.host?.details }}”</span>
+                  </small>
+                </div>
                 <div class="rf-late" *ngIf="row.latePost?.url">
                   <span class="rf-late-label">
                     Late post · {{ row.latePost?.status }}
@@ -148,6 +172,16 @@
                 </ng-container>
                 <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="canRecordFoundPost(row)" (click)="openAction('approve', row)">
                   Posted outside platform
+                </button>
+                <ng-container *ngIf="row.feeCredit?.status === 'needs_review'">
+                  <button class="btn btn-success btn-sm" type="button" [disabled]="saving" (click)="approveCredit(row)">Issue fee credit</button>
+                  <button class="btn btn-outline-secondary btn-sm" type="button" (click)="openAction('credit_withhold', row)">Withhold credit</button>
+                </ng-container>
+                <button class="rf-link-btn" type="button" *ngIf="!row.missExcused && row.state !== 'legacy_unconfirmed'" (click)="openAction('excuse', row)">
+                  Don't count against creator
+                </button>
+                <button class="rf-link-btn" type="button" *ngIf="row.paidSlot && !row.slotRestored && row.inviteStatus === 'withdrawn'" (click)="openAction('restore_slot', row)">
+                  Restore invite slot
                 </button>
                 <small class="rf-muted rf-blocked" *ngIf="blockedReason(row)">{{ blockedReason(row) }}</small>
                 <button class="rf-history-toggle" type="button" *ngIf="row.history.length" (click)="toggleHistory(row._id)">
@@ -213,6 +247,16 @@
           TrendStarZ pays the creator without the host's repayment. This is recorded with your reason.
         </p>
       </ng-container>
+      <p class="modal-info" *ngIf="action.mode === 'credit_withhold'">
+        The host will not receive the {{ ui.formatPaise(action.row.feeCredit?.amount || 0) }} fee credit. Recorded with your reason.
+      </p>
+      <p class="modal-info" *ngIf="action.mode === 'excuse'">
+        Use this when the creator is not at fault — e.g. the host told them not to post. The closure won't count in the
+        creator's completion record.
+      </p>
+      <p class="modal-info" *ngIf="action.mode === 'restore_slot'">
+        Only for a documented exception (platform error, fake creator account). The host gets this campaign invite slot back.
+      </p>
 
       <div class="form-group" *ngIf="action.mode === 'sent' || action.mode === 'repaid'">
         <label>UTR / reference</label>
@@ -234,11 +278,11 @@
       </div>
       <div class="form-group">
         <label>
-          {{ action.mode === 'sent' || action.mode === 'repaid' ? 'Note (optional)' : action.mode === 'exception' ? 'Reason (required)' : 'What you checked (required)' }}
+          {{ action.mode === 'sent' || action.mode === 'repaid' ? 'Note (optional)' : action.mode === 'approve' || action.mode === 'reject' ? 'What you checked (required)' : 'Reason (required)' }}
         </label>
         <textarea class="form-textarea" rows="3" [(ngModel)]="form.note"
           [placeholder]="action.mode === 'reject' ? 'e.g. Post is for a different brand' : 'e.g. Reel is public, tags @brand, posted 12 Oct'"></textarea>
-        <small class="rf-muted" *ngIf="action.mode === 'approve' || action.mode === 'reject' || action.mode === 'exception'">
+        <small class="rf-muted" *ngIf="action.mode !== 'sent' && action.mode !== 'repaid'">
           At least 10 characters — saved in the history.
         </small>
       </div>

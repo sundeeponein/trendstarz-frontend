@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CancelRequestsPanelComponent } from './cancel-requests-panel/cancel-requests-panel.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -10,7 +11,7 @@ type DisputeStatus = 'open' | 'resolved' | 'all';
 @Component({
   selector: 'app-admin-disputes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CancelRequestsPanelComponent],
   templateUrl: './admin-disputes.component.html',
   styleUrls: ['./admin-disputes.component.scss'],
 })

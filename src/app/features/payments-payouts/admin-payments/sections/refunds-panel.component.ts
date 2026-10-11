@@ -9,7 +9,15 @@ import { AdminPaymentsUiUtilsService } from '../admin-payments-ui-utils.service'
 import { buildSocialProfileUrl } from '../../../../shared/social-handle.util';
 
 type RefundFilter = 'all' | RefundState;
-type ActionMode = 'sent' | 'approve' | 'reject' | 'repaid' | 'exception';
+type ActionMode =
+  | 'sent'
+  | 'approve'
+  | 'reject'
+  | 'repaid'
+  | 'exception'
+  | 'credit_withhold'
+  | 'excuse'
+  | 'restore_slot';
 
 const STATE_LABELS: Record<RefundState, string> = {
   on_hold: 'On hold',
@@ -23,11 +31,38 @@ const FLAG_LABELS: Record<string, string> = {
   repeat_pair: 'Same host & creator refunded before',
   host_repeat_refunds: 'Host: 2+ refunds in 90 days',
   creator_repeat_no_post: 'Creator: 2+ no-post closures in 90 days',
+  replaced_after_no_post: 'Host invited another creator within 7 days',
+  host_no_post_rate: 'Host: 2+ no-posts in last 5 paid collaborations',
+};
+
+const ANSWER_LABELS: Record<string, string> = {
+  posted_not_submitted: 'Posted but forgot to submit',
+  forgot: 'Missed the deadline',
+  host_asked_not_to_post: 'Host asked me not to post',
+  host_offered_outside: 'Host offered to deal outside TrendStarZ',
+  saw_post: 'Saw a post',
+  no_post: 'Did not see a post',
+  asked_creator_to_stop: 'Asked the creator to stop',
+  other: 'Something else',
+};
+
+const CREDIT_LABELS: Record<string, string> = {
+  needs_review: 'Fee credit waiting for review',
+  issued: 'Fee credit issued',
+  withheld: 'Fee credit withheld',
+  reversed: 'Fee credit taken back',
 };
 
 const HISTORY_LABELS: Record<string, string> = {
   refund_on_hold: 'Refund put on hold',
   refund_owed: 'Refund approved (owed)',
+  fee_credit_issued: 'Fee credit issued',
+  fee_credit_needs_review: 'Fee credit parked for review',
+  fee_credit_withheld: 'Fee credit withheld',
+  closure_answer: 'Private answer received',
+  compensation_awarded: 'Compensation to creator',
+  miss_excused: 'Not counted against the creator',
+  slot_restored: 'Invite slot restored',
   hold_expired_refund_owed: 'Hold ended → owed',
   refund_sent: 'Refund sent',
   late_post_submitted: 'Late post submitted',
@@ -128,6 +163,31 @@ export class RefundsPanelComponent implements OnInit {
     return HISTORY_LABELS[action] || action;
   }
 
+  answerLabel(answer?: string): string {
+    return (answer && ANSWER_LABELS[answer]) || answer || '';
+  }
+
+  creditLabel(status?: string): string {
+    return (status && CREDIT_LABELS[status]) || '';
+  }
+
+  approveCredit(row: RefundQueueItem): void {
+    if (this.saving) return;
+    this.saving = true;
+    this.api.approveFeeCredit(row._id).subscribe({
+      next: () => {
+        this.saving = false;
+        this.successMessage.emit('Fee credit issued to the host.');
+        this.load();
+      },
+      error: (err) => {
+        this.saving = false;
+        this.errorMessage.emit(err?.error?.message || 'Could not issue the credit');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
   socialUrl(s: { platform: string; handle: string }): string {
     return buildSocialProfileUrl(s.platform, s.handle);
   }
@@ -202,6 +262,12 @@ export class RefundsPanelComponent implements OnInit {
         return 'Record host repayment';
       case 'exception':
         return 'Pay creator as an exception';
+      case 'credit_withhold':
+        return 'Withhold fee credit';
+      case 'excuse':
+        return "Don't count against the creator";
+      case 'restore_slot':
+        return 'Restore the invite slot';
       default:
         return '';
     }
@@ -219,6 +285,9 @@ export class RefundsPanelComponent implements OnInit {
         return note.length >= 10 && /^https?:\/\/\S+$/i.test(this.form.postUrl.trim());
       case 'reject':
       case 'exception':
+      case 'credit_withhold':
+      case 'excuse':
+      case 'restore_slot':
         return note.length >= 10;
     }
   }
@@ -266,6 +335,18 @@ export class RefundsPanelComponent implements OnInit {
       case 'reject':
         call = this.api.reviewLatePost(a.row.inviteId, { action: 'reject', note });
         done = 'Late post rejected. The refund review continues.';
+        break;
+      case 'credit_withhold':
+        call = this.api.withholdFeeCredit(a.row._id, note);
+        done = 'Fee credit withheld.';
+        break;
+      case 'excuse':
+        call = this.api.excuseMiss(a.row.inviteId, note);
+        done = "Recorded: this closure won't count against the creator.";
+        break;
+      case 'restore_slot':
+        call = this.api.restoreSlot(a.row.inviteId, note);
+        done = "The host's invite slot was restored.";
         break;
     }
     this.saving = true;

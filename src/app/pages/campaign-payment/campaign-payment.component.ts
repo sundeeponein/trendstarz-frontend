@@ -173,9 +173,14 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     return Math.round(fee * (this.gstPercent / 100));
   }
 
+  /** TrendStarZ credit applied to the platform fee (UPI payments only). */
+  get creditToApply(): number {
+    return Number(this.calculated?.creditToApply || 0);
+  }
+
   get totalToPay(): number {
     if (!this.calculated) return 0;
-    return Number(this.calculated.payerTotal || 0) + this.gstAmount;
+    return Number(this.calculated.payerTotal || 0) - this.creditToApply + this.gstAmount;
   }
 
   get needsTerms(): boolean {

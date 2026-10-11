@@ -248,7 +248,9 @@
             [inviteId]="inv._id"
             role="creator"
             [termsAccepted]="!!inv.termsAcceptance?.creator?.acceptedAt"
-            [reported]="!!inv.reportedIssue?.reportedAt && !inv.reportedIssue?.resolvedAt">
+            [reported]="!!inv.reportedIssue?.reportedAt && !inv.reportedIssue?.resolvedAt"
+            [allowCancel]="inv.status !== 'submitted'"
+        [cancelRequestStatus]="inv.cancelRequest?.requestedByRole === 'creator' ? inv.cancelRequest?.status : null">
           </app-paid-collab-notice>
         </div>
       </div>
@@ -268,6 +270,7 @@
             <span class="mx-1">•</span> {{ inv.withdrawnReason || 'Closed without a post' }}
           </div>
           <app-late-post-submit [inviteId]="inv._id" [window]="inv.latePostWindow"></app-late-post-submit>
+          <app-closure-question *ngIf="!inv.closureAnswers?.creator?.at" [inviteId]="inv._id" role="creator"></app-closure-question>
         </div>
       </div>
     </div>

@@ -36,7 +36,13 @@ describe('RefundsPanelComponent (Admin → Payments → Refunds)', () => {
       'recordHostRepayment',
       'approveSettlementException',
       'reviewLatePost',
+      'approveFeeCredit',
+      'withholdFeeCredit',
+      'excuseMiss',
+      'restoreSlot',
     ]);
+    api.approveFeeCredit.and.returnValue(of({ success: true }));
+    api.excuseMiss.and.returnValue(of({ success: true }));
     api.listRefunds.and.returnValue(of({ success: true, data: rows }));
     api.getSummary.and.returnValue(of({ data: { refundOnHold: 55000, refundDue: 55000, refunded: 0 } }));
     api.markRefundSent.and.returnValue(of({ success: true }));
@@ -131,5 +137,37 @@ describe('RefundsPanelComponent (Admin → Payments → Refunds)', () => {
     cmp.form.utr = 'HR1';
     cmp.submitAction();
     expect(errors).toEqual(['The host must repay ₹550']);
+  });
+
+  it('shows private answers, the new flags and fee-credit review actions', () => {
+    const fixture = render([
+      {
+        ...base,
+        state: 'sent',
+        refundPolicy: 'fee_credit',
+        feeCreditAmount: 5000,
+        feeCredit: { status: 'needs_review', amount: 5000 },
+        flags: ['replaced_after_no_post', 'host_no_post_rate'],
+        closureAnswers: { creator: { answer: 'host_asked_not_to_post', details: 'Asked on WhatsApp' } },
+      },
+    ]);
+    const el = fixture.nativeElement as HTMLElement;
+    expect(text(el)).toContain('Host invited another creator within 7 days');
+    expect(text(el)).toContain('Host: 2+ no-posts in last 5 paid collaborations');
+    expect(text(el)).toContain('Creator: Host asked me not to post');
+    expect(text(el)).toContain('Fee credit waiting for review');
+    (Array.from(el.querySelectorAll('button')).find((b) => b.textContent!.includes('Issue fee credit')) as HTMLElement).click();
+    expect(api.approveFeeCredit).toHaveBeenCalledWith('tx1');
+  });
+
+  it('"Don\'t count against creator" needs a reason', () => {
+    const fixture = render([base]);
+    const cmp = fixture.componentInstance;
+    cmp.openAction('excuse', cmp.rows[0]);
+    cmp.form.note = 'short';
+    expect(cmp.actionValid).toBeFalse();
+    cmp.form.note = 'Host told the creator not to post';
+    cmp.submitAction();
+    expect(api.excuseMiss).toHaveBeenCalledWith('inv1', 'Host told the creator not to post');
   });
 });

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CampaignTransaction, RefundQueueItem } from './payments-payouts.models';
+import { CampaignTransaction, CancelRequestItem, RefundQueueItem } from './payments-payouts.models';
 
 @Injectable({ providedIn: 'root' })
 export class PaymentsPayoutsApiService {
@@ -103,6 +103,40 @@ export class PaymentsPayoutsApiService {
     return this.http.post<any>(
       `${environment.apiBaseUrl}/campaign-transactions/${id}/settlement/exception`,
       { reason },
+    );
+  }
+
+  approveFeeCredit(id: string): Observable<any> {
+    return this.http.post<any>(`${environment.apiBaseUrl}/campaign-transactions/${id}/fee-credit/approve`, {});
+  }
+
+  withholdFeeCredit(id: string, reason: string): Observable<any> {
+    return this.http.post<any>(`${environment.apiBaseUrl}/campaign-transactions/${id}/fee-credit/withhold`, { reason });
+  }
+
+  /** Admin: this no-post closure must not count against the creator. */
+  excuseMiss(inviteId: string, reason: string): Observable<any> {
+    return this.http.post<any>(`${environment.apiBaseUrl}/campaign-invites/admin/${inviteId}/excuse-miss`, { reason });
+  }
+
+  /** Admin gives back a paid invite's campaign slot (documented exception). */
+  restoreSlot(inviteId: string, reason: string): Observable<any> {
+    return this.http.post<any>(`${environment.apiBaseUrl}/campaign-invites/admin/${inviteId}/restore-slot`, { reason });
+  }
+
+  listCancelRequests(): Observable<{ success: boolean; data: CancelRequestItem[] }> {
+    return this.http.get<{ success: boolean; data: CancelRequestItem[] }>(
+      `${environment.apiBaseUrl}/campaign-invites/admin/cancel-requests`,
+    );
+  }
+
+  decideCancelRequest(
+    inviteId: string,
+    payload: { decision: 'approve' | 'reject'; note: string; compensation?: number; pauseDays?: number },
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-invites/admin/${inviteId}/cancel-request/decide`,
+      payload,
     );
   }
 

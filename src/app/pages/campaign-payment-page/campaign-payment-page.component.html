@@ -67,7 +67,11 @@
       </div>
 
       <ng-container *ngIf="!successMessage">
-        <app-paid-collab-terms *ngIf="needsTerms" [(accepted)]="termsAccepted"></app-paid-collab-terms>
+        <app-paid-collab-terms *ngIf="needsTerms" [v2]="!!calculatedPayment?.termsV2Active" [(accepted)]="termsAccepted"></app-paid-collab-terms>
+        <p class="cmp-upi-hint" *ngIf="creditToApply > 0">
+          TrendStarZ credit of ₹{{ creditToApply / 100 | number: '1.0-2' }} is applied to the platform fee when you pay by UPI.
+          Pay ₹{{ (calculatedPayment?.payerTotalAfterCredit || 0) / 100 | number: '1.0-2' }} (+ GST on the fee, if any).
+        </p>
 
         <div class="cmp-actions" style="margin-bottom: 12px;">
           <button type="button" class="btn btn-primary" (click)="payWithRazorpay()" [disabled]="processingRazorpay || submitting || !termsOk">

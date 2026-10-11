@@ -38,6 +38,8 @@ export class InfluencerProfileViewComponent implements OnInit {
   influencer: any;
   loading = true;
   error = '';
+  /** Completed vs missed paid collaborations (shown to signed-in viewers; display only). */
+  paidRecord: { completed: number; missed: number } | null = null;
   showContactInfo = false;
   galleryModalOpen = false;
   galleryModalIndex = 0;
@@ -352,6 +354,7 @@ export class InfluencerProfileViewComponent implements OnInit {
             if (this.isBrandViewer && this.isProViewer) {
               this.loadCompletedInvite(this.influencer._id);
             }
+            this.loadPaidRecord(this.influencer._id);
           }
           this.loading = false;
           this.cd.detectChanges();
@@ -417,6 +420,18 @@ export class InfluencerProfileViewComponent implements OnInit {
       this.document.head.appendChild(canonical);
     }
     canonical.setAttribute('href', href);
+  }
+
+  private loadPaidRecord(creatorId: string) {
+    this.paidRecord = null;
+    if (!this.isLoggedIn || !creatorId) return;
+    this.config.getCreatorRecord(String(creatorId)).subscribe({
+      next: (r) => {
+        this.paidRecord = r && r.completed + r.missed > 0 ? r : null;
+        this.cd.markForCheck();
+      },
+      error: () => undefined,
+    });
   }
 
   loadCompletedInvite(influencerId: string) {

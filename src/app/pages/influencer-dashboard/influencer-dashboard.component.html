@@ -438,7 +438,9 @@
         role="creator"
         [termsAccepted]="!!c.creatorTermsAccepted"
         (termsAcceptedChange)="c.creatorTermsAccepted = $event"
-        [reported]="!!c.openReport">
+        [reported]="!!c.openReport"
+        [allowCancel]="c.inviteStatus !== 'submitted'"
+        [cancelRequestStatus]="c.cancelRequestStatus">
       </app-paid-collab-notice>
     </div>
     <div class="txn-see-all" *ngIf="activeCampaigns.length">
@@ -522,6 +524,7 @@
         <span><i class="bi bi-calendar3"></i> {{ formatDateRange(c.timelineStart, c.timelineEnd) }}</span>
       </div>
       <app-late-post-submit *ngIf="c.latePostWindow" [inviteId]="c.inviteId" [window]="c.latePostWindow"></app-late-post-submit>
+      <app-closure-question *ngIf="c.latePostWindow && !c.closureAnswered" [inviteId]="c.inviteId" role="creator"></app-closure-question>
     </div>
   </div>
 

@@ -49,6 +49,21 @@ export class PhotographerProfileViewComponent implements OnInit {
     return this.visibility.isLoggedIn();
   }
 
+  /** Completed vs missed paid collaborations (shown to signed-in viewers; display only). */
+  paidRecord: { completed: number; missed: number } | null = null;
+
+  private loadPaidRecord(creatorId: unknown) {
+    this.paidRecord = null;
+    if (!this.isLoggedIn || !creatorId) return;
+    this.config.getCreatorRecord(String(creatorId)).subscribe({
+      next: (r) => {
+        this.paidRecord = r && r.completed + r.missed > 0 ? r : null;
+        this.cd.markForCheck();
+      },
+      error: () => undefined,
+    });
+  }
+
   get isProViewer(): boolean {
     return this.visibility.isPro();
   }
@@ -379,6 +394,7 @@ export class PhotographerProfileViewComponent implements OnInit {
             this.setDefaultMetadata();
           } else {
             this.photographer = data;
+            this.loadPaidRecord(data?._id);
             this.updateMetadata(data);
             this.ensureCanonicalProfileUrl(data, username);
             // Profile view (best-effort), like influencer and brand profiles.

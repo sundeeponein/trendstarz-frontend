@@ -112,6 +112,12 @@
             <div class="detail-caption" *ngIf="isProViewer && influencer.promotionalPrice">Auto-calculated from content rates</div>
           </div>
 
+          <div class="detail-row" *ngIf="paidRecord">
+            <div><span class="detail-key">Paid collaborations</span></div>
+            <span class="detail-val">{{ paidRecord.completed }} completed · {{ paidRecord.missed }} missed</span>
+            <div class="detail-caption">On TrendStarZ. Excused or disputed closures are not counted.</div>
+          </div>
+
           <div class="detail-row" *ngIf="influencer.languages?.length">
             <div><span class="detail-key">Languages</span></div>
             <div class="chip-list">

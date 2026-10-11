@@ -85,6 +85,11 @@
             <span class="detail-locked" *ngIf="!isProViewer"><i class="bi bi-lock-fill"></i> Upgrade to view values</span>
           </div> -->
 
+          <div class="detail-row" *ngIf="paidRecord">
+            <div><span class="detail-key">Paid collaborations</span></div>
+            <span class="detail-val">{{ paidRecord.completed }} completed · {{ paidRecord.missed }} missed</span>
+          </div>
+
           <div class="detail-row" *ngIf="getEquipmentChips().length">
             <div><span class="detail-key">Equipment</span></div>
             <div class="chip-list">

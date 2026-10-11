@@ -71,6 +71,10 @@
             <span class="cp-row-label">GST on commission ({{ gstPercent }}%)</span>
             <span class="cp-row-val">{{ formatINR(gstAmount) }}</span>
           </div>
+          <div class="cp-row" *ngIf="creditToApply > 0">
+            <span class="cp-row-label">TrendStarZ credit (UPI payment)</span>
+            <span class="cp-row-val">−{{ formatINR(creditToApply) }}</span>
+          </div>
           <div class="cp-total">
             <span>Total to pay</span>
             <span class="cp-total-val">{{ formatINR(totalToPay) }}</span>
@@ -128,7 +132,10 @@
       </div>
 
 
-      <app-paid-collab-terms *ngIf="needsTerms" [(accepted)]="termsAccepted"></app-paid-collab-terms>
+      <app-paid-collab-terms *ngIf="needsTerms" [v2]="!!calculated?.termsV2Active" [(accepted)]="termsAccepted"></app-paid-collab-terms>
+      <p class="cp-field-note" *ngIf="creditToApply > 0">
+        Your TrendStarZ credit of {{ formatINR(creditToApply) }} is applied when you pay by UPI below (not with Razorpay).
+      </p>
 
       <div class="cp-actions" style="margin-top: 0; margin-bottom: 14px;">
         <button type="button" class="cp-btn cp-btn--primary w-100" (click)="payWithRazorpay()" [disabled]="processingRazorpay || submitting || !termsOk">

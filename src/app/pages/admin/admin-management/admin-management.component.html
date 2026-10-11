@@ -691,8 +691,32 @@
             <small class="text-light-emphasis d-block">
               Auto-complete starts after the host mark-completed lock expires. Use 0 for immediate release after the previous step is complete.
               If a disputed influencer neither resubmits nor withdraws within the respond-to-dispute window, the collaboration is auto-cancelled and the host is marked refunded.
-              If a campaign is left untouched past its end date plus this grace period, it closes automatically — any participant who never submitted is marked Not Submitted and the host is marked refunded, even if the host never clicks End Campaign.
+              If a campaign is left untouched past its end date plus this grace period, it closes automatically — any paid participant who never submitted is closed and the host's refund goes on a 7-day review hold (Payments → Refunds), even if the host never clicks End Campaign.
             </small>
+          </div>
+
+          <div class="mb-3">
+            <h6 class="mb-2">Paid-collaboration terms v2 (paid-slot rule + fee credit)</h6>
+            <p class="text-light-emphasis mb-2" style="font-size:0.85rem;">
+              From this date: a paid invite stays counted in the campaign invite limit after it closes, and on a no-post
+              refund the creator's amount is refunded by UPI while the platform fee becomes 12-month TrendStarZ credit.
+              Applies only to payments made from this moment — never to earlier payments.
+              <strong>Set it only after the terms have been legally reviewed.</strong> Leave empty to keep it off.
+            </p>
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-md-5">
+                <label class="form-label" style="font-size:0.9rem;">Effective from</label>
+                <input type="datetime-local" class="form-control" [(ngModel)]="settings.paidCollabTermsV2EffectiveAt" />
+              </div>
+              <div class="col-12 col-md-7">
+                <span class="badge" [class.bg-success]="termsV2Active" [class.bg-secondary]="!termsV2Active">
+                  {{ termsV2Active ? 'Active' : (settings.paidCollabTermsV2EffectiveAt ? 'Scheduled' : 'Off') }}
+                </span>
+                <button type="button" class="btn btn-link btn-sm" *ngIf="settings.paidCollabTermsV2EffectiveAt" (click)="settings.paidCollabTermsV2EffectiveAt = ''">
+                  Clear
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="mb-3">

@@ -74,6 +74,12 @@ export class CampaignPaymentPageComponent implements OnInit {
         firstValueFrom(this.config.getAppSettings() as any).catch(() => null),
       ]);
       this.campaign = campaignRes;
+      // Credit + terms version for the pay tab (best effort — the page works without it).
+      this.calculatedPayment = await firstValueFrom(
+        this.config.calculateCampaignPayment(this.campaignId),
+      )
+        .then((res: any) => res?.data || res)
+        .catch(() => null);
       if (settingsRes) {
         const s = settingsRes as any;
         if (s.paymentUpiId) this.paymentUpiId = s.paymentUpiId;
@@ -163,6 +169,10 @@ export class CampaignPaymentPageComponent implements OnInit {
 
   get needsTerms(): boolean {
     return String(this.campaign?.campaignType || '').toLowerCase() !== 'pay_to_join';
+  }
+
+  get creditToApply(): number {
+    return Number(this.calculatedPayment?.creditToApply || 0);
   }
 
   get termsOk(): boolean {
