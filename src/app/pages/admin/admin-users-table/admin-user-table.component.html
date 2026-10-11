@@ -52,6 +52,11 @@
         <i class="bi bi-sliders2"></i>
         Reset
       </button>
+      <button type="button" class="link-report-chip" *ngIf="linkReportCount > 0"
+              (click)="setActiveFilterValue('contactVerification', 'link_reported')"
+              title="Hosts reported a social link that doesn't open — show only these">
+        <i class="bi bi-link-45deg"></i> {{ linkReportCount }} link{{ linkReportCount === 1 ? '' : 's' }} not working
+      </button>
     </div>
   </div>
 
@@ -68,6 +73,7 @@
       <option value="admin_review_rejected">Admin Review Rejected</option>
       <option value="profile_updated">Updated since approval — needs review</option>
       <option value="social_changed">Social media changed — re-review</option>
+      <option value="link_reported">Link not working — reported{{ linkReportCountLabel }}</option>
       <option value="callback_requested">Callback Requested</option>
       <option value="featured_eligible">Featured Eligible (Premium + Public)</option>
       <option value="search_eligible">Search Eligible</option>
@@ -203,6 +209,11 @@
             <div class="mt-1" *ngIf="user.creatorUpdatesPending || user.socialReviewChanged" [title]="creatorUpdateTitle(user)">
               <span class="ts-status-badge ts-status-pending">
                 <i class="bi bi-pencil-square"></i> {{ user.socialReviewChanged || hasSocialCreatorUpdate(user) ? 'Social changed — re-review' : 'Updated — needs review' }}
+              </span>
+            </div>
+            <div class="mt-1" *ngIf="user.linkReportOpen" title="Hosts reported a social link that doesn't open — open the user to confirm or dismiss">
+              <span class="ts-status-badge ts-status-rejected">
+                <i class="bi bi-link-45deg"></i> Link not working — reported
               </span>
             </div>
             <div class="mt-1" *ngIf="user.hasPendingPremiumPayment" title="This user submitted a payment that is still awaiting admin approval/decline in Premium Payments. Review it there before accepting, declining, or deleting this account.">

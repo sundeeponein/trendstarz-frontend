@@ -1334,8 +1334,31 @@ export class AdminUserTableComponent implements OnInit {
     }
   }
 
+  /** Creators with an open "link not working" report, per type (shown on the filter). */
+  linkReportCounts: Record<string, number> = {};
+
+  get linkReportCount(): number {
+    const key = this.activeTab === 'photographer' ? 'Photographer' : this.activeTab === 'influencer' ? 'Influencer' : '';
+    return key ? Number(this.linkReportCounts[key] || 0) : 0;
+  }
+
+  get linkReportCountLabel(): string {
+    return this.linkReportCount > 0 ? ` (${this.linkReportCount})` : '';
+  }
+
+  private loadLinkReportCounts(): void {
+    this.http
+      .get<any>(`${environment.apiBaseUrl}/admin/social-links/open-count`, this.getAuthHeaders())
+      .pipe(catchError(() => of(null)))
+      .subscribe((res) => {
+        this.linkReportCounts = res?.data || {};
+        this.cd.detectChanges();
+      });
+  }
+
   fetchUsers(userType: AdminUserRole = this.activeTab) {
     this.isLoading = true;
+    this.loadLinkReportCounts();
     const headers = this.getAuthHeaders();
     this.http.get<any>(this.getAdminListUrl(userType), headers)
       .pipe(timeout(5000), catchError(() => of([])))
@@ -1581,6 +1604,9 @@ export class AdminUserTableComponent implements OnInit {
       return false;
     }
     if (filters.contactVerification === 'profile_updated' && !user.creatorUpdatesPending) {
+      return false;
+    }
+    if (filters.contactVerification === 'link_reported' && !user.linkReportOpen) {
       return false;
     }
     if (
