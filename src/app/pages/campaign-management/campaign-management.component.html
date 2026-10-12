@@ -146,7 +146,7 @@
               [class.is-full]="isActiveQuotaFull"
               [title]="quotaChipTitle">
           <i class="bi bi-folder-fill"></i>
-          {{ summaryActiveCampaigns }} / {{ maxActiveCampaigns }} slots used
+          {{ summaryActiveCampaigns }} / {{ maxActiveCampaigns }} slots used this month
         </span>
       </div>
       <div class="cm-header-actions" *ngIf="canCreateCollaborations">
@@ -160,7 +160,7 @@
         </button>
         <button class="btn btn-create" (click)="openCreateForm()"
                 [disabled]="!brandId || isActiveQuotaFull"
-                [title]="isActiveQuotaFull ? ((isPhotographerView || isInfluencerCollaborationsView) ? 'Active collaboration quota full (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + '). Upgrade to Premium for more.' : 'Active request quota full (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + '). Upgrade to Premium for more.') : ((isPhotographerView || isInfluencerCollaborationsView) ? 'Create a new collaboration' : 'Create a new campaign request')">
+                [title]="isActiveQuotaFull ? ('Monthly ' + quotaEntitySingularLabel + ' slots used (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + ').' + (slotsResetLabel ? ' Slots reset on ' + slotsResetLabel + '.' : '') + ' Upgrade to Premium for more.') : ((isPhotographerView || isInfluencerCollaborationsView) ? 'Create a new collaboration' : 'Create a new campaign request')">
           <i class="bi bi-plus-circle-fill"></i>
           {{ createButtonLabel }}
         </button>
@@ -469,7 +469,7 @@
       <div class="cm-stat-card">
         <span class="stat-value">{{ summaryTotalCampaigns }}</span>
         <span class="stat-label">{{ totalRequestsLabel }}</span>
-        <span class="stat-sub">{{ summaryActiveCampaigns }} active now</span>
+        <span class="stat-sub">{{ runningCampaignsCount }} active now</span>
       </div>
       <div class="cm-stat-card">
         <span class="stat-value">{{ summaryInvitesSent }}</span>

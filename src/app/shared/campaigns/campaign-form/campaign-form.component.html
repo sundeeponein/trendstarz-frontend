@@ -47,8 +47,9 @@
         <div class="cf-slots-full" *ngIf="slotsFullLimit !== null && !isEdit" role="alert">
           <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
           <span>
-            <strong>{{ slotsFullLimit === 1 ? 'Your plan\'s campaign slot is in use.' : 'All ' + slotsFullLimit + ' campaign slots on your plan are in use.' }}</strong>
-            Drafts, pending and active campaigns count. Complete or delete one, or upgrade, before you can save this campaign. Your progress here is kept on this device.
+            <strong>{{ slotsFullLimit === 1 ? 'You\'ve used your campaign slot for this month.' : 'You\'ve used all ' + slotsFullLimit + ' campaign slots for this month.' }}</strong>
+            Every campaign you submit this month counts, including completed ones.
+            You can still save this as a draft and submit it {{ slotsResetLabel ? 'after your slots reset on ' + slotsResetLabel : 'when your slots reset' }}, or upgrade for more.
           </span>
           <a routerLink="/campaigns" class="cf-restore__link">My campaigns</a>
           <a routerLink="/upgrade-premium" class="cf-upgrade__btn">Upgrade</a>

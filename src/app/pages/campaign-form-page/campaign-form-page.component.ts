@@ -22,6 +22,7 @@ import { CampaignFormComponent } from '../../shared/campaigns/campaign-form/camp
       [preSelectedRecipientRole]="preSelectedRecipientRole"
       [saving]="saving"
       [slotsFullLimit]="slotsFullLimit"
+      [slotsResetLabel]="slotsResetLabel"
       (save)="onSave($event)"
       (cancel)="onCancel()"
     ></app-campaign-form>
@@ -91,6 +92,7 @@ export class CampaignFormPageComponent implements OnInit {
   saving = false;
   /** Set (to the plan limit) when a new campaign can't be saved because all slots are used. */
   slotsFullLimit: number | null = null;
+  slotsResetLabel = '';
   preSelectedInfluencers: CampaignInfluencer[] = [];
   preSelectedRecipientRole: 'influencer' | 'photographer' | null = null;
   /** Invites the server refused, with its reason — shown before leaving the form. */
@@ -149,23 +151,22 @@ export class CampaignFormPageComponent implements OnInit {
   }
 
   /**
-   * Mirrors the backend create-time rule (campaigns.service create): active,
-   * pending, draft and paused campaigns use a plan slot; -1 = unlimited.
-   * Warns up front instead of failing after all three steps are filled.
+   * The backend's monthly slot count (campaigns.service campaignSlotUsage):
+   * every campaign submitted this plan month uses a slot, completed included;
+   * drafts and rejected ones don't. -1 = unlimited. Warns up front instead of
+   * failing after all three steps are filled.
    */
-  private checkCampaignSlots(caps: any): void {
-    const limit = Number((caps?.limits || []).find((l: any) => l?.key === 'maxActiveCampaigns')?.value ?? 1);
-    const ownerId = this.getRequesterId();
-    if (limit === -1 || !ownerId) return;
-    this.config.getCampaignsByBrandId(ownerId).subscribe({
-      next: (rows: any[]) => {
-        const used = (Array.isArray(rows) ? rows : [])
-          .filter((c: any) => ['active', 'pending', 'draft', 'paused'].includes(String(c?.status || '').toLowerCase()))
-          .length;
-        this.slotsFullLimit = used >= limit ? limit : null;
-        this.cd.detectChanges();
-      },
-      error: () => {},
+  private checkCampaignSlots(_caps: any): void {
+    this.config.getCampaignSlotUsage().subscribe((usage) => {
+      if (!usage) return;
+      const limit = Number(usage.limit);
+      if (limit === -1 || !Number.isFinite(limit)) return;
+      this.slotsFullLimit = Number(usage.used) >= limit ? limit : null;
+      const resets = usage.resetsAt ? new Date(usage.resetsAt) : null;
+      this.slotsResetLabel = resets && !Number.isNaN(resets.getTime())
+        ? resets.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+        : '';
+      this.cd.detectChanges();
     });
   }
 

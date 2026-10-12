@@ -104,6 +104,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   @Input() hasPremium: boolean = false;
   /** Plan limit when every campaign slot is already used (new campaigns only); null otherwise. */
   @Input() slotsFullLimit: number | null = null;
+  /** e.g. "5 Nov" — when the host's monthly campaign slots reset. */
+  @Input() slotsResetLabel = '';
   @Input() creatorRole: 'brand' | 'photographer' | 'influencer' = 'brand';
   @Input() saving = false;
   @Output() save = new EventEmitter<Partial<Campaign> & {

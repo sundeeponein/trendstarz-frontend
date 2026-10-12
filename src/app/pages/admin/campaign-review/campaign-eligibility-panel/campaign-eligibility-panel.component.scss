@@ -148,6 +148,15 @@
   color: #3730a3;
 }
 
+.ce-booked-tag {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #c2410c;
+}
+
 .ce-invite-bar {
   display: flex;
   flex-wrap: wrap;

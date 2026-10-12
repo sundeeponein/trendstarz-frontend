@@ -81,7 +81,9 @@ export interface CampaignEligibilityRow {
   >;
   /** Already holds an invite for this campaign (any status). Separate from eligibility. */
   invited: boolean;
-  /** Decided by the backend (live campaign + PASS + not invited); re-checked again at send time. */
+  /** All of the creator's monthly invite slots are used (backend, same rule as the send check). */
+  fullyBooked?: boolean;
+  /** Decided by the backend (live campaign + PASS + not invited + not fully booked); re-checked again at send time. */
   invitable: boolean;
   inviteBlockedReason: string | null;
   /** Stage 3C-1 — position among ALL eligible creators (server-calculated); null unless PASS. */

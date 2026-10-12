@@ -128,7 +128,7 @@ export class AdminPlansComponent implements OnInit {
       { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
       { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxProductImages', label: 'Product images' },
-      { key: 'maxActiveCampaigns', label: 'Active campaign' },
+      { key: 'maxActiveCampaigns', label: 'Campaigns / month' },
       { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
       { key: 'maxInvitesReceivedPerMonth', label: 'Invites received / month' },
       { key: 'maxInviteOptions', label: 'Invite options' },
@@ -137,7 +137,7 @@ export class AdminPlansComponent implements OnInit {
     BRAND: [
       { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
       { key: 'dailySearchLimit', label: 'Daily searches' },
-      { key: 'maxActiveCampaigns', label: 'Active campaign' },
+      { key: 'maxActiveCampaigns', label: 'Campaigns / month' },
       { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
       // 'maxTeamSeats' intentionally omitted — no team-member feature exists
       // yet (no schema, no invite flow, no UI) to actually enforce this cap,
@@ -150,7 +150,7 @@ export class AdminPlansComponent implements OnInit {
       { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
       { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxPortfolioImages', label: 'Portfolio images' },
-      { key: 'maxActiveCampaigns', label: 'Active campaign' },
+      { key: 'maxActiveCampaigns', label: 'Campaigns / month' },
       { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
       { key: 'maxInvitesReceivedPerMonth', label: 'Invites received / month' },
       { key: 'analytics', label: 'Analytics' },
@@ -209,6 +209,12 @@ export class AdminPlansComponent implements OnInit {
       const found = this.editingPlan!.features.find(f => f.key === m.key);
       return { ...m, value: found ? found.value : false };
     });
+  }
+
+  /** The current label for a stored limit (stored labels can be stale, e.g. "Active campaign"). */
+  limitLabel(userType: string, limit: { key: string; label: string }): string {
+    const master = this.masterLimits[userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
+    return master.find((m) => m.key === limit.key)?.label || limit.label;
   }
 
   getMergedLimits(): { key: string; label: string; value: number }[] {
@@ -391,7 +397,7 @@ export class AdminPlansComponent implements OnInit {
           { key: 'dailyProfileViewLimit', label: 'Daily profile views', value: 300 },
           { key: 'dailySearchLimit', label: 'Daily searches', value: 150 },
           { key: 'maxProductImages', label: 'Product images', value: 20 },
-          { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
+          { key: 'maxActiveCampaigns', label: 'Campaigns / month', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 10 },
           { key: 'maxInviteOptions', label: 'Invite options', value: 20 },
           { key: 'maxCampaignPosts', label: 'Max campaign posts', value: 20 },
@@ -411,7 +417,7 @@ export class AdminPlansComponent implements OnInit {
         limits: [
           { key: 'dailyProfileViewLimit', label: 'Daily profile views', value: 500 },
           { key: 'dailySearchLimit', label: 'Daily searches', value: 250 },
-          { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
+          { key: 'maxActiveCampaigns', label: 'Campaigns / month', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 20 },
           { key: 'analytics', label: 'Analytics', value: 1 },
           { key: 'maxCampaignPosts', label: 'Max campaign posts', value: 30 },
@@ -432,7 +438,7 @@ export class AdminPlansComponent implements OnInit {
           { key: 'dailyProfileViewLimit', label: 'Daily profile views', value: 300 },
           { key: 'dailySearchLimit', label: 'Daily searches', value: 150 },
           { key: 'maxPortfolioImages', label: 'Portfolio images', value: 10 },
-          { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
+          { key: 'maxActiveCampaigns', label: 'Campaigns / month', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 10 },
           { key: 'analytics', label: 'Analytics', value: 0 },
           { key: 'maxCampaignPosts', label: 'Max campaign posts', value: 20 },

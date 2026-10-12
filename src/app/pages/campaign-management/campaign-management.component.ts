@@ -65,6 +65,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   submissionAutoCompleteGraceHours = 48;
   payoutReleaseWaitHours = 24;
       maxActiveCampaigns: number = 1;
+      /** Server count of this plan month's campaign slots (completed ones included). */
+      slotUsage: { used: number; limit: number; resetsAt: string } | null = null;
       planCapabilities: any = null;
   private completionEventsTracked = new Set<string>();
     // Reload campaigns from backend (used after create/update)
@@ -476,7 +478,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   get quotaChipTitle(): string {
-    return `Drafts, pending and active ${this.quotaEntityPluralLabel} count toward your plan limit. Completed ones free up a slot.`;
+    const resets = this.slotsResetLabel ? ` Slots reset on ${this.slotsResetLabel}.` : '';
+    return `Every ${this.quotaEntitySingularLabel} you submit this plan month uses a slot, including completed ones. Drafts and rejected ones don't.${resets}`;
   }
 
   get influencerInboxSubtitle(): string {
@@ -1601,6 +1604,22 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
   }
 
+  private loadSlotUsage(): void {
+    this.config.getCampaignSlotUsage().subscribe((usage) => {
+      if (!usage || !Number.isFinite(Number(usage.used))) return;
+      this.slotUsage = usage;
+      this.cd.detectChanges();
+    });
+  }
+
+  /** e.g. "5 Nov" — when this plan month's slots reset. */
+  get slotsResetLabel(): string {
+    const d = this.slotUsage?.resetsAt ? new Date(this.slotUsage.resetsAt) : null;
+    return d && !Number.isNaN(d.getTime())
+      ? d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+      : '';
+  }
+
   private syncPlanCapabilities(): void {
     this.plans.getMyCapabilities().subscribe({
       next: (caps: any) => {
@@ -1676,6 +1695,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     this.isInfluencerView = userRole === 'influencer';
     this.isPhotographerView = userRole === 'photographer' || userRole === 'videographer';
     this.syncPlanCapabilities();
+    this.loadSlotUsage();
     this.config.getCreatorTypeOptions().subscribe({
       next: (items: any[]) => {
         this.creatorTypeOptions = Array.isArray(items) ? items : [];
@@ -2257,11 +2277,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       // Determine if user is premium or free
       const isPremium = this.isPremiumPlan;
       if (isPremium) {
-        this.upgradeBannerMessage = `Premium plan: ${this.summaryActiveCampaigns} / ${this.maxActiveCampaigns} ${this.quotaEntityPluralLabel} used.`;
+        this.upgradeBannerMessage = `Premium plan: ${this.summaryActiveCampaigns} / ${this.maxActiveCampaigns} ${this.quotaEntityPluralLabel} used this month${this.slotsResetLabel ? ` — slots reset on ${this.slotsResetLabel}` : ''}.`;
         this.planLimitError = '';
       } else {
         this.upgradeBannerMessage = '';
-        this.planLimitError = `Free plan limit reached: Only ${this.maxActiveCampaigns} active ${this.quotaEntityPluralLabel} allowed. Upgrade for more.`;
+        this.planLimitError = `Free plan limit reached: ${this.maxActiveCampaigns} ${this.maxActiveCampaigns === 1 ? this.quotaEntitySingularLabel : this.quotaEntityPluralLabel} per month${this.slotsResetLabel ? ` — slots reset on ${this.slotsResetLabel}` : ''}. Upgrade for more.`;
       }
       this.showUpgradeBanner = true;
       return;
@@ -4980,7 +5000,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   // ── Summary stats ─────────────────────────────────────────────
 
-  private consumesQuota(campaign: Campaign): boolean {
+  private isRunning(campaign: Campaign): boolean {
     const status = String(campaign?.status || '').trim().toLowerCase();
     return ['active', 'pending', 'pending_review', 'draft', 'paused'].includes(status);
   }
@@ -4990,12 +5010,21 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   get isActiveQuotaFull(): boolean {
     return this.maxActiveCampaigns !== -1 && this.summaryActiveCampaigns >= this.maxActiveCampaigns;
   }
+  /**
+   * Campaign slots used this plan month — the server's count (completed campaigns
+   * keep their slot; drafts and rejected ones don't). Falls back to running
+   * campaigns until it loads.
+   */
   get summaryActiveCampaigns(): number {
+    return this.slotUsage ? Number(this.slotUsage.used) : this.runningCampaignsCount;
+  }
+  /** Campaigns still running right now (the "active now" stat). */
+  get runningCampaignsCount(): number {
     if (!this.isInfluencerView) {
-      return this.campaigns.filter((campaign) => this.consumesQuota(campaign)).length;
+      return this.campaigns.filter((campaign) => this.isRunning(campaign)).length;
     }
     return this.campaigns.filter((campaign) =>
-      this.isCampaignOwnedByCurrentUser(campaign) && this.consumesQuota(campaign),
+      this.isCampaignOwnedByCurrentUser(campaign) && this.isRunning(campaign),
     ).length;
   }
 

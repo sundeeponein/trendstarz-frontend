@@ -220,6 +220,11 @@
                 }}</span>
               </div>
               <span class="ce-invited-tag" *ngIf="row.invited">Invited</span>
+              <span
+                class="ce-booked-tag"
+                *ngIf="!row.invited && row.fullyBooked"
+                title="All of this creator's monthly invite slots are used. They can be invited again when a slot frees up or their plan month resets."
+              >Fully booked</span>
               <span class="ce-pill" [ngClass]="'ce-pill--' + row.overall.toLowerCase()">{{
                 statusLabel(row.overall)
               }}</span>

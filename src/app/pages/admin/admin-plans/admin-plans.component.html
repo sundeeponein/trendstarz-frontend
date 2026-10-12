@@ -92,7 +92,7 @@
           <div class="section-label">Limits</div>
           <ul class="limit-list">
             <li *ngFor="let l of visibleLimits(plan)">
-              {{ l.label }}: <strong>{{ l.value }}</strong>
+              {{ limitLabel(plan.userType, l) }}: <strong>{{ l.value }}</strong>
             </li>
           </ul>
 

@@ -1122,6 +1122,14 @@ export class ConfigService {
     );
   }
 
+  /** The signed-in host's campaign slots for their current plan month (null on error). */
+  getCampaignSlotUsage(): Observable<{ used: number; limit: number; resetsAt: string } | null> {
+    return this.http.get<any>(`${this.apiUrl}/campaigns/slot-usage`).pipe(
+      map((res) => this.extractData<any>(res) || res || null),
+      catchError(() => of(null)),
+    );
+  }
+
   getCampaignsByBrandId(brandId: string): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/campaigns?brandId=${encodeURIComponent(brandId)}`).pipe(
       map(res => {
