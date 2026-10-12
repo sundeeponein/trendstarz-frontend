@@ -1118,7 +1118,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.photographersForInviteLoading = true;
       this.config.getPhotographers().subscribe({
         next: (arr: any[]) => {
-          this.allPhotographersForInvite = Array.isArray(arr) ? arr : [];
+          // Fully booked this month: the server would refuse the invite, so don't list them.
+          this.allPhotographersForInvite = (Array.isArray(arr) ? arr : []).filter((p: any) => p?.monthlySlotsFull !== true);
           this.photographersForInviteLoading = false;
           this.cd.detectChanges();
         },
@@ -2365,7 +2366,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.photographersForInviteLoading = true;
       this.config.getPhotographers().subscribe({
         next: (arr: any[]) => {
-          this.allPhotographersForInvite = Array.isArray(arr) ? arr : [];
+          // Fully booked this month: the server would refuse the invite, so don't list them.
+          this.allPhotographersForInvite = (Array.isArray(arr) ? arr : []).filter((p: any) => p?.monthlySlotsFull !== true);
           this.photographersForInviteLoading = false;
           this.cd.detectChanges();
         },

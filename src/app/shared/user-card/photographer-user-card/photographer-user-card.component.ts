@@ -31,6 +31,8 @@ export class PhotographerUserCardComponent {
   @Input() collaborationScore: number | null = null;
   @Input() campaignReady: 'Campaign Ready' | 'Partially Ready' | 'Not Ready' | null = null;
   @Input() trendstarzRecommended = false;
+  /** All of this creator's monthly invite slots are used — shown as a badge, never hidden. */
+  @Input() monthlySlotsFull = false;
 
   @Output() viewProfileClick = new EventEmitter<void>();
 

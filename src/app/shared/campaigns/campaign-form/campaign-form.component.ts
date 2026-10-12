@@ -2189,9 +2189,10 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       this.photographersLoading = true;
       this.config.getPhotographers().subscribe({
         next: (data: any[]) => {
+          // Fully booked this month: the server would refuse the invite, so don't list them.
           this.allPhotographers = (Array.isArray(data) ? data : [])
             .map((p: any) => ({ ...p, _id: p?._id || p?.id || '' }))
-            .filter((p: any) => !!String(p?._id || '').trim());
+            .filter((p: any) => !!String(p?._id || '').trim() && p?.monthlySlotsFull !== true);
           this.photographersLoading = false;
           this.cd.detectChanges();
         },

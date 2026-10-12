@@ -215,6 +215,7 @@
         [collaborationScore]="influencer.collaborationScore ?? null"
         [campaignReady]="influencer.campaignReadiness ?? null"
         [trendstarzRecommended]="influencer.trendstarzRecommended === true"
+        [monthlySlotsFull]="influencer.monthlySlotsFull === true"
         (viewProfileClick)="viewInfluencerProfile(influencer)"
         (createCampaignClick)="router.navigate(['/campaigns'])">
       </app-influencer-user-card>
@@ -328,6 +329,7 @@
         [collaborationScore]="p.collaborationScore ?? null"
         [campaignReady]="p.campaignReadiness ?? null"
         [trendstarzRecommended]="p.trendstarzRecommended === true"
+        [monthlySlotsFull]="p.monthlySlotsFull === true"
         (viewProfileClick)="viewPhotographerProfile(p)">
       </app-photographer-user-card>
       </div>
