@@ -83,7 +83,9 @@
       </div>
 
       <!-- Payout details (user, pending — shown above offer trail) -->
-      <div class="cdm-payout-block cdm-payout-block--body" *ngIf="isPending && !adminReview && needsPayoutDetails">
+      <div class="cdm-payout-block cdm-payout-block--body" #payoutSection
+           [class.cdm-attention]="attentionTarget === 'payout'"
+           *ngIf="isPending && !adminReview && needsPayoutDetails">
         <div class="cdm-payout-head">
           <i class="bi bi-bank"></i>
           <span>Receive payment to</span>
@@ -239,8 +241,13 @@
           </div>
 
           <!-- Content type selection (user pending) -->
-          <div class="cdm-section" *ngIf="!adminReview && (availableContentTypeOptions.length || unavailableContentTypeOptions.length)">
-            <div class="cdm-section__label">SELECT CONTENT TYPE</div>
+          <div class="cdm-section" #contentTypeSection
+               [class.cdm-attention]="attentionTarget === 'contentType'"
+               *ngIf="!adminReview && (availableContentTypeOptions.length || unavailableContentTypeOptions.length)">
+            <div class="cdm-section__label">
+              SELECT CONTENT TYPE
+              <span class="cdm-attention-hint" *ngIf="attentionTarget === 'contentType'">— tap one to continue</span>
+            </div>
             <div class="cdm-ct-row" *ngIf="availableContentTypeOptions.length">
               <button type="button" class="cdm-ct-pill"
                       *ngFor="let opt of availableContentTypeOptions"

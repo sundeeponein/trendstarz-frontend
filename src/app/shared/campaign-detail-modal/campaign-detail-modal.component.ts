@@ -48,6 +48,11 @@ interface ContentTypeOption {
 })
 export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked {
   @ViewChild('workflowTrack') private workflowTrackRef?: ElementRef<HTMLElement>;
+  @ViewChild('contentTypeSection') private contentTypeSectionRef?: ElementRef<HTMLElement>;
+  @ViewChild('payoutSection') private payoutSectionRef?: ElementRef<HTMLElement>;
+  /** Section briefly highlighted after a failed Accept, so the creator sees what's missing. */
+  attentionTarget: 'contentType' | 'payout' | null = null;
+  private attentionTimer: any;
   private _workflowScrolled = false;
 
   @Input() invite: any;
@@ -1644,6 +1649,19 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     this.toastTimer = setTimeout(() => { this.toastError = ''; }, 4000);
   }
 
+  /** Scrolls the missing section into view and highlights it for a moment. */
+  private pointTo(target: 'contentType' | 'payout') {
+    this.attentionTarget = target;
+    this.cdr.detectChanges();
+    const el = (target === 'contentType' ? this.contentTypeSectionRef : this.payoutSectionRef)?.nativeElement;
+    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    clearTimeout(this.attentionTimer);
+    this.attentionTimer = setTimeout(() => {
+      this.attentionTarget = null;
+      this.cdr.detectChanges();
+    }, 2500);
+  }
+
   onAccept() {
     if (!this.inviteId) return;
     if (this.showDateInput && !this.postDate) {
@@ -1652,6 +1670,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     }
     if (this.selectableContentTypeOptions.length && !this.selectedContentTypeKey) {
       this.showToastError('Please select a content type before accepting.');
+      this.pointTo('contentType');
       return;
     }
     if (this.selectedContentTypeKey && !this.selectedContentTypeOption) {
@@ -1660,6 +1679,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
           ? `Please choose a content option only for ${this.platformLabel(this.lockedPlatform)}.`
           : 'Please select a valid content type.'
       );
+      this.pointTo('contentType');
       return;
     }
     if (this.needsPayoutDetails) {
@@ -1668,6 +1688,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       if (!upi && !mobile) {
         this.payoutEditing = true;
         this.showToastError('Please add a UPI ID or mobile number (GPay/PhonePe) to receive payment.');
+        this.pointTo('payout');
         return;
       }
     }
