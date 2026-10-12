@@ -1463,9 +1463,9 @@
             {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Save as Draft' }}
           </button>
           <button type="button" class="btn btn-send"
-            [disabled]="selectedInfluencerIds.size === 0 || uploading || saving || submitLocked" (click)="onSubmit()">
+            [disabled]="!canSubmitWithSelection || uploading || saving || submitLocked" (click)="onSubmit()">
             <span *ngIf="uploading || saving || submitLocked">Saving…</span>
-            <span *ngIf="!(uploading || saving || submitLocked)">Send Invites <i class="bi bi-arrow-right"></i></span>
+            <span *ngIf="!(uploading || saving || submitLocked)">{{ selectedInfluencerIds.size === 0 ? 'Save Changes' : 'Send Invites' }} <i class="bi bi-arrow-right"></i></span>
           </button>
         </div>
         <app-mobile-bottom-actions ariaLabel="Invite recipients actions">
@@ -1476,8 +1476,8 @@
             <i class="bi bi-save"></i> {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Draft' }}
           </button>
           <button type="button" class="btn btn-success"
-            [disabled]="selectedInfluencerIds.size === 0 || uploading || saving || submitLocked" (click)="onSubmit()">
-            <i class="bi bi-send"></i> {{ (uploading || saving || submitLocked) ? 'Saving…' : 'Invite' }}
+            [disabled]="!canSubmitWithSelection || uploading || saving || submitLocked" (click)="onSubmit()">
+            <i class="bi bi-send"></i> {{ (uploading || saving || submitLocked) ? 'Saving…' : (selectedInfluencerIds.size === 0 ? 'Save' : 'Invite') }}
           </button>
         </app-mobile-bottom-actions>
       </ng-template>

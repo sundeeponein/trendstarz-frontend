@@ -67,6 +67,15 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
         .filter(i => !['declined', 'withdrawn'].includes(String(i?.status || '').toLowerCase()))
         .length;
     }
+    /**
+     * Invite-only campaigns need someone to invite — unless this is an edit of a campaign
+     * that already has active invites (e.g. the host only changed the dates).
+     */
+    get canSubmitWithSelection(): boolean {
+      if (this.selectedInfluencerIds.size > 0) return true;
+      if (this.form?.get('campaignMode')?.value === 'tier_filtered_open') return true;
+      return this.isEdit && this.invitedCount > 0;
+    }
     /** Total slots taken = invited + currently-selected. */
     get takenSlotsCount(): number {
       return this.invitedCount + this.selectedInfluencerIds.size;
@@ -3213,8 +3222,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       this.toast.error('Some fields need attention before this can be saved. Please check the highlighted fields above.');
       return;
     }
-    const isOpenCampaign = this.f['campaignMode']?.value === 'tier_filtered_open';
-    if (!isOpenCampaign && this.selectedInfluencerIds.size === 0) {
+    if (!this.canSubmitWithSelection) {
       this.toast.error(`Please select at least one ${this.inviteRecipientLabelSingular.toLowerCase()} to invite.`);
       this.uploading = false;
       return;
