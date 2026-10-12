@@ -1116,6 +1116,18 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   /** Fields locked after any influencer confirms (subset of approval-locked). */
   get isAcceptanceLocked(): boolean { return this.isApprovalLocked && this.hasAcceptedInvite; }
 
+  /** After approval (incl. paused) the dates may change once, and only before anyone accepts. */
+  get isDateChangeRestricted(): boolean {
+    const s = String(this.campaign?.status || '');
+    return this.isEdit && ['active', 'pending', 'completed'].includes(s);
+  }
+
+  get datesAlreadyChanged(): boolean { return !!(this.campaign as any)?.datesChangedAt; }
+
+  get isDatesLocked(): boolean {
+    return this.isDateChangeRestricted && (this.hasAcceptedInvite || this.datesAlreadyChanged);
+  }
+
   get isPhotographerCreator(): boolean {
     return this.creatorRole === 'photographer';
   }
@@ -1155,11 +1167,13 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       'description',
       'script',
       'inviteBenefits', 'payToJoinBenefits', 'payToJoinInstructions',
-      'productDescription', 'timelineStart',
+      'productDescription',
       'venueName', 'venueAddress', 'venueCity', 'venueDistrict',
       'venueState', 'venueGoogleMapUrl', 'postingDeadlineMode',
     ];
     setLock(acceptanceLockedFields, this.isAcceptanceLocked);
+
+    setLock(['timelineStart', 'timelineEnd'], this.isDatesLocked);
   }
 
   /** True when the acceptance deadline has passed — no more invites allowed. */

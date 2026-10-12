@@ -335,17 +335,17 @@
           <div class="field-group half">
             <label class="field-label">
               Start date <span class="required">*</span>
-              <span class="lock-badge" *ngIf="isAcceptanceLocked"><i class="bi bi-lock-fill"></i> Locked</span>
+              <span class="lock-badge" *ngIf="isDatesLocked"><i class="bi bi-lock-fill"></i> Locked</span>
             </label>
             <input type="date" formControlName="timelineStart" class="field-input" [attr.min]="minStartDate" />
-            <p class="field-sublabel lock-note" *ngIf="isAcceptanceLocked">
-              <i class="bi bi-lock-fill"></i> Start date is fixed once an influencer has confirmed.
-            </p>
             <span class="field-error" *ngIf="f['timelineStart'].touched && !f['timelineStart'].value">Required</span>
             <p class="field-sublabel cf-note">Acceptance deadline: <strong>{{ acceptanceDeadlineDisplay }}</strong> — creators must accept or decline by then.</p>
           </div>
           <div class="field-group half">
-            <label class="field-label">End date <span class="required">*</span></label>
+            <label class="field-label">
+              End date <span class="required">*</span>
+              <span class="lock-badge" *ngIf="isDatesLocked"><i class="bi bi-lock-fill"></i> Locked</span>
+            </label>
             <input type="date" formControlName="timelineEnd" class="field-input" [attr.min]="f['timelineStart'].value || minStartDate" [attr.max]="maxEndDate" />
             <span class="field-error" *ngIf="f['timelineEnd'].touched && !f['timelineEnd'].value">Required</span>
             <p class="field-sublabel cf-note">
@@ -353,6 +353,15 @@
             </p>
           </div>
         </div>
+
+        <p class="field-sublabel lock-note" *ngIf="isDatesLocked">
+          <i class="bi bi-lock-fill"></i>
+          {{ hasAcceptedInvite ? 'Dates are fixed once a creator has accepted.' : 'Dates have already been changed once since approval and are now fixed.' }}
+        </p>
+        <p class="field-sublabel lock-note" *ngIf="isDateChangeRestricted && !isDatesLocked">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          You can change the start/end dates only once after approval, and only before any creator accepts.
+        </p>
 
         <span class="field-error" *ngIf="(f['timelineStart'].touched || f['timelineEnd'].touched) && form.errors?.['invalidDateRange']">
           End date must be on or after start date.
