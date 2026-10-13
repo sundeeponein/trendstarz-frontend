@@ -509,9 +509,8 @@ export class AdminManagementComponent implements OnInit {
   /** Live example for the commission table, using the values being edited. */
   get feeExamples(): string[] {
     const st: any = this.settings;
-    if (!st.platformFeeEnabled) {
-      return ['Platform commission is off — the brand pays ₹1,000 and the influencer receives ₹1,000.'];
-    }
+    // While commission is off nothing is charged — still preview the rates so they can be checked first.
+    const off = !st.platformFeeEnabled;
     const rate = (free: unknown, premium: unknown) => {
       const f = Number(free) || 0;
       const p = premium === null || premium === undefined || premium === '' ? f : Number(premium) || 0;
@@ -523,10 +522,17 @@ export class AdminManagementComponent implements OnInit {
     const rs = (n: number) => '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
     const pays = (pct: number) => 1000 + 10 * pct + (10 * pct * gst) / 100;
     const gets = (pct: number) => 1000 - 10 * pct;
-    return [
+    const lines = [
       `Free: brand pays ${rs(pays(host.f))} (${host.f}% + ${gst}% GST on it) · influencer receives ${rs(gets(creator.f))} (${creator.f}% fee)`,
       `Premium: brand pays ${rs(pays(host.p))} (${host.p}%) · influencer receives ${rs(gets(creator.p))} (${creator.p}%)`,
     ];
+    return off
+      ? [
+          'Commission is OFF — today the brand pays ₹1,000 and the influencer receives ₹1,000.',
+          'Preview once switched on:',
+          ...lines,
+        ]
+      : lines;
   }
 
   effectiveRoleFee(roleField: 'brandFeePercent' | 'influencerFeePercent' | 'photographerFeePercent'): number {
