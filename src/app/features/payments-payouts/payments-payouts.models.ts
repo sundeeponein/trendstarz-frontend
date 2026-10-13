@@ -33,6 +33,8 @@ export interface CampaignTransaction {
   resolvedAt?: string;
   adminNotes?: string;
   utrNumber?: string;
+  /** One host payment (one UTR / order) — shared by every creator it paid for. */
+  paymentBatchId?: string;
   paymentProofUrl?: string;
   payoutUpiId?: string;
   payoutUtr?: string;

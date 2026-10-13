@@ -67,6 +67,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       maxActiveCampaigns: number = 1;
       /** Server count of this plan month's campaign slots (completed ones included). */
       slotUsage: { used: number; limit: number; resetsAt: string } | null = null;
+      /** Creators the open payment covers (row "Confirm Collaboration"); null = all payable. */
+      paymentInviteIds: string[] | null = null;
+      paymentPayeeNames: string[] = [];
       planCapabilities: any = null;
   private completionEventsTracked = new Set<string>();
     // Reload campaigns from backend (used after create/update)
@@ -297,21 +300,27 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     canOpenPaymentForCampaign(campaign: Campaign | null | undefined): boolean {
       if (!campaign) return false;
       if (String((campaign as any).campaignType || '').toLowerCase() !== 'paid_collab') return false;
-      if (this.isCampaignPaymentVerificationPending(campaign)) return false;
-      return this.getExpandInvitesByStatus(campaign, 'accepted') > 0;
+      // Per-creator: a payment under review for one creator doesn't block paying for the others.
+      return this.payableInvites(campaign).length > 0;
     }
 
     openPayment(
       campaignId?: string | null,
       allowWhenVerificationPending = false,
       openTab: 'summary' | 'pay' | 'status' = 'summary',
+      inviteIds: string[] | null = null,
+      payeeNames: string[] = [],
     ) {
       if (!campaignId) return;
       const status = String(this.campaignCollectionStatusById.get(String(campaignId)) || '').toLowerCase();
-      if (status === 'proof_submitted' && !allowWhenVerificationPending) {
+      const campaign = (this.campaigns || []).find((c: any) => String(c?._id || '') === String(campaignId));
+      // Only stop when nobody is left to pay for — others may still be payable while one is under review.
+      if (status === 'proof_submitted' && !allowWhenVerificationPending && !inviteIds?.length && !this.payableInvites(campaign).length) {
         this.toast.success('Payment verification is already in progress.');
         return;
       }
+      this.paymentInviteIds = inviteIds?.length ? inviteIds : null;
+      this.paymentPayeeNames = payeeNames;
       this.paymentInitialTab = openTab;
       this.paymentCampaignId = campaignId;
       this.paymentModalVisible = true;
@@ -323,6 +332,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       if (!v) {
         const campaignId = this.paymentCampaignId;
         this.paymentCampaignId = null;
+        this.paymentInviteIds = null;
+        this.paymentPayeeNames = [];
         this.paymentInitialTab = 'summary';
         this.refreshCampaignPaymentStatuses();
         if (campaignId) {
@@ -3040,8 +3051,29 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (campaignType !== 'paid_collab') return false;
     if (this.getHostInviteEffectiveStatus(inv) !== 'accepted') return false;
     if (!!inv?.unlocked) return false;
+    if (this.isInvitePaymentUnderReview(inv)) return false;
     const counterStatus = String(inv?.counterOffer?.status || '').toLowerCase();
     return counterStatus !== 'sent' && counterStatus !== 'brand_sent';
+  }
+
+  /** This creator's payment proof is waiting for admin verification. */
+  isInvitePaymentUnderReview(inv: any): boolean {
+    const tx = this.transactionByInviteId.get(String(inv?._id || ''));
+    return String(tx?.collectionStatus || '').toLowerCase() === 'proof_submitted';
+  }
+
+  /** Accepted creators the host can pay for right now (not paid, not under review). */
+  payableInvites(campaign: Campaign | null | undefined): any[] {
+    if (!campaign) return [];
+    return this.getExpandInvites(campaign).filter((inv: any) => this.canShowConfirmCollaboration(inv, campaign));
+  }
+
+  /** Row "Confirm Collaboration": pay for this one creator only. */
+  payForInvite(campaign: Campaign | null | undefined, inv: any): void {
+    const id = String(inv?._id || '');
+    if (!campaign?._id || !id) return;
+    const name = String(this.getInviteRecipient(inv)?.name || '').trim();
+    this.openPayment(campaign._id, false, 'summary', [id], name ? [name] : []);
   }
 
   getCounterOfferSummary(inv: any, campaign?: any): string {
@@ -4687,6 +4719,15 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
           return 'Payout Processing (4-6 hrs)';
         }
       }
+    }
+
+    // Paid collab, accepted but not paid yet: the creator can't start, so never "Working".
+    if (
+      status === 'accepted' &&
+      typeof invOrStatus !== 'string' &&
+      String((campaign as any)?.campaignType || '').toLowerCase() === 'paid_collab'
+    ) {
+      return this.isInvitePaymentUnderReview(invOrStatus) ? 'Payment Under Review' : 'Confirmation Pending';
     }
 
     const map: Record<string, string> = {

@@ -9,7 +9,8 @@
       <h3 class="cp-title">{{ isPayToJoin ? 'Creator Join Fees' : 'Pay for Campaign' }}</h3>
       <p class="cp-sub" *ngIf="calculated">
         <span class="cp-type-chip">{{ campaignTypeLabel }}</span>
-        <span class="cp-accepted" *ngIf="!isPayToJoin">{{ calculated.acceptedCount }} accepted influencer{{ calculated.acceptedCount === 1 ? '' : 's' }}</span>
+        <span class="cp-accepted" *ngIf="!isPayToJoin && !payeeNames.length">{{ calculated.acceptedCount }} accepted influencer{{ calculated.acceptedCount === 1 ? '' : 's' }}</span>
+        <span class="cp-accepted" *ngIf="!isPayToJoin && payeeNames.length">Paying for: {{ payeeNames.join(', ') }}</span>
         <span class="cp-accepted" *ngIf="isPayToJoin">{{ calculated.acceptedCount }} creator{{ calculated.acceptedCount === 1 ? '' : 's' }} joined</span>
       </p>
     </div>

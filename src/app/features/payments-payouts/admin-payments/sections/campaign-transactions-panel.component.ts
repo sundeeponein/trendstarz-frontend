@@ -353,6 +353,20 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
     return !proofAction && !payoutAction && !disputeAction;
   }
 
+  /** Every waiting row paid by the same host payment as `tx` (one UTR / order). */
+  paymentGroup(tx: CampaignTransaction): CampaignTransaction[] {
+    if (!tx.paymentBatchId) return [tx];
+    const group = this.campaignTransactions.filter(
+      (r) => r.paymentBatchId === tx.paymentBatchId && r.collectionStatus === 'proof_submitted',
+    );
+    return group.length ? group : [tx];
+  }
+
+  /** "Ramesh, Priya" — the creators one payment covers. */
+  paymentGroupNames(tx: CampaignTransaction): string {
+    return this.paymentGroup(tx).map((r) => this.partyName(r, 'recipient')).join(', ');
+  }
+
   verifyTransaction(tx: CampaignTransaction) {
     const token = this.getToken();
     if (!token) {
@@ -360,9 +374,16 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
       return;
     }
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    this.paymentsPayoutsApi.verifyTransaction(tx._id, headers).subscribe({
+    const group = this.paymentGroup(tx);
+    const names = this.paymentGroupNames(tx);
+    const request = tx.paymentBatchId
+      ? this.paymentsPayoutsApi.verifyPaymentBatch(tx.paymentBatchId, headers)
+      : this.paymentsPayoutsApi.verifyTransaction(tx._id, headers);
+    request.subscribe({
       next: () => {
-        this.successMessage.emit('Transaction verified');
+        this.successMessage.emit(
+          `Payment confirmed for ${group.length} creator${group.length === 1 ? '' : 's'}: ${names}`,
+        );
         this.loadCampaignTransactions();
       },
       error: (err) => this.errorMessage.emit(err?.error?.message || 'Failed to verify transaction'),
@@ -389,9 +410,16 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
       return;
     }
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    this.paymentsPayoutsApi.rejectTransaction(this.selectedTx._id, this.txRejectReason.trim(), headers).subscribe({
+    const tx = this.selectedTx;
+    const group = this.paymentGroup(tx);
+    const request = tx.paymentBatchId
+      ? this.paymentsPayoutsApi.rejectPaymentBatch(tx.paymentBatchId, this.txRejectReason.trim(), headers)
+      : this.paymentsPayoutsApi.rejectTransaction(tx._id, this.txRejectReason.trim(), headers);
+    request.subscribe({
       next: () => {
-        this.successMessage.emit('Transaction rejected');
+        this.successMessage.emit(
+          `Payment rejected for ${group.length} creator${group.length === 1 ? '' : 's'}: ${this.paymentGroupNames(tx)}`,
+        );
         this.closeRejectTxModal();
         this.loadCampaignTransactions();
       },

@@ -1156,8 +1156,12 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/campaigns/${campaignId}/invite-influencers`, { influencerIds });
   }
 
-  calculateCampaignPayment(campaignId: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/calculate`, {});
+  /** `inviteIds` = pay only for these creators; omitted = every accepted, unpaid creator. */
+  calculateCampaignPayment(campaignId: string, inviteIds?: string[] | null): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/campaign-transactions/${campaignId}/calculate`,
+      inviteIds?.length ? { inviteIds } : {},
+    );
   }
 
   getMyCampaignTransactions(): Observable<any[]> {
@@ -1208,7 +1212,7 @@ export class ConfigService {
 
   submitCampaignPaymentProof(
     campaignId: string,
-    data: { utrNumber: string; paymentProofUrl?: string; acceptTerms?: boolean },
+    data: { utrNumber: string; paymentProofUrl?: string; acceptTerms?: boolean; inviteIds?: string[] },
   ): Observable<any> {
     return this.http.post(`${this.apiUrl}/campaign-transactions/${campaignId}/submit-proof`, data);
   }

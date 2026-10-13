@@ -87,6 +87,10 @@
           <div class="tx-type-cell">
             <strong>{{ ui.getTransactionLabel(tx.transactionType) }}</strong>
             <code>{{ shortCampaignId(tx.campaignId) }}</code>
+            <span class="tx-group-chip" *ngIf="tx.collectionStatus === 'proof_submitted' && paymentGroup(tx).length > 1"
+                  [title]="'One payment covers: ' + paymentGroupNames(tx)">
+              <i class="bi bi-people-fill"></i> Group payment · {{ paymentGroup(tx).length }} creators
+            </span>
           </div>
         </td>
         <td>
@@ -149,11 +153,13 @@
           </div>
         </td>
         <td class="col-actions">
-          <button class="btn btn-success btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="verifyTransaction(tx)">
-            Verify
+          <button class="btn btn-success btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="verifyTransaction(tx)"
+                  [title]="'Confirms the payment for: ' + paymentGroupNames(tx)">
+            {{ paymentGroup(tx).length > 1 ? 'Verify all ' + paymentGroup(tx).length : 'Verify' }}
           </button>
-          <button class="btn btn-danger btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="openRejectTxModal(tx)">
-            Reject
+          <button class="btn btn-danger btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="openRejectTxModal(tx)"
+                  [title]="'Rejects the payment for: ' + paymentGroupNames(tx)">
+            {{ paymentGroup(tx).length > 1 ? 'Reject all ' + paymentGroup(tx).length : 'Reject' }}
           </button>
           <button class="btn btn-warning btn-sm me-1"
                   *ngIf="tx.collectionStatus === 'verified' && (tx.payoutStatus === 'pending' || tx.payoutStatus === 'processing') && isManualSettlement(tx)"
@@ -199,6 +205,9 @@
     <p class="modal-info" *ngIf="selectedTx">
       Rejecting <strong>{{ ui.getTransactionLabel(selectedTx.transactionType) }}</strong> with amount
       <strong>{{ ui.formatPaise(selectedTx.payerTotal) }}</strong>
+    </p>
+    <p class="modal-info" *ngIf="selectedTx && paymentGroup(selectedTx).length > 1">
+      This payment covers {{ paymentGroup(selectedTx).length }} creators ({{ paymentGroupNames(selectedTx) }}) — all of them will be rejected together, and the host gets one email.
     </p>
     <div class="form-group">
       <label>Reason:</label>

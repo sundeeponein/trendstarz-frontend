@@ -29,6 +29,24 @@ export class PaymentsPayoutsApiService {
     );
   }
 
+  /** Confirm a whole payment (every creator it covered). */
+  verifyPaymentBatch(batchId: string, headers: HttpHeaders, notes?: string): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-transactions/batch/${encodeURIComponent(batchId)}/verify`,
+      { notes },
+      { headers },
+    );
+  }
+
+  /** Reject a whole payment (its UTR/proof covers every creator in it). */
+  rejectPaymentBatch(batchId: string, reason: string, headers: HttpHeaders): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-transactions/batch/${encodeURIComponent(batchId)}/reject`,
+      { reason },
+      { headers },
+    );
+  }
+
   rejectTransaction(id: string, reason: string, headers: HttpHeaders): Observable<any> {
     return this.http.post<any>(
       `${environment.apiBaseUrl}/campaign-transactions/${id}/reject`,
@@ -165,6 +183,7 @@ export class PaymentsPayoutsApiService {
     campaignId: string,
     headers: HttpHeaders,
     acceptTerms = false,
+    inviteIds?: string[] | null,
   ): Observable<{
     success: boolean;
     order: { orderId: string; amount: number; currency: string; keyId: string };
@@ -174,7 +193,7 @@ export class PaymentsPayoutsApiService {
       order: { orderId: string; amount: number; currency: string; keyId: string };
     }>(
       `${environment.apiBaseUrl}/campaign-transactions/${campaignId}/razorpay/order`,
-      { acceptTerms },
+      inviteIds?.length ? { acceptTerms, inviteIds } : { acceptTerms },
       { headers },
     );
   }

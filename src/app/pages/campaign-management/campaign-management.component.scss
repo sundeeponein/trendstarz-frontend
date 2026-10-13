@@ -3376,3 +3376,11 @@
   font-weight: 600;
   color: #b45309;
 }
+
+// Payment sent for this creator, waiting for TrendStarZ to verify — informational, not a button.
+.inv-pay-chip--review {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  cursor: default;
+}

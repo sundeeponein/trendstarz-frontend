@@ -26,6 +26,10 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   @Input() campaignId?: string | null = null;
   @Input() visible = false;
   @Input() initialTab: Tab = 'summary';
+  /** Pay only for these creators (row "Confirm Collaboration"); null = all accepted, unpaid. */
+  @Input() inviteIds: string[] | null = null;
+  /** Their names, shown in the summary ("Paying for: Ramesh"). */
+  @Input() payeeNames: string[] = [];
   @Output() visibleChange = new EventEmitter<boolean>();
 
   loading = false;
@@ -247,7 +251,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
     this.loading = true;
     this.error = '';
     try {
-      const res: any = await firstValueFrom(this.config.calculateCampaignPayment(this.campaignId));
+      const res: any = await firstValueFrom(this.config.calculateCampaignPayment(this.campaignId, this.inviteIds));
       this.calculated = res?.data || res;
     } catch (err: any) {
       this.error = err?.error?.message || err?.message || 'Failed to calculate payment';
@@ -293,6 +297,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
         utrNumber: this.utrNumber.trim(),
         paymentProofUrl: this.paymentProofUrl,
         acceptTerms: this.termsOk,
+        ...(this.inviteIds?.length ? { inviteIds: this.inviteIds } : {}),
       };
       await firstValueFrom(this.config.submitCampaignPaymentProof(this.campaignId, payload));
       this.successMessage = 'Payment proof submitted! Verification usually takes 6–10 hours. We\'ll notify you once confirmed.';
@@ -334,7 +339,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
       }
       const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
       const orderRes = await firstValueFrom(
-        this.txApi.createCampaignRazorpayOrder(this.campaignId, headers, this.termsOk),
+        this.txApi.createCampaignRazorpayOrder(this.campaignId, headers, this.termsOk, this.inviteIds),
       );
       const order: RazorpayOrder | undefined = orderRes?.order;
       if (!order?.orderId || !order?.keyId) {

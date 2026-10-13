@@ -126,6 +126,8 @@
   <app-campaign-payment
     [campaignId]="paymentCampaignId"
     [initialTab]="paymentInitialTab"
+    [inviteIds]="paymentInviteIds"
+    [payeeNames]="paymentPayeeNames"
     [visible]="paymentModalVisible"
     (visibleChange)="onPaymentVisibleChange($event)">
   </app-campaign-payment>
@@ -679,15 +681,16 @@
             </div>
 
             <!-- Paid collab: payment nudge when accepted influencers are waiting -->
-            <div class="pay-now-nudge" *ngIf="c.campaignType === 'paid_collab' && getExpandInvitesByStatus(c, 'accepted') > 0 && !isCampaignPaymentVerificationPending(c)">
+            <div class="pay-now-nudge" *ngIf="c.campaignType === 'paid_collab' && payableInvites(c).length > 0">
               <div class="pay-now-nudge-icon"><i class="bi bi-wallet2-fill"></i></div>
               <div class="pay-now-nudge-text">
-                <strong>{{ getExpandInvitesByStatus(c, 'accepted') }}
-                  influencer{{ getExpandInvitesByStatus(c, 'accepted') === 1 ? ' has' : 's have' }} accepted</strong>
+                <strong>{{ payableInvites(c).length }}
+                  influencer{{ payableInvites(c).length === 1 ? ' has' : 's have' }} accepted</strong>
                 — Pay TrendStarz to confirm the collaboration and let them begin creating content.
+                <span *ngIf="payableInvites(c).length > 1">You can also confirm them one by one below.</span>
               </div>
               <button class="btn-pay-now" (click)="openPayment(c._id)" [disabled]="!canOpenPaymentForCampaign(c)">
-                <i class="bi bi-credit-card-fill"></i> Pay Now
+                <i class="bi bi-credit-card-fill"></i> {{ payableInvites(c).length > 1 ? 'Pay for all ' + payableInvites(c).length : 'Pay Now' }}
               </button>
             </div>
 
@@ -878,10 +881,14 @@
                     <!-- Paid collab: per-invite awaiting payment chip → click opens Pay Now -->
                     <button class="inv-pay-chip" type="button"
                       *ngIf="canShowConfirmCollaboration(inv, c)"
-                      (click)="openPayment(c._id); $event.stopPropagation()"
-                      title="Confirm collaboration payment">
+                      (click)="payForInvite(c, inv); $event.stopPropagation()"
+                      title="Pay for this creator only">
                       <i class="bi bi-lock-fill"></i> Confirm Collaboration
                     </button>
+                    <span class="inv-pay-chip inv-pay-chip--review" *ngIf="c.campaignType === 'paid_collab' && isInvitePaymentUnderReview(inv)"
+                      title="Your payment for this creator is being verified by TrendStarZ">
+                      <i class="bi bi-hourglass-split"></i> Payment under review
+                    </span>
                     <!-- Contact unlock (expand panel) -->
                     <ng-container *ngIf="isUnlockableStatus(getHostInviteEffectiveStatus(inv))">
                       <div class="contact-reveal" *ngIf="canRevealInviteContact(inv, c)">
@@ -1531,10 +1538,14 @@
               <!-- Locked: prompt unlock -->
               <button class="inv-pay-chip" type="button"
                       *ngIf="canShowConfirmCollaboration(inv, invitePanelCampaign)"
-                      (click)="openPayment(invitePanelCampaign?._id)"
-                      title="Confirm collaboration payment">
+                      (click)="payForInvite(invitePanelCampaign, inv)"
+                      title="Pay for this creator only">
                 <i class="bi bi-lock-fill"></i> Confirm Collaboration
               </button>
+              <span class="inv-pay-chip inv-pay-chip--review" *ngIf="invitePanelCampaign?.campaignType === 'paid_collab' && isInvitePaymentUnderReview(inv)"
+                    title="Your payment for this creator is being verified by TrendStarZ">
+                <i class="bi bi-hourglass-split"></i> Payment under review
+              </span>
                     <div class="contact-locked" *ngIf="isUnlockableStatus(getHostInviteEffectiveStatus(inv)) && !canRevealInviteContact(inv, invitePanelCampaign) && !canShowConfirmCollaboration(inv, invitePanelCampaign)">
                 <button class="btn-unlock-contact"
                         type="button"
