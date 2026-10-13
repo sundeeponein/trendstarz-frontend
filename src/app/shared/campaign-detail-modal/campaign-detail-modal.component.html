@@ -357,6 +357,15 @@
           </div>
 
 
+          <!-- Paid collab, before accepting: the rules that apply once payment is confirmed -->
+          <div class="cdm-protection-note" *ngIf="isPending && !adminReview && isPaidCollab">
+            <i class="bi bi-shield-lock-fill"></i>
+            <div>
+              <strong>Paid collaboration protection</strong>
+              <span>Once payment is confirmed, the collaboration follows TrendStarZ's platform rules. Only TrendStarZ can cancel a confirmed paid collaboration.</span>
+            </div>
+          </div>
+
           <!-- What you must do checklist (user pending) -->
           <div class="cdm-section" *ngIf="isPending && !adminReview">
             <div class="cdm-section__label">WHAT YOU MUST DO</div>

@@ -906,7 +906,7 @@
                           <i class="bi bi-whatsapp"></i> WhatsApp
                         </a>
                       </div>
-                      <div class="contact-locked" *ngIf="isUnlockableStatus(getHostInviteEffectiveStatus(inv)) && !canRevealInviteContact(inv, c) && !canShowConfirmCollaboration(inv, c)">
+                      <div class="contact-locked" *ngIf="isUnlockableStatus(getHostInviteEffectiveStatus(inv)) && !canRevealInviteContact(inv, c) && !canShowConfirmCollaboration(inv, c) && !isInvitePaymentUnderReview(inv)">
                         <button class="btn-unlock-contact" type="button"
                                 *ngIf="!inv.unlocked"
                                 [disabled]="unlockingInviteIds.has(inv._id)"
@@ -1546,7 +1546,7 @@
                     title="Your payment for this creator is being verified by TrendStarZ">
                 <i class="bi bi-hourglass-split"></i> Payment under review
               </span>
-                    <div class="contact-locked" *ngIf="isUnlockableStatus(getHostInviteEffectiveStatus(inv)) && !canRevealInviteContact(inv, invitePanelCampaign) && !canShowConfirmCollaboration(inv, invitePanelCampaign)">
+                    <div class="contact-locked" *ngIf="isUnlockableStatus(getHostInviteEffectiveStatus(inv)) && !canRevealInviteContact(inv, invitePanelCampaign) && !canShowConfirmCollaboration(inv, invitePanelCampaign) && !isInvitePaymentUnderReview(inv)">
                 <button class="btn-unlock-contact"
                         type="button"
                         *ngIf="!inv.unlocked"

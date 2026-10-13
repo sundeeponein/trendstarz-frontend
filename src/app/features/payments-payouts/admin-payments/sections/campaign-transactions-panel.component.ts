@@ -232,7 +232,26 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
   }
 
   get visibleTransactions(): CampaignTransaction[] {
-    return this.sortTransactions(this.filterByMode(this.filteredTransactions));
+    return this.collapsePaymentGroups(this.sortTransactions(this.filterByMode(this.filteredTransactions)));
+  }
+
+  /**
+   * One host payment for several creators is one row: rows of the same payment
+   * waiting for verification collapse into the first (paymentGroup() lists the rest).
+   */
+  private collapsePaymentGroups(rows: CampaignTransaction[]): CampaignTransaction[] {
+    const seen = new Set<string>();
+    return rows.filter((r) => {
+      if (r.collectionStatus !== 'proof_submitted' || !r.paymentBatchId) return true;
+      if (seen.has(r.paymentBatchId)) return false;
+      seen.add(r.paymentBatchId);
+      return true;
+    });
+  }
+
+  /** Sum of one amount field across a row's payment group (paise). */
+  groupSum(tx: CampaignTransaction, field: 'payerTotal' | 'platformFee' | 'recipientPayout'): number {
+    return this.paymentGroup(tx).reduce((sum, r) => sum + Number((r as any)[field] || 0), 0);
   }
 
   get pagedVisibleTransactions(): CampaignTransaction[] {

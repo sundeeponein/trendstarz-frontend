@@ -1370,3 +1370,21 @@ $dk-orange:    #e06030;
   color: inherit;
   margin-top: 0;
 }
+
+// Paid collab, before accepting: short heads-up on post-payment rules.
+.cdm-protection-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+  font-size: 0.84rem;
+  line-height: 1.45;
+
+  > i { color: #2563eb; margin-top: 2px; }
+  strong { display: block; margin-bottom: 2px; }
+}

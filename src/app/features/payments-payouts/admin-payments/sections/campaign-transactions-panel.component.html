@@ -96,18 +96,20 @@
         <td>
           <div class="tx-party-cell">
             <div><strong>{{ partyName(tx, 'payer') }}</strong> <span>({{ tx.payerRole }})</span></div>
-            <div class="tx-recipient-line">
-              <i class="bi bi-arrow-right-short"></i>
-              <strong>{{ partyName(tx, 'recipient') }}</strong> <span>({{ tx.recipientRole }})</span>
-            </div>
-            <small>{{ payoutDestinationCompactLabel(tx) }}</small>
+            <ng-container *ngFor="let member of paymentGroup(tx)">
+              <div class="tx-recipient-line">
+                <i class="bi bi-arrow-right-short"></i>
+                <strong>{{ partyName(member, 'recipient') }}</strong> <span>({{ member.recipientRole }})</span>
+              </div>
+              <small>{{ payoutDestinationCompactLabel(member) }}</small>
+            </ng-container>
           </div>
         </td>
         <td>
           <div class="tx-financials-cell">
-            <strong>{{ ui.formatPaise(tx.payerTotal) }} Paid</strong>
-            <span>Fee: {{ ui.formatPaise(tx.platformFee) }}</span>
-            <span>Gets: {{ ui.formatPaise(tx.recipientPayout) }}</span>
+            <strong>{{ ui.formatPaise(groupSum(tx, 'payerTotal')) }} Paid</strong>
+            <span>Fee: {{ ui.formatPaise(groupSum(tx, 'platformFee')) }}</span>
+            <span>Gets: {{ ui.formatPaise(groupSum(tx, 'recipientPayout')) }}</span>
           </div>
         </td>
         <td>
@@ -204,7 +206,7 @@
     <h2>Reject Transaction Proof</h2>
     <p class="modal-info" *ngIf="selectedTx">
       Rejecting <strong>{{ ui.getTransactionLabel(selectedTx.transactionType) }}</strong> with amount
-      <strong>{{ ui.formatPaise(selectedTx.payerTotal) }}</strong>
+      <strong>{{ ui.formatPaise(groupSum(selectedTx, 'payerTotal')) }}</strong>
     </p>
     <p class="modal-info" *ngIf="selectedTx && paymentGroup(selectedTx).length > 1">
       This payment covers {{ paymentGroup(selectedTx).length }} creators ({{ paymentGroupNames(selectedTx) }}) — all of them will be rejected together, and the host gets one email.
