@@ -506,6 +506,29 @@ export class AdminManagementComponent implements OnInit {
     photographer: { early_access_photographer: 0, partner_photographer: 0, internal_test_photographer: 0 },
   };
 
+  /** Live example for the commission table, using the values being edited. */
+  get feeExamples(): string[] {
+    const st: any = this.settings;
+    if (!st.platformFeeEnabled) {
+      return ['Platform commission is off — the brand pays ₹1,000 and the influencer receives ₹1,000.'];
+    }
+    const rate = (free: unknown, premium: unknown) => {
+      const f = Number(free) || 0;
+      const p = premium === null || premium === undefined || premium === '' ? f : Number(premium) || 0;
+      return { f, p };
+    };
+    const host = rate(st.brandFeePercent ?? st.platformFeePercent, st.brandFeePercentPremium);
+    const creator = rate(st.influencerRecipientFeePercent, st.influencerRecipientFeePercentPremium);
+    const gst = Number(st.gstPercent) || 0;
+    const rs = (n: number) => '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    const pays = (pct: number) => 1000 + 10 * pct + (10 * pct * gst) / 100;
+    const gets = (pct: number) => 1000 - 10 * pct;
+    return [
+      `Free: brand pays ${rs(pays(host.f))} (${host.f}% + ${gst}% GST on it) · influencer receives ${rs(gets(creator.f))} (${creator.f}% fee)`,
+      `Premium: brand pays ${rs(pays(host.p))} (${host.p}%) · influencer receives ${rs(gets(creator.p))} (${creator.p}%)`,
+    ];
+  }
+
   effectiveRoleFee(roleField: 'brandFeePercent' | 'influencerFeePercent' | 'photographerFeePercent'): number {
     const val = this.settings[roleField];
     return typeof val === 'number' ? val : 0;
