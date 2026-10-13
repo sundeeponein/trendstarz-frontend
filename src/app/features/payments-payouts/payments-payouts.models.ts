@@ -18,6 +18,10 @@ export interface CampaignTransaction {
   platformFee: number;
   payerTotal: number;
   recipientPayout: number;
+  /** Fee deducted from the creator's payout (paise). */
+  recipientFee?: number;
+  /** GST charged on the commission / platform fee (paise) — collected for the government. */
+  gstAmount?: number;
   /** Payment gateway. MVP = manual_upi. Future: razorpay. */
   gateway?: 'manual_upi' | 'razorpay';
   gatewayOrderId?: string;

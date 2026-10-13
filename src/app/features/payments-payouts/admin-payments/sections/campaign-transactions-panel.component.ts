@@ -249,8 +249,13 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** What TrendStarZ keeps from a row (or its payment group): host commission + creator fee (GST excluded). */
+  trendstarzKeeps(tx: CampaignTransaction): number {
+    return this.groupSum(tx, 'platformFee') + this.groupSum(tx, 'recipientFee');
+  }
+
   /** Sum of one amount field across a row's payment group (paise). */
-  groupSum(tx: CampaignTransaction, field: 'payerTotal' | 'platformFee' | 'recipientPayout'): number {
+  groupSum(tx: CampaignTransaction, field: 'payerTotal' | 'platformFee' | 'recipientPayout' | 'recipientFee' | 'gstAmount' | 'agreedAmount'): number {
     return this.paymentGroup(tx).reduce((sum, r) => sum + Number((r as any)[field] || 0), 0);
   }
 
