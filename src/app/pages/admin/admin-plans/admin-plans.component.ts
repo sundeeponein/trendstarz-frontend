@@ -123,12 +123,15 @@ export class AdminPlansComponent implements OnInit {
     ],
   };
 
-  readonly masterLimits: { [k: string]: { key: string; label: string }[] } = {
+  readonly masterLimits: { [k: string]: { key: string; label: string; default?: number }[] } = {
     INFLUENCER: [
       { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
       { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxProductImages', label: 'Product images' },
       { key: 'maxActiveCampaigns', label: 'Campaigns / month' },
+      { key: 'maxBarterCampaignsPerMonth', label: 'Barter/location campaigns / month (share of above)', default: 2 },
+      { key: 'maxInvitesPerBarterCampaign', label: 'Invites / barter or location campaign', default: 3 },
+      { key: 'maxAcceptedPerBarterCampaign', label: 'Accepted creators / barter or location campaign', default: 1 },
       { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
       { key: 'maxInvitesReceivedPerMonth', label: 'Invites received / month' },
       { key: 'maxInviteOptions', label: 'Invite options' },
@@ -138,6 +141,9 @@ export class AdminPlansComponent implements OnInit {
       { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
       { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxActiveCampaigns', label: 'Campaigns / month' },
+      { key: 'maxBarterCampaignsPerMonth', label: 'Barter/location campaigns / month (share of above)', default: 2 },
+      { key: 'maxInvitesPerBarterCampaign', label: 'Invites / barter or location campaign', default: 3 },
+      { key: 'maxAcceptedPerBarterCampaign', label: 'Accepted creators / barter or location campaign', default: 1 },
       { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
       // 'maxTeamSeats' intentionally omitted — no team-member feature exists
       // yet (no schema, no invite flow, no UI) to actually enforce this cap,
@@ -151,6 +157,9 @@ export class AdminPlansComponent implements OnInit {
       { key: 'dailySearchLimit', label: 'Daily searches' },
       { key: 'maxPortfolioImages', label: 'Portfolio images' },
       { key: 'maxActiveCampaigns', label: 'Campaigns / month' },
+      { key: 'maxBarterCampaignsPerMonth', label: 'Barter/location campaigns / month (share of above)', default: 2 },
+      { key: 'maxInvitesPerBarterCampaign', label: 'Invites / barter or location campaign', default: 3 },
+      { key: 'maxAcceptedPerBarterCampaign', label: 'Accepted creators / barter or location campaign', default: 1 },
       { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
       { key: 'maxInvitesReceivedPerMonth', label: 'Invites received / month' },
       { key: 'analytics', label: 'Analytics' },
@@ -223,7 +232,8 @@ export class AdminPlansComponent implements OnInit {
     const master = this.masterLimits[type] || [];
     return master.map(m => {
       const found = this.editingPlan!.limits.find(l => l.key === m.key);
-      return { ...m, value: found ? found.value : 0 };
+      // Unset keys show the server's default (e.g. barter limits), not a misleading 0.
+      return { key: m.key, label: m.label, value: found ? found.value : (m.default ?? 0) };
     });
   }
 
@@ -568,7 +578,7 @@ export class AdminPlansComponent implements OnInit {
     }
     const master = this.masterLimits[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
     const m = master.find(l => l.key === key);
-    if (m) this.editingPlan.limits.push({ ...m, value });
+    if (m) this.editingPlan.limits.push({ key: m.key, label: m.label, value });
   }
 
   addFeature() {

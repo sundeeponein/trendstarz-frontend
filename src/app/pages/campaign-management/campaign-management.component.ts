@@ -66,7 +66,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   payoutReleaseWaitHours = 24;
       maxActiveCampaigns: number = 1;
       /** Server count of this plan month's campaign slots (completed ones included). */
-      slotUsage: { used: number; limit: number; resetsAt: string } | null = null;
+      slotUsage: { used: number; limit: number; resetsAt: string; barterUsed?: number; barterLimit?: number } | null = null;
       /** Creators the open payment covers (row "Confirm Collaboration"); null = all payable. */
       paymentInviteIds: string[] | null = null;
       paymentPayeeNames: string[] = [];
@@ -490,7 +490,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get quotaChipTitle(): string {
     const resets = this.slotsResetLabel ? ` Slots reset on ${this.slotsResetLabel}.` : '';
-    return `Every ${this.quotaEntitySingularLabel} you submit this plan month uses a slot, including completed ones. Drafts and rejected ones don't.${resets}`;
+    const barterLimit = Number(this.slotUsage?.barterLimit);
+    const barter = Number.isFinite(barterLimit) && barterLimit >= 0
+      ? ` Barter/location: ${Number(this.slotUsage?.barterUsed || 0)} of ${barterLimit} allowed this month.`
+      : '';
+    return `Every ${this.quotaEntitySingularLabel} you submit this plan month uses a slot, including completed ones. Drafts and rejected ones don't.${barter}${resets}`;
   }
 
   get influencerInboxSubtitle(): string {
@@ -3575,15 +3579,28 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   saveFulfillment(): void {
     if (!this.fulfillInvite?._id || this.savingFulfillment) return;
-    this.savingFulfillment = true;
     const t = this.invitePanelCampaign?.campaignType;
+    // No-show / Cancelled close the invite on the server — confirm first.
+    if (t === 'invite_location' && this.fulfillForm.status !== this.fulfillInvite?.locationVisit?.status) {
+      if (this.fulfillForm.status === 'no_show'
+        && !window.confirm('Mark this visit as a no-show? The invite will be closed and it counts against the creator. Only do this if they did not visit.')) {
+        return;
+      }
+      if (this.fulfillForm.status === 'cancelled'
+        && !window.confirm('Cancel this visit? The invite will be withdrawn and the creator is released without any penalty.')) {
+        return;
+      }
+    }
+    this.savingFulfillment = true;
     const inviteId = this.fulfillInvite._id;
+    const campaignId = String(this.invitePanelCampaign?._id || '');
     const onSuccess = (data: any) => {
       if (t === 'product') this.fulfillInvite.productFulfillment = data?.productFulfillment;
       if (t === 'invite_location') this.fulfillInvite.locationVisit = data?.locationVisit;
       this.savingFulfillment = false;
-      this.toast.success('Fulfillment updated.');
+      this.toast.success(data?.closed ? 'Visit updated — the invite is now closed.' : 'Fulfillment updated.');
       this.closeFulfillment();
+      if (data?.closed && campaignId) this.reloadCampaignInvites(campaignId);
     };
     const onError = (err: any) => {
       this.savingFulfillment = false;
@@ -3615,6 +3632,18 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.savingFulfillment = false;
       this.closeFulfillment();
     }
+  }
+
+  private reloadCampaignInvites(campaignId: string): void {
+    this.config.getInvitesByCampaign(campaignId).subscribe({
+      next: (invites: any[]) => {
+        const rows = Array.isArray(invites) ? invites : [];
+        this.campaignInvitesMap.set(campaignId, rows);
+        if (this.invitePanelCampaign?._id === campaignId) this.invites = rows;
+        this.cd.detectChanges();
+      },
+      error: () => this.cd.detectChanges(),
+    });
   }
 
   getCardAcceptedCount(c: Campaign): number {

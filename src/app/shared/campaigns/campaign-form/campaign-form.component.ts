@@ -82,6 +82,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     get inviteSelectionLimit(): number {
+      // Barter/location campaigns have their own invite limit (plan limit, default 3).
+      if (this.isBarterCampaign) return this.barterLimit('maxInvitesPerBarterCampaign', 3);
       const configured = this.plansService.getLimitValue(this.planCaps, 'maxInvitesPerCampaign');
       if (configured === -1) return -1;
       if (configured > 0) return configured;
@@ -616,6 +618,10 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     }, { validators: [this.dateRangeValidator, this.minMaxInfluencerValidator] });
 
     this.syncAcceptanceDeadlineControl(this.f['timelineStart']?.value);
+    for (const key of ['campaignType', 'productPaymentMode', 'maxInfluencers']) {
+      this.form.get(key)?.valueChanges.subscribe(() => this.clampBarterParticipants());
+    }
+    this.clampBarterParticipants();
     this.form.get('timelineStart')?.valueChanges.subscribe((startVal: string) => {
       this.syncAcceptanceDeadlineControl(startVal);
     });
@@ -1499,6 +1505,37 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   get f() { return this.form.controls; }
   get selectedCampaignType(): string {
     return String(this.f['campaignType']?.value || 'paid_collab');
+  }
+
+  /** Product-only barter or invite-to-location (unpaid): smaller limits, see barter-limits.util on the server. */
+  get isBarterCampaign(): boolean {
+    const type = this.selectedCampaignType;
+    if (type === 'invite_location') return true;
+    return type === 'product' && this.f['productPaymentMode']?.value !== 'product_plus_payment';
+  }
+
+  /** A barter plan limit; the server's default when the plan doesn't set it. */
+  barterLimit(key: string, fallback: number): number {
+    const row = (this.planCaps?.limits || []).find((l: any) => l?.key === key);
+    const v = Number(row?.value);
+    return row && Number.isFinite(v) ? v : fallback;
+  }
+
+  /** Most accepted creators a barter/location campaign may have (null = no cap). */
+  get barterAcceptCap(): number | null {
+    if (!this.isBarterCampaign) return null;
+    const cap = this.barterLimit('maxAcceptedPerBarterCampaign', 1);
+    return cap > 0 ? cap : null;
+  }
+
+  /** Keep max/min participants within the barter cap (the server enforces it too). */
+  private clampBarterParticipants(): void {
+    const cap = this.barterAcceptCap;
+    if (!cap || !this.form) return;
+    for (const key of ['maxInfluencers', 'minInfluencers']) {
+      const ctrl = this.form.get(key);
+      if (ctrl && Number(ctrl.value) > cap) ctrl.setValue(cap, { emitEvent: false });
+    }
   }
 
   get isBrandToInfluencerFlow(): boolean {

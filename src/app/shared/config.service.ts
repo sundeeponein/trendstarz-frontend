@@ -1123,7 +1123,7 @@ export class ConfigService {
   }
 
   /** The signed-in host's campaign slots for their current plan month (null on error). */
-  getCampaignSlotUsage(): Observable<{ used: number; limit: number; resetsAt: string } | null> {
+  getCampaignSlotUsage(): Observable<{ used: number; limit: number; resetsAt: string; barterUsed?: number; barterLimit?: number } | null> {
     return this.http.get<any>(`${this.apiUrl}/campaigns/slot-usage`).pipe(
       map((res) => this.extractData<any>(res) || res || null),
       catchError(() => of(null)),
