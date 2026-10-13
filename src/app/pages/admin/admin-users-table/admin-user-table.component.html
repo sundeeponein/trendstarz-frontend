@@ -28,7 +28,7 @@
       <i class="bi bi-search"></i>
       <input
         type="text"
-        placeholder="Search by name, email or ID..."
+        placeholder="Search by name, email, ID, district or state..."
         [(ngModel)]="searchQuery"
         (ngModelChange)="onSearchQueryChange()"
       />
@@ -94,6 +94,12 @@
     <select class="state-filter" [ngModel]="getActiveFilterValue('state')" (change)="setActiveFilterValue('state', $any($event.target).value)">
       <option value="">State: All</option>
       <option *ngFor="let state of statesArray" [value]="state">State: {{ state }}</option>
+    </select>
+
+    <select class="state-filter" [ngModel]="getActiveFilterValue('district')" (change)="setActiveFilterValue('district', $any($event.target).value)"
+            [title]="getActiveFilterValue('state') ? 'Districts in ' + getActiveFilterValue('state') : 'Pick a state to narrow the districts'">
+      <option value="">District: All</option>
+      <option *ngFor="let district of districtsArray" [value]="district">District: {{ district }}</option>
     </select>
 
     <select class="category-filter" [ngModel]="getActiveFilterValue('category')" (change)="setActiveFilterValue('category', $any($event.target).value)">

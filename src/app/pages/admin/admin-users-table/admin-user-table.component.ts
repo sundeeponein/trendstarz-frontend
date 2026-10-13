@@ -1115,6 +1115,7 @@ export class AdminUserTableComponent implements OnInit {
     creatorTier: '',
     category: '',
     state: '',
+    district: '',
     signupSource: '',
     badgeTag: '',
     userPlatform: '',
@@ -1130,6 +1131,7 @@ export class AdminUserTableComponent implements OnInit {
     creatorTier: '',
     category: '',
     state: '',
+    district: '',
     signupSource: '',
     badgeTag: '',
     userPlatform: '',
@@ -1145,6 +1147,7 @@ export class AdminUserTableComponent implements OnInit {
     creatorTier: '',
     category: '',
     state: '',
+    district: '',
     signupSource: '',
     badgeTag: '',
     userPlatform: '',
@@ -1644,6 +1647,11 @@ export class AdminUserTableComponent implements OnInit {
       return false;
     }
 
+    // District filter (options follow the chosen state)
+    if (filters.district && this.searchKey(user.location?.district) !== this.searchKey(filters.district)) {
+      return false;
+    }
+
     // Signup source filter
     if (
       filters.signupSource &&
@@ -1699,6 +1707,8 @@ export class AdminUserTableComponent implements OnInit {
   setActiveFilterValue(field: string, value: string): void {
     const filters = this.getFiltersForType(this.activeTab) as Record<string, string>;
     filters[field] = value;
+    // A district belongs to one state: changing the state clears the district.
+    if (field === 'state') filters['district'] = '';
     if (field === 'contactVerification') {
       this.fetchUsers(this.activeTab);
       return;
@@ -2177,7 +2187,7 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   resetFilters(userType: 'influencer' | 'brand' | 'photographer') {
-    const empty = { status: '', premium: '', creatorTier: '', category: '', state: '', signupSource: '', badgeTag: '', userPlatform: '', emailVerified: '', mobileVerified: '', contactVerification: '', registeredFrom: '', registeredTo: '' };
+    const empty = { status: '', premium: '', creatorTier: '', category: '', state: '', district: '', signupSource: '', badgeTag: '', userPlatform: '', emailVerified: '', mobileVerified: '', contactVerification: '', registeredFrom: '', registeredTo: '' };
     if (userType === 'influencer') {
       this.influencerFilters = { ...empty };
     } else if (userType === 'brand') {
@@ -2196,10 +2206,29 @@ export class AdminUserTableComponent implements OnInit {
     return this.filteredPhotographers;
   }
 
+  /** Lower-case letters/digits only — "Ranga Reddy", "ranga-reddy" and "Rangareddy" match. */
+  private searchKey(value: unknown): string {
+    return String(value ?? '').toLowerCase().replace(/[^a-z0-9@]+/g, '');
+  }
+
+  /** Districts in the loaded users of this tab, limited to the chosen state. */
+  get districtsArray(): string[] {
+    const state = this.getActiveFilterValue('state');
+    const byKey = new Map<string, string>();
+    for (const user of this.getUsersByType(this.activeTab)) {
+      const district = String(user?.location?.district || '').trim();
+      if (!district) continue;
+      if (state && user?.location?.state !== state) continue;
+      const key = this.searchKey(district);
+      if (!byKey.has(key)) byKey.set(key, district);
+    }
+    return [...byKey.values()].sort((a, b) => a.localeCompare(b));
+  }
+
   private matchesSearch(user: any): boolean {
     const query = this.searchQuery.trim().toLowerCase();
     if (!query) return true;
-    const text = [
+    const fields = [
       user?._id,
       user?.publicId,
       user?.name,
@@ -2212,9 +2241,11 @@ export class AdminUserTableComponent implements OnInit {
       user?.location?.state,
     ]
       .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
-    return text.includes(query);
+      .map((v) => String(v));
+    if (fields.join(' ').toLowerCase().includes(query)) return true;
+    // Spacing/punctuation-insensitive, field by field (district and state names are typed many ways).
+    const key = this.searchKey(query);
+    return !!key && fields.some((v) => this.searchKey(v).includes(key));
   }
 
   getVisibleUsers(): any[] {
