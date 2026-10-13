@@ -409,6 +409,28 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Verified platform fee whose creator was a no-show, not yet credited back (decided by the server). */
+  canRefundFeeAsCredit(tx: CampaignTransaction): boolean {
+    return tx.feeRefundable === true;
+  }
+
+  refundFeeAsCredit(tx: CampaignTransaction) {
+    if (!window.confirm(`Refund the ${this.ui.formatPaise(tx.platformFee)} platform fee to the host as TrendStarZ credit? Only for a creator no-show.`)) return;
+    const token = this.getToken();
+    if (!token) {
+      this.errorMessage.emit('Not authenticated');
+      return;
+    }
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.paymentsPayoutsApi.refundPlatformFeeAsCredit(tx._id, headers).subscribe({
+      next: () => {
+        this.successMessage.emit('Platform fee refunded to the host as TrendStarZ credit');
+        this.loadCampaignTransactions();
+      },
+      error: (err) => this.errorMessage.emit(err?.error?.message || 'Could not refund the fee'),
+    });
+  }
+
   openRejectTxModal(tx: CampaignTransaction) {
     this.selectedTx = tx;
     this.txRejectReason = '';

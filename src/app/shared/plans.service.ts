@@ -75,7 +75,8 @@ export interface PlanCapabilities {
  * customer — is shown a cap that corresponds to nothing real. Remove a key
  * from this list once its feature actually ships.
  */
-export const HIDDEN_PLAN_LIMIT_KEYS: string[] = ['maxTeamSeats'];
+/** Stored on plans but not enforced by the app — hidden from admins and the upgrade page. */
+export const HIDDEN_PLAN_LIMIT_KEYS: string[] = ['maxTeamSeats', 'maxInviteOptions', 'maxCampaignPosts', 'analytics'];
 
 export function visiblePlanLimits(limits: PlanLimit[] | undefined | null): PlanLimit[] {
   return (limits || []).filter((l) => !HIDDEN_PLAN_LIMIT_KEYS.includes(l.key));

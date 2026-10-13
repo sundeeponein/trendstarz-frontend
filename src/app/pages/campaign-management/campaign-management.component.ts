@@ -267,7 +267,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
     private refreshCampaignPaymentStatuses(): void {
       const paidCampaignIds = (this.campaigns || [])
-        .filter((c: any) => String(c?.campaignType || '').toLowerCase() === 'paid_collab')
+        .filter((c: any) => String(c?.campaignType || '').toLowerCase() === 'paid_collab' || this.isFeeCampaign(c))
         .map((c: any) => String(c?._id || ''))
         .filter(Boolean);
 
@@ -277,7 +277,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
             const status = this.deriveCampaignCollectionStatus(rows);
             this.campaignCollectionStatusById.set(campaignId, status);
             (Array.isArray(rows) ? rows : []).forEach((row: any) => {
-              const inviteId = String(row?.inviteId || '');
+              // Platform-fee rows point at their invite through feeInviteId.
+              const inviteId = String(row?.feeInviteId || row?.inviteId || '');
               if (inviteId) this.transactionByInviteId.set(inviteId, row);
             });
             this.cd.detectChanges();
@@ -299,7 +300,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
     canOpenPaymentForCampaign(campaign: Campaign | null | undefined): boolean {
       if (!campaign) return false;
-      if (String((campaign as any).campaignType || '').toLowerCase() !== 'paid_collab') return false;
+      if (String((campaign as any).campaignType || '').toLowerCase() !== 'paid_collab' && !this.isFeeCampaign(campaign)) return false;
       // Per-creator: a payment under review for one creator doesn't block paying for the others.
       return this.payableInvites(campaign).length > 0;
     }
@@ -2803,7 +2804,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   canRevealInviteContact(inv: any, campaign?: any): boolean {
     const status = String(inv?.status || '');
-    return this.isContactPaymentConfirmedStatus(status);
+    if (this.isContactPaymentConfirmedStatus(status)) return true;
+    // Barter/location stay "accepted": details show once unlocked (free, or after the platform fee was verified).
+    return this.isFeeCampaign(campaign) && !!inv?.unlocked && status === 'accepted';
   }
 
   /** Build a WhatsApp deep-link from a phone number. */
@@ -3052,12 +3055,37 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   canShowConfirmCollaboration(inv: any, campaign?: Campaign | null): boolean {
     const campaignType = String((campaign as any)?.campaignType || '').toLowerCase();
+    // Barter/location with a platform fee: confirm = pay the fee for this creator.
+    if (this.isFeeCampaign(campaign)) {
+      return this.getHostInviteEffectiveStatus(inv) === 'accepted'
+        && this.invitePlatformFeeDue(inv) > 0
+        && !inv?.platformFeePaidAt
+        && !this.isInvitePaymentUnderReview(inv);
+    }
     if (campaignType !== 'paid_collab') return false;
     if (this.getHostInviteEffectiveStatus(inv) !== 'accepted') return false;
     if (!!inv?.unlocked) return false;
     if (this.isInvitePaymentUnderReview(inv)) return false;
     const counterStatus = String(inv?.counterOffer?.status || '').toLowerCase();
     return counterStatus !== 'sent' && counterStatus !== 'brand_sent';
+  }
+
+  /** Product-only barter or invite-to-location — unpaid campaigns that may carry a platform fee. */
+  isFeeCampaign(campaign: any): boolean {
+    const type = String(campaign?.campaignType || '').toLowerCase();
+    if (type === 'invite_location') return true;
+    return type === 'product' && String(campaign?.productPaymentMode || '') !== 'product_plus_payment';
+  }
+
+  /** Platform fee (paise) owed for this creator; 0 = none. */
+  invitePlatformFeeDue(inv: any): number {
+    const fee = Number(inv?.platformFeeDue || 0);
+    return Number.isFinite(fee) && fee > 0 ? fee : 0;
+  }
+
+  /** "₹149" for a creator's platform fee. */
+  platformFeeLabel(inv: any): string {
+    return `₹${(this.invitePlatformFeeDue(inv) / 100).toLocaleString('en-IN')}`;
   }
 
   /** This creator's payment proof is waiting for admin verification. */
@@ -4750,11 +4778,15 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Paid collab, accepted but not paid yet: the creator can't start, so never "Working".
+    // Accepted but not confirmed yet (paid collab unpaid, or platform fee unpaid): never "Working".
+    const awaitingFee = typeof invOrStatus !== 'string'
+      && this.isFeeCampaign(campaign)
+      && this.invitePlatformFeeDue(invOrStatus) > 0
+      && !invOrStatus?.platformFeePaidAt;
     if (
       status === 'accepted' &&
       typeof invOrStatus !== 'string' &&
-      String((campaign as any)?.campaignType || '').toLowerCase() === 'paid_collab'
+      (String((campaign as any)?.campaignType || '').toLowerCase() === 'paid_collab' || awaitingFee)
     ) {
       return this.isInvitePaymentUnderReview(invOrStatus) ? 'Payment Under Review' : 'Confirmation Pending';
     }

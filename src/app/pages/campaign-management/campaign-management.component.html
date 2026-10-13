@@ -694,6 +694,20 @@
               </button>
             </div>
 
+            <!-- Barter/location: platform fee to confirm accepted creators -->
+            <div class="pay-now-nudge" *ngIf="isFeeCampaign(c) && payableInvites(c).length > 0">
+              <div class="pay-now-nudge-icon"><i class="bi bi-shield-check"></i></div>
+              <div class="pay-now-nudge-text">
+                <strong>{{ payableInvites(c).length }}
+                  creator{{ payableInvites(c).length === 1 ? ' has' : 's have' }} accepted</strong>
+                — confirm with the TrendStarZ platform fee to unlock their contact {{ c.campaignType === 'product' ? 'and shipping address' : 'details' }}.
+                <span *ngIf="payableInvites(c).length > 1">You can also confirm them one by one below.</span>
+              </div>
+              <button class="btn-pay-now" (click)="openPayment(c._id)" [disabled]="!canOpenPaymentForCampaign(c)">
+                <i class="bi bi-credit-card-fill"></i> {{ payableInvites(c).length > 1 ? 'Confirm all ' + payableInvites(c).length : 'Confirm & pay fee' }}
+              </button>
+            </div>
+
             <!-- Paid collab: payment proof submitted, verification in progress -->
             <div class="pay-now-nudge pay-now-nudge--verify"
                  *ngIf="c.campaignType === 'paid_collab' && isCampaignPaymentVerificationPending(c)">
@@ -882,10 +896,10 @@
                     <button class="inv-pay-chip" type="button"
                       *ngIf="canShowConfirmCollaboration(inv, c)"
                       (click)="payForInvite(c, inv); $event.stopPropagation()"
-                      title="Pay for this creator only">
+                      [title]="isFeeCampaign(c) ? 'Pay the ' + platformFeeLabel(inv) + ' platform fee (+ GST) to confirm this creator' : 'Pay for this creator only'">
                       <i class="bi bi-lock-fill"></i> Confirm Collaboration
                     </button>
-                    <span class="inv-pay-chip inv-pay-chip--review" *ngIf="c.campaignType === 'paid_collab' && isInvitePaymentUnderReview(inv)"
+                    <span class="inv-pay-chip inv-pay-chip--review" *ngIf="(c.campaignType === 'paid_collab' || isFeeCampaign(c)) && isInvitePaymentUnderReview(inv)"
                       title="Your payment for this creator is being verified by TrendStarZ">
                       <i class="bi bi-hourglass-split"></i> Payment under review
                     </span>
@@ -1539,10 +1553,10 @@
               <button class="inv-pay-chip" type="button"
                       *ngIf="canShowConfirmCollaboration(inv, invitePanelCampaign)"
                       (click)="payForInvite(invitePanelCampaign, inv)"
-                      title="Pay for this creator only">
+                      [title]="isFeeCampaign(invitePanelCampaign) ? 'Pay the ' + platformFeeLabel(inv) + ' platform fee (+ GST) to confirm this creator' : 'Pay for this creator only'">
                 <i class="bi bi-lock-fill"></i> Confirm Collaboration
               </button>
-              <span class="inv-pay-chip inv-pay-chip--review" *ngIf="invitePanelCampaign?.campaignType === 'paid_collab' && isInvitePaymentUnderReview(inv)"
+              <span class="inv-pay-chip inv-pay-chip--review" *ngIf="(invitePanelCampaign?.campaignType === 'paid_collab' || isFeeCampaign(invitePanelCampaign)) && isInvitePaymentUnderReview(inv)"
                     title="Your payment for this creator is being verified by TrendStarZ">
                 <i class="bi bi-hourglass-split"></i> Payment under review
               </span>

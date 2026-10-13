@@ -4,6 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { PlansService, Plan, visiblePlanLimits } from '../../../shared/plans.service';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 
+type LimitGroup = 'browse' | 'host' | 'creator' | 'profile';
+interface MasterLimit {
+  key: string;
+  group: LimitGroup;
+  label: string;
+  hint: string;
+  /** Shown (and used by the server) when the plan doesn't set it. */
+  default?: number;
+}
+
 @Component({
   selector: 'app-admin-plans',
   standalone: true,
@@ -123,49 +133,64 @@ export class AdminPlansComponent implements OnInit {
     ],
   };
 
-  readonly masterLimits: { [k: string]: { key: string; label: string; default?: number }[] } = {
+  /** Plan limits shown in the editor, grouped by who they apply to (see limitGroups). */
+  readonly masterLimits: { [k: string]: MasterLimit[] } = {
     INFLUENCER: [
-      { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
-      { key: 'dailySearchLimit', label: 'Daily searches' },
-      { key: 'maxProductImages', label: 'Product images' },
-      { key: 'maxActiveCampaigns', label: 'Campaigns / month' },
-      { key: 'maxBarterCampaignsPerMonth', label: 'Barter/location campaigns / month (share of above)', default: 2 },
-      { key: 'maxInvitesPerBarterCampaign', label: 'Invites / barter or location campaign', default: 3 },
-      { key: 'maxAcceptedPerBarterCampaign', label: 'Accepted creators / barter or location campaign', default: 1 },
-      { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
-      { key: 'maxInvitesReceivedPerMonth', label: 'Invites received / month' },
-      { key: 'maxInviteOptions', label: 'Invite options' },
-      { key: 'maxCampaignPosts', label: 'Max campaign posts' },
+      { key: 'dailyProfileViewLimit', group: 'browse', label: 'Daily profile views', hint: 'Profiles they can open per day.' },
+      { key: 'dailySearchLimit', group: 'browse', label: 'Daily searches', hint: 'Searches they can run per day.' },
+      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns or collabs they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
+      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid collab, Product + Paid, or pay-to-join campaign.' },
+      { key: 'maxBarterCampaignsPerMonth', group: 'host', label: '… of which barter / location (max)', hint: 'How many of the monthly campaigns may be product-only barter or location visits.', default: 2 },
+      { key: 'maxInvitesPerBarterCampaign', group: 'host', label: 'Invites per barter / location campaign', hint: 'Creators they can invite to one barter or location campaign.', default: 3 },
+      { key: 'maxAcceptedPerBarterCampaign', group: 'host', label: 'Accepted creators per barter / location campaign', hint: 'The campaign closes once this many creators accept.', default: 1 },
+      { key: 'maxInvitesReceivedPerMonth', group: 'creator', label: 'Invites they can receive per month', hint: 'Hosts can\'t invite them once this many invites are active or used this plan month.' },
+      { key: 'maxProductImages', group: 'profile', label: 'Product images', hint: 'Images they can upload to their products.' },
     ],
     BRAND: [
-      { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
-      { key: 'dailySearchLimit', label: 'Daily searches' },
-      { key: 'maxActiveCampaigns', label: 'Campaigns / month' },
-      { key: 'maxBarterCampaignsPerMonth', label: 'Barter/location campaigns / month (share of above)', default: 2 },
-      { key: 'maxInvitesPerBarterCampaign', label: 'Invites / barter or location campaign', default: 3 },
-      { key: 'maxAcceptedPerBarterCampaign', label: 'Accepted creators / barter or location campaign', default: 1 },
-      { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
-      // 'maxTeamSeats' intentionally omitted — no team-member feature exists
-      // yet (no schema, no invite flow, no UI) to actually enforce this cap,
-      // so it's hidden here rather than showing admins a limit that does
-      // nothing. Re-add once brand team management ships.
-      { key: 'analytics', label: 'Analytics' },
-      { key: 'maxCampaignPosts', label: 'Max campaign posts' },
+      // 'maxTeamSeats' intentionally omitted — no team-member feature exists yet to enforce it.
+      { key: 'dailyProfileViewLimit', group: 'browse', label: 'Daily profile views', hint: 'Profiles they can open per day.' },
+      { key: 'dailySearchLimit', group: 'browse', label: 'Daily searches', hint: 'Searches they can run per day.' },
+      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns or collabs they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
+      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid collab, Product + Paid, or pay-to-join campaign.' },
+      { key: 'maxBarterCampaignsPerMonth', group: 'host', label: '… of which barter / location (max)', hint: 'How many of the monthly campaigns may be product-only barter or location visits.', default: 2 },
+      { key: 'maxInvitesPerBarterCampaign', group: 'host', label: 'Invites per barter / location campaign', hint: 'Creators they can invite to one barter or location campaign.', default: 3 },
+      { key: 'maxAcceptedPerBarterCampaign', group: 'host', label: 'Accepted creators per barter / location campaign', hint: 'The campaign closes once this many creators accept.', default: 1 },
     ],
     PHOTOGRAPHER: [
-      { key: 'dailyProfileViewLimit', label: 'Daily profile views' },
-      { key: 'dailySearchLimit', label: 'Daily searches' },
-      { key: 'maxPortfolioImages', label: 'Portfolio images' },
-      { key: 'maxActiveCampaigns', label: 'Campaigns / month' },
-      { key: 'maxBarterCampaignsPerMonth', label: 'Barter/location campaigns / month (share of above)', default: 2 },
-      { key: 'maxInvitesPerBarterCampaign', label: 'Invites / barter or location campaign', default: 3 },
-      { key: 'maxAcceptedPerBarterCampaign', label: 'Accepted creators / barter or location campaign', default: 1 },
-      { key: 'maxInvitesPerCampaign', label: 'Invites sent / campaign' },
-      { key: 'maxInvitesReceivedPerMonth', label: 'Invites received / month' },
-      { key: 'analytics', label: 'Analytics' },
-      { key: 'maxCampaignPosts', label: 'Max campaign posts' },
+      { key: 'dailyProfileViewLimit', group: 'browse', label: 'Daily profile views', hint: 'Profiles they can open per day.' },
+      { key: 'dailySearchLimit', group: 'browse', label: 'Daily searches', hint: 'Searches they can run per day.' },
+      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns or collabs they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
+      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid collab, Product + Paid, or pay-to-join campaign.' },
+      { key: 'maxBarterCampaignsPerMonth', group: 'host', label: '… of which barter / location (max)', hint: 'How many of the monthly campaigns may be product-only barter or location visits.', default: 2 },
+      { key: 'maxInvitesPerBarterCampaign', group: 'host', label: 'Invites per barter / location campaign', hint: 'Creators they can invite to one barter or location campaign.', default: 3 },
+      { key: 'maxAcceptedPerBarterCampaign', group: 'host', label: 'Accepted creators per barter / location campaign', hint: 'The campaign closes once this many creators accept.', default: 1 },
+      { key: 'maxInvitesReceivedPerMonth', group: 'creator', label: 'Invites they can receive per month', hint: 'Hosts can\'t invite them once this many invites are active or used this plan month.' },
+      { key: 'maxPortfolioImages', group: 'profile', label: 'Portfolio images', hint: 'Images in their portfolio.' },
     ],
   };
+
+  /** Editor sections, in order — each shows only the limits that belong to it. */
+  readonly limitGroups: { id: LimitGroup; title: string; subtitle: string }[] = [
+    { id: 'browse', title: 'Browsing', subtitle: 'Discovering profiles on TrendStarZ.' },
+    { id: 'host', title: 'As a host — running campaigns & sending invites', subtitle: 'Applies when this user creates a campaign or collab.' },
+    { id: 'creator', title: 'As a creator — receiving invites', subtitle: 'Applies when hosts invite this user.' },
+    { id: 'profile', title: 'Profile & media', subtitle: 'Uploads on their profile.' },
+  ];
+
+  limitsInGroup(group: LimitGroup) {
+    return this.getMergedLimits().filter((l) => l.group === group);
+  }
+
+  /** A setting that can't take effect as entered (e.g. barter share above the monthly total). */
+  limitWarning(key: string): string {
+    const value = (k: string) => this.getMergedLimits().find((l) => l.key === k)?.value;
+    const total = Number(value('maxActiveCampaigns'));
+    if (key === 'maxBarterCampaignsPerMonth' && total !== -1 && Number(value(key)) > total) {
+      return `No effect above ${total}: campaigns per month is ${total}, so at most ${total} can be barter / location.`;
+    }
+    return '';
+  }
+
 
   // Filtered out of the read-only comparison cards so admins aren't shown a
   // cap with nothing behind it — see masterLimits.BRAND above and
@@ -226,14 +251,14 @@ export class AdminPlansComponent implements OnInit {
     return master.find((m) => m.key === limit.key)?.label || limit.label;
   }
 
-  getMergedLimits(): { key: string; label: string; value: number }[] {
+  getMergedLimits(): (MasterLimit & { value: number })[] {
     if (!this.editingPlan) return [];
     const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER';
     const master = this.masterLimits[type] || [];
     return master.map(m => {
       const found = this.editingPlan!.limits.find(l => l.key === m.key);
       // Unset keys show the server's default (e.g. barter limits), not a misleading 0.
-      return { key: m.key, label: m.label, value: found ? found.value : (m.default ?? 0) };
+      return { ...m, value: found ? found.value : (m.default ?? 0) };
     });
   }
 

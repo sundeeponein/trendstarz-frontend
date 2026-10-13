@@ -307,10 +307,23 @@
           <i class="bi bi-123"></i>
           <span>Limits (Numbers)</span>
         </div>
-        <div class="limit-clean-row" *ngFor="let l of getMergedLimits(); trackBy: trackByKey">
-          <span class="limit-clean-label">{{ l.label }}</span>
-          <input type="number" [value]="l.value" min="0" class="limit-clean-value" (input)="setLimitValue(l.key, $event.target.valueAsNumber)" />
-        </div>
+        <p class="limit-group-note">Use -1 for unlimited.</p>
+        <ng-container *ngFor="let g of limitGroups">
+          <ng-container *ngIf="limitsInGroup(g.id).length">
+            <div class="limit-group-head">
+              <strong>{{ g.title }}</strong>
+              <small>{{ g.subtitle }}</small>
+            </div>
+            <div class="limit-clean-row" *ngFor="let l of limitsInGroup(g.id); trackBy: trackByKey">
+              <span class="limit-clean-text">
+                <span class="limit-clean-label">{{ l.label }}</span>
+                <small class="limit-clean-hint">{{ l.hint }}</small>
+                <small class="limit-clean-warn" *ngIf="limitWarning(l.key)"><i class="bi bi-exclamation-triangle-fill"></i> {{ limitWarning(l.key) }}</small>
+              </span>
+              <input type="number" [value]="l.value" min="-1" class="limit-clean-value" (input)="setLimitValue(l.key, $event.target.valueAsNumber)" />
+            </div>
+          </ng-container>
+        </ng-container>
       </div>
 
       <!-- Policies section -->

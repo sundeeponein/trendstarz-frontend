@@ -6,7 +6,7 @@
   <!-- Header -->
   <div class="cp-header">
     <div>
-      <h3 class="cp-title">{{ isPayToJoin ? 'Creator Join Fees' : 'Pay for Campaign' }}</h3>
+      <h3 class="cp-title">{{ isPayToJoin ? 'Creator Join Fees' : isPlatformFee ? 'Confirm Collaboration' : 'Pay for Campaign' }}</h3>
       <p class="cp-sub" *ngIf="calculated">
         <span class="cp-type-chip">{{ campaignTypeLabel }}</span>
         <span class="cp-accepted" *ngIf="!isPayToJoin && !payeeNames.length">{{ calculated.acceptedCount }} accepted influencer{{ calculated.acceptedCount === 1 ? '' : 's' }}</span>
@@ -45,8 +45,29 @@
     </div>
 
     <ng-container *ngIf="calculated; else noData">
+      <!-- Platform fee (barter / location): a fixed fee per creator, no creator payment -->
+      <div class="cp-card" *ngIf="isPlatformFee">
+        <div class="cp-row">
+          <span class="cp-row-label">TrendStarZ platform fee</span>
+          <span class="cp-row-val">{{ formatINR(calculated.platformFee / (calculated.acceptedCount || 1)) }} × {{ calculated.acceptedCount }}</span>
+        </div>
+        <div class="cp-row" [class.cp-row--muted]="gstAmount === 0" *ngIf="shownGstPercent > 0">
+          <span class="cp-row-label">GST ({{ shownGstPercent }}%)</span>
+          <span class="cp-row-val">{{ formatINR(gstAmount) }}</span>
+        </div>
+        <div class="cp-row" *ngIf="creditToApply > 0">
+          <span class="cp-row-label">TrendStarZ credit (UPI payment)</span>
+          <span class="cp-row-val">−{{ formatINR(creditToApply) }}</span>
+        </div>
+        <div class="cp-total">
+          <span>Total to pay</span>
+          <span class="cp-total-val">{{ formatINR(totalToPay) }}</span>
+        </div>
+        <small class="cp-row-label d-block mt-2">A fixed service charge for confirming this collaboration — the creator is not paid through TrendStarZ.</small>
+      </div>
+
       <!-- Breakdown card -->
-      <div class="cp-card">
+      <div class="cp-card" *ngIf="!isPlatformFee">
         <div class="cp-row">
           <span class="cp-row-label">{{ isPayToJoin ? 'Join fee per creator' : 'Price per influencer' }}</span>
           <span class="cp-row-val">{{ formatINR(calculated.pricePerInfluencer) }}</span>
@@ -142,7 +163,7 @@
         <button type="button" class="cp-btn cp-btn--primary w-100" (click)="payWithRazorpay()" [disabled]="processingRazorpay || submitting || !termsOk">
           <span *ngIf="processingRazorpay" class="spinner-border spinner-border-sm"></span>
           <i class="bi bi-lightning-charge-fill" *ngIf="!processingRazorpay"></i>
-          {{ processingRazorpay ? 'Opening Razorpay…' : 'Pay with Razorpay (Recommended)' }}
+          {{ processingRazorpay ? 'Opening Razorpay…' : (razorpayAmount !== null ? 'Pay ' + formatINR(razorpayAmount) + ' with Razorpay' : 'Pay with Razorpay (Recommended)') }}
         </button>
       </div>
 

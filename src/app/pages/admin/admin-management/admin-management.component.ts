@@ -407,6 +407,8 @@ export class AdminManagementComponent implements OnInit {
     platformFeeEnabled: false,
     platformFeePercent: 0,
     brandFeePercent: null as number | null,
+    barterPlatformFee: 0,
+    locationPlatformFee: 0,
     influencerFeePercent: 0 as number,
     photographerFeePercent: 0 as number,
     influencerRecipientFeePercent: 0 as number,
@@ -778,6 +780,8 @@ export class AdminManagementComponent implements OnInit {
           this.settings.platformFeeEnabled = !!data?.platformFeeEnabled;
           this.settings.platformFeePercent = typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : 10;
           this.settings.brandFeePercent = typeof data?.brandFeePercent === 'number' ? data.brandFeePercent : null;
+          this.settings.barterPlatformFee = typeof data?.barterPlatformFee === 'number' ? data.barterPlatformFee : 0;
+          this.settings.locationPlatformFee = typeof data?.locationPlatformFee === 'number' ? data.locationPlatformFee : 0;
           this.settings.influencerFeePercent = typeof data?.influencerFeePercent === 'number' ? data.influencerFeePercent : 0;
           this.settings.photographerFeePercent = typeof data?.photographerFeePercent === 'number' ? data.photographerFeePercent : 0;
           this.settings.influencerRecipientFeePercent = typeof data?.influencerRecipientFeePercent === 'number' ? data.influencerRecipientFeePercent : 0;

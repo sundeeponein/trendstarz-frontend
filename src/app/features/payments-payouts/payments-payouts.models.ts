@@ -2,7 +2,13 @@ export interface CampaignTransaction {
   _id: string;
   campaignId: string;
   inviteId?: string;
-  transactionType: 'paid_collab' | 'pay_to_join';
+  transactionType: 'paid_collab' | 'pay_to_join' | 'platform_fee';
+  /** platform_fee rows: the invite the fee confirmed. */
+  feeInviteId?: string;
+  /** platform_fee rows: refunded to the host as TrendStarZ credit. */
+  feeCreditedAt?: string | null;
+  /** platform_fee rows: verified, creator was a no-show, not yet credited — admin may refund as credit. */
+  feeRefundable?: boolean;
   direction: 'brand_to_influencer' | 'influencer_to_brand';
   payerRole: 'brand' | 'influencer' | 'photographer';
   payerId?: string;

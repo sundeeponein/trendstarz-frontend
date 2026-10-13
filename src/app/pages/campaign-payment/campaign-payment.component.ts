@@ -173,8 +173,20 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
 
   get gstAmount(): number {
     if (!this.calculated) return 0;
+    // Platform fee: the server's GST (summed per creator row, as charged and stored).
+    if (this.isPlatformFee) return Number(this.calculated.gstAmount || 0);
     const fee = Number(this.calculated.platformFee || 0);
     return Math.round(fee * (this.gstPercent / 100));
+  }
+
+  /** GST % shown in the breakdown — the server's for platform fees. */
+  get shownGstPercent(): number {
+    return this.isPlatformFee ? Number(this.calculated?.gstPercent || 0) : this.gstPercent;
+  }
+
+  /** What Razorpay will charge (credit isn't used with Razorpay); null = not computed by the server. */
+  get razorpayAmount(): number | null {
+    return this.isPlatformFee ? Number(this.calculated?.amountDueRazorpay || 0) : null;
   }
 
   /** TrendStarZ credit applied to the platform fee (UPI payments only). */
@@ -184,11 +196,18 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
 
   get totalToPay(): number {
     if (!this.calculated) return 0;
+    // Platform fee: exactly the server's UPI amount (fee + GST − credit).
+    if (this.isPlatformFee) return Number(this.calculated.amountDueUpi || 0);
     return Number(this.calculated.payerTotal || 0) - this.creditToApply + this.gstAmount;
   }
 
   get needsTerms(): boolean {
-    return !this.isPayToJoin;
+    return !this.isPayToJoin && !this.isPlatformFee;
+  }
+
+  /** Barter/location confirmation: a fixed TrendStarZ fee, not a creator payment. */
+  get isPlatformFee(): boolean {
+    return this.calculated?.isPlatformFee === true;
   }
 
   get termsOk(): boolean {

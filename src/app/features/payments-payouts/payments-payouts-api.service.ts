@@ -29,6 +29,15 @@ export class PaymentsPayoutsApiService {
     );
   }
 
+  /** Return a no-show creator's platform fee to the host as TrendStarZ credit. */
+  refundPlatformFeeAsCredit(id: string, headers: HttpHeaders): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/campaign-transactions/${id}/refund-fee-credit`,
+      {},
+      { headers },
+    );
+  }
+
   /** Confirm a whole payment (every creator it covered). */
   verifyPaymentBatch(batchId: string, headers: HttpHeaders, notes?: string): Observable<any> {
     return this.http.post<any>(

@@ -155,6 +155,11 @@
           </div>
         </td>
         <td class="col-actions">
+          <button class="btn btn-outline-primary btn-sm me-1" *ngIf="canRefundFeeAsCredit(tx)" (click)="refundFeeAsCredit(tx)"
+                  title="Creator no-show: give the host this fee back as TrendStarZ credit">
+            Refund fee as credit
+          </button>
+          <span class="badge bg-light text-dark me-1" *ngIf="tx.transactionType === 'platform_fee' && tx.feeCreditedAt">Fee credited back</span>
           <button class="btn btn-success btn-sm me-1" *ngIf="tx.collectionStatus === 'proof_submitted'" (click)="verifyTransaction(tx)"
                   [title]="'Confirms the payment for: ' + paymentGroupNames(tx)">
             {{ paymentGroup(tx).length > 1 ? 'Verify all ' + paymentGroup(tx).length : 'Verify' }}
