@@ -1122,6 +1122,14 @@ export class ConfigService {
     );
   }
 
+  /** Creator: payout fee (%) on a paid-collab invite — locked = fixed when they accepted. Null on error. */
+  getPayoutFeePreview(inviteId: string): Observable<{ feePercent: number; locked: boolean } | null> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-transactions/payout-fee/${encodeURIComponent(inviteId)}`).pipe(
+      map((res) => this.extractData<any>(res) || res || null),
+      catchError(() => of(null)),
+    );
+  }
+
   /** The signed-in host's campaign slots for their current plan month (null on error). */
   getCampaignSlotUsage(): Observable<{ used: number; limit: number; resetsAt: string; barterUsed?: number; barterLimit?: number } | null> {
     return this.http.get<any>(`${this.apiUrl}/campaigns/slot-usage`).pipe(

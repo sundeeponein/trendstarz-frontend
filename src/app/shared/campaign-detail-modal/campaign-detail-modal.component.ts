@@ -1,5 +1,6 @@
 import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { SessionService } from '../../core/session.service';
+import { ConfigService } from '../config.service';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -329,6 +330,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   constructor(
     private cdr: ChangeDetectorRef,
     private session: SessionService,
+    private config: ConfigService,
     private trackingLinksApi: TrackingLinksApiService,
   ) {}
 
@@ -389,6 +391,48 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       this._workflowScrolled = false;
       this.cdr.detectChanges();
     }
+    if (changes['invite'] || changes['visible']) this.loadPayoutFee();
+  }
+
+  /** Creator's payout fee on this paid collab (%), from the server; 0 until known. */
+  payoutFeePercent = 0;
+  private payoutFeeFor = '';
+
+  private loadPayoutFee(): void {
+    const id = this.inviteId;
+    const isPaid = String(this.campaign?.campaignType || '').toLowerCase() === 'paid_collab';
+    if (!id || this.adminReview || !this.visible || !isPaid) {
+      if (!id || !isPaid) this.payoutFeePercent = 0;
+      return;
+    }
+    if (this.payoutFeeFor === id) return;
+    this.payoutFeeFor = id;
+    this.config.getPayoutFeePreview(id).subscribe((res) => {
+      if (this.inviteId !== id) return;
+      this.payoutFeePercent = Number(res?.feePercent || 0);
+      this.cdr.detectChanges();
+    });
+  }
+
+  /** The gross amount behind yourPayoutText, in paise (0 when unknown). */
+  private get yourPayoutPaise(): number {
+    if (ACCEPTED_OR_LATER.includes(this.statusKey)) {
+      const paise = Number(this.invite?.agreedAmountPaise || 0);
+      if (paise > 0) return paise;
+      const rupees = Number(this.invite?.agreedAmount || 0);
+      if (rupees > 0) return Math.round(rupees * 100);
+    }
+    const selected = this.selectedContentTypeOption;
+    if (selected?.price) return Math.round(Number(selected.price) * 100);
+    return Number(this.campaign?.pricePerInfluencer || 0) || 0;
+  }
+
+  /** "You receive ₹980 after the 2% TrendStarZ fee" — empty when there's no fee. */
+  get netPayoutText(): string {
+    const gross = this.yourPayoutPaise;
+    if (!(this.payoutFeePercent > 0) || !(gross > 0)) return '';
+    const net = gross - Math.round((gross * this.payoutFeePercent) / 100);
+    return `You receive ₹${Math.floor(net / 100).toLocaleString('en-IN')} after the ${this.payoutFeePercent}% TrendStarZ fee`;
   }
 
   ngAfterViewChecked(): void {

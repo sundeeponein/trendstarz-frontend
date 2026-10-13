@@ -1388,3 +1388,13 @@ $dk-orange:    #e06030;
   > i { color: #2563eb; margin-top: 2px; }
   strong { display: block; margin-bottom: 2px; }
 }
+
+// Paid collab: what the creator actually receives after the TrendStarZ payout fee.
+.cdm-net-payout {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #6b7280;
+  line-height: 1.3;
+}

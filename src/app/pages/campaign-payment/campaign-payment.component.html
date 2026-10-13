@@ -89,8 +89,8 @@
             <span class="cp-row-label">Platform commission ({{ calculated.platformFeePercent }}%)</span>
             <span class="cp-row-val">{{ formatINR(calculated.platformFee) }}</span>
           </div>
-          <div class="cp-row" [class.cp-row--muted]="gstAmount === 0" *ngIf="gstPercent > 0">
-            <span class="cp-row-label">GST on commission ({{ gstPercent }}%)</span>
+          <div class="cp-row" [class.cp-row--muted]="gstAmount === 0" *ngIf="shownGstPercent > 0">
+            <span class="cp-row-label">GST on commission ({{ shownGstPercent }}%)</span>
             <span class="cp-row-val">{{ formatINR(gstAmount) }}</span>
           </div>
           <div class="cp-row" *ngIf="creditToApply > 0">

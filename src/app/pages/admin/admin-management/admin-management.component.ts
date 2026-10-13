@@ -408,6 +408,12 @@ export class AdminManagementComponent implements OnInit {
     platformFeePercent: 0,
     brandFeePercent: null as number | null,
     barterPlatformFee: 0,
+    // Premium rates — null = same as the Free rate.
+    brandFeePercentPremium: null as number | null,
+    influencerFeePercentPremium: null as number | null,
+    photographerFeePercentPremium: null as number | null,
+    influencerRecipientFeePercentPremium: null as number | null,
+    photographerRecipientFeePercentPremium: null as number | null,
     locationPlatformFee: 0,
     influencerFeePercent: 0 as number,
     photographerFeePercent: 0 as number,
@@ -781,6 +787,11 @@ export class AdminManagementComponent implements OnInit {
           this.settings.platformFeePercent = typeof data?.platformFeePercent === 'number' ? data.platformFeePercent : 10;
           this.settings.brandFeePercent = typeof data?.brandFeePercent === 'number' ? data.brandFeePercent : null;
           this.settings.barterPlatformFee = typeof data?.barterPlatformFee === 'number' ? data.barterPlatformFee : 0;
+          this.settings.brandFeePercentPremium = typeof data?.brandFeePercentPremium === 'number' ? data.brandFeePercentPremium : null;
+          this.settings.influencerFeePercentPremium = typeof data?.influencerFeePercentPremium === 'number' ? data.influencerFeePercentPremium : null;
+          this.settings.photographerFeePercentPremium = typeof data?.photographerFeePercentPremium === 'number' ? data.photographerFeePercentPremium : null;
+          this.settings.influencerRecipientFeePercentPremium = typeof data?.influencerRecipientFeePercentPremium === 'number' ? data.influencerRecipientFeePercentPremium : null;
+          this.settings.photographerRecipientFeePercentPremium = typeof data?.photographerRecipientFeePercentPremium === 'number' ? data.photographerRecipientFeePercentPremium : null;
           this.settings.locationPlatformFee = typeof data?.locationPlatformFee === 'number' ? data.locationPlatformFee : 0;
           this.settings.influencerFeePercent = typeof data?.influencerFeePercent === 'number' ? data.influencerFeePercent : 0;
           this.settings.photographerFeePercent = typeof data?.photographerFeePercent === 'number' ? data.photographerFeePercent : 0;

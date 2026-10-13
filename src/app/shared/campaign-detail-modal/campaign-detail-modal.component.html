@@ -55,6 +55,7 @@
           <div class="cdm-info-card">
             <div class="cdm-info-card__label"><i class="bi bi-cash-coin"></i> YOUR PAYOUT</div>
             <div class="cdm-info-card__value" style="color:#d2521a">{{ yourPayoutText || campaignBudgetText || '—' }}</div>
+            <small class="cdm-net-payout" *ngIf="netPayoutText">{{ netPayoutText }}</small>
             <div class="cdm-info-card__tags" *ngIf="payoutTypeTags.length">
               <span class="cdm-tag" *ngFor="let tag of payoutTypeTags">{{ tag }}</span>
             </div>

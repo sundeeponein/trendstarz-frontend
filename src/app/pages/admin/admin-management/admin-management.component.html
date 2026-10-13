@@ -603,13 +603,18 @@
                 <div class="p-2 rounded" style="background:#e8f5e9; border:1px solid #c8e6c9;">
                   <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#1b5e20;">Brands</div>
                   <div class="mb-0">
-                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%)</label>
+                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%) — Free</label>
                     <div class="input-group input-group-sm">
                       <input type="number" class="form-control" [(ngModel)]="settings.brandFeePercent" min="0" max="100" placeholder="0" />
                       <span class="input-group-text">%</span>
                     </div>
+                    <label class="form-label mt-2 mb-1" style="font-size:0.8rem;">Premium (%) <span class="text-muted">— blank = same as above</span></label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" [(ngModel)]="settings.brandFeePercentPremium" min="0" max="100" placeholder="same" />
+                      <span class="input-group-text">%</span>
+                    </div>
                   </div>
-                  <small class="text-muted d-block mt-1">All regular campaign types</small>
+                  <small class="text-muted d-block mt-1">Paid campaigns hosted by brands — and by influencers acting as hosts</small>
                 </div>
               </div>
               <!-- Influencer commission -->
@@ -617,13 +622,18 @@
                 <div class="p-2 rounded" style="background:#e3f2fd; border:1px solid #bbdefb;">
                   <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#0d47a1;">Influencers</div>
                   <div class="mb-0">
-                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%)</label>
+                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%) — Free</label>
                     <div class="input-group input-group-sm">
                       <input type="number" class="form-control" [(ngModel)]="settings.influencerFeePercent" min="0" max="100" placeholder="0" />
                       <span class="input-group-text">%</span>
                     </div>
+                    <label class="form-label mt-2 mb-1" style="font-size:0.8rem;">Premium (%) <span class="text-muted">— blank = same as above</span></label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" [(ngModel)]="settings.influencerFeePercentPremium" min="0" max="100" placeholder="same" />
+                      <span class="input-group-text">%</span>
+                    </div>
                   </div>
-                  <small class="text-muted d-block mt-1">Pay-to-Join · default 0%</small>
+                  <small class="text-muted d-block mt-1">Pay-to-Join (when they join) · default 0%</small>
                 </div>
               </div>
               <!-- Photographer commission -->
@@ -631,13 +641,18 @@
                 <div class="p-2 rounded" style="background:#fce4ec; border:1px solid #f8bbd0;">
                   <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#880e4f;">Photo/Video</div>
                   <div class="mb-0">
-                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%)</label>
+                    <label class="form-label" style="font-size:0.85rem;">Platform Commission (%) — Free</label>
                     <div class="input-group input-group-sm">
                       <input type="number" class="form-control" [(ngModel)]="settings.photographerFeePercent" min="0" max="100" placeholder="0" />
                       <span class="input-group-text">%</span>
                     </div>
+                    <label class="form-label mt-2 mb-1" style="font-size:0.8rem;">Premium (%) <span class="text-muted">— blank = same as above</span></label>
+                    <div class="input-group input-group-sm">
+                      <input type="number" class="form-control" [(ngModel)]="settings.photographerFeePercentPremium" min="0" max="100" placeholder="same" />
+                      <span class="input-group-text">%</span>
+                    </div>
                   </div>
-                  <small class="text-muted d-block mt-1">Pay-to-Join · default 0%</small>
+                  <small class="text-muted d-block mt-1">Pay-to-Join, and paid collabs they host · default 0%</small>
                 </div>
               </div>
             </div>
@@ -653,31 +668,41 @@
             <div class="col-12 col-md-4">
               <div class="p-2 rounded" style="background:#e3f2fd; border:1px solid #bbdefb;">
                 <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#0d47a1;">Influencers</div>
-                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%)</label>
+                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%) — Free</label>
                 <div class="input-group input-group-sm">
                   <input type="number" class="form-control" [(ngModel)]="settings.influencerRecipientFeePercent" min="0" max="100" placeholder="0" />
                   <span class="input-group-text">%</span>
                 </div>
-                <small class="text-muted d-block mt-1">Deducted from influencer payout · default 0%</small>
+                <label class="form-label mt-2 mb-1" style="font-size:0.8rem;">Premium (%) <span class="text-muted">— blank = same as above</span></label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control" [(ngModel)]="settings.influencerRecipientFeePercentPremium" min="0" max="100" placeholder="same" />
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted d-block mt-1">Deducted from influencer payout · rate locked when they accept · shown on the invite</small>
               </div>
             </div>
             <!-- Photo/Video as recipient -->
             <div class="col-12 col-md-4">
               <div class="p-2 rounded" style="background:#fce4ec; border:1px solid #f8bbd0;">
                 <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#880e4f;">Photo/Video</div>
-                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%)</label>
+                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%) — Free</label>
                 <div class="input-group input-group-sm">
                   <input type="number" class="form-control" [(ngModel)]="settings.photographerRecipientFeePercent" min="0" max="100" placeholder="0" />
                   <span class="input-group-text">%</span>
                 </div>
-                <small class="text-muted d-block mt-1">Deducted from photographer payout · default 0%</small>
+                <label class="form-label mt-2 mb-1" style="font-size:0.8rem;">Premium (%) <span class="text-muted">— blank = same as above</span></label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control" [(ngModel)]="settings.photographerRecipientFeePercentPremium" min="0" max="100" placeholder="same" />
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted d-block mt-1">Deducted from photographer payout · rate locked when they accept · shown on the invite</small>
               </div>
             </div>
             <!-- Brand as recipient (future) -->
             <div class="col-12 col-md-4">
               <div class="p-2 rounded" style="background:#f5f5f5; border:1px solid #e0e0e0; opacity:0.75;">
                 <div class="fw-semibold mb-2" style="font-size:0.88rem; color:#616161;">Brands <span class="badge bg-secondary ms-1" style="font-size:0.65rem; font-weight:400;">Future</span></div>
-                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%)</label>
+                <label class="form-label mb-1" style="font-size:0.82rem;">Payout Fee (%) — Free</label>
                 <div class="input-group input-group-sm">
                   <input type="number" class="form-control" [(ngModel)]="settings.brandRecipientFeePercent" min="0" max="100" placeholder="0" />
                   <span class="input-group-text">%</span>

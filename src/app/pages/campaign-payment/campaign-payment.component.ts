@@ -173,20 +173,25 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
 
   get gstAmount(): number {
     if (!this.calculated) return 0;
-    // Platform fee: the server's GST (summed per creator row, as charged and stored).
-    if (this.isPlatformFee) return Number(this.calculated.gstAmount || 0);
+    // The server's GST (on commission/fee only, summed per creator row, as charged and stored).
+    if (this.usesServerTotals) return Number(this.calculated.gstAmount || 0);
     const fee = Number(this.calculated.platformFee || 0);
     return Math.round(fee * (this.gstPercent / 100));
   }
 
-  /** GST % shown in the breakdown — the server's for platform fees. */
+  /** The server computed the totals (host payments) — show exactly what will be charged. */
+  get usesServerTotals(): boolean {
+    return !this.isPayToJoin && typeof this.calculated?.amountDueRazorpay === 'number';
+  }
+
+  /** GST % shown in the breakdown — the server's when it computed the totals. */
   get shownGstPercent(): number {
-    return this.isPlatformFee ? Number(this.calculated?.gstPercent || 0) : this.gstPercent;
+    return this.usesServerTotals ? Number(this.calculated?.gstPercent || 0) : this.gstPercent;
   }
 
   /** What Razorpay will charge (credit isn't used with Razorpay); null = not computed by the server. */
   get razorpayAmount(): number | null {
-    return this.isPlatformFee ? Number(this.calculated?.amountDueRazorpay || 0) : null;
+    return this.usesServerTotals ? Number(this.calculated?.amountDueRazorpay || 0) : null;
   }
 
   /** TrendStarZ credit applied to the platform fee (UPI payments only). */
@@ -196,8 +201,8 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
 
   get totalToPay(): number {
     if (!this.calculated) return 0;
-    // Platform fee: exactly the server's UPI amount (fee + GST − credit).
-    if (this.isPlatformFee) return Number(this.calculated.amountDueUpi || 0);
+    // Exactly the server's UPI amount (agreed + commission + GST − credit).
+    if (this.usesServerTotals) return Number(this.calculated.amountDueUpi || 0);
     return Number(this.calculated.payerTotal || 0) - this.creditToApply + this.gstAmount;
   }
 
