@@ -362,9 +362,17 @@
             <div class="cdm-section__label">WHAT YOU MUST DO</div>
             <ul class="cdm-checklist">
               <li><i class="bi bi-check-circle-fill"></i><span>Platform: {{ checklistPlatformText }}</span></li>
-              <li>
-                <i class="bi" [ngClass]="selectedContentTypeKey || contentTypeOptions.length === 0 ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+              <li *ngIf="!contentTypeStillNeeded">
+                <i class="bi bi-check-circle-fill"></i>
                 <span>Content type: {{ checklistContentTypeText }}</span>
+              </li>
+              <!-- Not chosen yet: tap to jump to the content type options -->
+              <li *ngIf="contentTypeStillNeeded" class="cdm-checklist__action"
+                  role="button" tabindex="0"
+                  (click)="goToContentType()" (keydown.enter)="goToContentType()" (keydown.space)="goToContentType(); $event.preventDefault()">
+                <i class="bi bi-circle"></i>
+                <span>Content type: {{ checklistContentTypeText }}</span>
+                <span class="cdm-checklist__go">Choose <i class="bi bi-chevron-up"></i></span>
               </li>
               <li><i class="bi bi-check-circle-fill"></i><span>{{ dateChecklistLabel }}: {{ timelineText }}</span></li>
               <li>

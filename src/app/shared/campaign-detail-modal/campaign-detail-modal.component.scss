@@ -1345,3 +1345,28 @@ $dk-orange:    #e06030;
 @media (prefers-reduced-motion: reduce) {
   .cdm-attention { animation: none; }
 }
+
+// Checklist row the creator can tap to jump to what's still missing.
+.cdm-checklist__action {
+  cursor: pointer;
+  border-radius: 8px;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(220, 38, 38, 0.06);
+    outline: none;
+  }
+}
+
+.cdm-checklist__go {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: #c2410c;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cdm-checklist .cdm-checklist__go i {
+  color: inherit;
+  margin-top: 0;
+}

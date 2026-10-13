@@ -1649,6 +1649,16 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     this.toastTimer = setTimeout(() => { this.toastError = ''; }, 4000);
   }
 
+  /** The creator still has to pick a content type (there are options to choose from). */
+  get contentTypeStillNeeded(): boolean {
+    return !this.selectedContentTypeKey && this.contentTypeOptions.length > 0;
+  }
+
+  /** "Content type" checklist row → the content type options. */
+  goToContentType() {
+    this.pointTo('contentType');
+  }
+
   /** Scrolls the missing section into view and highlights it for a moment. */
   private pointTo(target: 'contentType' | 'payout') {
     this.attentionTarget = target;
