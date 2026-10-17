@@ -35,6 +35,7 @@ import { ProfileVisibilitySelectorComponent } from '../../shared/components/prof
 import { SocialPlatformFieldComponent } from '../../shared/social-platform-field/social-platform-field.component';
 import { YoutubeCheck, youtubeCheckFor } from '../../shared/youtube-check.util';
 import { markRatesConfirmed, rateReviewFor } from '../../shared/rate-review.util';
+import { paymentAmountRupees } from '../../shared/payment-amount.util';
 
 @Component({
   selector: 'app-influencer-registration',
@@ -513,11 +514,8 @@ export class InfluencerProfileComponent implements OnInit {
   myPayments: any[] = [];
   latestPendingPayment: any = null;
 
-  // Razorpay payments store `amount` in paise; manual UPI/QR payments store it in plain rupees.
   get latestPendingPaymentAmount(): number {
-    const p = this.latestPendingPayment;
-    if (!p) return 0;
-    return p.paymentMethod === 'razorpay' ? (p.amount || 0) / 100 : (p.amount || 0);
+    return paymentAmountRupees(this.latestPendingPayment);
   }
 
   // Plan capabilities

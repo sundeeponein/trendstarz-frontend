@@ -1049,7 +1049,7 @@
               <div class="user-sub" *ngIf="!selectedUser.isPremium">Free plan</div>
               <div class="user-sub text-warning-emphasis" *ngIf="selectedUser.hasPendingPremiumPayment">
                 <i class="bi bi-cash-coin"></i>
-                Payment submitted{{ selectedUser.pendingPremiumPayment?.amount ? (' — ₹' + (selectedUser.pendingPremiumPayment.amount / 100)) : '' }} — awaiting approval in Premium Payments
+                Payment submitted{{ paymentAmountRupees(selectedUser.pendingPremiumPayment) ? (' — ₹' + paymentAmountRupees(selectedUser.pendingPremiumPayment)) : '' }} — awaiting approval in Premium Payments
               </div>
             </div>
             <span class="tier-badge" [ngClass]="getTierValue(selectedUser) === 'premium' ? 'premium' : 'free'">

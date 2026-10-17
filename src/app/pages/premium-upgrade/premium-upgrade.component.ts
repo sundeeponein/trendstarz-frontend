@@ -24,6 +24,7 @@ import { PaymentCheckoutComponent, BreakdownRow } from '../../shared/payment-che
 import { MonetizationApiService } from '../../services/monetization-api.service';
 import { ConfigService } from '../../shared/config.service';
 import { matchesFounderOfferAudience } from '../../shared/founder-offer/founder-offer.util';
+import { paymentAmountRupees } from '../../shared/payment-amount.util';
 
 
 
@@ -73,10 +74,8 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
       this.paymentMethodTab = tab;
     }
 
-    // Razorpay-sourced payments store `amount` in paise; manual UPI/QR payments store it in plain rupees.
     getPaymentDisplayAmount(payment: any): number {
-      const amount = payment?.amount || 0;
-      return payment?.gatewayProvider === 'razorpay' ? amount / 100 : amount;
+      return paymentAmountRupees(payment);
     }
     readonly upiId = 'trendstarzin@kotak';
     readonly isProduction = environment.production;
@@ -558,6 +557,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
           String((this.selectedPlan as any)?._id || ''),
           billingCycle,
           this.finalPrice,
+          this.couponApplied ? this.couponCode.trim().toUpperCase() : undefined,
         ),
       );
       const order = orderRes?.order;

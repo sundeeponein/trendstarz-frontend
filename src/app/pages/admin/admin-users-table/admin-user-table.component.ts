@@ -33,6 +33,7 @@ import { AppPaginatorComponent } from '../../../shared/components/app-paginator/
 import { ImageCropModalComponent } from '../../../shared/components/image-crop-modal/image-crop-modal.component';
 import { CollaborationScoreApiService, CollaborationAudit } from '../../../services/collaboration-score-api.service';
 import { MINIMUM_RATE_RUPEES, isBelowMinimumRate } from '../../../shared/rates.util';
+import { paymentAmountRupees } from '../../../shared/payment-amount.util';
 
 type AdminUserRole = 'influencer' | 'brand' | 'photographer';
 
@@ -164,6 +165,7 @@ export class AdminUserTableComponent implements OnInit {
   /** 3D-1d: flags rates saved below the minimum (kept until the creator changes them). */
   readonly minimumRate = MINIMUM_RATE_RUPEES;
   readonly isBelowMinimumRate = isBelowMinimumRate;
+  readonly paymentAmountRupees = paymentAmountRupees;
 
   filtersExpanded = true;
   searchQuery = '';

@@ -31,6 +31,7 @@ import { ImageCropModalComponent } from '../../shared/components/image-crop-moda
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { SessionService } from '../../core/session.service';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
+import { paymentAmountRupees } from '../../shared/payment-amount.util';
 
 @Component({
   selector: 'app-brand-registration',
@@ -292,11 +293,8 @@ export class BrandProfileComponent implements OnInit {
   myPayments: any[] = [];
   latestPendingPayment: any = null;
 
-  // Razorpay payments store `amount` in paise; manual UPI/QR payments store it in plain rupees.
   get latestPendingPaymentAmount(): number {
-    const p = this.latestPendingPayment;
-    if (!p) return 0;
-    return p.paymentMethod === 'razorpay' ? (p.amount || 0) / 100 : (p.amount || 0);
+    return paymentAmountRupees(this.latestPendingPayment);
   }
   registrationSuccess = false;
   registrationError = '';

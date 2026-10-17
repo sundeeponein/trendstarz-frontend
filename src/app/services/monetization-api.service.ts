@@ -36,7 +36,9 @@ export class MonetizationApiService {
     );
   }
 
-  createSubscriptionOrder(planId: string, billingCycle: "monthly" | "quarterly" | "yearly", finalAmount?: number) {
+  // finalAmount = the total the page showed; the server prices the order itself and
+  // refuses it if the two differ. couponCode is re-validated server-side.
+  createSubscriptionOrder(planId: string, billingCycle: "monthly" | "quarterly" | "yearly", finalAmount?: number, couponCode?: string) {
     return this.http.post<{
       success: boolean;
       order: { orderId: string; amount: number; currency: string; keyId: string };
@@ -45,6 +47,7 @@ export class MonetizationApiService {
       planId,
       billingCycle,
       ...(typeof finalAmount === "number" ? { finalAmount } : {}),
+      ...(couponCode ? { couponCode } : {}),
     });
   }
 

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { PremiumPayment } from '../payments-payouts.models';
+import { paymentAmountRupees } from '../../../shared/payment-amount.util';
 
 @Injectable({ providedIn: 'root' })
 export class AdminPaymentsUiUtilsService {
@@ -7,11 +8,8 @@ export class AdminPaymentsUiUtilsService {
     return `₹${((amount || 0) / 100).toLocaleString('en-IN')}`;
   }
 
-  // Razorpay-sourced premium payments store `amount` in paise; manual UPI/QR payments
-  // store it in plain rupees — normalize before display either way.
   premiumPaymentAmount(payment: PremiumPayment): number {
-    const amount = payment?.amount || 0;
-    return payment?.gatewayProvider === 'razorpay' ? amount / 100 : amount;
+    return paymentAmountRupees(payment);
   }
 
   formatPremiumPaymentAmount(payment: PremiumPayment): string {

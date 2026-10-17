@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { SessionService } from '../../core/session.service';
 import { WarmupService } from '../../core/warmup.service';
+import { paymentAmountRupees } from '../../shared/payment-amount.util';
 
 @Component({
   selector: 'app-payment-history',
@@ -120,10 +121,8 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Razorpay-sourced payments store `amount` in paise; manual UPI/QR payments store it in plain rupees.
   getDisplayAmount(payment: any): number {
-    const amount = payment?.amount || 0;
-    return payment?.gatewayProvider === 'razorpay' ? amount / 100 : amount;
+    return paymentAmountRupees(payment);
   }
 
   getModeLabel(payment: any): string {
