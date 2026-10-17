@@ -101,6 +101,13 @@
                   separately. The creator is told no payout will be made.
                 </p>
               </div>
+
+              <div *ngSwitchCase="'excuseMiss'" class="cc-field">
+                <p class="cc-explain">
+                  This no-show stops counting against the creator: their monthly invite slot is freed
+                  right away and it is left off their completion record. Payments and refunds are not changed.
+                </p>
+              </div>
             </ng-container>
 
             <div class="cc-field">
@@ -149,6 +156,9 @@
                 <button type="button" class="cc-btn" *ngIf="inv.actions.extendDeadline.allowed" (click)="open('extendDeadline', inv)">Extend deadline</button>
                 <button type="button" class="cc-btn" *ngIf="inv.actions.submitOnBehalf.allowed" (click)="open('submitOnBehalf', inv)">Submit post link</button>
                 <button type="button" class="cc-btn cc-btn--danger-outline" *ngIf="inv.actions.cancel.allowed" (click)="open('cancel', inv)">Cancel participation</button>
+                <button type="button" class="cc-btn" *ngIf="inv.actions.excuseMiss?.allowed" (click)="open('excuseMiss', inv)"
+                        title="Frees the creator's monthly slot and keeps this off their record">Don't count against creator</button>
+                <span class="cc-why" *ngIf="inv.missExcused">No-show excused: {{ inv.missExcused.reason }}</span>
                 <span class="cc-why"
                       *ngIf="inv.status === 'withdrawn' && !inv.actions.restore.allowed">{{ inv.actions.restore.why }}</span>
               </div>

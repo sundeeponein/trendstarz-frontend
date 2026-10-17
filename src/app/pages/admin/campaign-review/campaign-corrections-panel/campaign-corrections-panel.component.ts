@@ -43,11 +43,14 @@ export interface CorrectionInvite {
     resolveOutcome: string | null;
   } | null;
   corrections: Array<{ action: string; reason: string; by: string; at: string }>;
+  /** Set when an admin excused this no-show (it no longer holds the creator's monthly slot). */
+  missExcused?: { at: string; by: string; reason: string } | null;
   actions: {
     restore: ActionCheck;
     extendDeadline: ActionCheck;
     submitOnBehalf: ActionCheck;
     cancel: ActionCheck;
+    excuseMiss?: ActionCheck;
   };
 }
 export interface CorrectionsView {
@@ -70,7 +73,7 @@ export interface CorrectionsView {
   invites: CorrectionInvite[];
 }
 
-export type CorrectionAction = 'endDate' | 'restore' | 'extendDeadline' | 'submitOnBehalf' | 'cancel';
+export type CorrectionAction = 'endDate' | 'restore' | 'extendDeadline' | 'submitOnBehalf' | 'cancel' | 'excuseMiss';
 
 const ACTION_LABELS: Record<CorrectionAction, string> = {
   endDate: 'Extend campaign end date',
@@ -78,6 +81,7 @@ const ACTION_LABELS: Record<CorrectionAction, string> = {
   extendDeadline: 'Extend submission deadline',
   submitOnBehalf: 'Submit post link for the creator',
   cancel: 'Cancel participation (refund to host)',
+  excuseMiss: "Don't count this no-show against the creator",
 };
 
 const WITHDRAWAL_LABELS: Record<string, string> = {
@@ -94,6 +98,7 @@ const LOG_LABELS: Record<string, string> = {
   extend_submission_deadline: 'Deadline extended',
   submit_on_behalf: 'Post submitted by admin',
   cancel_participation: 'Cancelled by admin',
+  excuse_miss: 'No-show excused (creator slot freed)',
 };
 
 type ApiEnvelope<T> = { success?: boolean; data?: T } & Partial<T>;
@@ -272,6 +277,8 @@ export class CampaignCorrectionsPanelComponent implements OnInit, OnDestroy {
         return { url: inviteUrl('submit-on-behalf'), body: { postUrl: this.postUrl.trim(), reason } };
       case 'cancel':
         return { url: inviteUrl('cancel'), body: { reason } };
+      case 'excuseMiss':
+        return { url: inviteUrl('excuse-miss'), body: { reason } };
       default:
         return null;
     }
