@@ -105,13 +105,14 @@
       cursor: pointer;
       color: #c7d2fe;
       display: block;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-      }
+      margin-bottom:5px;
 
       &.unread {
-        background: rgba(255, 107, 53, 0.14);
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      &:hover {
+        background: rgba(255, 107, 53, 0.15);
       }
     }
 
@@ -183,6 +184,29 @@
         gap: 0.35rem;
       }
     }
+
+    .navbar-actions .navbar-icons .notification-dropdown .notifications-menu {
+      position: fixed;
+      top: 76px;
+      right: 0.75rem;
+      left: 0.75rem;
+      width: auto;
+      max-height: calc(100dvh - 92px);
+      padding: 0.5rem;
+      border-radius: 14px;
+    }
+
+    .navbar-actions .navbar-icons .notification-dropdown .notifications-header {
+      position: sticky;
+      top: -0.5rem;
+      z-index: 1;
+      padding: 0.75rem 0.6rem;
+      background: #1a2741;
+    }
+
+    .navbar-actions .navbar-icons .notification-dropdown .notification-item {
+      padding: 0.75rem 0.6rem;
+    }
   }
 }
 
@@ -244,3 +268,103 @@
 
 :host ::ng-deep { @include shared.ng-deep-overrides; }
 
+.mobile-link--with-count {
+  position: relative;
+}
+
+.mobile-notif-count {
+  margin-left: auto;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 0 6px;
+}
+
+// Guest actions: ghost Login + "Get Started" role menu
+.btn-login-ghost {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  font-size: 0.9rem;
+  background: transparent;
+
+  &:hover { border-color: #fff; color: #fff; background: rgba(255, 255, 255, 0.08); }
+}
+
+.get-started {
+  position: relative;
+
+  .btn-login {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background-color: shared.$orange-primary;
+    border-color: shared.$orange-primary;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  // Phones use the "Get started as" section in the slide-out menu instead.
+  @media (max-width: 575.98px) { display: none; }
+}
+
+.get-started-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 1050;
+  min-width: 300px;
+  padding: 0.4rem;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(11, 18, 32, 0.22);
+
+  button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    text-align: left;
+    color: #0b1220;
+
+    &:hover, &:focus-visible { background: #fff4ec; }
+
+    .bi {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      background: #fff1e6;
+      color: #ea580c;
+      flex: 0 0 auto;
+    }
+
+    strong { display: block; font-size: 0.92rem; white-space: nowrap; }
+    small { display: block; font-size: 0.78rem; color: #6b7280; }
+  }
+}
+
+.mobile-link-heading {
+  margin: 0.9rem 0 0.25rem;
+  padding: 0 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}

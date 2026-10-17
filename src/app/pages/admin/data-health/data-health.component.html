@@ -1,0 +1,54 @@
+<div class="dh-page">
+  <div class="dh-header">
+    <div>
+      <a class="dh-back" routerLink="/admin/admin-dashboard"><i class="bi bi-chevron-left"></i> Back to dashboard</a>
+      <h2>Data health</h2>
+      <p class="dh-subtitle" *ngIf="run">
+        Last checked {{ run.ranAt | date: 'd MMM y, h:mm a' }} ({{ run.trigger === 'nightly' ? 'nightly run' : 'run by an admin' }}).
+        Checks run every night at 2:45 AM; you're emailed when the results change.
+      </p>
+    </div>
+    <button type="button" class="dh-run" (click)="runNow()" [disabled]="running || loading">
+      <i class="bi bi-arrow-clockwise" [class.spin]="running"></i> {{ running ? 'Checking…' : 'Run checks now' }}
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="dh-card dh-state">Loading…</div>
+  <div *ngIf="error" class="dh-card dh-state dh-state--error">{{ error }}</div>
+
+  <ng-container *ngIf="run && !loading">
+    <div class="dh-summary" [class.dh-summary--ok]="!run.warnCount">
+      <i class="bi" [ngClass]="run.warnCount ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill'"></i>
+      <span *ngIf="!run.warnCount">All {{ run.checks.length }} checks passed.</span>
+      <span *ngIf="run.warnCount">{{ run.warnCount }} of {{ run.checks.length }} checks need attention.</span>
+    </div>
+
+    <div class="dh-card dh-check dh-check--warn" *ngFor="let c of warnings">
+      <div class="dh-check__head">
+        <span class="dh-pill dh-pill--warn">{{ c.count }}</span>
+        <strong>{{ c.label }}</strong>
+      </div>
+      <p class="dh-help">{{ c.help }}</p>
+      <ul class="dh-samples" *ngIf="c.samples.length">
+        <li *ngFor="let s of c.samples; let i = index">
+          <code>{{ s }}</code>
+          <button
+            *ngIf="c.refs?.[i]"
+            type="button"
+            class="dh-explain"
+            (click)="explain(c, i)"
+            [disabled]="explaining === c.refs?.[i]"
+          >{{ explaining === c.refs?.[i] ? 'Saving…' : 'Mark as explained' }}</button>
+        </li>
+      </ul>
+      <p class="dh-explained" *ngIf="c.explained">{{ c.explained }} more already explained by an admin.</p>
+    </div>
+
+    <div class="dh-card">
+      <div class="dh-ok" *ngFor="let c of passing">
+        <i class="bi bi-check-circle-fill"></i> {{ c.label }}
+        <span class="dh-explained" *ngIf="c.explained">({{ c.explained }} explained)</span>
+      </div>
+    </div>
+  </ng-container>
+</div>

@@ -1,0 +1,188 @@
+.csc-page {
+  background: #f6f7fa;
+  min-height: 60vh;
+}
+
+.csc-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f55b0a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+}
+
+.csc-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #161a26;
+  margin-bottom: 0.25rem;
+}
+
+.csc-subtitle {
+  color: #5f6b84;
+  margin-bottom: 1.5rem;
+}
+
+.csc-section {
+  margin-bottom: 1.5rem;
+}
+
+.csc-section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.csc-card {
+  background: #fff;
+  border: 1px solid #e7eaf0;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 16px rgba(17, 24, 39, 0.05);
+}
+
+.csc-section-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #161a26;
+  margin-bottom: 1rem;
+}
+
+// Platform Status
+.csc-platform-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.csc-platform-pill {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #eef0f6;
+  border-radius: 10px;
+  flex: 1 1 220px;
+
+  > i {
+    font-size: 1.1rem;
+    color: #f55b0a;
+    margin-top: 0.15rem;
+  }
+}
+
+.csc-platform-pill-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.csc-platform-pill-name {
+  font-weight: 600;
+  color: #3a4561;
+}
+
+// Audit History
+.csc-history-loading,
+.csc-history-detail-loading {
+  padding: 0.75rem 0;
+}
+
+.csc-history-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.csc-history-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #eef0f6;
+  border-radius: 10px;
+  cursor: pointer;
+
+  &:hover {
+    background: #fafbfd;
+  }
+}
+
+.csc-history-card-chip {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.csc-history-card-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.csc-history-card-title {
+  font-weight: 700;
+  color: #161a26;
+}
+
+.csc-history-card-view {
+  color: #9aa3b5;
+  font-size: 1.1rem;
+}
+
+.csc-history-detail {
+  padding: 1rem 0.25rem 1.25rem;
+  border-bottom: 1px solid #eef0f6;
+}
+
+.csc-history-detail-body {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.csc-history-score-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.csc-history-detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+  color: #3a4561;
+}
+
+// Future Features
+.csc-future-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.csc-future-card {
+  background: #f3f5f9;
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+  color: #9aa3b5;
+  font-weight: 700;
+  opacity: 0.7;
+}

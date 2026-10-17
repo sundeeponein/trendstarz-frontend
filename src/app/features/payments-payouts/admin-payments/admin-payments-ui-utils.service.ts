@@ -1,10 +1,19 @@
 import { Injectable } from '@angular/core';
 import { PremiumPayment } from '../payments-payouts.models';
+import { paymentAmountRupees } from '../../../shared/payment-amount.util';
 
 @Injectable({ providedIn: 'root' })
 export class AdminPaymentsUiUtilsService {
   formatPaise(amount: number): string {
     return `₹${((amount || 0) / 100).toLocaleString('en-IN')}`;
+  }
+
+  premiumPaymentAmount(payment: PremiumPayment): number {
+    return paymentAmountRupees(payment);
+  }
+
+  formatPremiumPaymentAmount(payment: PremiumPayment): string {
+    return `₹${this.premiumPaymentAmount(payment).toLocaleString('en-IN')}`;
   }
 
   formatDateTime(dateStr: string): string {
@@ -18,7 +27,8 @@ export class AdminPaymentsUiUtilsService {
     });
   }
 
-  getTransactionLabel(type: 'paid_collab' | 'pay_to_join'): string {
+  getTransactionLabel(type: 'paid_collab' | 'pay_to_join' | 'platform_fee'): string {
+    if (type === 'platform_fee') return 'Platform Fee';
     return type === 'paid_collab' ? 'Paid Collab' : 'Pay-to-Join';
   }
 
@@ -79,5 +89,26 @@ export class AdminPaymentsUiUtilsService {
     }
 
     return 'assets/default-profile.png';
+  }
+
+  premiumPaymentModeLabel(payment: PremiumPayment): string {
+    if (payment.gatewayProvider === 'razorpay') return 'Razorpay';
+    return payment.paymentMethod === 'qr' ? 'Manual QR' : 'Manual UPI';
+  }
+
+  premiumPaymentGatewayStatus(payment: PremiumPayment): string {
+    if (payment.gatewayProvider === 'razorpay') {
+      const map: Record<string, string> = {
+        created: 'Order Created',
+        authorized: 'Authorized',
+        captured: 'Captured',
+        failed: 'Failed',
+        refunded: 'Refunded',
+      };
+      return map[String(payment.paymentStatus || '')] || 'In Progress';
+    }
+    if (payment.status === 'approved') return 'Admin Verified';
+    if (payment.status === 'rejected') return 'Rejected';
+    return 'Pending Admin Review';
   }
 }

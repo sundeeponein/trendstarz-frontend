@@ -1,0 +1,138 @@
+.admin-social-notif-banner {
+  background: #fff8e1;
+  border: 1.5px solid #f59e0b;
+  border-radius: 10px;
+  padding: 14px 18px;
+}
+
+.admin-social-notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+  color: #92400e;
+}
+
+.admin-social-notif-dismiss {
+  background: none;
+  border: none;
+  color: #92400e;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  &:hover { background: #fde68a; }
+}
+
+.admin-social-notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-social-notif-item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.875rem;
+  background: #fff;
+  border: 1px solid #fde68a;
+  border-radius: 7px;
+  padding: 8px 12px;
+}
+
+.admin-social-notif-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1 1 520px;
+  min-width: 0;
+}
+
+.admin-social-notif-platform {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #374151;
+  min-width: 100px;
+}
+
+.admin-social-notif-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #374151;
+}
+
+.notif-old {
+  color: #dc2626;
+  text-decoration: line-through;
+  font-family: monospace;
+}
+
+.notif-new {
+  color: #16a34a;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.admin-social-notif-by {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.admin-social-notif-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.admin-social-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  padding: 5px 9px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #fff;
+  cursor: pointer;
+
+  &--confirm {
+    color: #047857;
+    border-color: rgba(5,150,105,0.28);
+    background: rgba(5,150,105,0.08);
+  }
+
+  &--edit {
+    color: #1d4ed8;
+    border-color: rgba(37,99,235,0.25);
+    background: rgba(37,99,235,0.07);
+  }
+
+  &--cancel {
+    color: #991b1b;
+    border-color: rgba(220,38,38,0.22);
+    background: rgba(220,38,38,0.06);
+  }
+
+  &:hover {
+    filter: brightness(0.97);
+  }
+}
+
+.admin-social-notif-rates {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #92400e;
+}

@@ -14,6 +14,10 @@ import { getPasswordChecks } from '../../password-strength';
 export class ResetPasswordModalComponent implements OnChanges {
   @Input() visible = false;
   @Output() visibleChange = new EventEmitter<boolean>();
+  /** Forced change after logging in with an admin-issued temporary password: can't be dismissed. */
+  @Input() required = false;
+  /** Emitted once the password has been changed successfully. */
+  @Output() changed = new EventEmitter<void>();
 
   passwordForm = {
     currentPassword: '',
@@ -58,7 +62,7 @@ export class ResetPasswordModalComponent implements OnChanges {
   }
 
   close(): void {
-    if (this.passwordSaving) return;
+    if (this.passwordSaving || this.required) return;
     this.visibleChange.emit(false);
   }
 
@@ -93,6 +97,7 @@ export class ResetPasswordModalComponent implements OnChanges {
           newPassword: '',
           confirmPassword: '',
         };
+        this.changed.emit();
         this.cdr.detectChanges();
       },
       error: (err: any) => {

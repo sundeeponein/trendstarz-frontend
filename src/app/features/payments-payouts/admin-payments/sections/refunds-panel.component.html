@@ -1,0 +1,302 @@
+<div class="tx-summary-grid">
+  <div class="tx-card tx-card--pending">
+    <div class="tx-label">On hold (7-day review)</div>
+    <div class="tx-value">{{ ui.formatPaise(summary.refundOnHold || 0) }}</div>
+    <small class="rf-card-sub">{{ summary.refundOnHoldCount || 0 }} · not owed yet</small>
+  </div>
+  <div class="tx-card">
+    <div class="tx-label">Refund owed</div>
+    <div class="tx-value">{{ ui.formatPaise(summary.refundDue || 0) }}</div>
+    <small class="rf-card-sub">{{ summary.refundDueCount || 0 }} · to send</small>
+  </div>
+  <div class="tx-card tx-card--paid">
+    <div class="tx-label">Refund sent</div>
+    <div class="tx-value">{{ ui.formatPaise(summary.refunded || 0) }}</div>
+    <small class="rf-card-sub">UTR recorded</small>
+  </div>
+  <div class="tx-card tx-card--accent">
+    <div class="tx-label">Awaiting host repayment</div>
+    <div class="tx-value">{{ ui.formatPaise(summary.settlementPending || 0) }}</div>
+    <small class="rf-card-sub">{{ summary.settlementPendingCount || 0 }} settlement</small>
+  </div>
+  <div class="tx-card" *ngIf="summary.legacyUnconfirmedCount">
+    <div class="tx-label">Legacy — unconfirmed</div>
+    <div class="tx-value">{{ ui.formatPaise(summary.legacyUnconfirmed || 0) }}</div>
+    <small class="rf-card-sub">{{ summary.legacyUnconfirmedCount }} · history not verified</small>
+  </div>
+</div>
+
+<div class="status-tabs">
+  <button
+    *ngFor="let f of filters"
+    type="button"
+    class="status-tab"
+    [class.active]="filter === f.key"
+    (click)="filter = f.key">
+    {{ f.label }} <span class="rf-count">{{ countFor(f.key) }}</span>
+  </button>
+</div>
+
+<div *ngIf="loading" class="loading">Loading refunds...</div>
+
+<div class="payments-section" *ngIf="!loading">
+  <div *ngIf="visibleRows.length === 0" class="no-payments">
+    <p>No refunds in this filter.</p>
+  </div>
+
+  <div class="table-scroll-wrap" *ngIf="visibleRows.length > 0">
+    <table class="table payments-table-grid rf-table">
+      <thead>
+        <tr>
+          <th>Campaign</th>
+          <th>Host → Creator</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Evidence</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let row of visibleRows">
+          <tr>
+            <td>
+              <div class="tx-type-cell">
+                <strong>{{ row.campaignTitle || 'Campaign' }}</strong>
+                <code *ngIf="row.campaignNumber">CMP-{{ row.campaignNumber }}</code>
+                <small *ngIf="row.withdrawnReason" class="rf-muted">{{ row.withdrawnReason }}</small>
+              </div>
+            </td>
+            <td>
+              <div class="tx-party-cell">
+                <div><strong>{{ row.hostName || 'Host' }}</strong> <span>({{ row.hostRole }})</span></div>
+                <div class="tx-recipient-line">
+                  <i class="bi bi-arrow-right-short"></i>
+                  <strong>{{ row.creatorName || 'Creator' }}</strong> <span>({{ row.creatorRole }})</span>
+                </div>
+                <small class="rf-muted">
+                  Terms:
+                  host {{ row.termsAcceptance?.host?.acceptedAt ? '✓' : '—' }} ·
+                  creator {{ row.termsAcceptance?.creator?.acceptedAt ? '✓' : '—' }}
+                </small>
+              </div>
+            </td>
+            <td>
+              <div class="tx-financials-cell">
+                <strong>{{ ui.formatPaise(row.refundAmount ?? row.cashRefundDue ?? row.payerTotal) }}</strong>
+                <span>Agreed {{ ui.formatPaise(row.agreedAmount) }} + fee {{ ui.formatPaise(row.platformFee) }}</span>
+                <span *ngIf="row.refundPolicy === 'fee_credit'" class="rf-muted">
+                  Cash refund (agreed amount) · fee {{ ui.formatPaise(row.feeCreditAmount || 0) }} as credit
+                </span>
+                <span *ngIf="row.creditApplied" class="rf-muted">Paid {{ ui.formatPaise(row.creditApplied) }} with credit</span>
+                <span *ngIf="row.compensation?.amount" class="rf-muted">
+                  Compensation to creator {{ ui.formatPaise(row.compensation?.amount || 0) }}
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="tx-status-cell">
+                <span class="rf-state" [ngClass]="'rf-state--' + row.state">{{ stateLabel(row.state) }}</span>
+                <small *ngIf="row.state === 'on_hold' && row.refundHoldUntil" class="rf-muted">
+                  until {{ ui.formatDateTime(row.refundHoldUntil) }}
+                </small>
+                <small *ngIf="row.state === 'sent'" class="rf-muted">
+                  UTR <code>{{ row.refundUtr }}</code> · {{ ui.formatDateTime(row.refundTransferDate || row.refundSentAt || '') }}
+                </small>
+                <small *ngIf="row.state === 'settlement'" class="rf-muted">
+                  Host to repay {{ ui.formatPaise(row.settlement?.amount || 0) }}
+                </small>
+                <span class="rf-flag rf-flag--report" *ngIf="row.openReport">
+                  <i class="bi bi-flag-fill"></i>
+                  {{ row.reportCategory === 'offplatform' ? 'Off-platform report open' : 'Report open' }}
+                </span>
+                <span class="rf-flag" *ngFor="let flag of row.flags" [title]="'A pattern, not proof'">
+                  <i class="bi bi-exclamation-triangle"></i> {{ flagLabel(flag) }}
+                </span>
+                <span class="rf-credit" *ngIf="row.feeCredit?.status" [ngClass]="'rf-credit--' + row.feeCredit?.status">
+                  {{ creditLabel(row.feeCredit?.status) }} · {{ ui.formatPaise(row.feeCredit?.amount || 0) }}
+                </span>
+                <small class="rf-muted" *ngIf="row.missExcused">Not counted against creator: {{ row.missExcused.reason }}</small>
+                <small class="rf-muted" *ngIf="row.slotRestored">Slot restored: {{ row.slotRestored.reason }}</small>
+              </div>
+            </td>
+            <td>
+              <div class="rf-evidence">
+                <a
+                  *ngFor="let s of row.creatorSocial"
+                  class="rf-link"
+                  [href]="socialUrl(s)"
+                  target="_blank"
+                  rel="noopener noreferrer">
+                  <i class="bi bi-box-arrow-up-right"></i> {{ s.platform }} · {{ s.handle }}
+                </a>
+                <span *ngIf="!row.creatorSocial.length" class="rf-muted">No social handles</span>
+                <div class="rf-answers" *ngIf="row.closureAnswers?.creator || row.closureAnswers?.host">
+                  <span class="rf-late-label">Private answers</span>
+                  <small *ngIf="row.closureAnswers?.creator">
+                    <b>Creator:</b> {{ answerLabel(row.closureAnswers?.creator?.answer) }}
+                    <span *ngIf="row.closureAnswers?.creator?.details"> — “{{ row.closureAnswers?.creator?.details }}”</span>
+                  </small>
+                  <small *ngIf="row.closureAnswers?.host">
+                    <b>Host:</b> {{ answerLabel(row.closureAnswers?.host?.answer) }}
+                    <a *ngIf="row.closureAnswers?.host?.link" [href]="row.closureAnswers?.host?.link" target="_blank" rel="noopener noreferrer">link</a>
+                    <span *ngIf="row.closureAnswers?.host?.details"> — “{{ row.closureAnswers?.host?.details }}”</span>
+                  </small>
+                </div>
+                <div class="rf-late" *ngIf="row.latePost?.url">
+                  <span class="rf-late-label">
+                    Late post · {{ row.latePost?.status }}
+                    <span *ngIf="row.latePost?.submittedAt">· {{ ui.formatDateTime(row.latePost?.submittedAt || '') }}</span>
+                  </span>
+                  <a class="rf-link" [href]="row.latePost?.url" target="_blank" rel="noopener noreferrer">
+                    <i class="bi bi-play-btn"></i> Open post
+                  </a>
+                  <small *ngIf="row.latePost?.originalDeadline" class="rf-muted">
+                    Deadline was {{ ui.formatDateTime(row.latePost?.originalDeadline || '') }}
+                  </small>
+                  <small *ngIf="row.latePost?.note" class="rf-muted">“{{ row.latePost?.note }}”</small>
+                </div>
+              </div>
+            </td>
+            <td class="col-actions">
+              <div class="rf-actions">
+                <ng-container *ngIf="canReviewLatePost(row)">
+                  <button class="btn btn-success btn-sm" type="button" (click)="openAction('approve', row)">Approve late post</button>
+                  <button class="btn btn-outline-danger btn-sm" type="button" (click)="openAction('reject', row)">Reject</button>
+                </ng-container>
+                <button class="btn btn-warning btn-sm" type="button" *ngIf="canMarkSent(row)" (click)="openAction('sent', row)">
+                  Mark refund sent
+                </button>
+                <ng-container *ngIf="row.state === 'settlement'">
+                  <button class="btn btn-success btn-sm" type="button" (click)="openAction('repaid', row)">Host repaid</button>
+                  <button class="btn btn-outline-secondary btn-sm" type="button" (click)="openAction('exception', row)">Pay as exception</button>
+                </ng-container>
+                <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="canRecordFoundPost(row)" (click)="openAction('approve', row)">
+                  Posted outside platform
+                </button>
+                <ng-container *ngIf="row.feeCredit?.status === 'needs_review'">
+                  <button class="btn btn-success btn-sm" type="button" [disabled]="saving" (click)="approveCredit(row)">Issue fee credit</button>
+                  <button class="btn btn-outline-secondary btn-sm" type="button" (click)="openAction('credit_withhold', row)">Withhold credit</button>
+                </ng-container>
+                <button class="rf-link-btn" type="button" *ngIf="!row.missExcused && row.state !== 'legacy_unconfirmed'" (click)="openAction('excuse', row)">
+                  Don't count against creator
+                </button>
+                <button class="rf-link-btn" type="button" *ngIf="row.paidSlot && !row.slotRestored && row.inviteStatus === 'withdrawn'" (click)="openAction('restore_slot', row)">
+                  Restore invite slot
+                </button>
+                <small class="rf-muted rf-blocked" *ngIf="blockedReason(row)">{{ blockedReason(row) }}</small>
+                <button class="rf-history-toggle" type="button" *ngIf="row.history.length" (click)="toggleHistory(row._id)">
+                  <i class="bi" [ngClass]="expanded.has(row._id) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                  History ({{ row.history.length }})
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="expanded.has(row._id)" class="rf-history-row">
+            <td colspan="6">
+              <ol class="rf-history">
+                <li *ngFor="let h of row.history">
+                  <strong>{{ historyLabel(h.action) }}</strong>
+                  <span class="rf-muted">· {{ ui.formatDateTime(h.at) }} · {{ h.byRole }}</span>
+                  <span *ngIf="h.amount" class="rf-muted">· {{ ui.formatPaise(h.amount) }}</span>
+                  <span *ngIf="h.utr" class="rf-muted">· UTR {{ h.utr }}</span>
+                  <div *ngIf="h.note" class="rf-history-note">{{ h.note }}</div>
+                </li>
+              </ol>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- One dialog for every refund action; fields depend on the action. -->
+<div class="modal-backdrop show" *ngIf="action" (click)="closeAction()"></div>
+<div class="modal d-block" *ngIf="action" tabindex="-1" (click)="closeAction()">
+  <div class="modal-dialog modal-dialog-centered ts-dialog-md" (click)="$event.stopPropagation()">
+    <div class="modal-content ts-modal">
+      <h2>{{ actionTitle }}</h2>
+      <p class="modal-info">
+        <strong>{{ action.row.campaignTitle }}</strong> · {{ action.row.hostName }} → {{ action.row.creatorName }}
+      </p>
+
+      <ng-container *ngIf="action.mode === 'sent'">
+        <p class="modal-info">
+          Record a transfer you have <strong>already made</strong> by UPI. Default amount:
+          <strong>{{ ui.formatPaise(action.row.payerTotal) }}</strong> (full amount paid, fee included).
+        </p>
+      </ng-container>
+      <ng-container *ngIf="action.mode === 'approve'">
+        <p class="modal-info" *ngIf="action.row.state === 'sent'">
+          The host was already refunded. Approving opens a <strong>settlement</strong>: the host is asked to repay
+          {{ ui.formatPaise(action.row.refundAmount ?? action.row.payerTotal) }}, and the creator is paid after that.
+        </p>
+        <p class="modal-info" *ngIf="action.row.state !== 'sent'">
+          Check the post is public, on the agreed platform and account, and matches the brief. Approving cancels the
+          refund and queues the creator's payout; the collaboration becomes Completed.
+        </p>
+      </ng-container>
+      <ng-container *ngIf="action.mode === 'repaid'">
+        <p class="modal-info">
+          Host must repay <strong>{{ ui.formatPaise(action.row.settlement?.amount || 0) }}</strong>. The creator's
+          payout is queued once recorded.
+        </p>
+      </ng-container>
+      <ng-container *ngIf="action.mode === 'exception'">
+        <p class="modal-info">
+          TrendStarZ pays the creator without the host's repayment. This is recorded with your reason.
+        </p>
+      </ng-container>
+      <p class="modal-info" *ngIf="action.mode === 'credit_withhold'">
+        The host will not receive the {{ ui.formatPaise(action.row.feeCredit?.amount || 0) }} fee credit. Recorded with your reason.
+      </p>
+      <p class="modal-info" *ngIf="action.mode === 'excuse'">
+        Use this when the creator is not at fault — e.g. the host told them not to post. The closure won't count in the
+        creator's completion record.
+      </p>
+      <p class="modal-info" *ngIf="action.mode === 'restore_slot'">
+        Only for a documented exception (platform error, fake creator account). The host gets this campaign invite slot back.
+      </p>
+
+      <div class="form-group" *ngIf="action.mode === 'sent' || action.mode === 'repaid'">
+        <label>UTR / reference</label>
+        <input class="form-control" [(ngModel)]="form.utr" placeholder="e.g. 4321 8765 1234" />
+      </div>
+      <div class="rf-form-row" *ngIf="action.mode === 'sent' || action.mode === 'repaid'">
+        <div class="form-group">
+          <label>Amount (₹, optional)</label>
+          <input class="form-control" type="number" min="1" [(ngModel)]="form.amountRupees" placeholder="Full amount" />
+        </div>
+        <div class="form-group">
+          <label>{{ action.mode === 'sent' ? 'Transfer date' : 'Received on' }}</label>
+          <input class="form-control" type="date" [(ngModel)]="form.date" />
+        </div>
+      </div>
+      <div class="form-group" *ngIf="action.mode === 'approve'">
+        <label>Verified post link</label>
+        <input class="form-control" [(ngModel)]="form.postUrl" placeholder="https://www.instagram.com/reel/…" />
+      </div>
+      <div class="form-group">
+        <label>
+          {{ action.mode === 'sent' || action.mode === 'repaid' ? 'Note (optional)' : action.mode === 'approve' || action.mode === 'reject' ? 'What you checked (required)' : 'Reason (required)' }}
+        </label>
+        <textarea class="form-textarea" rows="3" [(ngModel)]="form.note"
+          [placeholder]="action.mode === 'reject' ? 'e.g. Post is for a different brand' : 'e.g. Reel is public, tags @brand, posted 12 Oct'"></textarea>
+        <small class="rf-muted" *ngIf="action.mode !== 'sent' && action.mode !== 'repaid'">
+          At least 10 characters — saved in the history.
+        </small>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" type="button" (click)="closeAction()" [disabled]="saving">Cancel</button>
+        <button
+          type="button"
+          [class]="action.mode === 'reject' ? 'btn-reject-confirm' : 'btn btn-success'"
+          [disabled]="!actionValid || saving"
+          (click)="submitAction()">
+          {{ saving ? 'Saving…' : 'Confirm' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -2,14 +2,25 @@ export interface CampaignInfluencer {
   id: string;
   name: string;
   username?: string;
+  /** Card snapshot handed over from Search so a preselected recipient renders fully in Step 3 before its page is loaded. */
+  profile?: any;
 }
 
 export interface Campaign {
   _id?: string;
+  campaignNumber?: number;
   brandId: string;
   title: string;
   description?: string;
-  campaignType?: 'paid_collab' | 'product' | 'invite_location' | 'pay_to_join';
+  script?: string;
+  campaignType?:
+    | 'paid_collab'
+    | 'product'
+    | 'invite_location'
+    | 'pay_to_join'
+    | 'portfolio_collab'
+    | 'reel_collab'
+    | 'creative_project';
   campaignMode?: 'invite_only' | 'tier_filtered_open';
   image?: { url: string; public_id: string };
   status:
@@ -19,6 +30,7 @@ export interface Campaign {
     | 'needs_changes'
     | 'rejected'
     | 'completed'
+    | 'cancelled'
     | 'draft';
   budgetMin?: number;
   budgetMax?: number;
@@ -70,6 +82,17 @@ export interface Campaign {
   // Pay-to-join specific fields
   payToJoinBenefits?: string;
   payToJoinInstructions?: string;
+  // Campaign Resources — shared with the creator once accepted; source of the tracked promo link.
+  promotionUrlType?:
+    | 'website'
+    | 'app_store'
+    | 'play_store'
+    | 'instagram'
+    | 'facebook'
+    | 'youtube'
+    | 'whatsapp'
+    | 'other';
+  promotionUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 }

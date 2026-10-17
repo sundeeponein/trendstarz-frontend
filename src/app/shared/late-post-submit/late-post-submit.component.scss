@@ -1,0 +1,58 @@
+.lps {
+  color: #1e293b;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--ts-border, #fde68a);
+  background: var(--ts-surface-muted, #fffbeb);
+  font-size: 13px;
+}
+
+.lps-title {
+  margin-bottom: 6px;
+}
+
+.lps-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+
+  .btn {
+    justify-self: start;
+  }
+}
+
+.lps-hint {
+  display: block;
+  margin-top: 4px;
+  color: var(--ts-text-muted, #64748b);
+}
+
+.lps-status {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+
+  &--pending {
+    color: #92400e;
+  }
+  &--ok {
+    color: #15803d;
+  }
+  &--rejected {
+    color: #b91c1c;
+    margin-bottom: 6px;
+  }
+}
+
+.lps-error {
+  margin-top: 6px;
+  color: #b91c1c;
+}
+
+:host-context([data-theme='dark']) .lps {
+  color: #e2e8f0;
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.25);
+}

@@ -1,11 +1,25 @@
 // Campaign status badges & invite status pills
+
+// Shared shape for simple text pills (padding/radius/font only — no flex/gap).
+// Pass $display/$letter-spacing as null to omit them when a call site didn't declare one.
+@mixin badge-pill(
+  $padding: 4px 12px,
+  $radius: 14px,
+  $font-size: 0.68rem,
+  $font-weight: 700,
+  $letter-spacing: 0.5px,
+  $display: inline-block
+) {
+  @if $display { display: $display; }
+  padding: $padding;
+  border-radius: $radius;
+  font-size: $font-size;
+  font-weight: $font-weight;
+  @if $letter-spacing { letter-spacing: $letter-spacing; }
+}
+
 .status-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 14px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  @include badge-pill;
 
   &.active { background: #d4edda; color: #155724; }
   &.pending { background: #fff3cd; color: #856404; }
@@ -15,12 +29,7 @@
 }
 
 .inv-status {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.4px;
+  @include badge-pill($padding: 3px 10px, $radius: 12px, $font-size: 0.66rem, $letter-spacing: 0.4px);
 
   &.pending { background: #fff3cd; color: #856404; }
   &.accepted { background: #d4edda; color: #155724; }

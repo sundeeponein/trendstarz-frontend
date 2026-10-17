@@ -1,0 +1,75 @@
+<div class="registration-progress" *ngIf="dashboard">
+
+  <!-- Admin declined — replaces the tracker entirely with something actionable. -->
+  <div class="registration-progress__declined" *ngIf="isDeclined">
+    <p class="registration-progress__declined-title">Your profile requires some updates before approval.</p>
+    <div class="registration-progress__declined-reason" *ngIf="declineReason">
+      <span class="registration-progress__declined-reason-label">Reason:</span>
+      <span>{{ declineReason }}</span>
+    </div>
+    <button type="button" class="btn btn-primary btn-sm mt-2" (click)="updateProfile.emit()">Update Profile</button>
+  </div>
+
+  <ng-container *ngIf="!isDeclined">
+    <p class="registration-progress__title">Registration Progress</p>
+
+    <ul class="registration-progress__steps">
+      <li [ngClass]="'is-' + emailStep">
+        <span class="registration-progress__icon">{{ emailStep === 'done' ? '✅' : (emailStep === 'active' ? '⏳' : '⬜') }}</span>
+        <span>Email {{ emailStep === 'done' ? 'Verified' : 'Verification Pending' }}</span>
+      </li>
+      <li [ngClass]="'is-' + mobileStep">
+        <span class="registration-progress__icon">{{ mobileStep === 'done' ? '✅' : (mobileStep === 'active' ? '⏳' : '⬜') }}</span>
+        <span>Mobile {{ mobileStep === 'done' ? 'Verified' : 'Verification Pending' }}</span>
+      </li>
+      <li [ngClass]="'is-' + adminReviewStep">
+        <span class="registration-progress__icon">{{ adminReviewStep === 'done' ? '✅' : (adminReviewStep === 'active' ? '⏳' : '⬜') }}</span>
+        <span>{{ adminReviewStep === 'done' ? 'Admin Approved' : 'Admin Review' }}</span>
+      </li>
+    </ul>
+
+    <!-- Email pending -->
+    <div class="registration-progress__action" *ngIf="activeStage === 'email'">
+      <p class="registration-progress__warning">⚠️ Email verification is pending.</p>
+      <p>Please verify your email to continue.</p>
+      <button type="button" class="btn btn-primary btn-sm" [disabled]="resendingEmailVerification" (click)="resendEmail.emit()">
+        {{ resendingEmailVerification ? 'Sending…' : 'Resend Verification Email' }}
+      </button>
+    </div>
+
+    <!-- Mobile pending -->
+    <div class="registration-progress__action" *ngIf="activeStage === 'mobile'">
+      <p class="registration-progress__warning">⚠️ Mobile verification is pending.</p>
+      <p>Complete mobile verification to activate your profile.</p>
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        *ngIf="otpVerificationEnabled"
+        [disabled]="resendingMobileOtp"
+        (click)="resendOtp.emit()"
+      >
+        {{ resendingMobileOtp ? 'Sending…' : 'Resend OTP' }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm"
+        *ngIf="!otpVerificationEnabled"
+        [disabled]="requestingMobileCallback || mobileCallbackRequested"
+        (click)="requestCallback.emit()"
+      >
+        {{ mobileCallbackRequested ? 'Callback requested' : (requestingMobileCallback ? 'Requesting…' : 'Request a Callback') }}
+      </button>
+    </div>
+
+    <!-- Both verified, awaiting admin review -->
+    <div class="registration-progress__action" *ngIf="activeStage === 'admin_review'">
+      <p class="mb-1">Your verification is complete.</p>
+      <p class="mb-0">Our team will review your profile shortly. You'll receive campaign invites after your profile is approved.</p>
+    </div>
+
+    <!-- Fully approved -->
+    <div class="registration-progress__action registration-progress__action--approved" *ngIf="activeStage === 'approved'">
+      <p class="mb-0">✅ Your profile is approved. You're all set to receive campaign invites.</p>
+    </div>
+  </ng-container>
+</div>

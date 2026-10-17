@@ -79,8 +79,8 @@ export class CampaignPayComponent implements OnInit {
       { label: 'Accepted influencers', value: '× ' + accepted },
       { label: 'Agreed amount', value: this.fmt(this.p2r(c.agreedAmount)), strong: true },
       c.platformFeeEnabled
-        ? { label: `Platform fee (${c.platformFeePercent}%)`, value: this.fmt(platformFee) }
-        : { label: 'Platform fee', value: 'Free during launch', free: true },
+        ? { label: `Platform commission (${c.platformFeePercent}%)`, value: this.fmt(platformFee) }
+        : { label: 'Platform commission', value: 'Free during launch', free: true },
     ];
     if (gst > 0) rows.push({ label: `GST (${this.gstPercent}%)`, value: this.fmt(gst) });
     this.breakdown = rows;

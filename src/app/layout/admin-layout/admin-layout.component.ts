@@ -4,6 +4,44 @@ import { NavigationStart, RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { filter, Subscription } from 'rxjs';
+import { SessionService } from '../../core/session.service';
+
+interface AdminNavItem {
+  label: string;
+  link: string;
+  icon: string;
+}
+
+interface AdminNavGroup {
+  key: string;
+  label: string;
+  icon: string;
+  items: AdminNavItem[];
+}
+
+/** Grouped admin menu (desktop dropdowns + mobile sections). */
+export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
+  {
+    key: 'users',
+    label: 'Users',
+    icon: 'bi-people',
+    items: [
+      { label: 'Users list', link: '/admin/admin-user-table', icon: 'bi-person-lines-fill' },
+      { label: 'Deleted users', link: '/admin/deleted-users', icon: 'bi-trash3' },
+      { label: 'Matching Evidence', link: '/admin/matching-evidence', icon: 'bi-clipboard-data' },
+      { label: 'Tier Review', link: '/admin/tier-review', icon: 'bi-patch-check' },
+    ],
+  },
+  {
+    key: 'review',
+    label: 'Review',
+    icon: 'bi-kanban',
+    items: [
+      { label: 'Campaigns', link: '/admin/campaign-review', icon: 'bi-kanban' },
+      { label: 'Collaborations', link: '/admin/collaboration-review', icon: 'bi-camera-reels' },
+    ],
+  },
+];
 
 @Component({
   selector: 'app-admin-layout',
@@ -16,7 +54,9 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   searchQuery = '';
   adminUser: any = null;
   dropdownOpen = false;
-  userManagementMenuOpen = false;
+  readonly navGroups = ADMIN_NAV_GROUPS;
+  /** Key of the open desktop dropdown group, if any. */
+  openNavGroup: string | null = null;
   mobileMenuOpen = false;
   mobileProfileMenuOpen = false;
   openDisputesCount = 0;
@@ -49,6 +89,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     private elRef: ElementRef,
     private config: ConfigService,
     private cd: ChangeDetectorRef,
+    private session: SessionService,
   ) {
     this.loadAdminUser();
   }
@@ -62,7 +103,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.subs.add(
       this.router.events
         .pipe(filter((event) => event instanceof NavigationStart))
-        .subscribe(() => this.closeMobileMenu()),
+        .subscribe(() => {
+          this.closeMobileMenu();
+          this.closeNavGroup();
+        }),
     );
   }
 
@@ -91,13 +135,13 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     if (this.dropdownOpen && !this.elRef.nativeElement.querySelector('.profile-dropdown')?.contains(event.target)) {
       this.dropdownOpen = false;
     }
-    if (this.userManagementMenuOpen && !this.elRef.nativeElement.querySelector('.nav-dropdown')?.contains(event.target)) {
-      this.userManagementMenuOpen = false;
+    if (this.openNavGroup && !(event.target as HTMLElement | null)?.closest?.('.nav-dropdown')) {
+      this.openNavGroup = null;
     }
   }
 
   loadAdminUser() {
-    const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || sessionStorage.getItem('token')) : null;
+    const token = this.session.getToken();
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -114,7 +158,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    localStorage.removeItem('token');
+    this.session.clearSession();
     this.adminUser = null;
     this.router.navigate(['/']);
   }
@@ -131,19 +175,20 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.mobileProfileMenuOpen = !this.mobileProfileMenuOpen;
   }
 
-  toggleUserManagementMenu(event: Event) {
+  toggleNavGroup(key: string, event: Event) {
     event.preventDefault();
     event.stopPropagation();
-    this.userManagementMenuOpen = !this.userManagementMenuOpen;
+    this.openNavGroup = this.openNavGroup === key ? null : key;
   }
 
-  closeUserManagementMenu() {
-    this.userManagementMenuOpen = false;
+  closeNavGroup() {
+    this.openNavGroup = null;
   }
 
-  isUserManagementSection(): boolean {
-    const current = this.router.url || '';
-    return current.startsWith('/admin/admin-user-table') || current.startsWith('/admin/deleted-users');
+  /** A group is highlighted while any of its pages is open. */
+  isNavGroupActive(group: AdminNavGroup): boolean {
+    const current = (this.router.url || '').split('?')[0];
+    return group.items.some((item) => current === item.link || current.startsWith(item.link + '/'));
   }
 
   @HostListener('window:pageshow')
@@ -156,4 +201,3 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     this.closeMobileMenu();
   }
 }
-
