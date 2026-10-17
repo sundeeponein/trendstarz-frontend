@@ -82,6 +82,7 @@ export const routes: Routes = [
 			// Intentionally not linked from admin-layout's nav — reachable only via the "View Collaboration Details" button in the user table's popup.
 			{ path: 'collaboration-score/:userId', loadComponent: () => import('./pages/admin/collaboration-score-detail/collaboration-score-detail.component').then(m => m.CollaborationScoreDetailComponent) },
 			// Intentionally not linked from admin-layout's nav — reachable only via direct URL or the dashboard widget's link.
+			{ path: 'data-health', loadComponent: () => import('./pages/admin/data-health/data-health.component').then(m => m.DataHealthComponent) },
 			{ path: 'verification-funnel', loadComponent: () => import('./pages/admin/verification-funnel/verification-funnel.component').then(m => m.VerificationFunnelPageComponent) },
 			{ path: 'logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
 		],
