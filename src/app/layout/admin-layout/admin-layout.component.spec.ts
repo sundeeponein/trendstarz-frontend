@@ -29,7 +29,7 @@ describe('AdminLayoutComponent — grouped admin menu', () => {
   });
 
   it('shows the grouped menu in order', () => {
-    expect(topLevel()).toEqual(['Users', 'Review', 'Payments', 'Disputes', 'Link Analytics', 'Reviews']);
+    expect(topLevel()).toEqual(['Users', 'Review', 'Payments', 'Disputes', 'Link Analytics', 'Reviews', 'Data health']);
   });
 
   it('Users opens Users list, Deleted users, Matching Evidence and Tier Review; Review opens Campaigns and Collaborations', () => {
