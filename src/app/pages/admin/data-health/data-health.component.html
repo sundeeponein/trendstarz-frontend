@@ -30,13 +30,24 @@
       </div>
       <p class="dh-help">{{ c.help }}</p>
       <ul class="dh-samples" *ngIf="c.samples.length">
-        <li *ngFor="let s of c.samples"><code>{{ s }}</code></li>
+        <li *ngFor="let s of c.samples; let i = index">
+          <code>{{ s }}</code>
+          <button
+            *ngIf="c.refs?.[i]"
+            type="button"
+            class="dh-explain"
+            (click)="explain(c, i)"
+            [disabled]="explaining === c.refs?.[i]"
+          >{{ explaining === c.refs?.[i] ? 'Saving…' : 'Mark as explained' }}</button>
+        </li>
       </ul>
+      <p class="dh-explained" *ngIf="c.explained">{{ c.explained }} more already explained by an admin.</p>
     </div>
 
     <div class="dh-card">
       <div class="dh-ok" *ngFor="let c of passing">
         <i class="bi bi-check-circle-fill"></i> {{ c.label }}
+        <span class="dh-explained" *ngIf="c.explained">({{ c.explained }} explained)</span>
       </div>
     </div>
   </ng-container>

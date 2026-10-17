@@ -11,6 +11,8 @@ interface IntegrityCheck {
   count: number;
   help: string;
   samples: string[];
+  refs?: string[];
+  explained?: number;
 }
 
 interface IntegrityRun {
@@ -31,6 +33,7 @@ interface IntegrityRun {
 export class DataHealthComponent implements OnInit {
   loading = false;
   running = false;
+  explaining = '';
   error = '';
   run: IntegrityRun | null = null;
   private readonly isBrowser: boolean;
@@ -63,6 +66,28 @@ export class DataHealthComponent implements OnInit {
       error: (err) => {
         this.loading = false;
         this.error = err?.error?.message || 'Failed to load the data checks.';
+      },
+    });
+  }
+
+  /** Records why a flagged record is fine; the check stops counting it (the record itself is unchanged). */
+  explain(check: IntegrityCheck, index: number): void {
+    const ref = check.refs?.[index];
+    if (!ref) return;
+    const reason = window.prompt(
+      `Why is this OK?\n${check.samples[index]}\n\n(e.g. "Paid outside the app during early testing, June 2026")`,
+    );
+    if (reason === null) return;
+    this.explaining = ref;
+    this.error = '';
+    this.http.post<any>(`${this.url}/explain`, { check: check.key, ref, reason }).subscribe({
+      next: (res) => {
+        this.run = res?.data ?? res;
+        this.explaining = '';
+      },
+      error: (err) => {
+        this.explaining = '';
+        this.error = err?.error?.message || 'Could not save the explanation.';
       },
     });
   }

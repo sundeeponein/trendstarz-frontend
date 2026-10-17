@@ -55,3 +55,15 @@
 @media (max-width: 560px) {
   .dh-header { flex-direction: column; }
 }
+
+.dh-samples li { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0; }
+
+.dh-explain {
+  flex-shrink: 0; border: 1px solid #d7deea; background: #fff; border-radius: 8px; padding: 3px 10px;
+  font-size: 0.76rem; font-weight: 600; color: #1a1a2e;
+  &:hover:not(:disabled) { border-color: #e8612d; color: #e8612d; }
+  &:disabled { opacity: 0.6; }
+}
+
+.dh-explained { margin: 6px 0 0; font-size: 0.78rem; color: #64748b; }
+.dh-ok .dh-explained { margin: 0; }
