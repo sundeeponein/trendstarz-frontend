@@ -463,7 +463,7 @@ export class CampaignInviteCardComponent {
   get isPaidCollab(): boolean { return this.campaignTypeKey === 'paid_collab'; }
 
   get isPerContentPricingFlow(): boolean {
-    const ownerType = String(this.campaign?.ownerType || this.campaign?.createdByRole || '').toLowerCase();
+    const ownerType = String(this.campaign?.ownerType || '').toLowerCase();
     if (this.campaignTypeKey === 'reel_collab') return true;
     return this.campaignTypeKey === 'paid_collab' && ownerType !== 'photographer';
   }
@@ -495,7 +495,7 @@ export class CampaignInviteCardComponent {
   }
 
   get isPhotographerCollabFlow(): boolean {
-    const ownerType = String(this.campaign?.ownerType || this.campaign?.createdByRole || '').toLowerCase();
+    const ownerType = String(this.campaign?.ownerType || '').toLowerCase();
     const requestKind = String(this.campaign?.requestKind || '').toLowerCase();
     return this.isCollabInvite || ownerType === 'photographer' || requestKind === 'photographer_collaboration';
   }
@@ -969,7 +969,7 @@ export class CampaignInviteCardComponent {
 
   /** Whether this invite was sent by a photographer/creator (collaboration) rather than a standard brand */
   get isCollabInvite(): boolean {
-    return (this.brand?.role === 'photographer') || (this.campaign?.createdByRole === 'photographer');
+    return (this.brand?.role === 'photographer') || (this.campaign?.ownerType === 'photographer');
   }
   /** Human-readable invite type shown as a badge on the card header */
   get inviteTypeLabel(): string {

@@ -408,7 +408,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
 
   private isCollabInvite(inv: any): boolean {
     const ownerRole = String(
-      inv?.campaignId?.ownerType || inv?.campaignId?.createdByRole || inv?.brandId?.role || '',
+      inv?.campaignId?.ownerType || inv?.brandId?.role || '',
     ).trim().toLowerCase();
     const requestKind = String(inv?.campaignId?.requestKind || '').trim().toLowerCase();
     return ownerRole === 'photographer'

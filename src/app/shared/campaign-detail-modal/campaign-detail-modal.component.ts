@@ -1337,7 +1337,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
 
   get isPhotographerCollabFlow(): boolean {
-    const ownerType = String(this.campaign?.ownerType || this.campaign?.createdByRole || '').toLowerCase();
+    const ownerType = String(this.campaign?.ownerType || '').toLowerCase();
     const requestKind = String(this.campaign?.requestKind || '').toLowerCase();
     const brandRole = String(this.brand?.role || '').toLowerCase();
     return ownerType === 'photographer' || requestKind === 'photographer_collaboration' || brandRole === 'photographer';

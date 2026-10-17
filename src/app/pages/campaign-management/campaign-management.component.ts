@@ -1280,9 +1280,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const ownerType = String(campaign?.ownerType || '').trim().toLowerCase();
     if (ownerType === 'photographer') return 'influencer';
 
-    const creatorRole = String(campaign?.createdByRole || '').trim().toLowerCase();
-    if (creatorRole === 'photographer') return 'influencer';
-
     return 'influencer';
   }
 
@@ -1497,7 +1494,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   /** Returns true if this invite was sent by a photographer/creator (collaboration), not a brand */
   isCollabInvite(inv: any): boolean {
     const ownerRole = String(
-      inv?.campaignId?.ownerType || inv?.campaignId?.createdByRole || inv?.brandId?.role || '',
+      inv?.campaignId?.ownerType || inv?.brandId?.role || '',
     ).trim().toLowerCase();
     const requestKind = String(inv?.campaignId?.requestKind || '').trim().toLowerCase();
     return ownerRole === 'photographer'
@@ -1508,7 +1505,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   private isCollaborationCampaign(campaign: any): boolean {
     const roleCandidates = [
-      campaign?.createdByRole,
       campaign?.ownerType,
       campaign?.brandId?.role,
       campaign?.campaignOwnerRole,
