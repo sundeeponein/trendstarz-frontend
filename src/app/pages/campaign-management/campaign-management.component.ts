@@ -5067,7 +5067,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         this.isEndCampaignSubmitting = false;
         this.endCampaignModalOpen = false;
         this.endCampaignTarget = null;
-        // e.g. "Paid creators are still within their posting window. Contact TrendStarZ…"
+        // e.g. "Creators who accepted are still within their posting window…"
         this.toast.error(err?.error?.message || 'Could not end the campaign. Please try again.');
         this.cd.detectChanges();
       },

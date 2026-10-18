@@ -1887,11 +1887,15 @@
     <p class="invite-action-modal__help">
       There {{ endCampaignPendingCount === 1 ? 'is 1 participant' : ('are ' + endCampaignPendingCount + ' participants') }} who {{ endCampaignPendingCount === 1 ? 'has' : 'have' }} not submitted their content yet.
     </p>
-    <p class="invite-action-modal__help">After ending this campaign:</p>
+    <p class="invite-action-modal__help">
+      While a creator who accepted can still post (inside their posting window), the campaign can't be ended —
+      you'll see when their deadline is. Contact TrendStarZ if it must stop earlier.
+    </p>
+    <p class="invite-action-modal__help">If every deadline has passed, ending the campaign:</p>
     <ul class="invite-action-modal__help">
-      <li>No new submissions will be accepted.</li>
-      <li>Pending participants will be marked as Not Submitted.</li>
-      <li>Any held funds for those participants will be released according to your cancellation/refund policy.</li>
+      <li>Accepts no new submissions.</li>
+      <li>Closes creators who didn't post as Not Submitted.</li>
+      <li>Starts the refund review for any paid creator who didn't post.</li>
     </ul>
   </app-confirm-action-modal>
 
