@@ -827,7 +827,9 @@ export class AdminManagementComponent implements OnInit {
           this.settings.influencerRecipientFeePercent = typeof data?.influencerRecipientFeePercent === 'number' ? data.influencerRecipientFeePercent : 0;
           this.settings.photographerRecipientFeePercent = typeof data?.photographerRecipientFeePercent === 'number' ? data.photographerRecipientFeePercent : 0;
           this.settings.brandRecipientFeePercent = typeof data?.brandRecipientFeePercent === 'number' ? data.brandRecipientFeePercent : 0;
-          this.settings.gstPercent = typeof data?.gstPercent === 'number' ? data.gstPercent : 18;
+          // Same fallback as the server (0 = no GST until an admin sets it) — showing 18 here
+          // when nothing was saved would misstate what hosts are actually charged.
+          this.settings.gstPercent = typeof data?.gstPercent === 'number' ? data.gstPercent : 0;
           this.settings.submissionApprovalWaitHours = typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24;
           this.settings.submissionAutoCompleteGraceHours = typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48;
           this.settings.payoutReleaseWaitHours = typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24;
