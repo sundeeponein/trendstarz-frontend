@@ -90,7 +90,7 @@ describe('CampaignTransactionsPanelComponent', () => {
     component.verifyTransaction(component.campaignTransactions[0]);
 
     expect(serviceSpy.verifyTransaction).toHaveBeenCalled();
-    expect(successSpy).toHaveBeenCalledWith('Transaction verified');
+    expect(successSpy).toHaveBeenCalledWith('Payment confirmed for 1 creator: influencer');
   });
 
   it('runs auto-approve and emits completion message', () => {

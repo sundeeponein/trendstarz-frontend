@@ -1,4 +1,4 @@
-import { ACCEPTED_OR_LATER, FINISHED_OR_DISPUTED } from './invite-status';
+import { ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, FINISHED_OR_DISPUTED } from './invite-status';
 export type CampaignStatusTab = 'active' | 'pending' | 'completed' | 'draft';
 
 export function resolveCampaignStatusTab(
@@ -17,8 +17,18 @@ export function resolveCampaignStatusTab(
     FINISHED_OR_DISPUTED.includes(inviteStatus),
   );
 
-  if (normalizedStatus === 'completed' || hasCompletedWork) return 'completed';
-  if (normalizedStatus === 'active') return 'active';
+  // Creators still accepted/working/under review: the campaign is not done.
+  const hasOpenWork = normalizedInviteStatuses.some((inviteStatus) =>
+    ACCEPTED_THROUGH_SUBMITTED.includes(inviteStatus),
+  );
+
+  if (normalizedStatus === 'completed' || normalizedStatus === 'cancelled') return 'completed';
+  // A live campaign stays Active while anyone still has work open (e.g. 1 finished,
+  // 2 working). It moves to Completed early only once every creator's work is done
+  // and the end date has passed — the backend then closes it within the hour anyway.
+  if (normalizedStatus === 'active') {
+    return hasCompletedWork && !hasOpenWork && isExpired ? 'completed' : 'active';
+  }
   if (normalizedStatus === 'pending' || normalizedStatus === 'pending_review') {
     return hasStartedWork ? 'active' : 'pending';
   }
