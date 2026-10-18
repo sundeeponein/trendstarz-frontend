@@ -1978,6 +1978,16 @@
 
       <!-- Product fulfillment -->
       <ng-container *ngIf="invitePanelCampaign?.campaignType === 'product'">
+        <div class="fulfill-address" *ngIf="fulfillInvite.shippingAddress as a">
+          <div class="fulfill-address__title"><i class="bi bi-house-door"></i> Ship to</div>
+          <div><strong>{{ a.contactName }}</strong><span *ngIf="a.contactMobile"> · {{ a.contactMobile }}</span></div>
+          <div>{{ a.line1 }}<span *ngIf="a.line2">, {{ a.line2 }}</span></div>
+          <div *ngIf="a.landmark">Landmark: {{ a.landmark }}</div>
+          <div>{{ a.city }}<span *ngIf="a.state">, {{ a.state }}</span> {{ a.pincode }}</div>
+        </div>
+        <p class="fulfill-address fulfill-address--missing" *ngIf="!fulfillInvite.shippingAddress">
+          No shipping address on file — ask the creator for it (WhatsApp/phone) before sending.
+        </p>
         <label class="fulfill-label">Courier
           <input type="text" class="fulfill-input" [(ngModel)]="fulfillForm.courier" placeholder="e.g. BlueDart, DTDC"/>
         </label>

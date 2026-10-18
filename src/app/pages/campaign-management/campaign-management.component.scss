@@ -3384,3 +3384,10 @@
   border-color: rgba(59, 130, 246, 0.3);
   cursor: default;
 }
+
+.fulfill-address {
+  border: 1px solid #e6eaf2; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px;
+  font-size: 0.86rem; color: #344054; line-height: 1.5; background: #f8fafc;
+  &__title { font-weight: 700; color: #1a1a2e; margin-bottom: 2px; display: flex; gap: 6px; align-items: center; }
+  &--missing { color: #8a4b00; background: #fff4e5; border-color: #f5c27a; }
+}
