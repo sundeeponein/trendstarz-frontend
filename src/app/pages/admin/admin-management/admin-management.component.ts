@@ -421,6 +421,8 @@ export class AdminManagementComponent implements OnInit {
     photographerRecipientFeePercent: 0 as number,
     brandRecipientFeePercent: 0 as number,
     gstPercent: 0,
+    gstin: '',
+    creatorFeeGstEnabled: false,
     submissionApprovalWaitHours: 24,
     submissionAutoCompleteGraceHours: 48,
     payoutReleaseWaitHours: 24,
@@ -830,6 +832,8 @@ export class AdminManagementComponent implements OnInit {
           // Same fallback as the server (0 = no GST until an admin sets it) — showing 18 here
           // when nothing was saved would misstate what hosts are actually charged.
           this.settings.gstPercent = typeof data?.gstPercent === 'number' ? data.gstPercent : 0;
+          this.settings.creatorFeeGstEnabled = data?.creatorFeeGstEnabled === true;
+          this.settings.gstin = typeof data?.gstin === 'string' ? data.gstin : '';
           this.settings.submissionApprovalWaitHours = typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24;
           this.settings.submissionAutoCompleteGraceHours = typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48;
           this.settings.payoutReleaseWaitHours = typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24;
@@ -1028,6 +1032,24 @@ export class AdminManagementComponent implements OnInit {
   get termsV2Active(): boolean {
     const v = this.settings.paidCollabTermsV2EffectiveAt;
     return !!v && new Date(v).getTime() <= Date.now();
+  }
+
+  /** Same check as the server (fee-rates.util isValidGstin): format + check character. */
+  get gstinValid(): boolean {
+    const g = String(this.settings.gstin || '').trim().toUpperCase();
+    if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)) return false;
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let sum = 0;
+    for (let i = 0; i < 14; i++) {
+      const product = chars.indexOf(g[i]) * (i % 2 === 0 ? 1 : 2);
+      sum += Math.floor(product / 36) + (product % 36);
+    }
+    return chars[(36 - (sum % 36)) % 36] === g[14];
+  }
+
+  /** No GSTIN → GST must stay 0 (the server refuses anything else). */
+  onGstinChange(): void {
+    if (!this.gstinValid) this.settings.gstPercent = 0;
   }
 
   saveSettings() {

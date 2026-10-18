@@ -190,6 +190,9 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
         this.txSummary = {
           collected: Number(d.collected || 0),
           fees: Number(d.fees || 0),
+          creatorFees: Number(d.creatorFees || 0),
+          platformRevenue: Number(d.platformRevenue ?? d.fees ?? 0),
+          gstCollected: Number(d.gstCollected || 0),
           pendingPayouts: Number(d.pendingPayouts || 0),
           paidOut: Number(d.paidOut || 0),
           refunded: Number(d.refunded || 0),
@@ -255,7 +258,7 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
   }
 
   /** Sum of one amount field across a row's payment group (paise). */
-  groupSum(tx: CampaignTransaction, field: 'payerTotal' | 'platformFee' | 'recipientPayout' | 'recipientFee' | 'gstAmount' | 'agreedAmount'): number {
+  groupSum(tx: CampaignTransaction, field: 'payerTotal' | 'platformFee' | 'recipientPayout' | 'recipientFee' | 'recipientFeeGst' | 'gstAmount' | 'agreedAmount'): number {
     return this.paymentGroup(tx).reduce((sum, r) => sum + Number((r as any)[field] || 0), 0);
   }
 

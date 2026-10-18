@@ -4,8 +4,16 @@
     <div class="tx-value">{{ ui.formatPaise(txSummary.collected) }}</div>
   </div>
   <div class="tx-card">
-    <div class="tx-label">Platform Commission</div>
-    <div class="tx-value">{{ ui.formatPaise(txSummary.fees) }}</div>
+    <div class="tx-label">TrendStarZ revenue</div>
+    <div class="tx-value">{{ ui.formatPaise(txSummary.platformRevenue ?? txSummary.fees) }}</div>
+    <small class="tx-payout-subtext">
+      Host commission {{ ui.formatPaise(txSummary.fees) }}<ng-container *ngIf="txSummary.creatorFees"> · creator fees {{ ui.formatPaise(txSummary.creatorFees) }}</ng-container>
+    </small>
+  </div>
+  <div class="tx-card" *ngIf="txSummary.gstCollected">
+    <div class="tx-label">GST to remit</div>
+    <div class="tx-value">{{ ui.formatPaise(txSummary.gstCollected) }}</div>
+    <small class="tx-payout-subtext">Collected on fees · not revenue</small>
   </div>
   <div class="tx-card tx-card--pending">
     <div class="tx-label">Pending Payouts</div>
@@ -110,7 +118,8 @@
             <strong>{{ ui.formatPaise(groupSum(tx, 'payerTotal')) }} Paid</strong>
             <span>{{ tx.transactionType === 'platform_fee' ? 'Platform fee' : 'Commission' }}: {{ ui.formatPaise(groupSum(tx, 'platformFee')) }}</span>
             <span *ngIf="groupSum(tx, 'recipientFee') > 0">Creator fee: {{ ui.formatPaise(groupSum(tx, 'recipientFee')) }}</span>
-            <span *ngIf="groupSum(tx, 'gstAmount') > 0">GST (to remit): {{ ui.formatPaise(groupSum(tx, 'gstAmount')) }}</span>
+            <span *ngIf="groupSum(tx, 'recipientFeeGst') > 0">GST on creator fee: {{ ui.formatPaise(groupSum(tx, 'recipientFeeGst')) }}</span>
+            <span *ngIf="groupSum(tx, 'gstAmount') + groupSum(tx, 'recipientFeeGst') > 0">GST (to remit): {{ ui.formatPaise(groupSum(tx, 'gstAmount') + groupSum(tx, 'recipientFeeGst')) }}</span>
             <span class="tx-keeps">TrendStarZ keeps: {{ ui.formatPaise(trendstarzKeeps(tx)) }}</span>
             <span *ngIf="tx.transactionType !== 'platform_fee'">Send to creator: {{ ui.formatPaise(groupSum(tx, 'recipientPayout')) }}</span>
           </div>
@@ -242,8 +251,9 @@
     <p class="modal-info" *ngIf="selectedTx">
       Agreed {{ ui.formatPaise(selectedTx.agreedAmount || 0) }}
       <ng-container *ngIf="(selectedTx.recipientFee || 0) > 0"> − creator fee {{ ui.formatPaise(selectedTx.recipientFee || 0) }}</ng-container>
+      <ng-container *ngIf="(selectedTx.recipientFeeGst || 0) > 0"> − GST on fee {{ ui.formatPaise(selectedTx.recipientFeeGst || 0) }}</ng-container>
       = <strong>{{ ui.formatPaise(selectedTx.recipientPayout) }} to send</strong>
-      · TrendStarZ keeps {{ ui.formatPaise((selectedTx.platformFee || 0) + (selectedTx.recipientFee || 0)) }}<ng-container *ngIf="(selectedTx.gstAmount || 0) > 0"> (+ {{ ui.formatPaise(selectedTx.gstAmount || 0) }} GST to remit)</ng-container>
+      · TrendStarZ keeps {{ ui.formatPaise((selectedTx.platformFee || 0) + (selectedTx.recipientFee || 0)) }}<ng-container *ngIf="(selectedTx.gstAmount || 0) + (selectedTx.recipientFeeGst || 0) > 0"> (+ {{ ui.formatPaise((selectedTx.gstAmount || 0) + (selectedTx.recipientFeeGst || 0)) }} GST to remit)</ng-container>
     </p>
     <p class="modal-info" *ngIf="selectedTx">
       Invite status: <strong>{{ inviteStatusLabel(selectedTx) }}</strong> ·

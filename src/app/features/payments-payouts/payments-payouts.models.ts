@@ -20,6 +20,8 @@ export interface CampaignTransaction {
   recipientPayout: number;
   /** Fee deducted from the creator's payout (paise). */
   recipientFee?: number;
+  /** GST on the creator payout fee (paise), deducted from the payout. */
+  recipientFeeGst?: number;
   /** GST charged on the commission / platform fee (paise) — collected for the government. */
   gstAmount?: number;
   /** Payment gateway. MVP = manual_upi. Future: razorpay. */
@@ -102,6 +104,12 @@ export interface CampaignTransaction {
 export interface TransactionSummary {
   collected: number;
   fees: number;
+  /** Payout fees taken from creators. */
+  creatorFees?: number;
+  /** Host commission + creator payout fees (TrendStarZ revenue, before refunds). */
+  platformRevenue?: number;
+  /** GST on both fees — owed to the government, not revenue. */
+  gstCollected?: number;
   pendingPayouts: number;
   paidOut: number;
   /** Money actually transferred back (UTR recorded). */

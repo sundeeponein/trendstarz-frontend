@@ -93,6 +93,10 @@
             <span class="cp-row-label">GST on commission ({{ shownGstPercent }}%)</span>
             <span class="cp-row-val">{{ formatINR(gstAmount) }}</span>
           </div>
+          <div class="cp-row cp-row--muted" *ngIf="gstAmount > 0 && calculated?.gstin">
+            <span class="cp-row-label">TrendStarZ GSTIN</span>
+            <span class="cp-row-val">{{ calculated.gstin }}</span>
+          </div>
           <div class="cp-row" *ngIf="creditToApply > 0">
             <span class="cp-row-label">TrendStarZ credit (UPI payment)</span>
             <span class="cp-row-val">−{{ formatINR(creditToApply) }}</span>

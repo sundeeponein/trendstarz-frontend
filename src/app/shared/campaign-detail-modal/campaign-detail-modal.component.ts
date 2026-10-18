@@ -14,6 +14,7 @@ import { paymentReleaseMessage as buildPaymentReleaseMessage, buildWhatsAppLink 
 import { TrackingLinksApiService, TrackingLink } from '../tracking-links/tracking-links-api.service';
 import { PromoLinkCardComponent } from '../promo-link-card/promo-link-card.component';
 import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, PAID_NOT_DISPUTED, PAID_OR_LATER, SUBMITTED_OR_LATER } from '../invite-status';
+import { creatorPayoutBreakdown, formatRupeesFromPaise } from '../creator-payout.util';
 
 export type HostShareMessageType = 'accepted' | 'submitted' | 'startWork' | 'inviteOnly' | 'postingReminder';
 
@@ -396,13 +397,21 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   /** Creator's payout fee on this paid collab (%), from the server; 0 until known. */
   payoutFeePercent = 0;
+  /** GST (%) on that fee — 0 unless the admin switched creator-fee GST on. */
+  payoutFeeGstPercent = 0;
+  /** The Premium fee (%) a Free creator would pay instead — null when no saving. */
+  premiumPayoutFeePercent: number | null = null;
   private payoutFeeFor = '';
 
   private loadPayoutFee(): void {
     const id = this.inviteId;
     const isPaid = String(this.campaign?.campaignType || '').toLowerCase() === 'paid_collab';
     if (!id || this.adminReview || !this.visible || !isPaid) {
-      if (!id || !isPaid) this.payoutFeePercent = 0;
+      if (!id || !isPaid) {
+        this.payoutFeePercent = 0;
+        this.payoutFeeGstPercent = 0;
+        this.premiumPayoutFeePercent = null;
+      }
       return;
     }
     if (this.payoutFeeFor === id) return;
@@ -410,6 +419,9 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     this.config.getPayoutFeePreview(id).subscribe((res) => {
       if (this.inviteId !== id) return;
       this.payoutFeePercent = Number(res?.feePercent || 0);
+      this.payoutFeeGstPercent = Number(res?.gstPercent || 0);
+      this.premiumPayoutFeePercent =
+        typeof res?.premiumFeePercent === 'number' ? res.premiumFeePercent : null;
       this.cdr.detectChanges();
     });
   }
@@ -427,12 +439,31 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return Number(this.campaign?.pricePerInfluencer || 0) || 0;
   }
 
-  /** "You receive ₹980 after the 2% TrendStarZ fee" — empty when there's no fee. */
-  get netPayoutText(): string {
+  /**
+   * The creator's payout breakdown (amount − fee − GST on the fee = you receive),
+   * shown before accepting; null when there's no fee. Same rounding as the server.
+   */
+  get payoutBreakdown(): { lines: Array<{ label: string; value: string }>; net: string; premiumNote: string } | null {
     const gross = this.yourPayoutPaise;
-    if (!(this.payoutFeePercent > 0) || !(gross > 0)) return '';
-    const net = gross - Math.round((gross * this.payoutFeePercent) / 100);
-    return `You receive ₹${Math.floor(net / 100).toLocaleString('en-IN')} after the ${this.payoutFeePercent}% TrendStarZ fee`;
+    if (!(this.payoutFeePercent > 0) || !(gross > 0)) return null;
+    const b = creatorPayoutBreakdown(gross, this.payoutFeePercent, this.payoutFeeGstPercent);
+    const lines = [{ label: `TrendStarZ fee (${this.payoutFeePercent}%)`, value: '− ' + formatRupeesFromPaise(b.fee) }];
+    if (b.gst > 0) {
+      lines.push({ label: `GST on fee (${this.payoutFeeGstPercent}%)`, value: '− ' + formatRupeesFromPaise(b.gst) });
+    }
+    let premiumNote = '';
+    if (this.premiumPayoutFeePercent !== null) {
+      const p = creatorPayoutBreakdown(gross, this.premiumPayoutFeePercent, this.payoutFeeGstPercent);
+      premiumNote = `With Premium you'd receive ${formatRupeesFromPaise(p.payout)} (${this.premiumPayoutFeePercent}% fee)`;
+    }
+    return { lines, net: formatRupeesFromPaise(b.payout), premiumNote };
+  }
+
+  /** One-line summary, e.g. "You receive ₹976.40 after the 2% TrendStarZ fee + GST". */
+  get netPayoutText(): string {
+    const b = this.payoutBreakdown;
+    if (!b) return '';
+    return `You receive ${b.net} after the ${this.payoutFeePercent}% TrendStarZ fee${this.payoutFeeGstPercent > 0 ? ' + GST' : ''}`;
   }
 
   ngAfterViewChecked(): void {

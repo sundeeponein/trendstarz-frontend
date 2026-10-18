@@ -1123,7 +1123,7 @@ export class ConfigService {
   }
 
   /** Creator: payout fee (%) on a paid-collab invite — locked = fixed when they accepted. Null on error. */
-  getPayoutFeePreview(inviteId: string): Observable<{ feePercent: number; locked: boolean } | null> {
+  getPayoutFeePreview(inviteId: string): Observable<{ feePercent: number; gstPercent?: number; premiumFeePercent?: number | null; locked: boolean } | null> {
     return this.http.get<any>(`${this.apiUrl}/campaign-transactions/payout-fee/${encodeURIComponent(inviteId)}`).pipe(
       map((res) => this.extractData<any>(res) || res || null),
       catchError(() => of(null)),
