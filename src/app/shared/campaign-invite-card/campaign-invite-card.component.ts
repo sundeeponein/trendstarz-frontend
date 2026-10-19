@@ -49,7 +49,7 @@ export class CampaignInviteCardComponent {
   @Input() qualifyingPlatforms: string[] | null = null;
   @Input() influencerSocialMedia: Array<{ platform: string; tier: string }> | null = null;
   @Input() submissionApprovalWaitHours = 24;
-  @Input() submissionAutoCompleteGraceHours = 48;
+  @Input() submissionAutoCompleteGraceHours = 0;
   @Input() payoutReleaseWaitHours = 24;
   /** initial value for the post-date input (one-shot seed) */
   @Input() set initialPostDate(v: string | undefined) {
@@ -273,7 +273,7 @@ export class CampaignInviteCardComponent {
     const unlockAt = this.submissionReviewUnlockAt;
     if (!unlockAt) return null;
     const hours = Number(this.submissionAutoCompleteGraceHours);
-    const safeHours = Number.isFinite(hours) && hours >= 0 ? hours : 48;
+    const safeHours = Number.isFinite(hours) && hours >= 0 ? hours : 0;
     return new Date(unlockAt.getTime() + safeHours * 60 * 60 * 1000);
   }
   get submissionAutoCompleteAtText(): string {

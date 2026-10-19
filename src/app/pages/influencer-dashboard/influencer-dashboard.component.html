@@ -20,6 +20,7 @@
 
   <!-- Admin Social Media Change Notifications -->
   <app-social-confirm-banner editLink="/influencer-profile"></app-social-confirm-banner>
+  <app-payout-upi-banner role="influencer" [ready]="payoutLoaded" [payout]="defaultPayout" (saved)="onPayoutSaved($event)"></app-payout-upi-banner>
   <app-admin-social-notice
     class="mb-4 d-block"
     [notifications]="adminSocialNotifications"

@@ -202,6 +202,8 @@
                 <div class="field-block">
                   <label>UPI ID</label>
                   <input formControlName="upiId" type="text" class="form-control" placeholder="e.g. yourname@upi" />
+                  <small class="text-danger d-block" *ngIf="form.get('payout.upiId')?.errors?.['upiId'] as upiError">{{ upiError }}</small>
+                  <small class="text-muted d-block" *ngIf="!form.get('payout.upiId')?.value">Needed to accept paid invites — your payouts are sent here.</small>
                 </div>
                 <div class="field-block">
                   <label>Mobile (GPay / PhonePe)</label>

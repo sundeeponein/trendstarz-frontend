@@ -36,6 +36,7 @@ import { SocialPlatformFieldComponent } from '../../shared/social-platform-field
 import { YoutubeCheck, youtubeCheckFor } from '../../shared/youtube-check.util';
 import { markRatesConfirmed, rateReviewFor } from '../../shared/rate-review.util';
 import { paymentAmountRupees } from '../../shared/payment-amount.util';
+import { upiIdValidator } from '../../shared/upi.util';
 
 @Component({
   selector: 'app-influencer-registration',
@@ -658,7 +659,7 @@ export class InfluencerProfileComponent implements OnInit {
       }),
       website: [{ value: '', disabled: true }],
       payout: this.fb.group({
-        upiId: [{ value: '', disabled: true }],
+        upiId: [{ value: '', disabled: true }, upiIdValidator],
         mobile: [{ value: '', disabled: true }],
         accountHolderName: [{ value: '', disabled: true }],
       }),

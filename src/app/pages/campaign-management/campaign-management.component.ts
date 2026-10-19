@@ -62,7 +62,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   private static readonly REFRESH_TIMEOUT_MS = 10000;
   submissionApprovalWaitHours = 24;
-  submissionAutoCompleteGraceHours = 48;
+  submissionAutoCompleteGraceHours = 0;
   payoutReleaseWaitHours = 24;
       maxActiveCampaigns: number = 1;
       /** Server count of this plan month's campaign slots (completed ones included). */
@@ -1666,13 +1666,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         const autoCompleteHours = Number(settings?.submissionAutoCompleteGraceHours);
         const payoutHours = Number(settings?.payoutReleaseWaitHours);
         this.submissionApprovalWaitHours = Number.isFinite(submissionHours) && submissionHours >= 0 ? submissionHours : 24;
-        this.submissionAutoCompleteGraceHours = Number.isFinite(autoCompleteHours) && autoCompleteHours >= 0 ? autoCompleteHours : 48;
+        this.submissionAutoCompleteGraceHours = Number.isFinite(autoCompleteHours) && autoCompleteHours >= 0 ? autoCompleteHours : 0;
         this.payoutReleaseWaitHours = Number.isFinite(payoutHours) && payoutHours >= 0 ? payoutHours : 24;
         this.cd.detectChanges();
       },
       error: () => {
         this.submissionApprovalWaitHours = 24;
-        this.submissionAutoCompleteGraceHours = 48;
+        this.submissionAutoCompleteGraceHours = 0;
         this.payoutReleaseWaitHours = 24;
       },
     });
@@ -4827,11 +4827,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return new Date(anchorMs + this.submissionApprovalWaitHours * 60 * 60 * 1000);
   }
 
+  /** When the review window ends and the post completes on its own (mirrors the server). */
   getSubmissionAutoCompleteAt(submission: any): Date | null {
-    if (!submission?.hostAutoCompleteEnabled) return null;
     const unlockAt = this.getSubmissionApprovalUnlockAt(submission);
     if (!unlockAt) return null;
-    return unlockAt;
+    if (submission?.hostAutoCompleteEnabled) return unlockAt;
+    return new Date(unlockAt.getTime() + this.submissionAutoCompleteGraceHours * 60 * 60 * 1000);
   }
 
   canApproveSubmission(submission: any): boolean {
@@ -4844,7 +4845,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   /** Unlike Mark Completed, a host can flag an issue at any point during the review window — not just after it unlocks. */
   canDisputeSubmission(submission: any): boolean {
-    return !!submission && String(submission?.status || '').toLowerCase() === 'submitted';
+    if (!submission || String(submission?.status || '').toLowerCase() !== 'submitted') return false;
+    return !this.isSubmissionAutoCompleteWindowExpired(submission);
   }
 
   /** True once the influencer has used their one allowed resubmission — a further dispute is a final rejection. */
@@ -4924,8 +4926,14 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     });
   }
 
-  getSubmissionAutoCompleteDelayLabel(): string {
+  /** Ticking "Auto complete" ends the review as soon as Mark Completed unlocks. */
+  getSubmissionApprovalWaitLabel(): string {
     return this.formatHoursLabel(this.submissionApprovalWaitHours);
+  }
+
+  /** How long the host has to report an issue after submission. */
+  getSubmissionAutoCompleteDelayLabel(): string {
+    return this.formatHoursLabel(this.submissionApprovalWaitHours + this.submissionAutoCompleteGraceHours);
   }
 
   private formatHoursLabel(hours: number): string {

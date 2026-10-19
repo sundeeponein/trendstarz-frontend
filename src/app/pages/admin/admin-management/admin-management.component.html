@@ -753,11 +753,12 @@
                 <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.submissionApprovalWaitHours" />
               </div>
               <div class="col-12 col-md-4">
-                <label class="form-label" style="font-size:0.9rem;">Auto-complete if host silent after (hours)</label>
+                <label class="form-label" style="font-size:0.9rem;">Extra hours before auto-complete if host silent</label>
                 <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.submissionAutoCompleteGraceHours" />
+                <small class="text-muted">Added to "Host mark completed after". 0 = the post completes as soon as that ends. Hosts can raise an issue until then.</small>
               </div>
               <div class="col-12 col-md-4">
-                <label class="form-label" style="font-size:0.9rem;">Admin payout release after (hours)</label>
+                <label class="form-label" style="font-size:0.9rem;">Payout release after completion (hours)</label>
                 <input type="number" class="form-control" min="0" max="720" step="0.5" [(ngModel)]="settings.payoutReleaseWaitHours" />
               </div>
               <div class="col-12 col-md-4">

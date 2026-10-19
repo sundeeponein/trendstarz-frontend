@@ -26,6 +26,7 @@ import { ImageCropModalComponent } from '../../shared/components/image-crop-moda
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 import { SocialPlatformFieldComponent } from '../../shared/social-platform-field/social-platform-field.component';
+import { upiIdValidator } from '../../shared/upi.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -351,7 +352,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       creatorTypes: [[]],
       profileImages: this.fb.array([]),
       payout: this.fb.group({
-        upiId: [''],
+        upiId: ['', upiIdValidator],
         mobile: [''],
         accountHolderName: [''],
       }),

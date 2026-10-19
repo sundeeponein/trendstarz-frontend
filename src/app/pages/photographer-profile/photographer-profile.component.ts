@@ -34,6 +34,7 @@ import { YoutubeCheck, youtubeCheckFor } from '../../shared/youtube-check.util';
 import { YoutubeCheckNoteComponent } from '../../shared/youtube-check-note.component';
 import { markRatesConfirmed, rateReviewFor } from '../../shared/rate-review.util';
 import { RateReviewNoteComponent } from '../../shared/rate-review-note.component';
+import { upiIdValidator } from '../../shared/upi.util';
 
 @Component({
   selector: 'app-photographer-profile',
@@ -613,7 +614,7 @@ export class PhotographerProfileComponent implements OnInit {
         openToTravel: [{ value: false, disabled: true }],
       }),
       payout: this.fb.group({
-        upiId: [{ value: '', disabled: true }],
+        upiId: [{ value: '', disabled: true }, upiIdValidator],
         mobile: [{ value: '', disabled: true }],
         accountHolderName: [{ value: '', disabled: true }],
       }),

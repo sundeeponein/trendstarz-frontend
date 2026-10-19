@@ -203,11 +203,6 @@ export class BrandRegistrationComponent implements OnInit {
         email: [false],
         call: [false]
       }, { validators: [atLeastOneContactRequired] }),
-      payout: this.fb.group({
-        upiId: [''],
-        mobile: [''],
-        accountHolderName: [''],
-      })
     }, { validators: [passwordMatchValidator] });
 
     // Defensive defaults: ensure arrays/objects exist to avoid runtime nulls

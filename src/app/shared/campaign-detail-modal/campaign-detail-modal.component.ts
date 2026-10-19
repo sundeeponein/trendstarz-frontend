@@ -1,6 +1,7 @@
 import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../config.service';
+import { hasValidUpiId, upiIdError } from '../upi.util';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -322,6 +323,53 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   togglePayoutEdit() {
     this.payoutEditing = !this.payoutEditing;
   }
+
+  get payoutUpiInlineError(): string | null {
+    return upiIdError(this.payoutUpiId);
+  }
+
+  /** The creator is paid through TrendStarZ (not barter / location visit). */
+  get invitePaysMoney(): boolean {
+    if (this.isInviteLocation) return false;
+    if (this.isProduct) return this.productPaymentMode === 'product_plus_payment';
+    return true;
+  }
+
+  /** What's missing before accepting; null when the payout details are fine. Mirrors the server. */
+  payoutDetailsProblem(): string | null {
+    const upiError = upiIdError(this.payoutUpiId);
+    if (upiError) return upiError;
+    if (this.invitePaysMoney && !hasValidUpiId(this.payoutUpiId)) {
+      return 'Add your UPI ID (for example 9876543210@ybl) — TrendStarZ sends your payout there. A mobile number alone isn\'t enough for paid invites.';
+    }
+    if (!(this.payoutUpiId || '').trim() && !(this.payoutMobile || '').trim()) {
+      return 'Please add a UPI ID or mobile number (GPay/PhonePe) to receive payment.';
+    }
+    return null;
+  }
+
+  /** Review/payout timings (admin settings), for "How you get paid". */
+  workflowHours = { approval: 24, autoComplete: 48, release: 24 };
+  private workflowHoursLoaded = false;
+  private loadWorkflowHours(): void {
+    if (this.workflowHoursLoaded || this.adminReview || !this.visible) return;
+    this.workflowHoursLoaded = true;
+    this.config.getAppSettings().subscribe((s) => {
+      this.workflowHours = {
+        approval: Number(s?.submissionApprovalWaitHours ?? 24),
+        autoComplete: Number(s?.submissionAutoCompleteGraceHours ?? 0),
+        release: Number(s?.payoutReleaseWaitHours ?? 24),
+      };
+      this.cdr.detectChanges();
+    });
+  }
+
+  /** "6 hours" / "24 hours" / "3 days". */
+  hoursLabel(hours: number): string {
+    const h = Math.max(0, Math.round(Number(hours) || 0));
+    if (h > 24 && h % 24 === 0) return `${h / 24} days`;
+    return `${h} hour${h === 1 ? '' : 's'}`;
+  }
   // Previously used to delay pointer-events; removed now that modal mounts immediately.
 
   constructor(
@@ -389,6 +437,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       this.cdr.detectChanges();
     }
     if (changes['invite'] || changes['visible']) this.loadPayoutFee();
+    if (changes['visible']) this.loadWorkflowHours();
   }
 
   /** Creator's payout fee on this paid collab (%), from the server; 0 until known. */
@@ -1758,11 +1807,10 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       this.pointTo('contentType');
       return;
     }
-    const upi = (this.payoutUpiId || '').trim();
-    const mobile = (this.payoutMobile || '').trim();
-    if (!upi && !mobile) {
+    const payoutProblem = this.payoutDetailsProblem();
+    if (payoutProblem) {
       this.payoutEditing = true;
-      this.showToastError('Please add a UPI ID or mobile number (GPay/PhonePe) to receive payment.');
+      this.showToastError(payoutProblem);
       this.pointTo('payout');
       return;
     }
@@ -1818,6 +1866,13 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     }
     if (!this.hasValidCounterAmount) {
       this.showToastError('Please enter a valid counter amount.');
+      return;
+    }
+    const payoutProblem = this.payoutDetailsProblem();
+    if (payoutProblem) {
+      this.payoutEditing = true;
+      this.showToastError(payoutProblem);
+      this.pointTo('payout');
       return;
     }
     this.toastError = '';

@@ -381,7 +381,7 @@ export class ConfigService {
           gstPercent: typeof data?.gstPercent === 'number' ? data.gstPercent : undefined,
           paymentUpiId: data?.paymentUpiId || 'trendstarzin@kotak',
           submissionApprovalWaitHours: typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24,
-          submissionAutoCompleteGraceHours: typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48,
+          submissionAutoCompleteGraceHours: typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 0,
           payoutReleaseWaitHours: typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24,
           minCampaignStartDays: typeof data?.minCampaignStartDays === 'number' ? data.minCampaignStartDays : 3,
           maxCampaignDurationDays: typeof data?.maxCampaignDurationDays === 'number' ? data.maxCampaignDurationDays : 15,
@@ -403,7 +403,7 @@ export class ConfigService {
         preApproveBrands: false, brandRequireEmailVerified: true, brandRequireMobileVerified: false,
         platformFeeEnabled: false, platformFeePercent: undefined, gstPercent: undefined, paymentUpiId: 'trendstarzin@kotak',
         submissionApprovalWaitHours: 24,
-        submissionAutoCompleteGraceHours: 48,
+        submissionAutoCompleteGraceHours: 0,
         payoutReleaseWaitHours: 24,
         minCampaignStartDays: 3,
         maxCampaignDurationDays: 15,
@@ -985,6 +985,16 @@ export class ConfigService {
 
   updateInfluencerProfile(data: any): Observable<any> {
     return this.http.patch(`${this.apiUrl}/users/influencer-profile`, data);
+  }
+
+  /** Saves only the payout details (UPI, mobile, name) on the creator's own profile. */
+  savePayoutDetails(
+    role: 'influencer' | 'photographer',
+    payout: { upiId: string; mobile: string; accountHolderName: string },
+  ): Observable<any> {
+    return role === 'photographer'
+      ? this.http.patch(`${this.apiUrl}/users/photographers/me/profile`, { payout })
+      : this.http.patch(`${this.apiUrl}/users/influencer-profile`, { payout });
   }
 
   getBrandProfileById(): Observable<any> {

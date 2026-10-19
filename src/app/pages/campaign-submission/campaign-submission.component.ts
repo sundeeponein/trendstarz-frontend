@@ -89,7 +89,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   error = '';
   existingSubmission: any = null;
   submissionApprovalWaitHours = 24;
-  submissionAutoCompleteGraceHours = 48;
+  submissionAutoCompleteGraceHours = 0;
 
   // Dispute response (Resubmit / Withdraw / Request Admin Review)
   disputeReportedAt: Date | null = null;
@@ -143,14 +143,14 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
         const autoCompleteHours = Number(settings?.submissionAutoCompleteGraceHours);
         const disputeHours = Number(settings?.disputeResponseWaitHours);
         this.submissionApprovalWaitHours = Number.isFinite(submissionHours) && submissionHours >= 0 ? submissionHours : 24;
-        this.submissionAutoCompleteGraceHours = Number.isFinite(autoCompleteHours) && autoCompleteHours >= 0 ? autoCompleteHours : 48;
+        this.submissionAutoCompleteGraceHours = Number.isFinite(autoCompleteHours) && autoCompleteHours >= 0 ? autoCompleteHours : 0;
         this.disputeResponseWaitHours = Number.isFinite(disputeHours) && disputeHours >= 0 ? disputeHours : 12;
         this.paidSubmitGraceHours = graceHoursFromSettings(settings);
         this.cdr.markForCheck();
       },
       error: () => {
         this.submissionApprovalWaitHours = 24;
-        this.submissionAutoCompleteGraceHours = 48;
+        this.submissionAutoCompleteGraceHours = 0;
       },
     });
 

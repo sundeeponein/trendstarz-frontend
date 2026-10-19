@@ -424,7 +424,7 @@ export class AdminManagementComponent implements OnInit {
     gstin: '',
     creatorFeeGstEnabled: false,
     submissionApprovalWaitHours: 24,
-    submissionAutoCompleteGraceHours: 48,
+    submissionAutoCompleteGraceHours: 0,
     payoutReleaseWaitHours: 24,
     disputeResponseWaitHours: 12,
     campaignAutoCloseGraceHours: 24,
@@ -835,7 +835,7 @@ export class AdminManagementComponent implements OnInit {
           this.settings.creatorFeeGstEnabled = data?.creatorFeeGstEnabled === true;
           this.settings.gstin = typeof data?.gstin === 'string' ? data.gstin : '';
           this.settings.submissionApprovalWaitHours = typeof data?.submissionApprovalWaitHours === 'number' ? data.submissionApprovalWaitHours : 24;
-          this.settings.submissionAutoCompleteGraceHours = typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 48;
+          this.settings.submissionAutoCompleteGraceHours = typeof data?.submissionAutoCompleteGraceHours === 'number' ? data.submissionAutoCompleteGraceHours : 0;
           this.settings.payoutReleaseWaitHours = typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24;
           this.settings.disputeResponseWaitHours = typeof data?.disputeResponseWaitHours === 'number' ? data.disputeResponseWaitHours : 12;
           this.settings.campaignAutoCloseGraceHours = typeof data?.campaignAutoCloseGraceHours === 'number' ? data.campaignAutoCloseGraceHours : 24;

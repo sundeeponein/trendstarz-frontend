@@ -22,6 +22,7 @@ import { ImageCropModalComponent } from '../../shared/components/image-crop-moda
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { ProfileVisibilitySelectorComponent } from '../../shared/components/profile-visibility-selector/profile-visibility-selector.component';
 import { MINIMUM_RATE_RUPEES, isBelowMinimumRate } from '../../shared/rates.util';
+import { upiIdValidator } from '../../shared/upi.util';
 
 export const atLeastOneContactRequired: ValidatorFn = (control: AbstractControl) => {
   if (!control || !control.value) return { required: true };
@@ -242,7 +243,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       skills: [[]],
       equipment: [[]],
       payout: this.fb.group({
-        upiId: [''],
+        upiId: ['', upiIdValidator],
         mobile: [''],
         accountHolderName: [''],
       }),

@@ -1143,7 +1143,7 @@
                           [disabled]="autoCompleteToggleLoading.has(sub.inviteId)"
                           (change)="toggleSubmissionAutoComplete(sub, c._id, $event)" />
                         <span>
-                          Auto complete after {{ getSubmissionAutoCompleteDelayLabel() }}
+                          Auto complete after {{ getSubmissionApprovalWaitLabel() }}
                         </span>
                       </label>
                       <div class="sub-metrics-empty" *ngIf="!canApproveSubmission(sub) && !isSubmissionAutoCompleteWindowExpired(sub)">

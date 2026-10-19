@@ -1163,6 +1163,24 @@ $dk-orange:    #e06030;
 .cdm-payout-summary { font-size: 0.8rem; color: $lt-text; .cdm-panel--dark & { color: $dk-text; } }
 .cdm-payout-missing { color: $lt-muted; font-style: italic; font-size: 0.78rem; .cdm-panel--dark & { color: $dk-muted; } }
 .cdm-payout-form { display: grid; gap: 5px; }
+.cdm-payout-check {
+  margin: 6px 0 0; font-size: 0.74rem; color: $lt-muted;
+  .cdm-panel--dark & { color: $dk-muted; }
+}
+.cdm-payout-error { font-size: 0.74rem; color: #c62828; }
+
+// ── How you get paid ──────────────────────────────────────────
+.cdm-howpaid {
+  border: 1px solid $lt-border; border-radius: 9px;
+  padding: 10px 12px; margin-bottom: 16px; background: $lt-surface;
+  font-size: 0.8rem; color: $lt-text;
+  .cdm-panel--dark & { border-color: $dk-border; background: $dk-surface; color: $dk-text; }
+}
+.cdm-howpaid__title {
+  display: flex; align-items: center; gap: 7px; font-weight: 700; margin-bottom: 6px;
+  i { color: $lt-muted; .cdm-panel--dark & { color: $dk-muted; } }
+}
+.cdm-howpaid__steps { margin: 0; padding-left: 1.2rem; display: grid; gap: 3px; }
 .cdm-payout-input {
   width: 100%; border: 1px solid $lt-border; border-radius: 6px;
   padding: 6px 9px; font-size: 0.8rem; color: $lt-text; background: $lt-bg;
