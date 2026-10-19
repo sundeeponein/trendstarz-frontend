@@ -169,7 +169,7 @@ export class TransactionsComponent implements OnInit {
 
   typeLabel(tx: any): string {
     if (tx.transactionType === 'paid_collab') return 'Paid Collab';
-    if (tx.transactionType === 'pay_to_join') return 'Pay-to-Join';
+    if (tx.transactionType === 'platform_fee') return 'Platform Fee';
     return tx.transactionType || '—';
   }
 

@@ -36,7 +36,7 @@ export class CampaignPaymentPageComponent implements OnInit {
 
   calculatedPayment: any = null;
   utrNumber = '';
-  /** Host ticked the paid-collaboration terms (required to pay, except pay-to-join). */
+  /** Host ticked the paid-collaboration terms (required to pay). */
   termsAccepted = false;
   submitting = false;
   processingRazorpay = false;
@@ -167,16 +167,12 @@ export class CampaignPaymentPageComponent implements OnInit {
     done();
   }
 
-  get needsTerms(): boolean {
-    return String(this.campaign?.campaignType || '').toLowerCase() !== 'pay_to_join';
-  }
-
   get creditToApply(): number {
     return Number(this.calculatedPayment?.creditToApply || 0);
   }
 
   get termsOk(): boolean {
-    return !this.needsTerms || this.termsAccepted;
+    return this.termsAccepted;
   }
 
   get canSubmit(): boolean {

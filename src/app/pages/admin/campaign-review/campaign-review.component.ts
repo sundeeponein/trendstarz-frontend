@@ -315,7 +315,6 @@ export class CampaignReviewComponent implements OnInit {
 
   campaignBudgetType(c: any): string {
     const t = String(c?.campaignType || '').toLowerCase();
-    if (t === 'pay_to_join') return 'Performance Base';
     if (t === 'paid_collab') return 'Fixed Fee';
     if (t === 'product') return 'Product Deal';
     if (t === 'invite_location') return 'Location Deal';
@@ -1178,7 +1177,6 @@ export class CampaignReviewComponent implements OnInit {
       paid_collab: 'Paid Collab',
       product: 'Product Collab',
       invite_location: 'Invite to Location',
-      pay_to_join: 'Pay to Join',
     };
     return labels[key] || campaign?.campaignType || 'Campaign';
   }

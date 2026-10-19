@@ -427,7 +427,7 @@
         <div class="field-row" *ngIf="shouldShowFlatPricePerParticipantField">
           <div class="field-group half">
             <label class="field-label">
-              {{ selectedCampaignType === 'pay_to_join' ? 'Join fee per participant (₹)' : 'Payment per participant (₹)' }}
+              Payment per participant (₹)
               <span class="required" *ngIf="!isFlatPricePerParticipantOptional">*</span>
               <span class="text-muted" style="font-weight:400;" *ngIf="isFlatPricePerParticipantOptional">(optional)</span>
               <span class="lock-badge" *ngIf="isApprovalLocked"><i class="bi bi-lock-fill"></i> Locked</span>
@@ -559,21 +559,10 @@
         </div>
 
         <div class="budget-preview budget-preview--total" *ngIf="estimatedBudgetRupees > 0">
-          <span>{{ selectedCampaignType === 'pay_to_join' ? 'Max potential join amount' : 'Max potential payout' }} <em class="budget-preview__pill">Total</em>
-            <small *ngIf="selectedCampaignType !== 'pay_to_join'">If max participants accept &amp; deliver · you pay only for accepted creators, released after approval</small></span>
+          <span>Max potential payout <em class="budget-preview__pill">Total</em>
+            <small>If max participants accept &amp; deliver · you pay only for accepted creators, released after approval</small></span>
           <strong class="budget-preview__value">₹{{ estimatedBudgetRupees | number:'1.0-0' }}</strong>
         </div>
-        </div>
-
-        <div class="field-group" *ngIf="selectedCampaignType === 'pay_to_join'">
-          <label class="field-label">What influencer gets (benefits) <span class="required">*</span></label>
-          <textarea formControlName="payToJoinBenefits" class="field-textarea" rows="3"
-            placeholder="Example: Homepage feature, priority listing, paid badge, community access..."></textarea>
-          <span class="field-error" *ngIf="f['payToJoinBenefits'].touched && f['payToJoinBenefits'].invalid">Benefits are required</span>
-
-          <label class="field-label mt-2">Pay-to-join instructions</label>
-          <textarea formControlName="payToJoinInstructions" class="field-textarea" rows="3"
-            placeholder="Any joining terms, quality checks, timeline, and acceptance rules..."></textarea>
         </div>
 
         <p class="trust-note"><i class="bi bi-shield-check"></i> Pay only for accepted {{ inviteRecipientLabelPlural.toLowerCase() }}</p>

@@ -43,7 +43,6 @@
         {{ openCampaignPreview.campaignType === 'paid_collab' ? 'Paid Collab' :
            openCampaignPreview.campaignType === 'product' ? 'Product Collab' :
            openCampaignPreview.campaignType === 'invite_location' ? 'Invite to Location' :
-           openCampaignPreview.campaignType === 'pay_to_join' ? 'Pay to Join' :
            openCampaignPreview.campaignType }}
       </span>
       <span class="ocp-pill ocp-pill--platform" *ngFor="let p of getOpenCampaignPreviewPlatforms(openCampaignPreview)">

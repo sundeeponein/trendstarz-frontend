@@ -90,7 +90,7 @@
       <!-- Payout details (user, pending — shown above offer trail) -->
       <div class="cdm-payout-block cdm-payout-block--body" #payoutSection
            [class.cdm-attention]="attentionTarget === 'payout'"
-           *ngIf="isPending && !adminReview && needsPayoutDetails">
+           *ngIf="isPending && !adminReview">
         <div class="cdm-payout-head">
           <i class="bi bi-bank"></i>
           <span>Receive payment to</span>
@@ -617,18 +617,6 @@
             <div class="cdm-moderation-note__text">"{{ campaignModerationNote }}"</div>
           </div>
 
-          <!-- Pay to join details -->
-          <div class="cdm-section" *ngIf="isPayToJoin && hasPayToJoinDetails">
-            <div class="cdm-section__label">PAY TO JOIN</div>
-            <div class="cdm-brief-box" *ngIf="payToJoinBenefits">
-              <div class="cdm-section__label" style="margin-bottom:6px;">WHAT YOU GET</div>
-              <div style="white-space:pre-wrap;">{{ payToJoinBenefits }}</div>
-            </div>
-            <div class="cdm-brief-box mt-2" *ngIf="payToJoinInstructions">
-              <div class="cdm-section__label" style="margin-bottom:6px;">HOW TO JOIN</div>
-              <div style="white-space:pre-wrap;">{{ payToJoinInstructions }}</div>
-            </div>
-          </div>
 
           <!-- Venue / campaign image (user view) -->
           <div class="cdm-venue-img-card" *ngIf="!adminReview && venueImageUrl">

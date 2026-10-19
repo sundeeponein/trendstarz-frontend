@@ -41,7 +41,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   activeTab: Tab = 'summary';
 
   utrNumber = '';
-  /** Host ticked the paid-collaboration terms (required to pay, except pay-to-join). */
+  /** Host ticked the paid-collaboration terms (required to pay). */
   termsAccepted = false;
   paymentProofFile: File | null = null;
   paymentProofUrl = '';
@@ -152,16 +152,11 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   }
 
   // ── Helpers / display ──────────────────────────────────
-  get isPayToJoin(): boolean {
-    return (this.calculated?.campaignType || '').toLowerCase() === 'pay_to_join';
-  }
-
   get campaignTypeLabel(): string {
     const m: Record<string, string> = {
       paid_collab: 'Paid Collaboration',
       product: 'Product Collaboration',
       invite_location: 'Invite to Location',
-      pay_to_join: 'Pay to Join',
     };
     return m[(this.calculated?.campaignType || '').toLowerCase()] || 'Campaign';
   }
@@ -181,7 +176,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
 
   /** The server computed the totals (host payments) — show exactly what will be charged. */
   get usesServerTotals(): boolean {
-    return !this.isPayToJoin && typeof this.calculated?.amountDueRazorpay === 'number';
+    return typeof this.calculated?.amountDueRazorpay === 'number';
   }
 
   /** GST % shown in the breakdown — the server's when it computed the totals. */
@@ -207,7 +202,7 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   }
 
   get needsTerms(): boolean {
-    return !this.isPayToJoin && !this.isPlatformFee;
+    return !this.isPlatformFee;
   }
 
   /** Barter/location confirmation: a fixed TrendStarZ fee, not a creator payment. */

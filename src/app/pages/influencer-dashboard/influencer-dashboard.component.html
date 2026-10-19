@@ -339,7 +339,7 @@
         <tbody>
           <tr *ngFor="let tx of pendingPaymentHistory">
             <td>{{ tx.campaignTitle || '—' }}</td>
-            <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Collab' : 'Pay-to-Join' }}</td>
+            <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Collab' : 'Platform Fee' }}</td>
             <td>
               <span *ngIf="tx.recipientRole === 'influencer'">+{{ formatPaise(tx.recipientPayout) }}</span>
               <span *ngIf="tx.payerRole === 'influencer'">-{{ formatPaise(tx.payerTotal) }}</span>

@@ -311,10 +311,6 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   payoutName = '';
   payoutEditing = false;
 
-  get needsPayoutDetails(): boolean {
-    return (this.campaign?.campaignType || '').toLowerCase() !== 'pay_to_join';
-  }
-
   get payoutSummaryText(): string {
     const parts: string[] = [];
     if (this.payoutUpiId) parts.push(this.payoutUpiId);
@@ -919,13 +915,11 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       paid_collab: 'Paid Collab',
       product: 'Product Collab',
       invite_location: 'Invite to Location',
-      pay_to_join: 'Pay to Join',
     };
     return m[this.campaignTypeKey] || '';
   }
 
   get isInviteLocation(): boolean { return this.campaignTypeKey === 'invite_location'; }
-  get isPayToJoin(): boolean { return this.campaignTypeKey === 'pay_to_join'; }
   get isProduct(): boolean { return this.campaignTypeKey === 'product'; }
   get isPaidCollab(): boolean { return this.campaignTypeKey === 'paid_collab'; }
 
@@ -1029,9 +1023,6 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return !!(this.shootLocationTypeLabel || this.shootLocationAddress || this.shootLocationMapUrl || this.shootLocationNotes);
   }
 
-  get payToJoinBenefits(): string { return (this.campaign?.payToJoinBenefits || '').trim(); }
-  get payToJoinInstructions(): string { return (this.campaign?.payToJoinInstructions || '').trim(); }
-  get hasPayToJoinDetails(): boolean { return !!(this.payToJoinBenefits || this.payToJoinInstructions); }
 
   get hasBudget(): boolean {
     return !!this.yourPayoutText || !!this.campaignBudgetText;
@@ -1767,25 +1758,23 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       this.pointTo('contentType');
       return;
     }
-    if (this.needsPayoutDetails) {
-      const upi = (this.payoutUpiId || '').trim();
-      const mobile = (this.payoutMobile || '').trim();
-      if (!upi && !mobile) {
-        this.payoutEditing = true;
-        this.showToastError('Please add a UPI ID or mobile number (GPay/PhonePe) to receive payment.');
-        this.pointTo('payout');
-        return;
-      }
+    const upi = (this.payoutUpiId || '').trim();
+    const mobile = (this.payoutMobile || '').trim();
+    if (!upi && !mobile) {
+      this.payoutEditing = true;
+      this.showToastError('Please add a UPI ID or mobile number (GPay/PhonePe) to receive payment.');
+      this.pointTo('payout');
+      return;
     }
     this.toastError = '';
     const [platform, contentType] = this.selectedContentTypeKey
       ? this.selectedContentTypeKey.split('::')
       : [undefined, undefined];
-    const payout = this.needsPayoutDetails ? {
+    const payout = {
       upiId: (this.payoutUpiId || '').trim(),
       mobile: (this.payoutMobile || '').trim(),
       accountHolderName: (this.payoutName || '').trim(),
-    } : undefined;
+    };
     this.accept.emit({
       inviteId: this.inviteId,
       postDate: this.postDate || undefined,
@@ -1835,11 +1824,11 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     const [platform, contentType] = this.selectedContentTypeKey
       ? this.selectedContentTypeKey.split('::')
       : [undefined, undefined];
-    const payout = this.needsPayoutDetails ? {
+    const payout = {
       upiId: (this.payoutUpiId || '').trim(),
       mobile: (this.payoutMobile || '').trim(),
       accountHolderName: (this.payoutName || '').trim(),
-    } : undefined;
+    };
     this.accept.emit({
       inviteId: this.inviteId,
       postDate: this.postDate || undefined,

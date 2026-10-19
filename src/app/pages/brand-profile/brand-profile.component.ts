@@ -544,11 +544,6 @@ export class BrandProfileComponent implements OnInit {
         email: [false],
         call: [false]
       }, { validators: [atLeastOneContactRequired] }),
-      payout: this.fb.group({
-        upiId: [''],
-        mobile: [''],
-        accountHolderName: [''],
-      }),
     });
 
     // Username input sanitization
@@ -648,11 +643,6 @@ export class BrandProfileComponent implements OnInit {
             googleMapAddress: profile.googleMapAddress || profile.location?.googleMapLink || '',
             description: profile.description || '',
             contact: profile.contact || { whatsapp: false, email: false, call: false },
-            payout: {
-              upiId: profile.payout?.upiId || '',
-              mobile: profile.payout?.mobile || profile.phoneNumber || '',
-              accountHolderName: profile.payout?.accountHolderName || profile.brandName || '',
-            }
             }, { emitEvent: false });
 
           const logoArr = this.registrationForm.get('brandLogo') as FormArray;

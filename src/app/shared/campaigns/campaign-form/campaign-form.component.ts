@@ -493,8 +493,6 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
               venueDistrict: newCampaign.venueDistrict || '',
               venueState: newCampaign.venueState || '',
               venueGoogleMapUrl: newCampaign.venueGoogleMapUrl || newCampaign.shootLocationMapUrl || '',
-              payToJoinBenefits: newCampaign.payToJoinBenefits || '',
-              payToJoinInstructions: newCampaign.payToJoinInstructions || '',
               productValue: (function(paise: number){ return paise > 0 ? Math.floor(paise / 100) : null; })(Number(newCampaign.productValue || 0)),
               productDescription: newCampaign.productDescription || '',
               productPaymentMode: newCampaign.productPaymentMode || 'product_only',
@@ -603,8 +601,6 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       venueDistrict: [(this.campaign as any)?.venueDistrict || ''],
       venueState: [(this.campaign as any)?.venueState || ''],
       venueGoogleMapUrl: [(this.campaign as any)?.venueGoogleMapUrl || (this.campaign as any)?.shootLocationMapUrl || ''],
-      payToJoinBenefits: [(this.campaign as any)?.payToJoinBenefits || ''],
-      payToJoinInstructions: [(this.campaign as any)?.payToJoinInstructions || ''],
       productValue: [this.getInitialProductValue()],
       productDescription: [(this.campaign as any)?.productDescription || ''],
       productPaymentMode: [(this.campaign as any)?.productPaymentMode || 'product_only'],
@@ -1021,7 +1017,6 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     venueDistrict: 'Venue district',
     venueCity: 'Venue city',
     inviteBenefits: 'Location & benefits',
-    payToJoinBenefits: 'Benefits',
     productDescription: 'Product details',
     productPaymentAmount: 'Cash component',
     shootLocationType: 'Shoot location type',
@@ -1174,7 +1169,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     const acceptanceLockedFields = [
       'description',
       'script',
-      'inviteBenefits', 'payToJoinBenefits', 'payToJoinInstructions',
+      'inviteBenefits',
       'productDescription',
       'venueName', 'venueAddress', 'venueCity', 'venueDistrict',
       'venueState', 'venueGoogleMapUrl', 'postingDeadlineMode',
@@ -1560,7 +1555,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
 
   get shouldRequireFlatPricePerParticipant(): boolean {
     const t = this.selectedCampaignType;
-    if (t === 'pay_to_join' || t === 'invite_location') return true;
+    if (t === 'invite_location') return true;
     if (this.isPhotographerCreator) {
       return t === 'paid_collab' || t === 'creative_project';
     }
@@ -1845,7 +1840,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   step2Valid(): boolean {
-    const requiredControls = ['pricePerInfluencer', 'maxInfluencers', 'payToJoinBenefits', 'productDescription', 'productPaymentAmount'];
+    const requiredControls = ['pricePerInfluencer', 'maxInfluencers', 'productDescription', 'productPaymentAmount'];
     const hasMissingRequiredControl = requiredControls.some((name) => {
       const control = this.form.get(name);
       // Disabled controls are locked — treat as passing even if they have validators
@@ -1896,12 +1891,9 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     const fieldMessages: Array<{ name: string; message: string }> = [
       {
         name: 'pricePerInfluencer',
-        message: this.selectedCampaignType === 'pay_to_join'
-          ? 'Enter a valid join fee per participant.'
-          : 'Enter a valid payment per participant.',
+        message: 'Enter a valid payment per participant.',
       },
       { name: 'maxInfluencers', message: 'Enter max participants (at least 1).' },
-      { name: 'payToJoinBenefits', message: 'Add pay-to-join benefits.' },
       { name: 'productDescription', message: 'Add product details.' },
       { name: 'productPaymentAmount', message: 'Enter product cash component amount.' },
     ];
@@ -1990,7 +1982,6 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       pricePerInfluencer: [Validators.min(1)],
       venueAddress: [Validators.minLength(5)],
       inviteBenefits: [Validators.minLength(3)],
-      payToJoinBenefits: [Validators.minLength(5)],
       productDescription: [Validators.minLength(3)],
       productPaymentAmount: [Validators.min(1)],
       shootLocationAddress: [Validators.minLength(3)],
@@ -1999,7 +1990,6 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     const managedFields = [
       'pricePerInfluencer',
       'venueAddress', 'venueState', 'venueDistrict', 'venueCity', 'inviteBenefits',
-      'payToJoinBenefits',
       'productDescription', 'productPaymentAmount',
       'shootLocationType', 'shootLocationAddress',
     ];
@@ -2082,10 +2072,6 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       payload.venueState = undefined;
       payload.venueGoogleMapUrl = undefined;
       payload.inviteBenefits = undefined;
-    }
-    if (t !== 'pay_to_join') {
-      payload.payToJoinBenefits = undefined;
-      payload.payToJoinInstructions = undefined;
     }
     if (t !== 'product') {
       payload.productValue = undefined;

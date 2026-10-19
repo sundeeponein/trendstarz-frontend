@@ -84,7 +84,6 @@ export class CampaignPayComponent implements OnInit {
       paid_collab: 'Paid Collaboration',
       product: 'Product Collaboration',
       invite_location: 'Invite to Location',
-      pay_to_join: 'Pay to Join',
     };
     this.chip = typeMap[(c.campaignType || '').toLowerCase()] || 'Campaign';
     this.subtitle = `${accepted} accepted influencer${accepted === 1 ? '' : 's'}`;

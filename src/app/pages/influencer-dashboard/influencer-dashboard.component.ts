@@ -82,7 +82,6 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     pending: 0,
     confirmedWorkValue: 0,
     frozen: 0,
-    paidInPayToJoin: 0,
   };
   planCaps: PlanCapabilities = FREE_CAPABILITIES;
   attentionCounts = { pendingInvites: 0, overdueDeliverables: 0, disputedAgainstMe: 0 };
@@ -573,11 +572,7 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
       .filter((r: any) => r.recipientRole === 'influencer' && r.payoutStatus === 'frozen')
       .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
 
-    const paidInPayToJoin = rows
-      .filter((r: any) => r.payerRole === 'influencer')
-      .reduce((sum: number, r: any) => sum + Number(r.payerTotal || 0), 0);
-
-    this.paymentSummary = { earnedThisMonth, pending, confirmedWorkValue, frozen, paidInPayToJoin };
+    this.paymentSummary = { earnedThisMonth, pending, confirmedWorkValue, frozen };
   }
 
   /** Only non-paid / non-skipped transactions for the dashboard snapshot */

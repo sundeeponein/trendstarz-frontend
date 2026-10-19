@@ -2,7 +2,7 @@ export interface CampaignTransaction {
   _id: string;
   campaignId: string;
   inviteId?: string;
-  transactionType: 'paid_collab' | 'pay_to_join' | 'platform_fee';
+  transactionType: 'paid_collab' | 'platform_fee';
   /** platform_fee rows: the invite the fee confirmed. */
   feeInviteId?: string;
   /** platform_fee rows: refunded to the host as TrendStarZ credit. */

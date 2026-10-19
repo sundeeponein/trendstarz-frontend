@@ -231,7 +231,7 @@
         <tbody>
           <tr *ngFor="let tx of pendingPaymentHistory">
             <td>{{ tx.campaignTitle || '—' }}</td>
-            <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Collab' : 'Pay-to-Join' }}</td>
+            <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Collab' : 'Platform Fee' }}</td>
             <td>{{ formatPaise(tx.payerTotal) }}</td>
             <td>{{ tx.collectionStatus === 'proof_submitted' ? 'Proof Under Review' : 'Awaiting Payment' }}</td>
             <td>{{ formatDate(tx.updatedAt || tx.createdAt) }}</td>

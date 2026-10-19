@@ -659,7 +659,7 @@
                 <tr>
                   <td>
                     <div class="fw-semibold">Photographer host</div>
-                    <small class="text-muted">A photographer creating a paid collab — invites influencers (also used when a photographer joins Pay-to-Join)</small>
+                    <small class="text-muted">A photographer creating a paid collab — invites influencers</small>
                   </td>
                   <td>
                     <div class="input-group input-group-sm">
@@ -678,7 +678,7 @@
                 <tr>
                   <td>
                     <div class="fw-semibold">Influencer host</div>
-                    <small class="text-muted">An influencer creating a paid campaign — invites photographers (also used when an influencer joins Pay-to-Join)</small>
+                    <small class="text-muted">An influencer creating a paid campaign — invites photographers</small>
                   </td>
                   <td>
                     <div class="input-group input-group-sm">
@@ -878,9 +878,9 @@
               </div>
             </div>
 
-            <!-- Pay-to-Join: Influencer + Photo/Video commission (default 0%) -->
+            <!-- Influencer / photographer hosts: commission by badge -->
             <div class="mb-2">
-              <div class="fw-semibold mb-1" style="font-size:0.85rem; color:#bf360c;">Pay-to-Join — Creator Commission <span class="badge bg-secondary ms-1" style="font-weight:400; font-size:0.7rem;">Default 0%</span></div>
+              <div class="fw-semibold mb-1" style="font-size:0.85rem; color:#bf360c;">Influencer &amp; Photographer hosts — Commission</div>
               <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
                   <thead>
@@ -924,31 +924,19 @@
             <div class="mt-3 p-3 rounded" style="background:#f8f9fa; border:1px solid #dee2e6; font-size:0.85rem;">
               <strong>How platform commission applies</strong>
               <div class="row mt-2 g-2">
-                <div class="col-12 col-md-6">
+                <div class="col-12">
                   <div class="p-2 rounded" style="background:#e8f5e9; border:1px solid #c8e6c9;">
                     <strong style="color:#1b5e20;">Regular campaigns</strong><br>
                     <small style="color:#388e3c;">Paid collab · Product · Location invite · Reel collab · Portfolio</small>
                     <div class="mt-1" style="color:#2e7d32;">
-                      Brand pays: agreed amount + commission ({{ effectiveRoleFee('brandFeePercent') }}%)<br>
-                      Creator receives: full agreed amount<br>
-                      <small class="text-muted">Commission added on top — creator is never docked. GST applies on commission.</small>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-12 col-md-6">
-                  <div class="p-2 rounded" style="background:#fff3e0; border:1px solid #ffe0b2;">
-                    <strong style="color:#bf360c;">Pay-to-Join campaigns</strong><br>
-                    <small style="color:#e65100;">Product collab · Invite to location · Enable from Campaign Types above</small>
-                    <div class="mt-1" style="color:#e65100;">
-                      Creator pays: join fee (face value)<br>
-                      Creator commission ({{ effectiveRoleFee('influencerFeePercent') }}% / {{ effectiveRoleFee('photographerFeePercent') }}%) deducted — currently 0%<br>
-                      Host receives: join fees minus creator commission<br>
-                      <small class="text-muted">Set Influencer/Photo-Video % above to activate. Badge overrides apply to the paying creator.</small>
+                      Host pays: agreed amount + host commission (brand {{ effectiveRoleFee('brandFeePercent') }}%) + GST on the commission<br>
+                      Creator receives: agreed amount − creator payout fee (Recipient Payout Fee above)<br>
+                      <small class="text-muted">GST is charged only on TrendStarZ's fees, never on the creator's amount.</small>
                     </div>
                   </div>
                 </div>
               </div>
-              <p class="mb-0 mt-2 text-muted" style="font-size:0.8rem;">Brand badge overrides apply to Regular campaigns. Creator badge overrides apply to Pay-to-Join. Assign badges via Users table → Fee Badges tab.</p>
+              <p class="mb-0 mt-2 text-muted" style="font-size:0.8rem;">Badge overrides apply to whoever hosts and pays: brand badges to brands, creator badges to influencer and photographer hosts. Assign badges via Users table → Fee Badges tab.</p>
             </div>
           </div>
         </div>

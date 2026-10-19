@@ -118,14 +118,6 @@ export class CampaignInviteCardComponent {
     this.payoutEditing = !this.payoutEditing;
   }
 
-  /** True for campaigns where the influencer receives money. */
-  get needsPayoutDetails(): boolean {
-    const t = (this.campaign?.campaignType || '').toLowerCase();
-    // Influencer is paid in paid_collab, product (if any) and invite_location.
-    // For pay_to_join the influencer pays the brand, so no payout details.
-    return t !== 'pay_to_join';
-  }
-
   get payoutSummary(): string {
     const parts: string[] = [];
     if (this.payoutUpiId) parts.push(this.payoutUpiId);
@@ -444,7 +436,6 @@ export class CampaignInviteCardComponent {
       paid_collab: 'Paid Collab',
       product: 'Product / Barter',
       invite_location: 'Invite to Location',
-      pay_to_join: 'Pay to Join',
     };
     return m[this.campaignTypeKey] || '';
   }
@@ -453,12 +444,10 @@ export class CampaignInviteCardComponent {
       paid_collab: 'bi-cash-coin',
       product: 'bi-box-seam',
       invite_location: 'bi-geo-alt-fill',
-      pay_to_join: 'bi-ticket-perforated',
     };
     return m[this.campaignTypeKey] || 'bi-tag-fill';
   }
   get isInviteLocation(): boolean { return this.campaignTypeKey === 'invite_location'; }
-  get isPayToJoin(): boolean { return this.campaignTypeKey === 'pay_to_join'; }
   get isProduct(): boolean { return this.campaignTypeKey === 'product'; }
   get isPaidCollab(): boolean { return this.campaignTypeKey === 'paid_collab'; }
 
@@ -692,12 +681,6 @@ export class CampaignInviteCardComponent {
     return this.isLocationPaymentConfirmed;
   }
 
-  get payToJoinFeeText(): string {
-    const paise = Number(this.campaign?.pricePerInfluencer || 0);
-    if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
-    return '';
-  }
-  get payToJoinBenefits(): string { return (this.campaign?.payToJoinBenefits || '').trim(); }
 
   get hasBudget(): boolean {
     const c = this.campaign;
@@ -1129,25 +1112,21 @@ export class CampaignInviteCardComponent {
 
     // Require at least one payout channel for campaigns where the
     // influencer will be paid.
-    if (this.needsPayoutDetails) {
-      const upi = (this.payoutUpiId || '').trim();
-      const mobile = (this.payoutMobile || '').trim();
-      if (!upi && !mobile) {
-        this.payoutEditing = true;
-        this.validationError.emit(
-          'Please add a UPI ID or mobile number where you want to receive payment.',
-        );
-        return;
-      }
+    const upi = (this.payoutUpiId || '').trim();
+    const mobile = (this.payoutMobile || '').trim();
+    if (!upi && !mobile) {
+      this.payoutEditing = true;
+      this.validationError.emit(
+        'Please add a UPI ID or mobile number where you want to receive payment.',
+      );
+      return;
     }
 
-    const payout: InvitePayoutDetails | undefined = this.needsPayoutDetails
-      ? {
-          upiId: (this.payoutUpiId || '').trim(),
-          mobile: (this.payoutMobile || '').trim(),
-          accountHolderName: (this.payoutName || '').trim(),
-        }
-      : undefined;
+    const payout: InvitePayoutDetails = {
+      upiId: (this.payoutUpiId || '').trim(),
+      mobile: (this.payoutMobile || '').trim(),
+      accountHolderName: (this.payoutName || '').trim(),
+    };
 
     this.accept.emit({
       inviteId: this.inviteId,
@@ -1200,29 +1179,25 @@ export class CampaignInviteCardComponent {
       return;
     }
 
-    if (this.needsPayoutDetails) {
-      const upi = (this.payoutUpiId || '').trim();
-      const mobile = (this.payoutMobile || '').trim();
-      if (!upi && !mobile) {
-        this.payoutEditing = true;
-        this.validationError.emit(
-          'Please add a UPI ID or mobile number where you want to receive payment.',
-        );
-        return;
-      }
+    const upi = (this.payoutUpiId || '').trim();
+    const mobile = (this.payoutMobile || '').trim();
+    if (!upi && !mobile) {
+      this.payoutEditing = true;
+      this.validationError.emit(
+        'Please add a UPI ID or mobile number where you want to receive payment.',
+      );
+      return;
     }
 
     const [platform, contentType] = this.selectedContentTypeKey
       ? this.selectedContentTypeKey.split('::')
       : [undefined, undefined];
 
-    const payout: InvitePayoutDetails | undefined = this.needsPayoutDetails
-      ? {
-          upiId: (this.payoutUpiId || '').trim(),
-          mobile: (this.payoutMobile || '').trim(),
-          accountHolderName: (this.payoutName || '').trim(),
-        }
-      : undefined;
+    const payout: InvitePayoutDetails = {
+      upiId: (this.payoutUpiId || '').trim(),
+      mobile: (this.payoutMobile || '').trim(),
+      accountHolderName: (this.payoutName || '').trim(),
+    };
 
     this.accept.emit({
       inviteId: this.inviteId,

@@ -68,7 +68,6 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     earnedThisMonth: 0,
     pending: 0,
     frozen: 0,
-    paidInPayToJoin: 0,
   };
   loading = true;
   error = '';
@@ -475,11 +474,7 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
       .filter((r: any) => r.recipientRole === 'photographer' && r.payoutStatus === 'frozen')
       .reduce((sum: number, r: any) => sum + Number(r.recipientPayout || 0), 0);
 
-    const paidInPayToJoin = rows
-      .filter((r: any) => r.payerRole === 'photographer')
-      .reduce((sum: number, r: any) => sum + Number(r.payerTotal || 0), 0);
-
-    this.paymentSummary = { earnedThisMonth, pending, frozen, paidInPayToJoin };
+    this.paymentSummary = { earnedThisMonth, pending, frozen };
   }
 
   /** Only non-paid / non-skipped transactions for the dashboard snapshot */

@@ -27,9 +27,8 @@ export class AdminPaymentsUiUtilsService {
     });
   }
 
-  getTransactionLabel(type: 'paid_collab' | 'pay_to_join' | 'platform_fee'): string {
-    if (type === 'platform_fee') return 'Platform Fee';
-    return type === 'paid_collab' ? 'Paid Collab' : 'Pay-to-Join';
+  getTransactionLabel(type: 'paid_collab' | 'platform_fee'): string {
+    return type === 'platform_fee' ? 'Platform Fee' : 'Paid Collab';
   }
 
   collectionStatusLabel(status: string): string {

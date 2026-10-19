@@ -17,7 +17,6 @@ export interface Campaign {
     | 'paid_collab'
     | 'product'
     | 'invite_location'
-    | 'pay_to_join'
     | 'portfolio_collab'
     | 'reel_collab'
     | 'creative_project';
@@ -79,9 +78,6 @@ export interface Campaign {
   moderationNote?: string;
   // Invite to location specific benefits text (e.g. "Stay + food included")
   inviteBenefits?: string;
-  // Pay-to-join specific fields
-  payToJoinBenefits?: string;
-  payToJoinInstructions?: string;
   // Campaign Resources — shared with the creator once accepted; source of the tracked promo link.
   promotionUrlType?:
     | 'website'
