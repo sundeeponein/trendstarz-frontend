@@ -1998,10 +1998,10 @@
         </label>
         <div class="fulfill-row">
           <label class="fulfill-label">Shipped on
-            <input type="date" class="fulfill-input" [(ngModel)]="fulfillForm.shippedAt"/>
+            <input type="date" class="fulfill-input" [(ngModel)]="fulfillForm.shippedAt" [max]="todayDateInput"/>
           </label>
           <label class="fulfill-label">Delivered on
-            <input type="date" class="fulfill-input" [(ngModel)]="fulfillForm.deliveredAt"/>
+            <input type="date" class="fulfill-input" [(ngModel)]="fulfillForm.deliveredAt" [max]="todayDateInput"/>
           </label>
         </div>
         <label class="fulfill-label">Status

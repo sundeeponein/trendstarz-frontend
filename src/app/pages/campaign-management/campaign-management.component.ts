@@ -208,6 +208,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     status?: string;
     note?: string;
   } = {};
+  /** Latest pickable shipping/delivery date (today, local). */
+  get todayDateInput(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
   savingFulfillment = false;
 
   // ── Expand panel (brand view) ──────────────────────────────────
