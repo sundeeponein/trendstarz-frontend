@@ -1181,6 +1181,10 @@ $dk-orange:    #e06030;
   i { color: $lt-muted; .cdm-panel--dark & { color: $dk-muted; } }
 }
 .cdm-howpaid__steps { margin: 0; padding-left: 1.2rem; display: grid; gap: 3px; }
+.cdm-howpaid__note {
+  margin: 6px 0 0; font-size: 0.75rem; color: $lt-muted;
+  .cdm-panel--dark & { color: $dk-muted; }
+}
 .cdm-payout-input {
   width: 100%; border: 1px solid $lt-border; border-radius: 6px;
   padding: 6px 9px; font-size: 0.8rem; color: $lt-text; background: $lt-bg;

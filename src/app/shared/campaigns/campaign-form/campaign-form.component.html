@@ -566,6 +566,11 @@
         </div>
 
         <p class="trust-note"><i class="bi bi-shield-check"></i> Pay only for accepted {{ inviteRecipientLabelPlural.toLowerCase() }}</p>
+        <p class="trust-note" *ngIf="selectedCampaignType === 'product' || selectedCampaignType === 'invite_location'">
+          <i class="bi bi-info-circle"></i>
+          TrendStarZ connects you with {{ inviteRecipientLabelPlural.toLowerCase() }} and tracks their post links.
+          {{ selectedCampaignType === 'product' ? 'Sending the product (its quality and delivery)' : 'Hosting the visit' }} and the content they post are between you and the {{ inviteRecipientLabelSingular.toLowerCase() }} — TrendStarZ isn't responsible for them.
+        </p>
 
         <div class="field-group">
           <app-chip-selection-group

@@ -19,7 +19,11 @@ export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
   },
   {
     question: 'How do influencers receive payouts?',
-    answer: 'Once the brand approves your submitted work, TrendStarz releases the agreed amount to you via UPI. You can follow the status of every payout on your Transactions page.'
+    answer: 'Submit your post link in TrendStarz. Once the host approves it, or their review time passes with no issue raised, the collaboration is completed and TrendStarz sends the agreed amount to the UPI ID on your profile. You can follow every payout on your Transactions page.'
+  },
+  {
+    question: 'What does TrendStarz do in product (barter) and location-visit collaborations?',
+    answer: 'TrendStarz connects you, tracks the shipping or visit date, and tracks the post link the creator submits (with the host review and no-show rules). The product itself (its quality and delivery) or the visit, and the content the creator posts, are between the host and the creator — TrendStarz isn\'t responsible for them.'
   },
   {
     question: 'How do brands use TrendStarz?',

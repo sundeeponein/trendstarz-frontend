@@ -127,6 +127,22 @@
         </ol>
       </div>
 
+      <!-- How it works (user, pending, barter / location) -->
+      <div class="cdm-howpaid" *ngIf="isPending && !adminReview && (isProduct || isInviteLocation)">
+        <div class="cdm-howpaid__title"><i class="bi bi-info-circle"></i> {{ invitePaysMoney ? 'Please note' : 'How it works' }}</div>
+        <ol class="cdm-howpaid__steps" *ngIf="!invitePaysMoney">
+          <li *ngIf="isProduct">The host sends you the product. Your posting window starts when it's delivered.</li>
+          <li *ngIf="isInviteLocation">Visit the location on your chosen date. The host checks you in.</li>
+          <li>Create your reel, short or post as per the campaign description and guidelines, and submit the post link in TrendStarZ (Invites → <strong>Submit your post</strong>).</li>
+          <li>The host has {{ hoursLabel(workflowHours.approval + workflowHours.autoComplete) }} to check it. After that the collaboration is completed.</li>
+          <li>If you don't post, the collaboration closes as a no-show and still uses one of your monthly invite slots.</li>
+        </ol>
+        <p class="cdm-howpaid__note">
+          TrendStarZ connects you with the host and tracks your post link.
+          {{ isProduct ? 'The product (its quality and delivery)' : 'The visit' }} and what you post are between you and the host — TrendStarZ isn't responsible for them.
+        </p>
+      </div>
+
       <!-- Campaign Workflow stepper -->
       <div class="cdm-workflow" *ngIf="adminReview">
         <div class="cdm-workflow__label">CAMPAIGN WORKFLOW</div>
