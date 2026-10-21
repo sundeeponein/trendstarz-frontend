@@ -928,8 +928,13 @@ export class ConfigService {
   }
 
   /** Settings → Delete Account. Requires the current password; schedules deletion after a grace period. */
-  selfDeleteAccount(id: string, password: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/users/${id}/self-delete`, { password });
+  selfDeleteAccount(id: string, password: string, code = ''): Observable<any> {
+    return this.http.post(`${this.apiUrl}/users/${id}/self-delete`, { password, code });
+  }
+
+  /** Delete Account → "Email me a code instead": sends a one-time code to the account email. */
+  sendSelfDeleteCode(id: string): Observable<{ sentTo: string }> {
+    return this.http.post<{ sentTo: string }>(`${this.apiUrl}/users/${id}/self-delete/code`, {});
   }
 
   /** Cancels a pending self-deletion request during the grace period. */

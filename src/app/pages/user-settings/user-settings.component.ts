@@ -39,6 +39,10 @@ export class UserSettingsComponent implements OnInit {
   deletePassword = '';
   deleteBusy = false;
   deleteError = '';
+  /** "Email me a code instead" (forgot password): the code and where it was sent. */
+  deleteCode = '';
+  deleteCodeSentTo = '';
+  sendingDeleteCode = false;
   private userId: string | null = null;
 
   constructor(
@@ -93,22 +97,50 @@ export class UserSettingsComponent implements OnInit {
 
   openDeleteConfirm(): void {
     this.showDeleteConfirm = true;
+    this.resetDeleteForm();
+  }
+
+  private resetDeleteForm(): void {
     this.deletePassword = '';
+    this.deleteCode = '';
+    this.deleteCodeSentTo = '';
     this.deleteError = '';
+  }
+
+  /** Can confirm with the password, or with the emailed 6-digit code. */
+  get canConfirmDelete(): boolean {
+    return !this.deleteBusy && (!!this.deletePassword || /^\d{6}$/.test(this.deleteCode.trim()));
+  }
+
+  sendDeleteCode(): void {
+    if (this.sendingDeleteCode || !this.userId) return;
+    this.sendingDeleteCode = true;
+    this.deleteError = '';
+    this.config.sendSelfDeleteCode(this.userId).subscribe({
+      next: (res) => {
+        this.sendingDeleteCode = false;
+        this.deleteCodeSentTo = res?.sentTo || 'your email';
+      },
+      error: (err) => {
+        this.sendingDeleteCode = false;
+        this.deleteError =
+          err?.error?.message || err?.error?.error || "Couldn't send the code. Please try again in a minute.";
+      },
+    });
   }
 
   cancelDeleteConfirm(): void {
     if (this.deleteBusy) return;
     this.showDeleteConfirm = false;
-    this.deletePassword = '';
-    this.deleteError = '';
+    this.resetDeleteForm();
   }
 
   confirmDeleteAccount(): void {
-    if (this.deleteBusy || !this.userId || !this.deletePassword) return;
+    if (!this.canConfirmDelete || !this.userId) return;
     this.deleteBusy = true;
     this.deleteError = '';
-    this.config.selfDeleteAccount(this.userId, this.deletePassword).subscribe({
+    const code = this.deleteCodeSentTo ? this.deleteCode.trim() : '';
+    this.config.selfDeleteAccount(this.userId, code ? '' : this.deletePassword, code).subscribe({
       next: () => {
         this.deleteBusy = false;
         this.session.clearSession();
@@ -116,7 +148,7 @@ export class UserSettingsComponent implements OnInit {
       },
       error: (err) => {
         this.deleteBusy = false;
-        this.deleteError = err?.error?.message || 'Incorrect password. Please try again.';
+        this.deleteError = err?.error?.message || (code ? 'That code is wrong or has expired.' : 'Incorrect password. Please try again.');
       },
     });
   }

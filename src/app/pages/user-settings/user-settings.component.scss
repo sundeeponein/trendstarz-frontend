@@ -573,3 +573,28 @@ button:disabled {
 
 // Referral card renders nothing while loading / when unavailable — hide the empty bordered host.
 app-referral-link-card.settings-section:empty { display: none; }
+
+.delete-code-alt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  margin: -4px 0 10px;
+  color: #6b7280;
+}
+.btn-link-code {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #e11d48;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.btn-link-code:disabled { opacity: 0.6; cursor: default; }
+.delete-code-hint {
+  display: block;
+  margin-top: 4px;
+  color: #6b7280;
+}
