@@ -1,5 +1,6 @@
 import { Component, ChangeDetectorRef, HostListener, OnDestroy, inject } from '@angular/core';
 import { SessionService } from '../../core/session.service';
+import { PushNotificationService } from '../../core/push-notification.service';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -315,7 +316,10 @@ export class NavbarLayoutComponent implements OnDestroy {
     );
     // No need to call loadUserFromStorage here; handled in App root
   }
-  logout() {
+  private readonly push = inject(PushNotificationService);
+
+  async logout() {
+    await this.push.detachFromAccount();
     this.session.clearSession();
     this.router.navigate(['/']);
   }

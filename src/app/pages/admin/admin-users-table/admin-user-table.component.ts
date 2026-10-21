@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -29,6 +29,7 @@ import { ImageGalleryModalComponent } from '../../../shared/components/image-gal
 import { VerificationFieldComponent } from '../../../shared/components/verification-field/verification-field.component';
 import { SocialMediaEditModalComponent, AdminUser, SocialMediaEditPayload } from '../../../shared/components/social-media-edit-modal/social-media-edit-modal.component';
 import { SessionService } from '../../../core/session.service';
+import { PushNotificationService } from '../../../core/push-notification.service';
 import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 import { ImageCropModalComponent } from '../../../shared/components/image-crop-modal/image-crop-modal.component';
 import { CollaborationScoreApiService, CollaborationAudit } from '../../../services/collaboration-score-api.service';
@@ -3601,7 +3602,10 @@ export class AdminUserTableComponent implements OnInit {
     this.premiumType = null;
   }
 
-  logout() {
+  private readonly push = inject(PushNotificationService);
+
+  async logout() {
+    await this.push.detachFromAccount();
     this.session.clearSession();
     window.location.href = '/login';
   }

@@ -1,10 +1,11 @@
-import { Component, HostListener, ElementRef, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, ElementRef, ChangeDetectorRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavigationStart, RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ConfigService } from '../../shared/config.service';
 import { filter, Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
+import { PushNotificationService } from '../../core/push-notification.service';
 
 interface AdminNavItem {
   label: string;
@@ -157,7 +158,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  logout() {
+  private readonly push = inject(PushNotificationService);
+
+  async logout() {
+    await this.push.detachFromAccount();
     this.session.clearSession();
     this.adminUser = null;
     this.router.navigate(['/']);

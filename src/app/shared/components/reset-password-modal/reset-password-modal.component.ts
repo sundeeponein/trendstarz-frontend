@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfigService } from '../../config.service';
 import { SessionService } from '../../../core/session.service';
+import { PushNotificationService } from '../../../core/push-notification.service';
 import { getPasswordChecks } from '../../password-strength';
 
 @Component({
@@ -33,6 +34,8 @@ export class ResetPasswordModalComponent implements OnChanges {
     next: false,
     confirm: false,
   };
+
+  private readonly push = inject(PushNotificationService);
 
   constructor(
     private configService: ConfigService,
@@ -98,6 +101,12 @@ export class ResetPasswordModalComponent implements OnChanges {
         // Changing the password signs out every other session; keep this one with the new token.
         const freshToken = res?.token || res?.data?.token;
         if (freshToken) this.session.setToken(freshToken);
+        // The server forgets every push device on a password change; re-attach
+        // this one silently if notifications were already allowed here.
+        if (this.push.localPreference !== 'disabled' && this.push.browserPermission === 'granted') {
+          const role = String((this.session.getUser() as any)?.role || '').toLowerCase();
+          this.push.requestSubscription(role === 'brand' || role === 'admin' || role === 'photographer' ? role : 'influencer');
+        }
         this.passwordSuccess = res?.data?.message || res?.message || 'Password changed successfully.';
         this.passwordSaving = false;
         this.passwordForm = {

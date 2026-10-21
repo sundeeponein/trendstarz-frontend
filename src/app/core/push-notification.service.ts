@@ -2,7 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { SwPush } from '@angular/service-worker';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { catchError } from 'rxjs/operators';
+import { catchError, timeout } from 'rxjs/operators';
 import { of, Subscription } from 'rxjs';
 
 export interface NotificationPreferences {
@@ -74,6 +74,24 @@ export class PushNotificationService implements OnDestroy {
       console.error('[PushNotificationService] Subscription failed:', err);
       return false;
     }
+  }
+
+  /**
+   * On logout: stop this browser receiving the account's notifications while
+   * keeping the browser permission, so the next login re-attaches it. Must run
+   * before the session token is cleared (the backend only removes the
+   * caller's own subscription). Never blocks logout for more than 3 seconds.
+   */
+  async detachFromAccount(): Promise<void> {
+    if (!this.swPush.isEnabled) return;
+    try {
+      const sub = await this.swPush.subscription.pipe(timeout(1500), catchError(() => of(null))).toPromise();
+      if (!sub) return;
+      await this.http
+        .delete(`${this.apiUrl}/push/unsubscribe`, { body: { endpoint: (sub as PushSubscription).endpoint } })
+        .pipe(timeout(3000), catchError(() => of(null)))
+        .toPromise();
+    } catch { /* silent — logout must still happen */ }
   }
 
   /** Cancel the active browser push subscription and notify the backend. */
