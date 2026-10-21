@@ -59,6 +59,15 @@ export class LoginComponent {
       password: ['', Validators.required],
     });
 
+    // Signed out by the server (see JwtInterceptor): say why.
+    const ended = this.route.snapshot.queryParamMap.get('sessionEnded');
+    const endedText: Record<string, string> = {
+      password: 'Your password was changed. Please log in again with the new password.',
+      deleted: 'This account has been deleted. Contact TrendStarZ support if this is a mistake.',
+      expired: 'Your session has ended. Please log in again.',
+    };
+    if (ended && endedText[ended]) this.toast.warning(endedText[ended], 7000);
+
     // Only honor app-internal paths — never an absolute/external URL.
     const requested = this.route.snapshot.queryParamMap.get('returnUrl');
     if (requested && requested.startsWith('/') && !requested.startsWith('//')) {
