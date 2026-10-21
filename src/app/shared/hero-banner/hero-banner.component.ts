@@ -115,7 +115,7 @@ export class HeroBannerComponent implements OnChanges, OnDestroy {
   @Input() titleHighlight = 'Creators & Photographers';
   @Input() subtitle = 'Brands find talent. Creators get discovered. Photographers get hired.';
   @Input() audiences: HeroAudienceCta[] = [
-    { key: 'brand', label: 'I\'m a Brand', sub: 'Find creators & photographers', icon: 'bi-briefcase' },
+    { key: 'brand', label: 'I\'m a Brand — find creators for my campaign', sub: 'Verified influencers & photographers · pay only for accepted creators', icon: 'bi-briefcase' },
     { key: 'influencer', label: 'I\'m an Influencer', sub: 'Get discovered & earn', icon: 'bi-person-video3' },
     { key: 'photographer', label: 'I\'m a Photo/Videographer', sub: 'Get hired for campaigns', icon: 'bi-camera' },
   ];

@@ -40,9 +40,11 @@
   }
 
   // ── Audience CTAs ─────────────────────────────────────────────────────────
+  // Brands first: the primary audience spans the full row; the other two sit
+  // underneath as smaller, secondary choices.
   .hero-audiences {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
   }
 
@@ -91,7 +93,17 @@
     strong { font-size: 0.98rem; font-weight: 700; line-height: 1.25; }
     small { font-size: 0.8rem; color: rgba(11, 18, 32, 0.62); }
 
+    &:not(.primary) {
+      padding: 0.7rem 0.9rem;
+      box-shadow: none;
+      strong { font-size: 0.92rem; }
+      .audience-icon { width: 32px; height: 32px; font-size: 0.95rem; }
+    }
+
     &.primary {
+      grid-column: 1 / -1;
+      padding: 1.1rem 1.25rem;
+      strong { font-size: 1.12rem; }
       border-color: transparent;
       background: linear-gradient(90deg, #ff7a00, #ff4d1a);
       color: #fff;

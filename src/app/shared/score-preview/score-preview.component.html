@@ -88,6 +88,9 @@
         <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Save your score</li>
         <li><i class="bi bi-lock-fill" aria-hidden="true"></i> Get discovered by brands</li>
       </ul>
+      <button type="button" class="sp-card__next" (click)="goToRolePicker(rolePicker)">
+        Save my score — create a free profile <i class="bi bi-arrow-down" aria-hidden="true"></i>
+      </button>
       <button type="button" class="btn btn-link sp-card__again" (click)="checkAnother()">Check another channel</button>
     </div>
   </div>
@@ -96,7 +99,7 @@
 
   <!-- Registration isn't unified across roles — never assume Influencer.
        Nothing is preselected; the sign-up button appears once a role is picked. -->
-  <div class="sp-roles">
+  <div class="sp-roles" #rolePicker>
     <div class="sp-roles__picker">
       <p class="sp-roles__label">Who are you?</p>
       <div class="sp-card__role-choice" role="radiogroup" aria-label="Who are you?">

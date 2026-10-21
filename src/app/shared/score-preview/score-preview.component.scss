@@ -535,3 +535,19 @@
     grid-template-columns: 1fr;
   }
 }
+
+.sp-card__next {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 4px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: #f97316;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sp-card__next:hover { background: #ea580c; }
+.sp-card__next:focus-visible { outline: 3px solid #fdba74; outline-offset: 2px; }

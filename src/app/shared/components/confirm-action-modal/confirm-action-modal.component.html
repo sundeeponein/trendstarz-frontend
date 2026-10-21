@@ -6,9 +6,10 @@
         <h4>{{ title }}</h4>
         <button class="confirm-action-modal__close"
                 type="button"
+                aria-label="Close"
                 [disabled]="submitting"
                 (click)="dismiss()">
-          <i class="bi bi-x-lg"></i>
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
         </button>
       </div>
 

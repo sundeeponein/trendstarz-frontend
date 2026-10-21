@@ -1,7 +1,7 @@
 <div class="brand-card" (click)="viewProfileClick.emit()">
   <!-- Image + overlays -->
   <div class="brand-card__img-wrap">
-    <img [src]="displayBrandLogo" (error)="onImgError($event)" class="brand-card__img" {{ brandName }} />
+    <img [src]="displayBrandLogo" [alt]="(brandName || 'Brand') + ' logo'" (error)="onImgError($event)" class="brand-card__img" loading="lazy" decoding="async" />
 
     <!-- Trust badges -->
     <div class="brand-card__img-tags" *ngIf="isTrendstarzVerified || isPremium || trendstarzRecommended">

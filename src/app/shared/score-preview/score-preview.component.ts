@@ -309,6 +309,13 @@ export class ScorePreviewComponent implements OnInit, OnDestroy {
     this.router.navigate([`/register-${role}`]);
   }
 
+  /** From the result: bring the role picker into view and focus it (sign-up starts there). */
+  goToRolePicker(section: HTMLElement): void {
+    section?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const first = section?.querySelector<HTMLButtonElement>('.sp-role');
+    setTimeout(() => first?.focus({ preventScroll: true }), 350);
+  }
+
   checkAnother(): void {
     this.result = null;
     this.error = '';

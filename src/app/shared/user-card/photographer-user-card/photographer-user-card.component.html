@@ -5,7 +5,7 @@
   [title]="profileViewDisabled ? 'Upgrade to Pro to open this profile' : null"
   (click)="onViewProfileClick($event)">
   <div class="photographer-card__img-wrap">
-    <img [src]="displayImage" [alt]="name" (error)="onImgError($event)" class="photographer-card__img" {{ name }} />
+    <img [src]="displayImage" [alt]="(name || 'Photographer') + ' — profile photo'" (error)="onImgError($event)" class="photographer-card__img" loading="lazy" decoding="async" />
 
     <div class="photographer-card__img-tags" *ngIf="isTrendstarzVerified || isPremium || trendstarzRecommended">
       <span class="photographer-card__img-tag badge rounded-pill badge--premium" *ngIf="isPremium" tooltip="Premium" title="Premium">

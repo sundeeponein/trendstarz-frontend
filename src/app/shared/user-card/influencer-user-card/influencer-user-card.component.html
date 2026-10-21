@@ -6,7 +6,7 @@
   (click)="onViewProfileClick($event)">
   <!-- Image + overlays -->
   <div class="inf-card__img-wrap">
-    <img [src]="displayImage" (error)="onImgError($event)" class="inf-card__img" title="{{ name }}" />
+    <img [src]="displayImage" [alt]="(name || 'Creator') + ' — profile photo'" (error)="onImgError($event)" class="inf-card__img" title="{{ name }}" loading="lazy" decoding="async" />
 
     <!-- Trust badges -->
     <div class="inf-card__img-tags" *ngIf="isTrendstarzVerified || isPremium || (professionalStatus && visibleCreatorTypes.length)">
