@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ConfigService } from '../../config.service';
+import { SessionService } from '../../../core/session.service';
 import { getPasswordChecks } from '../../password-strength';
 
 @Component({
@@ -33,7 +34,11 @@ export class ResetPasswordModalComponent implements OnChanges {
     confirm: false,
   };
 
-  constructor(private configService: ConfigService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private configService: ConfigService,
+    private cdr: ChangeDetectorRef,
+    private session: SessionService,
+  ) {}
 
   get passwordChecks() {
     return getPasswordChecks(this.passwordForm.newPassword || '');
@@ -90,6 +95,9 @@ export class ResetPasswordModalComponent implements OnChanges {
       this.passwordForm.confirmPassword,
     ).subscribe({
       next: (res: any) => {
+        // Changing the password signs out every other session; keep this one with the new token.
+        const freshToken = res?.token || res?.data?.token;
+        if (freshToken) this.session.setToken(freshToken);
         this.passwordSuccess = res?.data?.message || res?.message || 'Password changed successfully.';
         this.passwordSaving = false;
         this.passwordForm = {
