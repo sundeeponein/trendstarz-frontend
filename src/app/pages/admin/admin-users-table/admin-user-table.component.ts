@@ -3524,24 +3524,26 @@ export class AdminUserTableComponent implements OnInit {
     });
   }
   deleteUser(userId: string) {
-    this.showConfirm(`Delete this user? This cannot be undone.${this.pendingPaymentWarning(userId)}`, () => {
-      this.isLoading = true;
-      this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete`, {}, this.getAuthHeaders()).subscribe(() => {
-        this.fetchUsers();
-        window.dispatchEvent(new CustomEvent('user-deleted-refresh'));
-        setTimeout(() => { this.isLoading = false; }, 500);
-      });
-    });
+    this.showConfirm(
+      `Delete this user? They can't log in and are hidden everywhere. You can restore them from Deleted Users; permanent deletion happens there.${this.pendingPaymentWarning(userId)}`,
+      () => {
+        this.isLoading = true;
+        this.http.patch(`${environment.apiBaseUrl}/users/${userId}/delete`, {}, this.getAuthHeaders()).subscribe({
+          next: () => {
+            this.fetchUsers();
+            window.dispatchEvent(new CustomEvent('user-deleted-refresh'));
+            setTimeout(() => { this.isLoading = false; }, 500);
+          },
+          error: (err) => {
+            this.isLoading = false;
+            alert('Could not delete: ' + (err?.error?.message || err?.message || 'Unknown error'));
+          },
+        });
+      },
+    );
   }
   restoreUser(userId: string) {
     this.http.patch(`${environment.apiBaseUrl}/users/${userId}/restore`, {}, this.getAuthHeaders()).subscribe(() => this.fetchUsers());
-  }
-  deletePermanently(userId: string) {
-    this.isLoading = true;
-    this.http.delete(`${environment.apiBaseUrl}/users/${userId}/permanent`, this.getAuthHeaders()).subscribe(() => {
-      this.fetchUsers();
-      setTimeout(() => { this.isLoading = false; }, 500);
-    });
   }
   setPremium(userId: string, isPremium: boolean, userType: 'influencer' | 'brand' | 'photographer') {
       try {

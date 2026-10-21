@@ -506,8 +506,11 @@ export class DeletedUsersTableComponent implements OnInit {
             .filter(id => !failed.some(result => result.id === id))
             .forEach(id => this.removeUserFromDeletedLists(id));
           this.dispatchAdminRefresh('user-deleted-refresh');
+          // Say why (e.g. a payout or refund isn't settled yet), not just how many failed.
+          const reasons = [...new Set(failed.map((f: any) => f?.err?.error?.message).filter(Boolean))];
           this.errorMessage = failed.length
-            ? `Permanently deleted ${ids.length - failed.length} user(s). ${failed.length} failed.`
+            ? `Permanently deleted ${ids.length - failed.length} user(s). ${failed.length} not deleted` +
+              (reasons.length ? `: ${reasons.join(' / ')}` : '.')
             : null;
         });
       },
