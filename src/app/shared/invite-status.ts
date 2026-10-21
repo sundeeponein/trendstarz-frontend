@@ -47,3 +47,21 @@ export const FINISHED_OR_DISPUTED: StatusList = ['completed', 'approved', 'dispu
 
 /** Finished work: post approved (payout released) or completed. */
 export const FINISHED: StatusList = ['completed', 'approved'];
+
+/**
+ * Closed because the creator accepted but never posted (or didn't turn up for a
+ * location visit). Mirrors the backend's no-show rule (campaigns/creator-monthly-slots.util.ts);
+ * unlike that rule, an admin-excused no-show still counts here — it still didn't post.
+ */
+const NO_SHOW_REASON_CODES = ['expired_unsubmitted', 'location_no_show'];
+const LEGACY_NO_SHOW_REASONS = [
+  'Posting deadline and grace period expired with no submission.',
+  "Campaign's grace period ended with no submission.",
+  'Campaign ended by host before submission.',
+];
+export function isNoShowInvite(invite: any): boolean {
+  if (String(invite?.status || '') !== 'withdrawn') return false;
+  const code = String(invite?.withdrawnReasonCode || '');
+  if (code) return NO_SHOW_REASON_CODES.includes(code);
+  return LEGACY_NO_SHOW_REASONS.includes(String(invite?.withdrawnReason || ''));
+}

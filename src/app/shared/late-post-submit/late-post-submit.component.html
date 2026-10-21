@@ -12,6 +12,10 @@
       <div class="lps-status lps-status--rejected" *ngIf="window.status === 'rejected'">
         <i class="bi bi-x-circle"></i> Your earlier link was not approved{{ window.reviewNote ? ': ' + window.reviewNote : '.' }}
       </div>
+      <div class="lps-note" *ngIf="window.slotCounts !== false">
+        <i class="bi bi-info-circle"></i>
+        This collaboration closed without a post, so it still counts as one of your invite slots this month.
+      </div>
       <div *ngIf="window.canSubmit">
         <div class="lps-title">
           Already published the post? Submit the link by

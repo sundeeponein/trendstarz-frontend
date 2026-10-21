@@ -755,6 +755,14 @@
                 <span class="expand-stat-val">{{ getExpandAcceptedOrBeyond(c) }}</span>
                 <span class="expand-stat-lbl">Accepted</span>
               </div>
+              <div class="expand-stat" *ngIf="getExpandCompletedCount(c) > 0">
+                <span class="expand-stat-val">{{ getExpandCompletedCount(c) }}</span>
+                <span class="expand-stat-lbl">Completed</span>
+              </div>
+              <div class="expand-stat" *ngIf="getExpandNoShowCount(c) > 0">
+                <span class="expand-stat-val expired-text">{{ getExpandNoShowCount(c) }}</span>
+                <span class="expand-stat-lbl">Didn't post</span>
+              </div>
               <div class="expand-stat">
                 <span class="expand-stat-val">{{ getExpandInvitesByStatus(c, 'pending') }}</span>
                 <span class="expand-stat-lbl">Pending</span>
@@ -772,12 +780,12 @@
             <!-- Invited recipients list -->
             <div class="completed-worked-note" *ngIf="c.status === 'completed'">
               <i class="bi bi-stars"></i>
-              Showing recipients who accepted/worked on this {{ isPhotographerView ? 'collaboration' : 'campaign' }}.
+              Showing everyone who accepted this {{ isPhotographerView ? 'collaboration' : 'campaign' }} — including anyone who didn't post.
             </div>
 
             <div class="expand-inf-list" *ngIf="getExpandDisplayInvites(c).length > 0">
               <div class="expand-inf-heading-row">
-                <p class="expand-inf-heading">{{ c.status === 'completed' ? 'Worked ' : 'Invited ' }}{{ getCampaignInviteTargetPluralLabel(c) }}</p>
+                <p class="expand-inf-heading">{{ c.status === 'completed' ? 'Accepted ' : 'Invited ' }}{{ getCampaignInviteTargetPluralLabel(c) }}</p>
                 <button class="tier-info-trigger" type="button" (click)="tierInfo.open(); $event.stopPropagation()">
                   <i class="bi bi-info-circle"></i> Tier info
                 </button>
@@ -865,6 +873,37 @@
                   <div class="col-md-6">
 
                     <span class="inv-status" [ngClass]="getHostInviteEffectiveStatus(inv)">{{ brandInviteStatusLabel(inv, c) }}</span>
+                    <!-- Didn't post: where the host's money for this creator stands -->
+                    <div class="inv-refund-line" *ngIf="isNoShow(inv)">
+                      <ng-container *ngIf="hostRefundFor(inv) as r; else noRefundRow">
+                        <ng-container [ngSwitch]="r.state">
+                          <span *ngSwitchCase="'on_hold'">
+                            <i class="bi bi-hourglass-split"></i>
+                            {{ formatRupeesPaise(r.amount) }} · Refund under review until {{ r.until | date: 'd MMM' }}.
+                            <small class="d-block text-muted">If TrendStarZ verifies a late post, the creator is paid instead.</small>
+                          </span>
+                          <span *ngSwitchCase="'owed'">
+                            <i class="bi bi-arrow-return-left"></i>
+                            {{ formatRupeesPaise(r.amount) }} · Refund approved — TrendStarZ is sending it to you.
+                          </span>
+                          <span *ngSwitchCase="'sent'">
+                            <i class="bi bi-check-circle"></i>
+                            {{ formatRupeesPaise(r.amount) }} refunded{{ r.sentAt ? ' on ' + (r.sentAt | date: 'd MMM') : '' }}{{ r.utr ? ' · UTR ' + r.utr : '' }}
+                          </span>
+                          <span *ngSwitchCase="'settlement'">
+                            <i class="bi bi-info-circle"></i>
+                            The creator's late post was verified after your refund — TrendStarZ will contact you.
+                          </span>
+                          <span *ngSwitchCase="'cancelled'">
+                            <i class="bi bi-info-circle"></i>
+                            Refund cancelled — the creator's post was verified.
+                          </span>
+                        </ng-container>
+                      </ng-container>
+                      <ng-template #noRefundRow>
+                        <span><i class="bi bi-dash-circle"></i> Closed without a post.</span>
+                      </ng-template>
+                    </div>
                     <!-- Updated at timestamp -->
                     <small class="expand-updated-at" *ngIf="getInviteUpdatedAtText(inv)">
                       {{ getInviteUpdatedAtText(inv) }}

@@ -9,6 +9,8 @@ export interface LatePostWindow {
   status: 'pending' | 'approved' | 'rejected' | null;
   url: string | null;
   reviewNote: string | null;
+  /** false once an admin excused the no-show (the monthly slot is given back). */
+  slotCounts?: boolean;
 }
 
 /**

@@ -208,7 +208,7 @@ export class RefundsPanelComponent implements OnInit {
     if (row.state === 'on_hold') {
       return this.holdEnded(row)
         ? 'Hold ended — moves to Owed within the hour.'
-        : `Under review until ${this.ui.formatDateTime(row.refundHoldUntil || '')}.`;
+        : `Under review until ${this.ui.formatDateTime(row.refundHoldUntil || '')} — then it moves to Owed automatically (unless you verify a late post or excuse it).`;
     }
     if (row.state === 'legacy_unconfirmed') {
       return 'Payment history not confirmed. Left unchanged until the legacy migration is approved.';

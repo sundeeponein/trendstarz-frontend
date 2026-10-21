@@ -39,7 +39,7 @@ import {
   passesHostEligibilityFilter,
 } from '../../shared/campaigns/host-eligibility.util';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
-import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, FINISHED, FINISHED_OR_DISPUTED, OPEN_WORK, PAID_OR_LATER, SUBMITTED_OR_LATER } from '../../shared/invite-status';
+import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, FINISHED, FINISHED_OR_DISPUTED, OPEN_WORK, PAID_OR_LATER, SUBMITTED_OR_LATER, isNoShowInvite } from '../../shared/invite-status';
 import { busyUntilText } from '../../shared/availability.util';
 import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-collab-notice.component';
 
@@ -3695,10 +3695,35 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return Number((c as any)?.maxInfluencers || 0);
   }
 
+  /** Declined or withdrawn before working — not the creators who accepted and didn't post. */
   getExpandDeclinedCount(c: Campaign): number {
     const declinedStatuses = new Set(['declined', 'withdrawn']);
     return this.getExpandInvites(c)
-      .filter((i: any) => declinedStatuses.has(this.getHostInviteEffectiveStatus(i))).length;
+      .filter((i: any) => declinedStatuses.has(this.getHostInviteEffectiveStatus(i)) && !isNoShowInvite(i))
+      .length;
+  }
+
+  /** Accepted, then closed because they never posted (the host's payment goes to refund review). */
+  getExpandNoShowCount(c: Campaign): number {
+    return this.getExpandInvites(c).filter((i: any) => isNoShowInvite(i)).length;
+  }
+
+  getExpandCompletedCount(c: Campaign): number {
+    return this.getExpandInvites(c).filter((i: any) => FINISHED.includes(String(i?.status || ''))).length;
+  }
+
+  isNoShow(inv: any): boolean {
+    return isNoShowInvite(inv);
+  }
+
+  /** The host's refund for this creator (server summary on the payment row), or null. */
+  hostRefundFor(inv: any): { state: string; amount: number; until: string | null; sentAt: string | null; utr: string | null } | null {
+    const tx = this.transactionByInviteId.get(String(inv?._id || ''));
+    return tx?.hostRefund || null;
+  }
+
+  formatRupeesPaise(paise: number): string {
+    return `₹${(Number(paise || 0) / 100).toLocaleString('en-IN')}`;
   }
 
   /** True once the campaign's acceptance window has closed — either the deadline passed, or the max headcount was reached. */
@@ -4707,8 +4732,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return ACCEPTED_OR_LATER.includes(String(status || '').toLowerCase());
   }
 
+  /** Completed campaign: everyone who accepted — those who worked, then those who didn't post. */
   getCompletedWorkedInvites(c: Campaign): any[] {
-    return this.getExpandVisibleInvites(c).filter((inv: any) => this.isWorkedInviteStatus(inv?.status));
+    const all = this.getExpandInvites(c);
+    const worked = this.getExpandVisibleInvites(c).filter((inv: any) => this.isWorkedInviteStatus(inv?.status));
+    return [...worked, ...all.filter((inv: any) => isNoShowInvite(inv))];
   }
 
   getExpandDisplayInvites(c: Campaign): any[] {
@@ -4727,7 +4755,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   /** Statuses that count as "accepted or beyond" for the mini stat chip */
   getExpandAcceptedOrBeyond(c: Campaign): number {
     return this.getExpandInvites(c)
-      .filter((i: any) => ACCEPTED_OR_LATER.includes(this.getHostInviteEffectiveStatus(i))).length;
+      .filter((i: any) => ACCEPTED_OR_LATER.includes(this.getHostInviteEffectiveStatus(i)) || isNoShowInvite(i))
+      .length;
   }
 
   /** Returns true when the invite has moved past accepted (payment made) */
@@ -4760,6 +4789,9 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (typeof invOrStatus !== 'string' && this.isConfirmedNoShow(invOrStatus, campaign)) {
       return 'Not Submitted';
     }
+    if (typeof invOrStatus !== 'string' && isNoShowInvite(invOrStatus)) {
+      return "Didn't post";
+    }
 
     // The invite's own status never moves past "completed" — real payout
     // progress (processing vs. actually paid) only exists on the matching
@@ -4772,7 +4804,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         const payoutStatus = String(tx?.payoutStatus || '').trim().toLowerCase();
         const workStatus = String(tx?.workStatus || '').trim().toLowerCase();
         if (payoutStatus === 'frozen') return 'Dispute open';
-        if (payoutStatus === 'paid') return `Paid ₹${((tx?.recipientPayout || 0) / 100).toLocaleString('en-IN')}`;
+        // The creator's agreed amount (the host never sees the creator's fee or net payout).
+        if (payoutStatus === 'paid') return `Paid ₹${((tx?.agreedAmount || 0) / 100).toLocaleString('en-IN')}`;
         if (payoutStatus === 'processing' || FINISHED.includes(status) || workStatus === 'approved') {
           return 'Payout Processing (4-6 hrs)';
         }
