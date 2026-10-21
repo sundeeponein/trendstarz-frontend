@@ -472,8 +472,9 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
   }
 
   searchInfluencers(): void {
-    this.dashboardService.searchInfluencers(this.filters).subscribe((res: any[]) => {
-      this.recommendedInfluencers = res;
+    this.dashboardService.searchInfluencers(this.filters).subscribe((res: any) => {
+      // The server returns { data, total, page, limit }.
+      this.recommendedInfluencers = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
     });
   }
 
