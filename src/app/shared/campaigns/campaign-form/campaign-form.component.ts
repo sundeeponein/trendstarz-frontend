@@ -1102,7 +1102,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   /** True once admin has approved the campaign (status = active or completed). */
   get isApproved(): boolean {
     const s = String(this.campaign?.status || '');
-    return s === 'active' || s === 'completed';
+    // "pending" = paused by the host after approval: the same locks apply (server rule).
+    return s === 'active' || s === 'pending' || s === 'completed';
   }
 
   /** True once at least one influencer has confirmed (accepted) participation. */
@@ -1162,6 +1163,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     const approvalLockedFields = [
       'title', 'campaignType', 'pricePerInfluencer',
       'budgetMin', 'budgetMax',
+      'productPaymentMode', 'productPaymentAmount', 'productShippingRequired',
     ];
     setLock(approvalLockedFields, this.isApprovalLocked);
 
