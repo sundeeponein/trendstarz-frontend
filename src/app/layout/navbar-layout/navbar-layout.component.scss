@@ -7,16 +7,16 @@
   @include shared.navbar-content {
     // Unique to main navbar: login button
     .btn-login {
-      background-color: shared.$orange-primary;
-      border-color: shared.$orange-primary;
+      background-color: shared.$orange-fill;
+      border-color: shared.$orange-fill;
       color: shared.$text-white;
       padding: 0.5rem 1rem;
       font-size: 0.9rem;
       transition: all 0.3s ease;
 
       &:hover {
-        background-color: color.adjust(shared.$orange-primary, $lightness: -10%);
-        border-color: color.adjust(shared.$orange-primary, $lightness: -10%);
+        background-color: #9a3412;
+        border-color: #9a3412;
         color: shared.$text-white;
       }
     }
@@ -215,8 +215,8 @@
 // Mobile sidebar — shared styles from mixin; .btn-login is injected as extra content
 @include shared.mobile-sidebar {
   .btn-login {
-    background-color: shared.$orange-primary;
-    border-color: shared.$orange-primary;
+    background-color: shared.$orange-fill;
+    border-color: shared.$orange-fill;
     color: #ffffff;
     font-weight: 700;
     border-radius: 0.72rem;
@@ -234,7 +234,7 @@
   letter-spacing: 0.02em;
 
   &--pro  { background: #22c55e; color: #fff; }
-  &--free { background: shared.$orange-primary; color: #fff; }
+  &--free { background: shared.$orange-fill; color: #fff; }
 }
 
 .commission-badge {
@@ -248,7 +248,7 @@
   margin-left: 0.4rem;
 
   &--early { background: #1d4ed8; color: #fff; }
-  &--partner { background: #f97316; color: #fff; }
+  &--partner { background: shared.$orange-fill; color: #fff; }
   &--internal { background: #7c3aed; color: #fff; }
 }
 
@@ -262,7 +262,7 @@
   margin-top: 0.25rem;
 
   &.commission-badge--early { background: #1d4ed8; color: #fff; }
-  &.commission-badge--partner { background: #f97316; color: #fff; }
+  &.commission-badge--partner { background: shared.$orange-fill; color: #fff; }
   &.commission-badge--internal { background: #7c3aed; color: #fff; }
 }
 
@@ -305,8 +305,8 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    background-color: shared.$orange-primary;
-    border-color: shared.$orange-primary;
+    background-color: shared.$orange-fill;
+    border-color: shared.$orange-fill;
     color: #fff;
     padding: 0.5rem 1rem;
     font-size: 0.9rem;

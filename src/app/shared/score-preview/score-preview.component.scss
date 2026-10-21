@@ -61,7 +61,7 @@
     color: rgba(11, 18, 32, 0.72);
   }
 
-  &__accent { color: #ea580c; font-weight: 600; }
+  &__accent { color: #c2410c; font-weight: 600; }
 
   // ── Platform tabs (segmented) ──
   &__platform-tabs {
@@ -130,7 +130,7 @@
   &__input-icon {
     padding: 0 0.3rem 0 1.1rem;
     font-size: 1.3rem;
-    color: #8a8fa3;
+    color: #6b7280;
   }
 
   &__input {
@@ -143,7 +143,7 @@
     font-size: 1rem;
     color: #0b1220;
 
-    &::placeholder { color: #8a8fa3; }
+    &::placeholder { color: #6b7280; }
   }
 
   &__submit {
@@ -172,7 +172,7 @@
 
     .bi { color: #16a34a; margin-right: 4px; }
     .sep { margin: 0 0.4rem; color: #9ca3af; }
-    .muted { color: #8a8fa3; }
+    .muted { color: #6b7280; }
   }
 
   &__connect-hint .bi { color: #4f46e5; }
@@ -230,7 +230,7 @@
     align-items: center;
     gap: 1rem;
     margin: 2.25rem 0 1.75rem;
-    color: #8a8fa3;
+    color: #6b7280;
     font-size: 0.85rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -265,7 +265,7 @@
   place-items: center;
   font-size: 1.15rem;
 
-  &--orange { background: #fff1e6; color: #ea580c; }
+  &--orange { background: #fff1e6; color: #c2410c; }
   &--green { background: #e3f8ee; color: #16a34a; }
   &--purple { background: #f1ecfe; color: #7c3aed; }
 }
@@ -280,7 +280,7 @@
 
 .sp-roles__label {
   margin: 0 0 0.8rem;
-  color: #8a8fa3;
+  color: #6b7280;
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -317,7 +317,7 @@
 
 .sp-role__emoji { font-size: 1.5rem; line-height: 1.2; }
 .sp-role__name { font-weight: 600; color: #0b1220; }
-.sp-role__sub { font-size: 0.8rem; color: #8a8fa3; }
+.sp-role__sub { font-size: 0.8rem; color: #6b7280; }
 
 .sp-roles__perk {
   display: flex;
@@ -544,10 +544,10 @@
   padding: 10px 16px;
   border: 0;
   border-radius: 10px;
-  background: #f97316;
+  background: #c2410c;
   color: #fff;
   font-weight: 700;
   cursor: pointer;
 }
-.sp-card__next:hover { background: #ea580c; }
+.sp-card__next:hover { background: #9a3412; }
 .sp-card__next:focus-visible { outline: 3px solid #fdba74; outline-offset: 2px; }

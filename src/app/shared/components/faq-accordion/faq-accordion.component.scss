@@ -89,7 +89,7 @@
   color: #4b5563;
   transition: transform 0.25s ease, color 0.2s ease;
 
-  .is-open & { transform: rotate(180deg); color: #ea580c; }
+  .is-open & { transform: rotate(180deg); color: #c2410c; }
 }
 
 // Height animates via grid rows, so no fixed max-height guess is needed.
