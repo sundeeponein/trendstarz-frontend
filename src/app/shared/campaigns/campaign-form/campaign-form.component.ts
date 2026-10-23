@@ -1,4 +1,5 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, OnDestroy, SimpleChanges, ChangeDetectorRef, inject } from '@angular/core';
+import { SessionService } from '../../../core/session.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
@@ -443,6 +444,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   protected tierInfo = inject(TierInfoService);
   protected flowHelp = inject(FlowHelpModalService);
   protected guideModal = inject(CampaignGuideModalService);
+  private readonly session = inject(SessionService);
   constructor(
     private fb: FormBuilder,
     private config: ConfigService,
@@ -3406,7 +3408,12 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     formData.append('folder', folder);
     const res = await fetch(
       `${environment.apiBaseUrl}/auth/upload-image`,
-      { method: 'POST', body: formData }
+      {
+        method: 'POST',
+        body: formData,
+        // Lets the server accept this campaign's folder (anonymous uploads go to staging only).
+        headers: this.session.getToken() ? { Authorization: `Bearer ${this.session.getToken()}` } : undefined,
+      }
     );
     if (!res.ok) {
       throw new Error('Image upload failed');

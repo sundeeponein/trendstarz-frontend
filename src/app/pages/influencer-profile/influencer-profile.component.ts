@@ -1482,6 +1482,7 @@ export class InfluencerProfileComponent implements OnInit {
         const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
           method: 'POST',
           body: formData,
+          headers: { Authorization: `Bearer ${this.session.getToken()}` },
         });
         if (!response.ok) {
           this.registrationError = 'Profile image upload failed.';
@@ -1776,6 +1777,7 @@ export class InfluencerProfileComponent implements OnInit {
         const resp = await fetch(`${environment.apiBaseUrl}/auth/upload-verification`, {
           method: 'POST',
           body: fd,
+          headers: { Authorization: `Bearer ${this.session.getToken()}` },
         });
         if (!resp.ok) {
           this.verificationUploadError = 'Verification upload failed for one or more files.';

@@ -383,7 +383,8 @@ export class BrandProfileComponent implements OnInit {
       formData.append('folder', `brands/${this.session.getUser()?.id}/logo`);
       const response = await fetch(`${environment.apiBaseUrl}/auth/upload-image`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: { Authorization: `Bearer ${this.session.getToken()}` },
       });
       if (!response.ok) {
         this.registrationError = 'Brand logo upload failed.';
