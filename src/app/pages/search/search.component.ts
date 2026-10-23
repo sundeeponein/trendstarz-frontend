@@ -456,7 +456,7 @@ export class SearchComponent implements OnInit {
           return;
         }
 
-        if (!this.showInfluencerTab && !this.showPhotographersTab && this.activeTab !== 'brands') {
+        if (!this.showInfluencerTab && !this.showPhotographersTab && this.activeTab !== 'brands' && this.isAdminUser) {
           this.setTab('brands');
         }
         setTimeout(() => this.cd.detectChanges(), 0);
@@ -566,7 +566,8 @@ export class SearchComponent implements OnInit {
   }
 
   private isValidTab(tab: string | null): tab is 'influencers' | 'brands' | 'photographers' {
-    return tab === 'influencers' || tab === 'brands' || tab === 'photographers';
+    // Brand discovery is hidden from users; only admins may open it (also by URL).
+    return tab === 'influencers' || tab === 'photographers' || (tab === 'brands' && (this.showBrandsTab || this.isAdminUser));
   }
 
   onKeywordChange(value: string) {
