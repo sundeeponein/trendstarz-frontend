@@ -1325,7 +1325,9 @@ export class InfluencerProfileComponent implements OnInit {
           headers: { Authorization: `Bearer ${this.session.getToken()}` },
         });
         if (!resp.ok) { failedUploads++; continue; }
-        const data = await resp.json();
+        const body = await resp.json();
+        // The API wraps responses as { success, data: { url, public_id } }.
+        const data = body?.data || body;
         if (data?.url && data?.public_id) {
           this.galleryImagesPreview.push(preview);
           this.galleryImagesData.push({ url: data.url, public_id: data.public_id });
