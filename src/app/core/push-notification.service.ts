@@ -2,7 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { SwPush } from '@angular/service-worker';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { catchError, take, timeout } from 'rxjs/operators';
+import { catchError, map, take, timeout } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { of, Subscription } from 'rxjs';
 
@@ -11,6 +11,21 @@ export interface NotificationPreferences {
   mobileEnabled: boolean;
   campaignEnabled: boolean;
   paymentEnabled: boolean;
+}
+
+/**
+ * The API wraps responses as { success, data: {...} }. Reading the flags at the
+ * top level found nothing, so Settings showed every switch as off after a
+ * reload. Missing values mean "on" (the server's default).
+ */
+function toPreferences(res: any): NotificationPreferences {
+  const p = res?.data ?? res ?? {};
+  return {
+    webEnabled: p.webEnabled !== false,
+    mobileEnabled: p.mobileEnabled !== false,
+    campaignEnabled: p.campaignEnabled !== false,
+    paymentEnabled: p.paymentEnabled !== false,
+  };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -130,15 +145,21 @@ export class PushNotificationService implements OnDestroy {
   /** Get the account-level push preference for the logged-in user (device + event category). */
   getPreferences() {
     return this.http
-      .get<NotificationPreferences>(`${this.apiUrl}/push/preferences`)
-      .pipe(catchError(() => of({ webEnabled: true, mobileEnabled: true, campaignEnabled: true, paymentEnabled: true })));
+      .get<any>(`${this.apiUrl}/push/preferences`)
+      .pipe(
+        map((res) => toPreferences(res)),
+        catchError(() => of(toPreferences(null))),
+      );
   }
 
   /** Update the account-level push preference for the logged-in user (device + event category). */
   updatePreferences(updates: Partial<NotificationPreferences>) {
     return this.http
-      .patch<NotificationPreferences>(`${this.apiUrl}/push/preferences`, updates)
-      .pipe(catchError(() => of(null)));
+      .patch<any>(`${this.apiUrl}/push/preferences`, updates)
+      .pipe(
+        map((res) => toPreferences(res)),
+        catchError(() => of(null)),
+      );
   }
 
   /** Register a handler that shows an in-app toast when a push message arrives. */

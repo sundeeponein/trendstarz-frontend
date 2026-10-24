@@ -43,4 +43,15 @@ describe('PushNotificationService', () => {
     subscription$.next({ endpoint: 'https://push/x' });
     expect(await check).toBeTrue();
   });
+
+  it('reads saved preferences from the wrapped response (switches were shown as off after reload)', (done) => {
+    service.getPreferences().subscribe((prefs) => {
+      expect(prefs).toEqual({ webEnabled: true, mobileEnabled: false, campaignEnabled: true, paymentEnabled: true });
+      done();
+    });
+    http.expectOne((r) => r.url.endsWith('/push/preferences')).flush({
+      success: true,
+      data: { webEnabled: true, mobileEnabled: false, campaignEnabled: true, paymentEnabled: true },
+    });
+  });
 });
