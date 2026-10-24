@@ -206,19 +206,25 @@ export class UserSettingsComponent implements OnInit {
   async enablePush(): Promise<void> {
     if (this.pushBusy) return;
     this.pushBusy = true;
-    const user = this.session.getUser();
-    const role = this.normalizeRole(user?.role);
-    await this.push.requestSubscription(role);
-    await this.refreshPushState();
-    this.pushBusy = false;
+    try {
+      const user = this.session.getUser();
+      const role = this.normalizeRole(user?.role);
+      await this.push.requestSubscription(role);
+      await this.refreshPushState();
+    } finally {
+      this.pushBusy = false; // never leave the button on "Saving…"
+    }
   }
 
   async disablePush(): Promise<void> {
     if (this.pushBusy) return;
     this.pushBusy = true;
-    await this.push.cancelSubscription();
-    await this.refreshPushState();
-    this.pushBusy = false;
+    try {
+      await this.push.cancelSubscription();
+      await this.refreshPushState();
+    } finally {
+      this.pushBusy = false;
+    }
   }
 
   private async refreshPushState(): Promise<void> {

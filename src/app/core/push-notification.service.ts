@@ -2,7 +2,8 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { SwPush } from '@angular/service-worker';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
-import { catchError, timeout } from 'rxjs/operators';
+import { catchError, take, timeout } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { of, Subscription } from 'rxjs';
 
 export interface NotificationPreferences {
@@ -43,10 +44,20 @@ export class PushNotificationService implements OnDestroy {
     return Notification.permission;
   }
 
+  /**
+   * The browser's current push subscription. swPush.subscription never
+   * completes, so take the first value (awaiting toPromise() hung forever —
+   * the Settings button stayed on "Saving…").
+   */
+  private currentSubscription(): Promise<PushSubscription | null> {
+    if (!this.swPush.isEnabled) return Promise.resolve(null);
+    return firstValueFrom(
+      this.swPush.subscription.pipe(take(1), timeout(3000), catchError(() => of(null))),
+    ) as Promise<PushSubscription | null>;
+  }
+
   async hasActiveSubscription(): Promise<boolean> {
-    if (!this.swPush.isEnabled) return false;
-    const sub = await this.swPush.subscription.pipe(catchError(() => of(null))).toPromise();
-    return !!sub;
+    return !!(await this.currentSubscription());
   }
 
   /**
@@ -58,16 +69,21 @@ export class PushNotificationService implements OnDestroy {
 
     try {
       this.setLocalPreference('enabled');
-      const { key } = await this.http
-        .get<{ key: string }>(`${this.apiUrl}/push/vapid-public-key`)
-        .toPromise() as { key: string };
+      // The API wraps responses as { success, data: { key } }; reading `.key`
+      // at the top level gave the browser an empty key, so it never subscribed.
+      const res: any = await firstValueFrom(
+        this.http.get<any>(`${this.apiUrl}/push/vapid-public-key`).pipe(timeout(10000)),
+      );
+      const key = String(res?.data?.key || res?.key || '');
+      if (!key) throw new Error('Push is not configured on the server (no VAPID key).');
 
       const sub = await this.swPush.requestSubscription({ serverPublicKey: key });
 
-      await this.http
-        .post(`${this.apiUrl}/push/subscribe`, { subscription: sub.toJSON(), userRole })
-        .pipe(catchError(() => of(null)))
-        .toPromise();
+      await firstValueFrom(
+        this.http
+          .post(`${this.apiUrl}/push/subscribe`, { subscription: sub.toJSON(), userRole })
+          .pipe(timeout(10000)),
+      );
 
       return true;
     } catch (err) {
@@ -85,7 +101,7 @@ export class PushNotificationService implements OnDestroy {
   async detachFromAccount(): Promise<void> {
     if (!this.swPush.isEnabled) return;
     try {
-      const sub = await this.swPush.subscription.pipe(timeout(1500), catchError(() => of(null))).toPromise();
+      const sub = await this.currentSubscription();
       if (!sub) return;
       await this.http
         .delete(`${this.apiUrl}/push/unsubscribe`, { body: { endpoint: (sub as PushSubscription).endpoint } })
@@ -99,7 +115,7 @@ export class PushNotificationService implements OnDestroy {
     this.setLocalPreference('disabled');
     if (!this.swPush.isEnabled) return;
     try {
-      const sub = await this.swPush.subscription.pipe(catchError(() => of(null))).toPromise();
+      const sub = await this.currentSubscription();
       if (sub) {
         const endpoint = (sub as PushSubscription).endpoint;
         await this.http
