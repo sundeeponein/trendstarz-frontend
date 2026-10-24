@@ -3083,12 +3083,15 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   private computeAcceptanceDeadline(startDateStr?: string): Date | null {
     const parts = this.parseDateParts(startDateStr);
     if (!parts) return null;
-    return new Date(Date.UTC(parts.y, parts.m - 1, parts.d - 1, 23, 59, 59, 999));
+    // 23:59:59 India time on the day before the start (same rule as the server).
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    return new Date(Date.UTC(parts.y, parts.m - 1, parts.d - 1, 23, 59, 59, 999) - IST_OFFSET_MS);
   }
 
   private minStartDateValue(): string {
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    // Today's date in India (same rule as the server).
+    const istNow = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+    const today = new Date(Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate()));
     const min = new Date(today.getTime() + this.minStartDays * CampaignFormComponent.MS_PER_DAY);
     return min.toISOString().split('T')[0];
   }
@@ -3114,7 +3117,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-      timeZone: 'UTC',
+      timeZone: 'Asia/Kolkata',
     });
   }
 

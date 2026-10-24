@@ -3747,7 +3747,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-      timeZone: 'UTC',
+      // The real moment acceptance closes, in India time.
+      timeZone: 'Asia/Kolkata',
     });
   }
 
