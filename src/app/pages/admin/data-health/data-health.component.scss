@@ -83,3 +83,13 @@
   .dh-config-head { flex-direction: column; }
   .dh-config .dh-help { padding-left: 0; }
 }
+
+// Bold labels (check titles, service names): the admin area's global styles
+// turned them white on this white card — set their colour explicitly.
+.dh-check__head strong,
+.dh-config strong,
+.dh-config-head strong {
+  display: inline;
+  color: #101828;
+  font-weight: 700;
+}
