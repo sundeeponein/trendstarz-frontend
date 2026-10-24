@@ -55,6 +55,37 @@
   <div class="dh-card">
     <div class="dh-config-head">
       <div>
+        <strong>Razorpay payments vs TrendStarZ</strong>
+        <p class="dh-help">Every payment Razorpay captured in the last 14 days must be completed here. Anything listed was paid but the customer didn't get what they paid for — complete it or refund it in Razorpay.</p>
+      </div>
+      <button type="button" class="dh-run" (click)="reconcileRazorpay(14)" [disabled]="reconLoading">
+        <i class="bi bi-arrow-left-right" [class.spin]="reconLoading"></i> {{ reconLoading ? 'Comparing…' : 'Compare' }}
+      </button>
+    </div>
+    <p class="dh-state--error" *ngIf="reconError">{{ reconError }}</p>
+    <ng-container *ngIf="recon">
+      <div class="dh-ok" *ngIf="!recon.notRecorded.length && !recon.unknownOrder.length">
+        <i class="bi bi-check-circle-fill"></i> All {{ recon.checked }} captured payments of the last {{ recon.days }} days are recorded.
+      </div>
+      <p class="dh-help" *ngIf="recon.notRecorded.length || recon.unknownOrder.length">
+        {{ recon.checked }} captured, {{ recon.recorded }} recorded.
+      </p>
+      <div class="dh-config" *ngFor="let r of recon.notRecorded">
+        <span class="dh-config__status dh-config__status--failing">Not completed</span>
+        <strong>₹{{ r.amountRupees }} · {{ r.capturedAt | date: 'd MMM, h:mm a' }} · {{ r.email }}</strong>
+        <span class="dh-help">{{ r.paymentId }} / {{ r.orderId }} — {{ r.record }}</span>
+      </div>
+      <div class="dh-config" *ngFor="let r of recon.unknownOrder">
+        <span class="dh-config__status dh-config__status--off">Unknown</span>
+        <strong>₹{{ r.amountRupees }} · {{ r.capturedAt | date: 'd MMM, h:mm a' }} · {{ r.email }}</strong>
+        <span class="dh-help">{{ r.paymentId }} / {{ r.orderId }} — {{ r.record }}</span>
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="dh-card">
+    <div class="dh-config-head">
+      <div>
         <strong>Service settings</strong>
         <p class="dh-help">After a deploy or changing a key in Railway: checks each service's settings are present and its key works (read-only test calls).</p>
       </div>

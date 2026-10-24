@@ -46,6 +46,10 @@ export class DataHealthComponent implements OnInit {
   private readonly url = `${environment.apiBaseUrl}/admin/data-integrity`;
   /** Service settings check (keys present and working) — loaded on request: it calls each service. */
   configChecks: ConfigCheck[] | null = null;
+  /** Razorpay vs TrendStarZ (captured payments that were never completed here). */
+  recon: { days: number; checked: number; recorded: number; notRecorded: any[]; unknownOrder: any[] } | null = null;
+  reconLoading = false;
+  reconError = '';
   configLoading = false;
   configError = '';
 
@@ -63,6 +67,22 @@ export class DataHealthComponent implements OnInit {
 
   get passing(): IntegrityCheck[] {
     return (this.run?.checks || []).filter((c) => c.status === 'ok');
+  }
+
+  reconcileRazorpay(days = 14): void {
+    this.reconLoading = true;
+    this.reconError = '';
+    this.http.get<any>(`${this.url}/razorpay-reconcile`, { params: { days } }).subscribe({
+      next: (res) => {
+        const body = res?.data ?? res;
+        this.recon = body?.data ?? body;
+        this.reconLoading = false;
+      },
+      error: (err) => {
+        this.reconLoading = false;
+        this.reconError = err?.error?.message || 'Failed to compare with Razorpay.';
+      },
+    });
   }
 
   checkConfig(): void {
