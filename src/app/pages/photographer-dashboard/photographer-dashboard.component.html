@@ -164,7 +164,8 @@
     <div id="invites" class="section-card mb-4">
       <div class="section-title d-flex align-items-center mb-3">
         <span class="dot dot--blue me-2"></span>
-        Brand Invites
+        Invites
+        <span class="section-sub ms-2">From brands &amp; influencers</span>
         <span class="section-count ms-2">{{ pendingBrandInvites.length }}</span>
       </div>
 
@@ -175,8 +176,8 @@
 
       <div *ngIf="!brandInvitesLoading && pendingBrandInvites.length === 0" class="section-empty py-4">
         <div class="section-empty-icon"><i class="bi bi-envelope-paper"></i></div>
-        <div class="section-empty-title">No direct brand invites yet</div>
-        <div class="section-empty-desc">When a brand invites you to a campaign, it will appear here.</div>
+        <div class="section-empty-title">No invites yet</div>
+        <div class="section-empty-desc">When a brand or an influencer invites you to a shoot, it will appear here.</div>
       </div>
 
       <div class="brand-campaign-list" *ngIf="!brandInvitesLoading && pendingBrandInvites.length > 0">
@@ -185,8 +186,9 @@
             <div>
               <div class="brand-campaign-title">{{ inv.campaignId?.title || 'Campaign invite' }}</div>
               <div class="brand-campaign-meta">
-                <i class="bi bi-building"></i>
-                {{ inv.brandId?.brandName || 'Brand' }}
+                <i class="bi" [ngClass]="inv.sender?.role === 'influencer' ? 'bi-person-video3' : 'bi-building'"></i>
+                {{ inv.sender?.name || inv.brandId?.brandName || 'Brand' }}
+                <span class="sender-role">{{ inv.sender?.role === 'influencer' ? 'Influencer' : 'Brand' }}</span>
                 <span class="mx-1">•</span>
                 <i class="bi bi-calendar3"></i>
                 {{ formatDate(inv.createdAt) }}

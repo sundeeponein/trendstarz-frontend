@@ -169,3 +169,9 @@
   font-size: 0.82rem;
   i { color: #22c55e; flex-shrink: 0; }
 }
+
+.section-sub { font-size: 0.78rem; font-weight: 500; color: #667085; }
+.sender-role {
+  margin-left: 4px; padding: 0 6px; border-radius: 999px; font-size: 0.7rem; font-weight: 600;
+  background: #f2f4f7; color: #475467;
+}
