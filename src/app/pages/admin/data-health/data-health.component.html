@@ -51,4 +51,24 @@
       </div>
     </div>
   </ng-container>
+
+  <div class="dh-card">
+    <div class="dh-config-head">
+      <div>
+        <strong>Service settings</strong>
+        <p class="dh-help">After a deploy or changing a key in Railway: checks each service's settings are present and its key works (read-only test calls).</p>
+      </div>
+      <button type="button" class="dh-run" (click)="checkConfig()" [disabled]="configLoading">
+        <i class="bi bi-plug" [class.spin]="configLoading"></i> {{ configLoading ? 'Checking…' : 'Check settings' }}
+      </button>
+    </div>
+    <p class="dh-state--error" *ngIf="configError">{{ configError }}</p>
+    <div class="dh-config" *ngFor="let c of configChecks">
+      <span class="dh-config__status" [ngClass]="'dh-config__status--' + c.status">
+        {{ c.status === 'working' ? 'Working' : c.status === 'missing' ? 'Missing' : c.status === 'failing' ? 'Failing' : 'Off' }}
+      </span>
+      <strong>{{ c.service }}</strong>
+      <span class="dh-help">{{ c.detail }}</span>
+    </div>
+  </div>
 </div>

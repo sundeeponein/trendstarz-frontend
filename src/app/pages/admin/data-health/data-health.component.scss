@@ -67,3 +67,19 @@
 
 .dh-explained { margin: 6px 0 0; font-size: 0.78rem; color: #64748b; }
 .dh-ok .dh-explained { margin: 0; }
+
+.dh-config-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+.dh-config {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 6px 0; border-top: 1px solid #f0f2f6;
+  .dh-help { margin: 0; flex-basis: 100%; padding-left: 74px; }
+}
+.dh-config__status {
+  min-width: 64px; padding: 2px 8px; border-radius: 999px; text-align: center; font-size: 0.75rem; font-weight: 700;
+  &--working { background: #dcfae6; color: #085d3a; }
+  &--missing, &--failing { background: #fee4e2; color: #912018; }
+  &--off { background: #f2f4f7; color: #475467; }
+}
+@media (max-width: 560px) {
+  .dh-config-head { flex-direction: column; }
+  .dh-config .dh-help { padding-left: 0; }
+}

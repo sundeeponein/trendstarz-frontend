@@ -15,6 +15,12 @@ interface IntegrityCheck {
   explained?: number;
 }
 
+interface ConfigCheck {
+  service: string;
+  status: 'working' | 'missing' | 'failing' | 'off';
+  detail: string;
+}
+
 interface IntegrityRun {
   ranAt: string;
   trigger: 'nightly' | 'admin';
@@ -38,6 +44,10 @@ export class DataHealthComponent implements OnInit {
   run: IntegrityRun | null = null;
   private readonly isBrowser: boolean;
   private readonly url = `${environment.apiBaseUrl}/admin/data-integrity`;
+  /** Service settings check (keys present and working) — loaded on request: it calls each service. */
+  configChecks: ConfigCheck[] | null = null;
+  configLoading = false;
+  configError = '';
 
   constructor(private http: HttpClient, @Inject(PLATFORM_ID) platformId: object) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -53,6 +63,21 @@ export class DataHealthComponent implements OnInit {
 
   get passing(): IntegrityCheck[] {
     return (this.run?.checks || []).filter((c) => c.status === 'ok');
+  }
+
+  checkConfig(): void {
+    this.configLoading = true;
+    this.configError = '';
+    this.http.get<any>(`${environment.apiBaseUrl}/health/config`).subscribe({
+      next: (res) => {
+        this.configChecks = (res?.data ?? res)?.checks || [];
+        this.configLoading = false;
+      },
+      error: (err) => {
+        this.configLoading = false;
+        this.configError = err?.error?.message || 'Failed to check the service settings.';
+      },
+    });
   }
 
   load(): void {
