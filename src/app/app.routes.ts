@@ -110,5 +110,7 @@ export const routes: Routes = [
 	// (login required; logged-out visitors log in and come back).
 	{ path: 'campaign-management', redirectTo: '/campaigns', pathMatch: 'full' },
 	{ path: 'influencer-dashboard/campaigns', redirectTo: '/campaigns', pathMatch: 'full' },
+	// Old notification/email links (the page never existed) — open the dashboard instead of the homepage.
+	{ path: 'influencer-dashboard/invites', redirectTo: '/influencer-dashboard', pathMatch: 'full' },
 	{ path: '**', redirectTo: '' },
 ];
