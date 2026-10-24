@@ -106,7 +106,7 @@
     [showSkipAction]="false"
   ></app-whatsapp-community-card>
 
-  <div class="section-card mb-4" *ngIf="!loading">
+  <div id="dual-role" class="section-card mb-4" *ngIf="!loading">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--blue me-2"></span>
       Dual Role Summary
@@ -150,7 +150,7 @@
         <span class="attention-banner__title d-block">Pending {{ attentionCounts.pendingInvites === 1 ? 'invite' : 'invites' }}</span>
         <span class="attention-banner__desc d-block">Brands are waiting for you to accept or decline.</span>
       </span>
-      <button type="button" class="attention-banner__cta" (click)="openCampaignManagement('campaigns')">Review <i class="bi bi-arrow-right"></i></button>
+      <button type="button" class="attention-banner__cta" (click)="scrollToSection('invites')">Review <i class="bi bi-arrow-right"></i></button>
     </div>
     <div class="attention-banner attention-banner--warn" *ngIf="attentionCounts.overdueDeliverables > 0">
       <span class="attention-banner__count">{{ attentionCounts.overdueDeliverables }}</span>
@@ -206,7 +206,7 @@
   <!-- ═══════════════════════════════════════════════════════
        NEW CAMPAIGN INVITES
   ═══════════════════════════════════════════════════════ -->
-  <div *ngIf="!loading" class="section-card mb-4">
+  <div id="invites" *ngIf="!loading" class="section-card mb-4">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--orange me-2"></span>
       New Brand Campaign Invites
@@ -246,7 +246,7 @@
     </div>
   </div>
 
-  <div *ngIf="!loading" class="section-card mb-4">
+  <div id="collab-requests" *ngIf="!loading" class="section-card mb-4">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--purple me-2"></span>
       Photo/Videographer Collaboration Requests
@@ -295,7 +295,7 @@
     </div>
   </div>
 
-  <div *ngIf="!loading" class="section-card mb-4">
+  <div id="payments" *ngIf="!loading" class="section-card mb-4">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--blue me-2"></span>
       Earnings / Payments

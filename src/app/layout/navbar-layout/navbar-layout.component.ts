@@ -1,6 +1,7 @@
 import { Component, ChangeDetectorRef, HostListener, OnDestroy, inject } from '@angular/core';
 import { SessionService } from '../../core/session.service';
 import { PushNotificationService } from '../../core/push-notification.service';
+import { creatorNotificationUrl } from '../../shared/utils/notification-target.util';
 import { ConfigService } from '../../shared/config.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -408,7 +409,7 @@ export class NavbarLayoutComponent implements OnDestroy {
 
     this.notificationsOpen = false;
     if (item.url) {
-      this.router.navigateByUrl(item.url);
+      this.router.navigateByUrl(creatorNotificationUrl(item.url, item.title, item.body));
     }
   }
 

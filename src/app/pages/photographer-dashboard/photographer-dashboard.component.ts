@@ -126,9 +126,29 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
 
   private readonly route = inject(ActivatedRoute);
 
+  /**
+   * Scrolls to a dashboard section (id="dual-role" | "invites" | "collab-requests"
+   * | "payments"). Sections appear once the dashboard has loaded, so it retries
+   * for a few seconds.
+   */
+  scrollToSection(id: string, attempt = 0): void {
+    if (typeof document === 'undefined') return;
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    if (attempt < 20) setTimeout(() => this.scrollToSection(id, attempt + 1), 250);
+  }
+
   /** ?invite=<id> (from a notification or email): open that invite's details. */
   private watchInviteLink(): void {
     this.route?.queryParamMap?.subscribe((params) => {
+      const section = String(params.get('section') || '').trim();
+      if (section) {
+        this.scrollToSection(section);
+        this.router.navigate([], { queryParams: { section: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      }
       const inviteId = String(params.get('invite') || '').trim();
       if (!inviteId) return;
       const open = (invite: any) => {
