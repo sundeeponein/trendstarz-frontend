@@ -6,58 +6,82 @@
   (confirm)="onConfirmDialogConfirm()"
   (cancel)="onConfirmDialogCancel()"
 ></admin-confirm-dialog>
-<div class="container-fluid p-4">
-  <h2 class="text-white">Deleted Users</h2>
+<div class="deleted-users-page ts-admin-page">
+  <div class="ts-admin-page-header">
+    <div class="ts-admin-heading">
+      <h2 class="ts-admin-title"><i class="bi bi-trash3"></i> Deleted Users</h2>
+      <p class="ts-admin-subtitle">Restore soft-deleted users or permanently remove records when required.</p>
+    </div>
 
-  <div class="row">
-    <div class="col-4">
-      <div class="admin-tabs">
-        <button class="tab-btn" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
-        <button class="tab-btn" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
-        <button class="tab-btn" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photographers</button>
+    <div class="admin-tabs ts-admin-tabbar" role="tablist" aria-label="Deleted user roles">
+      <button class="tab-btn ts-admin-tab" [class.active]="activeTab === 'influencer'" (click)="setTab('influencer')">Influencers</button>
+      <button class="tab-btn ts-admin-tab" [class.active]="activeTab === 'brand'" (click)="setTab('brand')">Brands</button>
+      <button class="tab-btn ts-admin-tab" [class.active]="activeTab === 'photographer'" (click)="setTab('photographer')">Photo/Videographers</button>
+    </div>
+  </div>
+
+  <div class="deleted-users-toolbar">
+    <div class="tabs-bulk-row">
+      <div class="bulk-actions" *ngIf="getSelectedCount() > 0">
+        <span>{{ getSelectedCount() }} selected</span>
+        <button class="btn btn-success btn-sm" [disabled]="bulkActionLoading" (click)="restoreSelectedUsers()">Restore</button>
+        <button class="btn btn-danger btn-sm" [disabled]="bulkActionLoading" (click)="deleteSelectedPermanently()">Delete Permanently</button>
       </div>
     </div>
 
-    <div class="col-8">
-      <div class="filters-section p-0 bg-transparent border-0">
-        <div class="filter-group justify-content-end">
-          <!-- Category Filter -->
-          <div class="filter-item">
-            <label>Category</label>
-            <select id="category-filter"
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.category : brandFilters.category"
-                    (change)="activeTab === 'influencer' ? influencerFilters.category = $any($event.target).value : brandFilters.category = $any($event.target).value; onFilterChange(activeTab)">
-              <option value="">All Categories</option>
-              <option *ngFor="let category of categoriesArray" [value]="category">{{ category }}</option>
-            </select>
-          </div>
-
-          <!-- State Filter -->
-          <div class="filter-item">
-            <label>State</label>
-            <select id="state-filter"
-                    [ngModel]="activeTab === 'influencer' ? influencerFilters.state : brandFilters.state"
-                    (change)="activeTab === 'influencer' ? influencerFilters.state = $any($event.target).value : brandFilters.state = $any($event.target).value; onFilterChange(activeTab)">
-              <option value="">All States</option>
-              <option *ngFor="let state of statesArray" [value]="state">{{ state }}</option>
-            </select>
-          </div>
-
-          <!-- Reset Button -->
-          <button class="btn btn-secondary btn-sm" (click)="resetFilters(activeTab)">Reset Filters</button>
-        </div>
+    <div class="deleted-users-actions">
+      <div class="search-wrap">
+        <i class="bi bi-search"></i>
+        <input
+          type="text"
+          placeholder="Search by name, email or ID..."
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearchQueryChange()"
+        />
       </div>
-    </div>
 
+      <select class="deleted-filter-select" id="category-filter"
+              [ngModel]="getActiveFilterValue('category')"
+              (change)="setActiveFilterValue('category', $any($event.target).value)"
+              aria-label="Filter deleted users by category">
+        <option value="">All Categories</option>
+        <option *ngFor="let category of categoriesArray" [value]="category">{{ category }}</option>
+      </select>
+
+      <select class="deleted-filter-select" id="state-filter"
+              [ngModel]="getActiveFilterValue('state')"
+              (change)="setActiveFilterValue('state', $any($event.target).value)"
+              aria-label="Filter deleted users by state">
+        <option value="">All States</option>
+        <option *ngFor="let state of statesArray" [value]="state">{{ state }}</option>
+      </select>
+
+      <button class="reset-btn" (click)="resetFilters(activeTab)">
+        <i class="bi bi-sliders2"></i>
+        Reset
+      </button>
+    </div>
   </div>
   
+  <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->
   <div *ngIf="activeTab === 'influencer'">
     <div *ngIf="!filteredInfluencers || filteredInfluencers.length === 0" class="no-data-message">
-      <p>No Data</p>
+      <p>{{ isLoading ? 'Loading users...' : 'No Data' }}</p>
     </div>
-    <table *ngIf="filteredInfluencers && filteredInfluencers.length > 0" class="table table-hover admin-table">
-      <thead>
+    <table *ngIf="filteredInfluencers && filteredInfluencers.length > 0" class="table table-hover admin-table  table-striped">
+      <thead class="sticky-top bg-white" style="z-index: 1;">
         <tr>
+          <th class="select-col">
+            <label class="select-all-control" [class.disabled]="getTotalVisibleUsers() === 0">
+              <input
+                type="checkbox"
+                [checked]="areAllVisibleUsersSelected()"
+                [indeterminate]="isSomeVisibleUserSelected()"
+                [disabled]="getTotalVisibleUsers() === 0"
+                (change)="toggleSelectAllVisible($any($event.target).checked)"
+              />
+            </label>
+          </th>
           <th>Profile</th>
           <th>Name</th>
           <th>Username</th>
@@ -69,7 +93,15 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of filteredInfluencers">
+        <tr *ngFor="let user of getPagedDeletedUsers()">
+          <td class="select-col">
+            <input
+              type="checkbox"
+              [checked]="isUserSelected(user._id)"
+              (change)="toggleUserSelection(user._id, $any($event.target).checked)"
+              [attr.aria-label]="'Select ' + (user.name || user.email || 'user')"
+            />
+          </td>
           <td>
             <img [src]="user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png')" alt="Profile" width="40" height="40" (error)="$any($event.target).src='assets/default-profile.png'">
           </td>
@@ -88,13 +120,25 @@
     </table>
   </div>
   
+  <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->
   <div *ngIf="activeTab === 'brand'">
     <div *ngIf="!filteredBrands || filteredBrands.length === 0" class="no-data-message">
-      <p>No Data</p>
+      <p>{{ isLoading ? 'Loading users...' : 'No Data' }}</p>
     </div>
     <table *ngIf="filteredBrands && filteredBrands.length > 0" class="admin-table table table-hover">
-      <thead>
+      <thead class="sticky-top bg-white" style="z-index: 1;">
         <tr>
+          <th class="select-col">
+            <label class="select-all-control" [class.disabled]="getTotalVisibleUsers() === 0">
+              <input
+                type="checkbox"
+                [checked]="areAllVisibleUsersSelected()"
+                [indeterminate]="isSomeVisibleUserSelected()"
+                [disabled]="getTotalVisibleUsers() === 0"
+                (change)="toggleSelectAllVisible($any($event.target).checked)"
+              />
+            </label>
+          </th>
           <th>Logo</th>
           <th>Brand Name</th>
           <th>Email <small>Phone</small></th>
@@ -105,7 +149,15 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of filteredBrands">
+        <tr *ngFor="let user of getPagedDeletedUsers()">
+          <td class="select-col">
+            <input
+              type="checkbox"
+              [checked]="isUserSelected(user._id)"
+              (change)="toggleUserSelection(user._id, $any($event.target).checked)"
+              [attr.aria-label]="'Select ' + (user.brandName || user.email || 'brand')"
+            />
+          </td>
           <td>
             <img [src]="user.brandLogo && user.brandLogo[0]?.url ? user.brandLogo[0].url : (user.brandLogo && typeof user.brandLogo[0] === 'string' ? user.brandLogo[0] : 'assets/default-profile-brands.png')" alt="Logo" width="40" height="40" (error)="$any($event.target).src='assets/default-profile-brands.png'">
           </td>
@@ -139,13 +191,25 @@
     </table>
   </div>
 
+  <!-- overflow-auto add this class for scrolling  style="max-height: 100vh;" -->
   <div *ngIf="activeTab === 'photographer'">
     <div *ngIf="!filteredPhotographers || filteredPhotographers.length === 0" class="no-data-message">
-      <p>No Data</p>
+      <p>{{ isLoading ? 'Loading users...' : 'No Data' }}</p>
     </div>
     <table *ngIf="filteredPhotographers && filteredPhotographers.length > 0" class="table table-hover admin-table">
-      <thead>
+      <thead class="sticky-top bg-white" style="z-index: 1;">
         <tr>
+          <th class="select-col">
+            <label class="select-all-control" [class.disabled]="getTotalVisibleUsers() === 0">
+              <input
+                type="checkbox"
+                [checked]="areAllVisibleUsersSelected()"
+                [indeterminate]="isSomeVisibleUserSelected()"
+                [disabled]="getTotalVisibleUsers() === 0"
+                (change)="toggleSelectAllVisible($any($event.target).checked)"
+              />
+            </label>
+          </th>
           <th>Profile</th>
           <th>Name</th>
           <th>Email <small>Phone</small></th>
@@ -155,7 +219,15 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of filteredPhotographers">
+        <tr *ngFor="let user of getPagedDeletedUsers()">
+          <td class="select-col">
+            <input
+              type="checkbox"
+              [checked]="isUserSelected(user._id)"
+              (change)="toggleUserSelection(user._id, $any($event.target).checked)"
+              [attr.aria-label]="'Select ' + (user.name || user.email || 'photo/videographer')"
+            />
+          </td>
           <td>
             <img [src]="user.profileImage || (user.profileImages && user.profileImages[0]?.url ? user.profileImages[0].url : (user.profileImages && typeof user.profileImages[0] === 'string' ? user.profileImages[0] : 'assets/default-profile.png'))" alt="Profile" width="40" height="40" (error)="$any($event.target).src='assets/default-profile.png'">
           </td>
@@ -170,5 +242,18 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="deleted-table-footer" *ngIf="getTotalVisibleUsers() > 0">
+    <div class="page-size-control">
+      <select [ngModel]="pageSize" (ngModelChange)="onPageSizeChange($event)" aria-label="Rows per page">
+        <option *ngFor="let size of pageSizeOptions" [ngValue]="size">{{ size }}</option>
+      </select>
+      <span>{{ getVisibleRangeStart() }} - {{ getVisibleRangeEnd() }} of {{ getTotalVisibleUsers() }} {{ getRoleTitle() }}</span>
+    </div>
+    <div class="pager-buttons">
+      <button (click)="goToPreviousPage()" [disabled]="!hasPreviousPage()"><i class="bi bi-chevron-left"></i></button>
+      <button (click)="goToNextPage()" [disabled]="!hasNextPage()"><i class="bi bi-chevron-right"></i></button>
+    </div>
   </div>
 </div>

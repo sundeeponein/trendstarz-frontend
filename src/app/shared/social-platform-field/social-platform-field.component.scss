@@ -1,0 +1,83 @@
+@use '../styles/social-platform' as *;
+
+.spf-connect-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e0e5ef;
+  border-radius: 10px;
+  background: #fff;
+
+  &--soon {
+    opacity: 0.85;
+  }
+}
+
+.spf-connect-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.spf-connect-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1a7f4e;
+
+  &--muted {
+    color: #6b7d97;
+  }
+}
+
+.spf-connect-detail {
+  font-size: 0.8rem;
+  color: #3a4561;
+
+  em {
+    color: #8a97ab;
+    font-style: normal;
+  }
+}
+
+.spf-connect-btn {
+  flex-shrink: 0;
+}
+
+.content-type-item { flex-wrap: wrap; }
+
+.content-type-item .price-suggestion {
+  min-width: 0;
+  flex-basis: 100%;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 0 24px;
+  font-size: 0.76rem;
+  color: rgba(11, 18, 32, 0.62);
+
+  i { color: #f59e0b; }
+}
+
+.price-suggestion__use {
+  padding: 1px 9px;
+  border-radius: 999px;
+  border: 1px solid #fed7c3;
+  background: #fff7f2;
+  color: #ea580c;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+// 3D-1d: shown under a rate below the ₹50 minimum.
+.rate-min-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: #b45309;
+}

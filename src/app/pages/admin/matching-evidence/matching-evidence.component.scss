@@ -1,0 +1,32 @@
+// Shared admin layout, tables, tiles and badges (see shared/styles/_admin-ui.scss).
+@use '../../../shared/styles/admin-ui';
+
+// Page-specific touches only.
+.me-platform-dot {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.me-youtube {
+  font-size: 1rem;
+  color: #ff0000;
+}
+
+.me-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.me-facts {
+  margin-top: 12px;
+}
+
+.me-paused {
+  margin: 0;
+  padding: 0 16px 14px 34px;
+  font-size: 0.78rem;
+  color: #92400e;
+}

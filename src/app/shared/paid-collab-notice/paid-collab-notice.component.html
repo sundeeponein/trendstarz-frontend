@@ -1,0 +1,70 @@
+<div class="pcn" (click)="stop($event)">
+  <div class="pcn-line">
+    <i class="bi bi-shield-lock-fill"></i>
+    <span>
+      Paid collaboration — only TrendStarZ can cancel it. If anyone asks you to skip posting, cancel, or deal outside
+      TrendStarZ, report it here.
+    </span>
+  </div>
+
+  <div class="pcn-agree" *ngIf="needsAgreement">
+    <button type="button" class="pcn-link" (click)="showTerms = !showTerms; stop($event)">
+      {{ showTerms ? 'Hide terms' : 'Read the paid-collaboration terms' }}
+    </button>
+    <ul class="pcn-terms" *ngIf="showTerms">
+      <li *ngFor="let t of terms">{{ t }}</li>
+    </ul>
+    <button type="button" class="btn btn-sm btn-primary" [disabled]="busy" (click)="agree($event)">
+      I agree to the terms
+    </button>
+  </div>
+
+  <div class="pcn-report">
+    <span class="pcn-done" *ngIf="cancelRequestStatus === 'pending'">
+      <i class="bi bi-hourglass-split"></i> Your cancel / pause request is with TrendStarZ. Until it decides, the deadline stays the same.
+    </span>
+    <button type="button" class="pcn-link" *ngIf="allowCancel && cancelRequestStatus !== 'pending'" (click)="toggleCancel($event)">
+      <i class="bi bi-pause-circle"></i> Request to cancel or pause
+    </button>
+    <div class="pcn-form" *ngIf="cancelOpen && cancelRequestStatus !== 'pending'">
+      <div class="pcn-radio">
+        <label><input type="radio" name="pcn-type-{{ inviteId }}" value="cancel" [(ngModel)]="cancelType" (click)="stop($event)" /> Cancel</label>
+        <label><input type="radio" name="pcn-type-{{ inviteId }}" value="pause" [(ngModel)]="cancelType" (click)="stop($event)" /> Pause</label>
+      </div>
+      <textarea
+        class="form-control form-control-sm"
+        rows="3"
+        [(ngModel)]="cancelReason"
+        (click)="stop($event)"
+        placeholder="Why? (at least 15 characters) — only TrendStarZ can approve it"></textarea>
+      <div class="pcn-form-actions">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleCancel($event)">Close</button>
+        <button type="button" class="btn btn-sm btn-primary" [disabled]="busy || cancelReason.trim().length < 15" (click)="sendCancel($event)">
+          Send request
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pcn-report">
+    <span class="pcn-done" *ngIf="reported"><i class="bi bi-check2-circle"></i> Reported — TrendStarZ will review it.</span>
+    <button type="button" class="pcn-link" *ngIf="!reported" (click)="toggleReport($event)">
+      <i class="bi bi-flag"></i> Report: {{ reportLabel }}
+    </button>
+    <div class="pcn-form" *ngIf="reportOpen && !reported">
+      <textarea
+        class="form-control form-control-sm"
+        rows="3"
+        [(ngModel)]="details"
+        (click)="stop($event)"
+        placeholder="What happened? (at least 20 characters) — the other side is not notified"></textarea>
+      <div class="pcn-form-actions">
+        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="toggleReport($event)">Cancel</button>
+        <button type="button" class="btn btn-sm btn-danger" [disabled]="busy || details.trim().length < 20" (click)="sendReport($event)">
+          Send report
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="pcn-error" *ngIf="error">{{ error }}</div>
+</div>

@@ -25,7 +25,7 @@ test.describe('Forgot password page', () => {
   test('shows validation error for invalid email format', async ({ page }) => {
     await page.fill('input[formControlName="email"]', 'not-an-email');
     await page.locator('input[formControlName="email"]').blur();
-    await expect(page.locator('.text-danger')).toBeVisible();
+    await expect(page.locator('button:has-text("Send Reset Link")')).toBeDisabled();
   });
 
   test('shows success message after submitting valid email (mocked API)', async ({ page }) => {
@@ -40,7 +40,9 @@ test.describe('Forgot password page', () => {
     await page.fill('input[formControlName="email"]', 'user@example.com');
     await page.click('button:has-text("Send Reset Link")');
 
-    await expect(page.locator('.text-success')).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.getByText(/If your email is registered, you'll receive a password reset link shortly\..*most recent reset email only/i)
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test('shows same success message when email is not registered (mocked API)', async ({ page }) => {
@@ -56,7 +58,9 @@ test.describe('Forgot password page', () => {
     await page.click('button:has-text("Send Reset Link")');
 
     // Component intentionally shows success message even on error (security best practice)
-    await expect(page.locator('.text-success')).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByText(/If your email is registered, you'll receive a password reset link shortly\..*most recent reset email only/i)
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('Back to Login link navigates to /login', async ({ page }) => {
@@ -70,8 +74,17 @@ test.describe('Forgot password page', () => {
 // ─────────────────────────────────────────────────────────────
 test.describe('Reset password page', () => {
   const RESET_URL = '/reset-password?token=fake-reset-token-123';
+  const WRAPPED_RESET_URL = `/reset-password?link=${encodeURIComponent('https://www.trendstarz.in/reset-password?token=fake-reset-token-123')}`;
 
   test.beforeEach(async ({ page }) => {
+    await page.route('**/auth/reset-password/validate**', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ valid: true }),
+      });
+    });
+
     await page.goto(RESET_URL);
     await page.waitForSelector('input[formControlName="password"]', { state: 'visible' });
     // Wait for Angular hydration to complete (SSR app)
@@ -81,7 +94,17 @@ test.describe('Reset password page', () => {
   test('renders new password and confirm password fields', async ({ page }) => {
     await expect(page.locator('input[formControlName="password"]')).toBeVisible();
     await expect(page.locator('input[formControlName="confirmPassword"]')).toBeVisible();
-    await expect(page.locator('button:has-text("Reset Password")')).toBeVisible();
+    await expect(page.locator('button[type="submit"].btn-signin')).toBeVisible();
+  });
+
+  test('accepts wrapped reset links and keeps the form usable', async ({ page }) => {
+    await page.goto(WRAPPED_RESET_URL);
+    await page.waitForSelector('input[formControlName="password"]', { state: 'visible' });
+
+    await page.fill('input[formControlName="password"]', 'Wrapped@1234');
+    await page.fill('input[formControlName="confirmPassword"]', 'Wrapped@1234');
+
+    await expect(page.locator('button:has-text("Reset Password")')).toBeEnabled();
   });
 
   test('password strength checklist appears when typing', async ({ page }) => {
@@ -103,7 +126,7 @@ test.describe('Reset password page', () => {
     await page.fill('input[formControlName="password"]', 'Strong@1234');
     await page.fill('input[formControlName="confirmPassword"]', 'Different@9');
     await page.locator('input[formControlName="confirmPassword"]').blur();
-    await expect(page.locator('.text-danger')).toBeVisible();
+    await expect(page.locator('button:has-text("Reset Password")')).toBeDisabled();
   });
 
   test('password toggle works on both fields', async ({ page }) => {
@@ -143,28 +166,8 @@ test.describe('Reset password page', () => {
       page.click('button:has-text("Reset Password")'),
     ]);
 
-    // Angular 21 is zoneless — trigger change detection via template interaction
-    await page.waitForTimeout(200);
-    await page.locator('input[formControlName="password"]').focus();
-    await page.locator('input[formControlName="password"]').blur();
-
-    // Success message is transient before redirect to /login; assert the component state first,
-    // then confirm the UI text if it is still mounted.
-    await expect.poll(async () => {
-      return await page.evaluate(() => {
-        const host = document.querySelector('app-reset-password') as any;
-        const ng = (window as any).ng;
-        const comp = ng?.getComponent?.(host);
-        return String(comp?.successMsg || '');
-      });
-    }, {
-      timeout: 5000,
-    }).toContain('password has been reset');
-
-    const successMessage = page.locator('.text-success', { hasText: 'Your password has been reset' });
-    if (await successMessage.count()) {
-      await expect(successMessage.first()).toBeVisible({ timeout: 5000 });
-    }
+    await expect(page.getByRole('heading', { name: 'Password reset successful' })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Your password has been reset. You can now log in.')).toBeVisible({ timeout: 5000 });
   });
 
   test('shows error when token is invalid (mocked API)', async ({ page }) => {
@@ -190,6 +193,8 @@ test.describe('Reset password page', () => {
     await page.locator('input[formControlName="password"]').focus();
     await page.locator('input[formControlName="password"]').blur();
 
-    await expect(page.locator('.text-danger.text-center')).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByText(/This reset link is invalid or expired\..*most recent link or request a new one/i)
+    ).toBeVisible({ timeout: 10000 });
   });
 });

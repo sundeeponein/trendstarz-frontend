@@ -1,8 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PlansService, Plan } from '../../../shared/plans.service';
+import { PlansService, Plan, visiblePlanLimits } from '../../../shared/plans.service';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
+
+type LimitGroup = 'browse' | 'host' | 'creator' | 'profile';
+interface MasterLimit {
+  key: string;
+  group: LimitGroup;
+  label: string;
+  hint: string;
+  /** Shown (and used by the server) when the plan doesn't set it. */
+  default?: number;
+}
 
 @Component({
   selector: 'app-admin-plans',
@@ -20,6 +30,32 @@ export class AdminPlansComponent implements OnInit {
   brandPlans: Plan[] = [];
   photographerPlans: Plan[] = [];
 
+  activeTab: 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER' = 'INFLUENCER';
+
+  setTab(tab: 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER') {
+    this.activeTab = tab;
+  }
+
+  get activePlans(): Plan[] {
+    if (this.activeTab === 'BRAND') return this.brandPlans;
+    if (this.activeTab === 'PHOTOGRAPHER') return this.photographerPlans;
+    return this.influencerPlans;
+  }
+
+  // Quick reference so trial days across roles are visible without switching tabs —
+  // avoids the "is this plan's trial different on purpose or did I forget it" confusion.
+  get trialDaysSummary(): { label: string; days: number }[] {
+    const trialDaysOf = (plans: Plan[]) => {
+      const plan = plans.find(p => p.highlight) || plans[0];
+      return plan?.offers?.find(o => o.key === 'trialPeriodDays')?.value ?? 0;
+    };
+    return [
+      { label: 'Influencer Pro', days: trialDaysOf(this.influencerPlans) },
+      { label: 'Brand Pro', days: trialDaysOf(this.brandPlans) },
+      { label: 'Photo/Video Pro', days: trialDaysOf(this.photographerPlans) },
+    ];
+  }
+
   readonly masterFeatures: { [k: string]: { key: string; label: string }[] } = {
     INFLUENCER: [
       { key: 'publicProfileListing', label: 'Public profile listing' },
@@ -29,6 +65,8 @@ export class AdminPlansComponent implements OnInit {
       { key: 'analyticsDashboard', label: 'Analytics dashboard' },
       { key: 'canWriteReview', label: 'Write reviews for brands' },
       { key: 'canReadReviews', label: 'View influencer & brand reviews' },
+      { key: 'canInviteUsers', label: 'Can invite users' },
+      { key: 'canViewAnalytics', label: 'Can view analytics' },
     ],
     BRAND: [
       { key: 'browseInfluencerProfiles', label: 'Browse influencer profiles' },
@@ -39,6 +77,9 @@ export class AdminPlansComponent implements OnInit {
       { key: 'bulkOutreachTools', label: 'Bulk outreach tools' },
       { key: 'canWriteReview', label: 'Write reviews for influencers' },
       { key: 'canReadReviews', label: 'View influencer & brand reviews' },
+      { key: 'canInviteUsers', label: 'Can invite users' },
+      { key: 'canViewAnalytics', label: 'Can view analytics' },
+      { key: 'featuredBadge', label: 'Featured badge' },
     ],
     PHOTOGRAPHER: [
       { key: 'publicProfileListing', label: 'Public photographer profile' },
@@ -48,49 +89,121 @@ export class AdminPlansComponent implements OnInit {
       { key: 'analyticsDashboard', label: 'Analytics dashboard' },
       { key: 'canWriteReview', label: 'Write reviews for brands' },
       { key: 'canReadReviews', label: 'View influencer & brand reviews' },
+      { key: 'canInviteUsers', label: 'Can invite users' },
+      { key: 'canViewAnalytics', label: 'Can view analytics' },
     ],
   };
 
   readonly masterOffers: { [k: string]: { key: string; label: string }[] } = {
     INFLUENCER: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
-      { key: 'discountOnInfluencerPro', label: 'Discount on Influencer Pro plan (%)' },
+      { key: 'discountMonthly', label: 'Monthly Discount (%)' },
+      { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
+      { key: 'discountYearly', label: 'Yearly Discount (%)' },
+      { key: 'bonusMonthsMonthly', label: 'Bonus Months (Monthly)' },
+      { key: 'bonusMonthsQuarterly', label: 'Bonus Months (Quarterly)' },
+      { key: 'bonusMonthsYearly', label: 'Bonus Months (Yearly)' },
+      { key: 'founderBonusMonthsMonthly', label: 'Founder Offer Bonus Months (Monthly)' },
+      { key: 'founderBonusMonthsQuarterly', label: 'Founder Offer Bonus Months (Quarterly)' },
+      { key: 'founderBonusMonthsYearly', label: 'Founder Offer Bonus Months (Yearly)' },
     ],
     BRAND: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
-      { key: 'discountOnBrandPro', label: 'Discount on Brand Pro plan (%)' },
+      { key: 'discountMonthly', label: 'Monthly Discount (%)' },
+      { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
+      { key: 'discountYearly', label: 'Yearly Discount (%)' },
+      { key: 'bonusMonthsMonthly', label: 'Bonus Months (Monthly)' },
+      { key: 'bonusMonthsQuarterly', label: 'Bonus Months (Quarterly)' },
+      { key: 'bonusMonthsYearly', label: 'Bonus Months (Yearly)' },
+      { key: 'founderBonusMonthsMonthly', label: 'Founder Offer Bonus Months (Monthly)' },
+      { key: 'founderBonusMonthsQuarterly', label: 'Founder Offer Bonus Months (Quarterly)' },
+      { key: 'founderBonusMonthsYearly', label: 'Founder Offer Bonus Months (Yearly)' },
     ],
     PHOTOGRAPHER: [
       { key: 'trialPeriodDays', label: 'Trial period (days)' },
-      { key: 'discountOnPhotographerPro', label: 'Discount on Photographer Pro plan (%)' },
+      { key: 'discountMonthly', label: 'Monthly Discount (%)' },
+      { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
+      { key: 'discountYearly', label: 'Yearly Discount (%)' },
+      { key: 'bonusMonthsMonthly', label: 'Bonus Months (Monthly)' },
+      { key: 'bonusMonthsQuarterly', label: 'Bonus Months (Quarterly)' },
+      { key: 'bonusMonthsYearly', label: 'Bonus Months (Yearly)' },
+      { key: 'founderBonusMonthsMonthly', label: 'Founder Offer Bonus Months (Monthly)' },
+      { key: 'founderBonusMonthsQuarterly', label: 'Founder Offer Bonus Months (Quarterly)' },
+      { key: 'founderBonusMonthsYearly', label: 'Founder Offer Bonus Months (Yearly)' },
     ],
   };
 
-  readonly masterLimits: { [k: string]: { key: string; label: string }[] } = {
+  /** Plan limits shown in the editor, grouped by who they apply to (see limitGroups). */
+  readonly masterLimits: { [k: string]: MasterLimit[] } = {
     INFLUENCER: [
-      { key: 'maxProductImages', label: 'Product images' },
-      { key: 'maxActiveCampaigns', label: 'Active campaign' },
-      { key: 'maxInvitesPerCampaign', label: 'Invites / campaign' },
-      { key: 'maxInviteOptions', label: 'Invite options' },
+      { key: 'dailyProfileViewLimit', group: 'browse', label: 'Daily profile views', hint: 'Profiles they can open per day.' },
+      { key: 'dailySearchLimit', group: 'browse', label: 'Daily searches', hint: 'Searches they can run per day.' },
+      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns or collabs they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
+      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid collab or Product + Paid campaign.' },
+      { key: 'maxBarterCampaignsPerMonth', group: 'host', label: '… of which barter / location (max)', hint: 'How many of the monthly campaigns may be product-only barter or location visits.', default: 2 },
+      { key: 'maxInvitesPerBarterCampaign', group: 'host', label: 'Invites per barter / location campaign', hint: 'Creators they can invite to one barter or location campaign.', default: 3 },
+      { key: 'maxAcceptedPerBarterCampaign', group: 'host', label: 'Accepted creators per barter / location campaign', hint: 'The campaign closes once this many creators accept.', default: 1 },
+      { key: 'maxInvitesReceivedPerMonth', group: 'creator', label: 'Invites they can receive per month', hint: 'Hosts can\'t invite them once this many invites are active or used this plan month.' },
+      { key: 'maxProductImages', group: 'profile', label: 'Product images', hint: 'Images they can upload to their products.' },
     ],
     BRAND: [
-      { key: 'maxActiveCampaigns', label: 'Active campaign' },
-      { key: 'maxInvitesPerCampaign', label: 'Invites / campaign' },
-      { key: 'maxTeamSeats', label: 'Team seat' },
-      { key: 'analytics', label: 'Analytics' },
+      // 'maxTeamSeats' intentionally omitted — no team-member feature exists yet to enforce it.
+      { key: 'dailyProfileViewLimit', group: 'browse', label: 'Daily profile views', hint: 'Profiles they can open per day.' },
+      { key: 'dailySearchLimit', group: 'browse', label: 'Daily searches', hint: 'Searches they can run per day.' },
+      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns or collabs they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
+      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid collab or Product + Paid campaign.' },
+      { key: 'maxBarterCampaignsPerMonth', group: 'host', label: '… of which barter / location (max)', hint: 'How many of the monthly campaigns may be product-only barter or location visits.', default: 2 },
+      { key: 'maxInvitesPerBarterCampaign', group: 'host', label: 'Invites per barter / location campaign', hint: 'Creators they can invite to one barter or location campaign.', default: 3 },
+      { key: 'maxAcceptedPerBarterCampaign', group: 'host', label: 'Accepted creators per barter / location campaign', hint: 'The campaign closes once this many creators accept.', default: 1 },
     ],
     PHOTOGRAPHER: [
-      { key: 'maxPortfolioImages', label: 'Portfolio images' },
-      { key: 'maxActiveCampaigns', label: 'Active campaign' },
-      { key: 'maxInvitesPerCampaign', label: 'Invites / campaign' },
-      { key: 'analytics', label: 'Analytics' },
+      { key: 'dailyProfileViewLimit', group: 'browse', label: 'Daily profile views', hint: 'Profiles they can open per day.' },
+      { key: 'dailySearchLimit', group: 'browse', label: 'Daily searches', hint: 'Searches they can run per day.' },
+      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns or collabs they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
+      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid collab or Product + Paid campaign.' },
+      { key: 'maxBarterCampaignsPerMonth', group: 'host', label: '… of which barter / location (max)', hint: 'How many of the monthly campaigns may be product-only barter or location visits.', default: 2 },
+      { key: 'maxInvitesPerBarterCampaign', group: 'host', label: 'Invites per barter / location campaign', hint: 'Creators they can invite to one barter or location campaign.', default: 3 },
+      { key: 'maxAcceptedPerBarterCampaign', group: 'host', label: 'Accepted creators per barter / location campaign', hint: 'The campaign closes once this many creators accept.', default: 1 },
+      { key: 'maxInvitesReceivedPerMonth', group: 'creator', label: 'Invites they can receive per month', hint: 'Hosts can\'t invite them once this many invites are active or used this plan month.' },
+      { key: 'maxPortfolioImages', group: 'profile', label: 'Portfolio images', hint: 'Images in their portfolio.' },
     ],
   };
+
+  /** Editor sections, in order — each shows only the limits that belong to it. */
+  readonly limitGroups: { id: LimitGroup; title: string; subtitle: string }[] = [
+    { id: 'browse', title: 'Browsing', subtitle: 'Discovering profiles on TrendStarZ.' },
+    { id: 'host', title: 'As a host — running campaigns & sending invites', subtitle: 'Applies when this user creates a campaign or collab.' },
+    { id: 'creator', title: 'As a creator — receiving invites', subtitle: 'Applies when hosts invite this user.' },
+    { id: 'profile', title: 'Profile & media', subtitle: 'Uploads on their profile.' },
+  ];
+
+  limitsInGroup(group: LimitGroup) {
+    return this.getMergedLimits().filter((l) => l.group === group);
+  }
+
+  /** A setting that can't take effect as entered (e.g. barter share above the monthly total). */
+  limitWarning(key: string): string {
+    const value = (k: string) => this.getMergedLimits().find((l) => l.key === k)?.value;
+    const total = Number(value('maxActiveCampaigns'));
+    if (key === 'maxBarterCampaignsPerMonth' && total !== -1 && Number(value(key)) > total) {
+      return `No effect above ${total}: campaigns per month is ${total}, so at most ${total} can be barter / location.`;
+    }
+    return '';
+  }
+
+
+  // Filtered out of the read-only comparison cards so admins aren't shown a
+  // cap with nothing behind it — see masterLimits.BRAND above and
+  // HIDDEN_PLAN_LIMIT_KEYS in plans.service.ts for why.
+  visibleLimits(plan: Plan): { key: string; label: string; value: number }[] {
+    return visiblePlanLimits(plan?.limits);
+  }
 
   plans: Plan[] = [];
   loading = false;
   error = '';
   successMsg = '';
+  saving = false;
 
   editingPlan: Plan | null = null;
   isCreating = false;
@@ -132,13 +245,20 @@ export class AdminPlansComponent implements OnInit {
     });
   }
 
-  getMergedLimits(): { key: string; label: string; value: number }[] {
+  /** The current label for a stored limit (stored labels can be stale, e.g. "Active campaign"). */
+  limitLabel(userType: string, limit: { key: string; label: string }): string {
+    const master = this.masterLimits[userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
+    return master.find((m) => m.key === limit.key)?.label || limit.label;
+  }
+
+  getMergedLimits(): (MasterLimit & { value: number })[] {
     if (!this.editingPlan) return [];
     const type = this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER';
     const master = this.masterLimits[type] || [];
     return master.map(m => {
       const found = this.editingPlan!.limits.find(l => l.key === m.key);
-      return { ...m, value: found ? found.value : 0 };
+      // Unset keys show the server's default (e.g. barter limits), not a misleading 0.
+      return { ...m, value: found ? found.value : (m.default ?? 0) };
     });
   }
 
@@ -152,6 +272,10 @@ export class AdminPlansComponent implements OnInit {
     });
   }
 
+  getOfferValue(key: string): number {
+    return this.getMergedOffers().find(o => o.key === key)?.value ?? 0;
+  }
+
   setOfferValue(key: string, value: number) {
     if (!this.editingPlan) return;
     if (!this.editingPlan.offers) this.editingPlan.offers = [];
@@ -163,6 +287,79 @@ export class AdminPlansComponent implements OnInit {
     const master = this.masterOffers[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
     const m = master.find(o => o.key === key);
     if (m) this.editingPlan.offers.push({ ...m, value });
+  }
+
+  // Offer values are mixed units: trialPeriodDays/bonusMonths are counts, the
+  // discount keys are percentages. Render each with its own unit instead of
+  // assuming '%' for all.
+  offerValueDisplay(o: { key: string; value: number }): string {
+    if (o.key === 'trialPeriodDays') return `${o.value} days`;
+    if (o.key.startsWith('bonusMonths')) return `${o.value} months`;
+    return `${o.value}%`;
+  }
+
+  private readonly baseMonthsByCycle: Record<'monthly' | 'quarterly' | 'yearly', number> = {
+    monthly: 1,
+    quarterly: 3,
+    yearly: 12,
+  };
+
+  getPricingPreview(): { label: string; price: number; discountPercent: number; final: number }[] {
+    if (!this.editingPlan) return [];
+    const offers = this.getMergedOffers();
+    const discountFor = (key: string) => offers.find(o => o.key === key)?.value ?? 0;
+    const rows: { key: 'monthly' | 'quarterly' | 'yearly'; label: string; discountKey: string }[] = [
+      { key: 'monthly', label: 'Monthly', discountKey: 'discountMonthly' },
+      { key: 'quarterly', label: 'Quarterly', discountKey: 'discountQuarterly' },
+      { key: 'yearly', label: 'Yearly', discountKey: 'discountYearly' },
+    ];
+    return rows.map(r => {
+      const price = this.editingPlan!.price[r.key] ?? 0;
+      const discountPercent = discountFor(r.discountKey);
+      return { label: r.label, price, discountPercent, final: Math.round(price * (1 - discountPercent / 100)) };
+    });
+  }
+
+  getFinalPrice(durationKey: 'monthly' | 'quarterly' | 'yearly'): number {
+    return this.getPricingPreview().find(r => r.label.toLowerCase() === durationKey)?.final ?? 0;
+  }
+
+  /** Months actually granted to every paying user of this cycle: base + the standing Pricing & Discounts bonus. */
+  getFinalDuration(durationKey: 'monthly' | 'quarterly' | 'yearly'): number {
+    const bonusKey = `bonusMonths${durationKey.charAt(0).toUpperCase()}${durationKey.slice(1)}`;
+    const bonusMonths = this.getOfferValue(bonusKey);
+    return this.baseMonthsByCycle[durationKey] + bonusMonths;
+  }
+
+  /** Months granted to a Founder-Offer-eligible user: standing bonus (above) + the Founder Offer's own bonus, stacked — e.g. pay 1, +1 standing, +1 Founder Offer = 3 total. */
+  getFounderFinalDuration(durationKey: 'monthly' | 'quarterly' | 'yearly'): number {
+    const founderBonusKey = `founderBonusMonths${durationKey.charAt(0).toUpperCase()}${durationKey.slice(1)}`;
+    const founderBonusMonths = this.getOfferValue(founderBonusKey);
+    return this.getFinalDuration(durationKey) + founderBonusMonths;
+  }
+
+  /** Small status tag next to "First-Login Founder Offer Popup" summarizing who the two checkboxes target. */
+  get founderOfferAudienceBadge(): string {
+    const forNew = this.editingPlan?.founderOfferForNewUsers ?? true;
+    const forExisting = this.editingPlan?.founderOfferForExistingUsers ?? true;
+    const cap = Number(this.editingPlan?.founderOfferAudienceCap || 0);
+    const count = Number(this.editingPlan?.founderOfferAudienceCount || 0);
+    if (cap > 0 && count >= cap) return 'CAP REACHED';
+    if (this.editingPlan?.founderOfferEndsAt) {
+      const endsAt = new Date(this.editingPlan.founderOfferEndsAt).getTime();
+      if (Number.isFinite(endsAt) && endsAt < Date.now()) return 'ENDED';
+    }
+    if (forNew && forExisting) return 'ALL USERS';
+    if (forNew) return 'NEW USERS';
+    if (forExisting) return 'EXISTING USERS';
+    return 'DISABLED';
+  }
+
+  dateInputValue(value?: string | Date | null): string {
+    if (!value) return '';
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return '';
+    return date.toISOString().slice(0, 10);
   }
 
   private syncContactVisibilityFeature(_plan: Plan) {
@@ -214,6 +411,7 @@ export class AdminPlansComponent implements OnInit {
   startCreate() {
     this.loading = false;
     this.isCreating = false;
+    this.saving = false;
     this.showTypeSelector = true;
     this.newPlanType = null;
     this.editingPlan = null;
@@ -231,10 +429,13 @@ export class AdminPlansComponent implements OnInit {
         price: { monthly: 399, quarterly: 999, yearly: 2999 },
         features: this.masterFeatures['INFLUENCER'].map(f => ({ ...f, value: true })),
         limits: [
+          { key: 'dailyProfileViewLimit', label: 'Daily profile views', value: 300 },
+          { key: 'dailySearchLimit', label: 'Daily searches', value: 150 },
           { key: 'maxProductImages', label: 'Product images', value: 20 },
-          { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
+          { key: 'maxActiveCampaigns', label: 'Campaigns / month', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 10 },
           { key: 'maxInviteOptions', label: 'Invite options', value: 20 },
+          { key: 'maxCampaignPosts', label: 'Max campaign posts', value: 20 },
         ],
         offers: this.masterOffers['INFLUENCER'].map(o => ({ ...o, value: 0 })),
         policies: { imageRetentionDaysAfterExpiry: 45 },
@@ -249,10 +450,12 @@ export class AdminPlansComponent implements OnInit {
         price: { monthly: 399, quarterly: 999, yearly: 2999 },
         features: this.masterFeatures['BRAND'].map(f => ({ ...f, value: true })),
         limits: [
-          { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
+          { key: 'dailyProfileViewLimit', label: 'Daily profile views', value: 500 },
+          { key: 'dailySearchLimit', label: 'Daily searches', value: 250 },
+          { key: 'maxActiveCampaigns', label: 'Campaigns / month', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 20 },
-          { key: 'maxTeamSeats', label: 'Team seats', value: 5 },
           { key: 'analytics', label: 'Analytics', value: 1 },
+          { key: 'maxCampaignPosts', label: 'Max campaign posts', value: 30 },
         ],
         offers: this.masterOffers['BRAND'].map(o => ({ ...o, value: 0 })),
         policies: { imageRetentionDaysAfterExpiry: 45 },
@@ -267,10 +470,13 @@ export class AdminPlansComponent implements OnInit {
         price: { monthly: 399, quarterly: 999, yearly: 2999 },
         features: this.masterFeatures['PHOTOGRAPHER'].map(f => ({ ...f, value: true })),
         limits: [
+          { key: 'dailyProfileViewLimit', label: 'Daily profile views', value: 300 },
+          { key: 'dailySearchLimit', label: 'Daily searches', value: 150 },
           { key: 'maxPortfolioImages', label: 'Portfolio images', value: 10 },
-          { key: 'maxActiveCampaigns', label: 'Active campaign', value: 10 },
+          { key: 'maxActiveCampaigns', label: 'Campaigns / month', value: 10 },
           { key: 'maxInvitesPerCampaign', label: 'Invites / campaign', value: 10 },
           { key: 'analytics', label: 'Analytics', value: 0 },
+          { key: 'maxCampaignPosts', label: 'Max campaign posts', value: 20 },
         ],
         offers: this.masterOffers['PHOTOGRAPHER'].map(o => ({ ...o, value: 0 })),
         policies: { imageRetentionDaysAfterExpiry: 45 },
@@ -288,6 +494,7 @@ export class AdminPlansComponent implements OnInit {
   startEdit(plan: Plan) {
     this.loading = false;
     this.isCreating = false;
+    this.saving = false;
     this.editingPlan = JSON.parse(JSON.stringify(plan));
     if (this.editingPlan) {
       this.syncContactVisibilityFeature(this.editingPlan);
@@ -308,6 +515,7 @@ export class AdminPlansComponent implements OnInit {
   cancelEdit() {
     this.editingPlan = null;
     this.isCreating = false;
+    this.saving = false;
     this.showTypeSelector = false;
     this.newPlanType = null;
   }
@@ -317,6 +525,7 @@ export class AdminPlansComponent implements OnInit {
 
     this.error = '';
     this.successMsg = '';
+    this.saving = true;
 
     this.editingPlan.features = this.getMergedFeatures();
     this.editingPlan.limits = this.getMergedLimits();
@@ -332,9 +541,13 @@ export class AdminPlansComponent implements OnInit {
           this.successMsg = 'Plan created successfully';
           this.editingPlan = null;
           this.isCreating = false;
+          this.saving = false;
           this.loadPlans();
         },
-        error: (err) => (this.error = err?.error?.message || 'Failed to save plan'),
+        error: (err) => {
+          this.error = err?.error?.message || 'Failed to save plan';
+          this.saving = false;
+        },
       });
       return;
     }
@@ -344,9 +557,13 @@ export class AdminPlansComponent implements OnInit {
       next: () => {
         this.successMsg = 'Plan updated successfully';
         this.editingPlan = null;
+        this.saving = false;
         this.loadPlans();
       },
-      error: (err) => (this.error = err?.error?.message || 'Failed to update plan'),
+      error: (err) => {
+        this.error = err?.error?.message || 'Failed to update plan';
+        this.saving = false;
+      },
     });
   }
 
@@ -386,7 +603,7 @@ export class AdminPlansComponent implements OnInit {
     }
     const master = this.masterLimits[this.editingPlan.userType as 'INFLUENCER' | 'BRAND' | 'PHOTOGRAPHER'] || [];
     const m = master.find(l => l.key === key);
-    if (m) this.editingPlan.limits.push({ ...m, value });
+    if (m) this.editingPlan.limits.push({ key: m.key, label: m.label, value });
   }
 
   addFeature() {
@@ -407,5 +624,9 @@ export class AdminPlansComponent implements OnInit {
 
   trackById(_: number, item: Plan) {
     return item._id;
+  }
+
+  trackByKey(_: number, item: { key: string }) {
+    return item.key;
   }
 }

@@ -1,0 +1,95 @@
+.dh-page { max-width: 760px; margin: 0 auto; padding: 28px 20px; }
+
+.dh-header {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 18px;
+  h2 { margin: 6px 0 4px; font-weight: 800; color: #1a1a2e; }
+}
+
+.dh-back {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 0.82rem; color: #7a7a8e; text-decoration: none;
+  &:hover { color: #e8612d; }
+}
+
+.dh-subtitle { margin: 0; font-size: 0.82rem; color: #64748b; }
+
+.dh-run {
+  flex-shrink: 0; border: 1px solid #d7deea; background: #fff; border-radius: 10px; padding: 8px 14px;
+  font-size: 0.85rem; font-weight: 600; color: #1a1a2e; display: inline-flex; align-items: center; gap: 6px;
+  &:disabled { opacity: 0.6; }
+  .spin { animation: dh-spin 0.8s linear infinite; }
+}
+
+@keyframes dh-spin { to { transform: rotate(360deg); } }
+
+.dh-card { background: #fff; border: 1px solid #e6eaf2; border-radius: 14px; padding: 16px 18px; margin-bottom: 12px; }
+
+.dh-state { color: #64748b; font-size: 0.9rem; }
+.dh-state--error { color: #b42318; }
+
+.dh-summary {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; margin-bottom: 12px;
+  background: #fff4e5; color: #8a4b00; font-weight: 600;
+  &--ok { background: #e9f8ef; color: #1e6b3a; }
+}
+
+.dh-check--warn { border-color: #f5c27a; }
+.dh-check__head { display: flex; align-items: center; gap: 10px; }
+
+.dh-pill {
+  min-width: 28px; padding: 2px 8px; border-radius: 999px; text-align: center; font-size: 0.8rem; font-weight: 700;
+  &--warn { background: #fde7c4; color: #8a4b00; }
+}
+
+.dh-help { margin: 8px 0 0; font-size: 0.85rem; color: #475467; }
+
+.dh-samples {
+  margin: 8px 0 0; padding-left: 18px; font-size: 0.8rem;
+  code { word-break: break-all; color: #344054; }
+}
+
+.dh-ok {
+  display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 0.88rem; color: #344054;
+  i { color: #1e9e57; }
+}
+
+@media (max-width: 560px) {
+  .dh-header { flex-direction: column; }
+}
+
+.dh-samples li { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0; }
+
+.dh-explain {
+  flex-shrink: 0; border: 1px solid #d7deea; background: #fff; border-radius: 8px; padding: 3px 10px;
+  font-size: 0.76rem; font-weight: 600; color: #1a1a2e;
+  &:hover:not(:disabled) { border-color: #e8612d; color: #e8612d; }
+  &:disabled { opacity: 0.6; }
+}
+
+.dh-explained { margin: 6px 0 0; font-size: 0.78rem; color: #64748b; }
+.dh-ok .dh-explained { margin: 0; }
+
+.dh-config-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+.dh-config {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 6px 0; border-top: 1px solid #f0f2f6;
+  .dh-help { margin: 0; flex-basis: 100%; padding-left: 74px; }
+}
+.dh-config__status {
+  min-width: 64px; padding: 2px 8px; border-radius: 999px; text-align: center; font-size: 0.75rem; font-weight: 700;
+  &--working { background: #dcfae6; color: #085d3a; }
+  &--missing, &--failing { background: #fee4e2; color: #912018; }
+  &--off { background: #f2f4f7; color: #475467; }
+}
+@media (max-width: 560px) {
+  .dh-config-head { flex-direction: column; }
+  .dh-config .dh-help { padding-left: 0; }
+}
+
+// Bold labels (check titles, service names): the admin area's global styles
+// turned them white on this white card — set their colour explicitly.
+.dh-check__head strong,
+.dh-config strong,
+.dh-config-head strong {
+  display: inline;
+  color: #101828;
+  font-weight: 700;
+}
