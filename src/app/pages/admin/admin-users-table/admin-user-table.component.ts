@@ -144,6 +144,16 @@ interface SocialAccountObservation {
   } | null;
 }
 
+
+/**
+ * The user an admin endpoint saved. Endpoints answering { message, user } are
+ * wrapped by the API as { success, data: { message, user } }, so reading
+ * res.user missed it and the table kept its own guess instead of the saved row.
+ */
+function savedUser(res: any): any {
+  return res?.user ?? res?.data?.user ?? null;
+}
+
 @Component({
   selector: 'app-admin-user-table',
   standalone: true,
@@ -2019,10 +2029,10 @@ export class AdminUserTableComponent implements OnInit {
         .subscribe((res: any) => {
           if (!res) return;
           const effectiveValue = field === 'paymentVerified'
-            ? !!(res?.user?.paymentVerified ?? value)
+            ? !!(savedUser(res)?.paymentVerified ?? value)
             : value;
-          if (res?.user) {
-            this.mergeUpdatedUser(userType, res.user);
+          if (savedUser(res)) {
+            this.mergeUpdatedUser(userType, savedUser(res));
           } else {
             user[field] = effectiveValue;
           }
@@ -2105,7 +2115,7 @@ export class AdminUserTableComponent implements OnInit {
         }))
         .subscribe((res: any) => {
           if (!res) return;
-          const updated = res?.user || {};
+          const updated = savedUser(res) || {};
           user.communityJoined = false;
           user.communityJoinedAt = null;
           user.communityJoinedDate = null;
@@ -2159,7 +2169,7 @@ export class AdminUserTableComponent implements OnInit {
       }))
       .subscribe((res: any) => {
         if (!res) return;
-        if (res?.user) this.mergeUpdatedUser(userType, res.user);
+        if (savedUser(res)) this.mergeUpdatedUser(userType, savedUser(res));
         this.closeVerificationDocsModal();
         this.fetchUsers(userType);
       });
@@ -2184,7 +2194,7 @@ export class AdminUserTableComponent implements OnInit {
       }))
       .subscribe((res: any) => {
         if (!res) return;
-        if (res?.user) this.mergeUpdatedUser(userType, res.user);
+        if (savedUser(res)) this.mergeUpdatedUser(userType, savedUser(res));
         this.fetchUsers(userType);
       });
   }
@@ -3113,8 +3123,8 @@ export class AdminUserTableComponent implements OnInit {
       .pipe(catchError(() => of(null)))
       .subscribe((res: any) => {
         if (!res) return;
-        if (res?.user) {
-          this.mergeUpdatedUser(this.selectedUserType!, res.user);
+        if (savedUser(res)) {
+          this.mergeUpdatedUser(this.selectedUserType!, savedUser(res));
         } else {
           this.selectedUser.verificationAdminNotes = this.selectedUserInternalNotes;
           this.selectedUser.profileModerationNotes = this.selectedUserInternalNotes;
@@ -3277,9 +3287,10 @@ export class AdminUserTableComponent implements OnInit {
           alert(`Tags were not updated.${warningText}`);
           return;
         }
-        if (res?.user) {
-          const warningText = Array.isArray(res?.warnings) && res.warnings.length
-            ? `\n\nNote:\n- ${res.warnings.join('\n- ')}`
+        if (savedUser(res)) {
+          const warnings = (res?.warnings ?? res?.data?.warnings) as string[] | undefined;
+          const warningText = Array.isArray(warnings) && warnings.length
+            ? `\n\nNote:\n- ${warnings.join('\n- ')}`
             : '';
           alert(`Tags updated successfully!${warningText}`);
           this.showTagModal = false;
@@ -3360,7 +3371,7 @@ export class AdminUserTableComponent implements OnInit {
         this.smEditSaving = false;
         this.smEditModalOpen = false;
         this.smEditingIdx = null;
-        const updatedUser = res?.user ?? res?.data?.user;
+        const updatedUser = savedUser(res);
         if (updatedUser) {
           this.mergeUpdatedUser(userType, updatedUser);
           this.loadSelectedProfileVerification();
@@ -3635,8 +3646,8 @@ export class AdminUserTableComponent implements OnInit {
         return of(null);
       }))
       .subscribe((res: any) => {
-        if (res && res.user) {
-          user.promotionalPrice = res.user.promotionalPrice ?? res.user.price;
+        if (savedUser(res)) {
+          user.promotionalPrice = savedUser(res).promotionalPrice ?? savedUser(res).price;
           user.editPrice = user.promotionalPrice;
           alert('Price updated successfully!');
         } else {

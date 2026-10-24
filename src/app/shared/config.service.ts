@@ -989,7 +989,10 @@ export class ConfigService {
   }
 
   updateInfluencerProfile(data: any): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/users/influencer-profile`, data);
+    // Returns { message, user } (unwrapped from the API's { success, data }).
+    return this.http
+      .patch<any>(`${this.apiUrl}/users/influencer-profile`, data)
+      .pipe(map((res) => this.extractData<any>(res) || res));
   }
 
   /** Saves only the payout details (UPI, mobile, name) on the creator's own profile. */
@@ -1031,7 +1034,10 @@ export class ConfigService {
   }
 
   updateBrandProfile(data: any): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/users/brand-profile`, data);
+    // Returns { message, user } (unwrapped from the API's { success, data }).
+    return this.http
+      .patch<any>(`${this.apiUrl}/users/brand-profile`, data)
+      .pipe(map((res) => this.extractData<any>(res) || res));
   }
 
   setPremiumForUser(userId: string, isPremium: boolean, premiumDuration: '1m' | '3m' | '1y'): Observable<any> {
@@ -1206,7 +1212,8 @@ export class ConfigService {
 
   getUnreadNotificationsCount(): Observable<number> {
     return this.http.get<any>(`${this.apiUrl}/notifications/unread-count`).pipe(
-      map((res) => Number(res?.count || 0)),
+      // Wrapped as { success, data: { count } } — reading res.count gave 0, so the bell never showed a number.
+      map((res) => Number(this.extractData<any>(res)?.count ?? res?.count ?? 0)),
       catchError(() => of(0)),
     );
   }
