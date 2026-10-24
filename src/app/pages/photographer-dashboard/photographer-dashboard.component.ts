@@ -1,11 +1,11 @@
-import { Component, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnDestroy, OnInit, inject } from '@angular/core';
 import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-collab-notice.component';
 import { LatePostSubmitComponent } from '../../shared/late-post-submit/late-post-submit.component';
 import { ClosureQuestionComponent } from '../../shared/closure-question/closure-question.component';
 import { SocialConfirmBannerComponent } from '../../shared/social-confirm-banner/social-confirm-banner.component';
 import { PayoutUpiBannerComponent, PayoutDetails } from '../../shared/payout-upi-banner/payout-upi-banner.component';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { finalize, timeout } from 'rxjs/operators';
 import { SessionService } from '../../core/session.service';
@@ -124,7 +124,29 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     private readonly collaborationScoreApi: CollaborationScoreApiService,
   ) {}
 
+  private readonly route = inject(ActivatedRoute);
+
+  /** ?invite=<id> (from a notification or email): open that invite's details. */
+  private watchInviteLink(): void {
+    this.route?.queryParamMap?.subscribe((params) => {
+      const inviteId = String(params.get('invite') || '').trim();
+      if (!inviteId) return;
+      const open = (invite: any) => {
+        this.openDetail(invite);
+        this.router.navigate([], { queryParams: { invite: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      };
+      const known = (this.brandInvites || []).find((i: any) => String(i?._id) === inviteId);
+      if (known) return open(known);
+      this.config.getMyPhotographerInvites().subscribe((rows: any[]) => {
+        const found = (rows || []).find((i: any) => String(i?._id) === inviteId);
+        if (found) open(found);
+        else this.toast.info('That invite is no longer available.');
+      });
+    });
+  }
+
   ngOnInit(): void {
+    this.watchInviteLink();
     if (!this.session.getUser()) {
       this.session.loadUserFromStorage();
     }

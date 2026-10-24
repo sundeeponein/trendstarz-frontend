@@ -1,3 +1,4 @@
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
 import { InfluencerDashboardComponent } from './influencer-dashboard.component';
@@ -92,6 +93,7 @@ describe('InfluencerDashboardComponent usage summary', () => {
         { provide: ToastService, useValue: { info: jasmine.createSpy('info'), success: jasmine.createSpy('success'), error: jasmine.createSpy('error') } },
         { provide: ShippingAddressModalService, useValue: { prompt: () => Promise.resolve(null) } },
         { provide: Router, useValue: { navigate: jasmine.createSpy('navigate') } },
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({})) } },
       ],
     })
       .overrideComponent(InfluencerDashboardComponent, {

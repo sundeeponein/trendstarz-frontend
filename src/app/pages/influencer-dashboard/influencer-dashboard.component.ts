@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-collab-notice.component';
 import { LatePostSubmitComponent } from '../../shared/late-post-submit/late-post-submit.component';
 import { ClosureQuestionComponent } from '../../shared/closure-question/closure-question.component';
 import { SocialConfirmBannerComponent } from '../../shared/social-confirm-banner/social-confirm-banner.component';
 import { PayoutUpiBannerComponent, PayoutDetails } from '../../shared/payout-upi-banner/payout-upi-banner.component';
-import { Router, NavigationEnd, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SessionService } from '../../core/session.service';
 import { HttpClient } from '@angular/common/http';
@@ -154,7 +154,35 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     private collaborationScoreApi: CollaborationScoreApiService,
   ) {}
 
+  private readonly route = inject(ActivatedRoute);
+
+  /**
+   * ?invite=<id> (from a notification or email): open that invite's details.
+   * Also runs when the user is already on the dashboard and clicks another
+   * notification (same page, new query).
+   */
+  private watchInviteLink(): void {
+    this.route?.queryParamMap?.subscribe((params) => {
+      const inviteId = String(params.get('invite') || '').trim();
+      if (!inviteId) return;
+      const open = (invite: any) => {
+        this.openDetail(invite);
+        this.cdr.markForCheck();
+        // Drop the parameter so a refresh doesn't reopen it.
+        this.router.navigate([], { queryParams: { invite: null }, queryParamsHandling: 'merge', replaceUrl: true });
+      };
+      const known = (this.invites || []).find((i: any) => String(i?._id) === inviteId);
+      if (known) return open(known);
+      this.config.getMyInvites().subscribe((rows: any[]) => {
+        const found = (rows || []).find((i: any) => String(i?._id) === inviteId);
+        if (found) open(found);
+        else this.toast.info('That invite is no longer available.');
+      });
+    });
+  }
+
   ngOnInit() {
+    this.watchInviteLink();
     this.loadProfileVerificationDashboard();
     this.loadCollaborationScore();
     this.plansService.getMyCapabilities().subscribe((caps) => {
