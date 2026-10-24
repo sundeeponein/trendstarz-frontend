@@ -142,16 +142,8 @@
 
   <!-- Needs attention -->
   <div class="needs-attention mb-4"
-       *ngIf="(attentionCounts.pendingInvites + attentionCounts.overdueDeliverables + attentionCounts.disputedAgainstMe) > 0">
-    <div class="attention-banner attention-banner--info" *ngIf="attentionCounts.pendingInvites > 0">
-      <span class="attention-banner__count">{{ attentionCounts.pendingInvites }}</span>
-      <span class="attention-banner__body">
-        <span class="attention-banner__kicker">Needs your response</span>
-        <span class="attention-banner__title d-block">Pending {{ attentionCounts.pendingInvites === 1 ? 'invite' : 'invites' }}</span>
-        <span class="attention-banner__desc d-block">Brands are waiting for you to accept or decline.</span>
-      </span>
-      <button type="button" class="attention-banner__cta" (click)="scrollToSection('invites')">Review <i class="bi bi-arrow-right"></i></button>
-    </div>
+       *ngIf="(attentionCounts.overdueDeliverables + attentionCounts.disputedAgainstMe) > 0">
+    <!-- Pending invites aren't repeated here: they're listed right below in "New Brand Campaign Invites". -->
     <div class="attention-banner attention-banner--warn" *ngIf="attentionCounts.overdueDeliverables > 0">
       <span class="attention-banner__count">{{ attentionCounts.overdueDeliverables }}</span>
       <span class="attention-banner__body">
