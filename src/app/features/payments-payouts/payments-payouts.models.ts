@@ -73,6 +73,8 @@ export interface CampaignTransaction {
     payoutMobile?: string;
     payoutName?: string;
     lastConfirmedAt?: string;
+    /** When the creator last changed their UPI ID. */
+    payoutUpiChangedAt?: string | null;
   };
   /** Payer profile snapshot enriched by listForAdmin (admin view only). */
   payer?: {

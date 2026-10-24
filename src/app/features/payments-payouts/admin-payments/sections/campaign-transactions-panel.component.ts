@@ -23,6 +23,12 @@ import { FINISHED } from '../../../../shared/invite-status';
 export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
   payoutReleaseWaitHours = 24;
   nowMs = Date.now();
+
+  /** UPI ID changed in the last 7 days: an account takeover would change it right before a payout. */
+  upiChangedRecently(r: any): boolean {
+    const at = r?.payoutUpiChangedAt ? new Date(r.payoutUpiChangedAt).getTime() : 0;
+    return at > 0 && this.nowMs - at < 7 * 24 * 60 * 60 * 1000;
+  }
   private payoutTimerInterval: ReturnType<typeof setInterval> | null = null;
 
   @Output() errorMessage = new EventEmitter<string>();

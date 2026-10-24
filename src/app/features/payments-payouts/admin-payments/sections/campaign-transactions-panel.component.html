@@ -298,6 +298,10 @@
       <div class="ri-row" *ngIf="r.payoutUpiId">
         <i class="bi bi-bank"></i> UPI: <code>{{ r.payoutUpiId }}</code>
       </div>
+      <div class="ri-row ri-warn" *ngIf="upiChangedRecently(r)">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        UPI ID changed {{ r.payoutUpiChangedAt | date: 'd MMM, h:mm a' }} — confirm with the creator before paying.
+      </div>
       <div class="ri-row" *ngIf="r.payoutName">
         <i class="bi bi-card-text"></i> Name on UPI: {{ r.payoutName }}
       </div>
