@@ -56,6 +56,22 @@ export class DataHealthComponent implements OnInit {
   reconError = '';
   configLoading = false;
   configError = '';
+  /** Firebase logins vs TrendStarZ accounts. */
+  fbRecon: {
+    firebaseUsers: number;
+    accounts: number;
+    noFirebaseLogin: any[];
+    linkedToOtherLogin: any[];
+    deletedButLoginKept: any[];
+    loginWithoutAccount: any[];
+    verifiedOnlyInFirebase: any[];
+  } | null = null;
+  fbReconLoading = false;
+  fbReconError = '';
+  /** Live accounts whose email Brevo refuses (bounced, spam complaint, unsubscribed). */
+  emailBlocks: { blockedInBrevo: number; accounts: any[] } | null = null;
+  emailBlocksLoading = false;
+  emailBlocksError = '';
 
   constructor(private http: HttpClient, @Inject(PLATFORM_ID) platformId: object) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -90,6 +106,50 @@ export class DataHealthComponent implements OnInit {
         this.reconError = err?.error?.message || 'Failed to compare with Razorpay.';
       },
     });
+  }
+
+  checkEmailBlocks(): void {
+    this.emailBlocksLoading = true;
+    this.emailBlocksError = '';
+    this.http.get<any>(`${this.url}/email-blocks`).subscribe({
+      next: (res) => {
+        const body = res?.data ?? res;
+        this.emailBlocks = body?.data ?? body;
+        this.emailBlocksLoading = false;
+      },
+      error: (err) => {
+        this.emailBlocksLoading = false;
+        this.emailBlocksError = err?.error?.message || 'Failed to read Brevo\'s blocked list.';
+      },
+    });
+  }
+
+  reconcileFirebase(): void {
+    this.fbReconLoading = true;
+    this.fbReconError = '';
+    this.http.get<any>(`${this.url}/firebase-reconcile`).subscribe({
+      next: (res) => {
+        const body = res?.data ?? res;
+        this.fbRecon = body?.data ?? body;
+        this.fbReconLoading = false;
+      },
+      error: (err) => {
+        this.fbReconLoading = false;
+        this.fbReconError = err?.error?.message || 'Failed to compare with Firebase.';
+      },
+    });
+  }
+
+  /** Lists that need action (the "no Firebase login yet" list is information only). */
+  get fbProblems(): Array<{ label: string; tone: string; rows: any[] }> {
+    const r = this.fbRecon;
+    if (!r) return [];
+    return [
+      { label: 'Linked to another login', tone: 'failing', rows: r.linkedToOtherLogin },
+      { label: 'Deleted, login kept', tone: 'failing', rows: r.deletedButLoginKept },
+      { label: 'Login, no account', tone: 'off', rows: r.loginWithoutAccount },
+      { label: 'Verified only in Firebase', tone: 'off', rows: r.verifiedOnlyInFirebase },
+    ].filter((g) => g.rows.length);
   }
 
   loadBackups(): void {

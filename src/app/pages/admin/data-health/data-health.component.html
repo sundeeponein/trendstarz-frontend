@@ -108,6 +108,58 @@
   <div class="dh-card">
     <div class="dh-config-head">
       <div>
+        <strong>Emails that can't be delivered</strong>
+        <p class="dh-help">Accounts whose email Brevo refuses (bounced, marked as spam, unsubscribed). They get no OTPs, invites, payment or security emails — ask them to change their email, or unblock it in Brevo if the reason is gone. Read-only.</p>
+      </div>
+      <button type="button" class="dh-run" (click)="checkEmailBlocks()" [disabled]="emailBlocksLoading">
+        <i class="bi bi-envelope-exclamation" [class.spin]="emailBlocksLoading"></i> {{ emailBlocksLoading ? 'Checking…' : 'Check' }}
+      </button>
+    </div>
+    <p class="dh-state--error" *ngIf="emailBlocksError">{{ emailBlocksError }}</p>
+    <ng-container *ngIf="emailBlocks">
+      <div class="dh-ok" *ngIf="!emailBlocks.accounts.length">
+        <i class="bi bi-check-circle-fill"></i> No account's email is blocked ({{ emailBlocks.blockedInBrevo }} addresses blocked in Brevo in total).
+      </div>
+      <div class="dh-config" *ngFor="let r of emailBlocks.accounts">
+        <span class="dh-config__status dh-config__status--failing">Blocked</span>
+        <strong>{{ r.email }} · {{ r.role }}</strong>
+        <span class="dh-help">{{ r.reason }}<ng-container *ngIf="r.blockedAt"> · since {{ r.blockedAt | date: 'd MMM y' }}</ng-container> · {{ r.accountId }}</span>
+      </div>
+    </ng-container>
+  </div>
+
+  <div class="dh-card">
+    <div class="dh-config-head">
+      <div>
+        <strong>Firebase logins vs TrendStarZ accounts</strong>
+        <p class="dh-help">Password resets and sign-in tokens come from Firebase; everything else uses the TrendStarZ account. Both must describe the same people. Read-only.</p>
+      </div>
+      <button type="button" class="dh-run" (click)="reconcileFirebase()" [disabled]="fbReconLoading">
+        <i class="bi bi-arrow-left-right" [class.spin]="fbReconLoading"></i> {{ fbReconLoading ? 'Comparing…' : 'Compare' }}
+      </button>
+    </div>
+    <p class="dh-state--error" *ngIf="fbReconError">{{ fbReconError }}</p>
+    <ng-container *ngIf="fbRecon">
+      <div class="dh-ok" *ngIf="!fbProblems.length">
+        <i class="bi bi-check-circle-fill"></i> {{ fbRecon.accounts }} accounts and {{ fbRecon.firebaseUsers }} Firebase logins agree.
+      </div>
+      <p class="dh-help">
+        {{ fbRecon.accounts }} live accounts · {{ fbRecon.firebaseUsers }} Firebase logins ·
+        {{ fbRecon.noFirebaseLogin.length }} without a Firebase login yet (normal — created on their first password reset).
+      </p>
+      <ng-container *ngFor="let g of fbProblems">
+        <div class="dh-config" *ngFor="let r of g.rows">
+          <span class="dh-config__status" [ngClass]="'dh-config__status--' + g.tone">{{ g.label }}</span>
+          <strong>{{ r.email }}<ng-container *ngIf="r.role"> · {{ r.role }}</ng-container></strong>
+          <span class="dh-help">{{ r.problem }}<ng-container *ngIf="r.accountId"> · {{ r.accountId }}</ng-container></span>
+        </div>
+      </ng-container>
+    </ng-container>
+  </div>
+
+  <div class="dh-card">
+    <div class="dh-config-head">
+      <div>
         <strong>Service settings</strong>
         <p class="dh-help">After a deploy or changing a key in Railway: checks each service's settings are present and its key works (read-only test calls).</p>
       </div>
