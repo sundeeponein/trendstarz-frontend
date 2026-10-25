@@ -170,6 +170,9 @@
                   <button class="btn btn-success btn-sm" type="button" (click)="openAction('repaid', row)">Host repaid</button>
                   <button class="btn btn-outline-secondary btn-sm" type="button" (click)="openAction('exception', row)">Pay as exception</button>
                 </ng-container>
+                <button class="btn btn-warning btn-sm" type="button" *ngIf="canRefundNow(row)" (click)="openAction('refund_now', row)">
+                  Confirm no post — refund now
+                </button>
                 <button class="btn btn-outline-primary btn-sm" type="button" *ngIf="canRecordFoundPost(row)" (click)="openAction('approve', row)">
                   Posted outside platform
                 </button>
@@ -250,6 +253,11 @@
       <p class="modal-info" *ngIf="action.mode === 'credit_withhold'">
         The host will not receive the {{ ui.formatPaise(action.row.feeCredit?.amount || 0) }} fee credit. Recorded with your reason.
       </p>
+      <p class="modal-info" *ngIf="action.mode === 'refund_now'">
+        You checked and the creator did <strong>not</strong> post. The 7-day wait ends now and the refund of
+        <strong>{{ ui.formatPaise(action.row.payerTotal) }}</strong> moves to <strong>Owed</strong>. Then send it by UPI
+        and press <em>Mark refund sent</em> with the UTR. The creator can no longer submit a late post for this.
+      </p>
       <p class="modal-info" *ngIf="action.mode === 'excuse'">
         Use this when the creator is not at fault — e.g. the host told them not to post. The closure won't count in the
         creator's completion record.
@@ -281,7 +289,7 @@
           {{ action.mode === 'sent' || action.mode === 'repaid' ? 'Note (optional)' : action.mode === 'approve' || action.mode === 'reject' ? 'What you checked (required)' : 'Reason (required)' }}
         </label>
         <textarea class="form-textarea" rows="3" [(ngModel)]="form.note"
-          [placeholder]="action.mode === 'reject' ? 'e.g. Post is for a different brand' : 'e.g. Reel is public, tags @brand, posted 12 Oct'"></textarea>
+          [placeholder]="action.mode === 'reject' ? 'e.g. Post is for a different brand' : action.mode === 'refund_now' ? 'e.g. Checked @handle on 25 Oct — no reel for this brand' : 'e.g. Reel is public, tags @brand, posted 12 Oct'"></textarea>
         <small class="rf-muted" *ngIf="action.mode !== 'sent' && action.mode !== 'repaid'">
           At least 10 characters — saved in the history.
         </small>

@@ -141,6 +141,11 @@ export class PaymentsPayoutsApiService {
     return this.http.post<any>(`${environment.apiBaseUrl}/campaign-transactions/${id}/fee-credit/withhold`, { reason });
   }
 
+  /** Admin: checked, no post — the refund on hold becomes owed now. */
+  approveRefundNow(id: string, reason: string): Observable<any> {
+    return this.http.post<any>(`${environment.apiBaseUrl}/campaign-transactions/${id}/approve-refund-now`, { reason });
+  }
+
   /** Admin: this no-post closure must not count against the creator. */
   excuseMiss(inviteId: string, reason: string): Observable<any> {
     return this.http.post<any>(`${environment.apiBaseUrl}/campaign-invites/admin/${inviteId}/excuse-miss`, { reason });

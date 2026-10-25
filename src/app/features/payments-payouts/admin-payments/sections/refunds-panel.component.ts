@@ -10,6 +10,7 @@ import { buildSocialProfileUrl } from '../../../../shared/social-handle.util';
 
 type RefundFilter = 'all' | RefundState;
 type ActionMode =
+  | 'refund_now'
   | 'sent'
   | 'approve'
   | 'reject'
@@ -64,6 +65,7 @@ const HISTORY_LABELS: Record<string, string> = {
   miss_excused: 'Not counted against the creator',
   slot_restored: 'Invite slot restored',
   hold_expired_refund_owed: 'Hold ended → owed',
+  refund_approved_early: 'No post confirmed → owed',
   refund_sent: 'Refund sent',
   late_post_submitted: 'Late post submitted',
   late_post_approved: 'Late post approved',
@@ -221,6 +223,11 @@ export class RefundsPanelComponent implements OnInit {
   }
 
   /** "Posted outside platform": admin found the post themselves. */
+  /** On hold, nothing waiting for review: admin may confirm the no-post now instead of waiting 7 days. */
+  canRefundNow(row: RefundQueueItem): boolean {
+    return row.state === 'on_hold' && !row.openReport && row.latePost?.status !== 'pending';
+  }
+
   canRecordFoundPost(row: RefundQueueItem): boolean {
     return (
       !row.openReport &&
@@ -252,6 +259,8 @@ export class RefundsPanelComponent implements OnInit {
 
   get actionTitle(): string {
     switch (this.action?.mode) {
+      case 'refund_now':
+        return 'Confirm no post — refund now';
       case 'sent':
         return 'Record refund sent';
       case 'approve':
@@ -283,6 +292,7 @@ export class RefundsPanelComponent implements OnInit {
         return !!this.form.utr.trim();
       case 'approve':
         return note.length >= 10 && /^https?:\/\/\S+$/i.test(this.form.postUrl.trim());
+      case 'refund_now':
       case 'reject':
       case 'exception':
       case 'credit_withhold':
@@ -335,6 +345,10 @@ export class RefundsPanelComponent implements OnInit {
       case 'reject':
         call = this.api.reviewLatePost(a.row.inviteId, { action: 'reject', note });
         done = 'Late post rejected. The refund review continues.';
+        break;
+      case 'refund_now':
+        call = this.api.approveRefundNow(a.row._id, note);
+        done = 'Refund approved. It is now under Owed — send it and record the UTR.';
         break;
       case 'credit_withhold':
         call = this.api.withholdFeeCredit(a.row._id, note);
