@@ -46,6 +46,10 @@ export class DataHealthComponent implements OnInit {
   private readonly url = `${environment.apiBaseUrl}/admin/data-integrity`;
   /** Service settings check (keys present and working) — loaded on request: it calls each service. */
   configChecks: ConfigCheck[] | null = null;
+  /** Nightly encrypted database backups. */
+  backups: { configured: boolean; runs: any[]; files: any[] } | null = null;
+  backupBusy = false;
+  backupError = '';
   /** Razorpay vs TrendStarZ (captured payments that were never completed here). */
   recon: { days: number; checked: number; recorded: number; notRecorded: any[]; unknownOrder: any[] } | null = null;
   reconLoading = false;
@@ -58,7 +62,10 @@ export class DataHealthComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.isBrowser) this.load();
+    if (this.isBrowser) {
+      this.load();
+      this.loadBackups();
+    }
   }
 
   get warnings(): IntegrityCheck[] {
@@ -83,6 +90,40 @@ export class DataHealthComponent implements OnInit {
         this.reconError = err?.error?.message || 'Failed to compare with Razorpay.';
       },
     });
+  }
+
+  loadBackups(): void {
+    this.http.get<any>(`${this.url}/backups`).subscribe({
+      next: (res) => {
+        const body = res?.data ?? res;
+        this.backups = body?.data ?? body;
+      },
+      error: () => (this.backups = null),
+    });
+  }
+
+  backupNow(): void {
+    this.backupBusy = true;
+    this.backupError = '';
+    this.http.post<any>(`${this.url}/backups/run`, {}).subscribe({
+      next: () => {
+        this.backupBusy = false;
+        this.loadBackups();
+      },
+      error: (err) => {
+        this.backupBusy = false;
+        this.backupError = err?.error?.message || 'Backup failed.';
+        this.loadBackups();
+      },
+    });
+  }
+
+  get lastGoodBackup(): any {
+    return (this.backups?.runs || []).find((r: any) => r.status === 'ok') || null;
+  }
+
+  formatKb(bytes: number): string {
+    return `${Math.max(1, Math.round(Number(bytes || 0) / 1024))} KB`;
   }
 
   checkConfig(): void {

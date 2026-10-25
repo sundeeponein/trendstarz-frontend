@@ -55,6 +55,28 @@
   <div class="dh-card">
     <div class="dh-config-head">
       <div>
+        <strong>Database backups</strong>
+        <p class="dh-help">
+          Every night at 4:15 AM the whole database is saved, encrypted, as a private file (last 14 days kept).
+          <ng-container *ngIf="lastGoodBackup">Last backup: {{ lastGoodBackup.at | date: 'd MMM y, h:mm a' }} ({{ lastGoodBackup.records }} records).</ng-container>
+          <ng-container *ngIf="backups && !backups.configured"> Off — set BACKUP_ENCRYPTION_KEY in Railway.</ng-container>
+        </p>
+      </div>
+      <button type="button" class="dh-run" (click)="backupNow()" [disabled]="backupBusy || (backups && !backups.configured)">
+        <i class="bi bi-cloud-arrow-up" [class.spin]="backupBusy"></i> {{ backupBusy ? 'Backing up…' : 'Back up now' }}
+      </button>
+    </div>
+    <p class="dh-state--error" *ngIf="backupError">{{ backupError }}</p>
+    <div class="dh-config" *ngFor="let f of (backups?.files || []) | slice: 0 : 5">
+      <span class="dh-config__status dh-config__status--working">Saved</span>
+      <strong>{{ f.created_at | date: 'd MMM y, h:mm a' }} · {{ formatKb(f.bytes) }}</strong>
+      <span class="dh-help"><a [href]="f.downloadUrl" rel="noopener">Download (encrypted)</a> — link works for 10 minutes. Restore with cron/restoreDatabase.js and your BACKUP_ENCRYPTION_KEY.</span>
+    </div>
+  </div>
+
+  <div class="dh-card">
+    <div class="dh-config-head">
+      <div>
         <strong>Razorpay payments vs TrendStarZ</strong>
         <p class="dh-help">Every payment Razorpay captured in the last 14 days must be completed here. Anything listed was paid but the customer didn't get what they paid for — complete it or refund it in Razorpay.</p>
       </div>
