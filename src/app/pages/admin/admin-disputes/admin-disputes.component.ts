@@ -91,8 +91,9 @@ export class AdminDisputesComponent implements OnInit {
       });
   }
 
+  /** A report closed without an outcome while the invite is still 'disputed' still needs one. */
   isResolved(inv: any): boolean {
-    return !!inv?.reportedIssue?.resolvedAt;
+    return !!inv?.reportedIssue?.resolvedAt && inv?.status !== 'disputed';
   }
 
   /** "Asked to skip posting / deal outside TrendStarZ" — resolving it needs a written note. */
