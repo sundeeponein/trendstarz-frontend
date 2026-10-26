@@ -147,16 +147,35 @@ export class App implements OnInit {
   // appear to "revert" saved values after every deploy. Reloading as soon as
   // a new version installs guarantees every tab is always running the
   // version that was actually just deployed.
+  //
+  // Tabs left open also check every 30 minutes and when brought back into view.
+  // A version found later is applied at the next page change or while the tab is
+  // hidden — never mid-form, where a reload would lose what the user typed.
   private setupServiceWorkerUpdates(): void {
     if (!this.swUpdate.isEnabled) return;
+    const startedAt = Date.now();
+    let pending = false;
+    const reload = () => this.swUpdate.activateUpdate().then(() => this.document.location.reload());
 
     this.swUpdate.versionUpdates
       .pipe(filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'))
       .subscribe(() => {
-        this.swUpdate.activateUpdate().then(() => this.document.location.reload());
+        if (Date.now() - startedAt < 15000 || this.document.visibilityState === 'hidden') reload();
+        else pending = true;
+      });
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        if (pending) reload();
       });
 
-    this.swUpdate.checkForUpdate().catch(() => {});
+    const check = () => this.swUpdate.checkForUpdate().catch(() => {});
+    this.document.addEventListener('visibilitychange', () => {
+      if (this.document.visibilityState === 'hidden' && pending) reload();
+      else if (this.document.visibilityState === 'visible') check();
+    });
+    setInterval(check, 30 * 60 * 1000);
+    check();
   }
 
   private setupAnalyticsTracking(): void {
