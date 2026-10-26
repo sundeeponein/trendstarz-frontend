@@ -717,6 +717,16 @@
           </div>
         </div>
 
+        <div class="details-section" *ngIf="selectedUserActions.length">
+          <h6>Admin history</h6>
+          <div class="details-grid">
+            <div *ngFor="let a of selectedUserActions">
+              <label>{{ a.at | date:'d MMM y, h:mm a' }}</label>
+              <div>{{ formatAdminAction(a) }} · {{ a.by || 'admin' }}</div>
+            </div>
+          </div>
+        </div>
+
         <div class="details-section">
           <h6>Complete User Data</h6>
           <div class="details-grid details-grid-extended">

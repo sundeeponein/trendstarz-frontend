@@ -194,6 +194,8 @@ export class AdminUserTableComponent implements OnInit {
   selectedProfileVerificationLoading = false;
   selectedUserCollabScore: CollaborationAudit | null = null;
   selectedUserCollabScoreLoading = false;
+  /** Admin history of the open account (accept/delete/Premium/… — who and when). */
+  selectedUserActions: Array<{ at: string; action: string; by: string; details: Record<string, unknown> }> = [];
   galleryModalOpen = false;
   galleryModalImages: string[] = [];
   galleryModalIndex = 0;
@@ -2314,9 +2316,34 @@ export class AdminUserTableComponent implements OnInit {
     this.showUserDetailsModal = true;
     this.loadSelectedProfileVerification();
     this.loadSelectedUserCollabScore(user?._id);
+    this.loadSelectedUserActions(user?._id);
     this.smEditModalOpen = false;
     this.smEditingIdx = null;
     this.smEditError = null;
+  }
+
+  private loadSelectedUserActions(userId: string): void {
+    this.selectedUserActions = [];
+    if (!userId) return;
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/users/${userId}/actions`).subscribe({
+      next: (res) => {
+        const body = res?.data ?? res;
+        if (String(this.selectedUser?._id) === String(userId)) this.selectedUserActions = body?.actions || [];
+      },
+      error: () => (this.selectedUserActions = []),
+    });
+  }
+
+  /** "set_premium" → "Set premium", plus the useful details (Premium on/off, duration, reason). */
+  formatAdminAction(a: { action: string; details: Record<string, unknown> }): string {
+    const name = String(a.action || '').replace(/_/g, ' ');
+    const d = a.details || {};
+    const bits = [
+      d['isPremium'] === true ? 'on' : d['isPremium'] === false ? 'off' : '',
+      d['premiumDuration'] ? String(d['premiumDuration']) : '',
+      d['reason'] ? `“${String(d['reason'])}”` : '',
+    ].filter(Boolean);
+    return name.charAt(0).toUpperCase() + name.slice(1) + (bits.length ? ` (${bits.join(', ')})` : '');
   }
 
   private loadSelectedUserCollabScore(userId: string): void {
