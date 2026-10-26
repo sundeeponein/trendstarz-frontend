@@ -124,6 +124,8 @@ export class AdminDashboardComponent implements OnInit {
    */
   static readonly LIST_LIMIT = 1000;
   countsMayBeIncomplete = false;
+  /** Exact counts from the server; once loaded, they replace the list-based numbers. */
+  private serverCounts: any = null;
   private allInfluencers: any[] = [];
   private allBrands: any[] = [];
   private allPhotographers: any[] = [];
@@ -152,6 +154,7 @@ export class AdminDashboardComponent implements OnInit {
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
+      this.fetchUserCounts();
       this.fetchInfluencers();
       this.fetchBrands();
       this.fetchPhotographers();
@@ -493,18 +496,45 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  /** Exact numbers counted in the database (not limited by how many rows a list returns). */
+  fetchUserCounts() {
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/user-counts`, this.getAuthHeaders()).subscribe({
+      next: (res) => {
+        const c = res?.data ?? res;
+        if (!c?.influencers) return;
+        this.serverCounts = c;
+        this.countsMayBeIncomplete = false;
+        const apply = (k: 'influencer' | 'brand' | 'photographer', v: any) => {
+          (this as any)[`${k}Count`] = v.total;
+          (this as any)[`${k}Activated`] = v.active;
+          (this as any)[`${k}Pending`] = v.pending;
+          (this as any)[`${k}Premium`] = v.premium;
+        };
+        apply('influencer', c.influencers);
+        apply('brand', c.brands);
+        apply('photographer', c.photographers);
+        this.totalPending = this.influencerPending + this.brandPending + this.photographerPending;
+        this.totalVerified = this.influencerActivated + this.brandActivated + this.photographerActivated;
+        this.cd.detectChanges();
+      },
+      error: () => {},
+    });
+  }
+
   fetchInfluencers() {
     this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers?limit=${AdminDashboardComponent.LIST_LIMIT}`, this.getAuthHeaders())
       .subscribe({
         next: (data) => {
           const all = Array.isArray(data) ? data : ((data as any)?.data || []);
           this.allInfluencers = all;
-          if (all.length >= AdminDashboardComponent.LIST_LIMIT) this.countsMayBeIncomplete = true;
+          if (all.length >= AdminDashboardComponent.LIST_LIMIT && !this.serverCounts) this.countsMayBeIncomplete = true;
           const filtered = all.filter((u: any) => !this.isDeletedUser(u));
-          this.influencerCount = filtered.length;
-          this.influencerActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
-          this.influencerPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
-          this.influencerPremium = filtered.filter((u: any) => !!u.isPremium).length;
+          if (!this.serverCounts) {
+            this.influencerCount = filtered.length;
+            this.influencerActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
+            this.influencerPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
+            this.influencerPremium = filtered.filter((u: any) => !!u.isPremium).length;
+          }
           this.onFetchDone();
         },
         error: () => this.onFetchDone()
@@ -517,12 +547,14 @@ export class AdminDashboardComponent implements OnInit {
         next: (data) => {
           const all = Array.isArray(data) ? data : ((data as any)?.data || []);
           this.allBrands = all;
-          if (all.length >= AdminDashboardComponent.LIST_LIMIT) this.countsMayBeIncomplete = true;
+          if (all.length >= AdminDashboardComponent.LIST_LIMIT && !this.serverCounts) this.countsMayBeIncomplete = true;
           const filtered = all.filter((u: any) => !this.isDeletedUser(u));
-          this.brandCount = filtered.length;
-          this.brandActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
-          this.brandPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
-          this.brandPremium = filtered.filter((u: any) => !!u.isPremium).length;
+          if (!this.serverCounts) {
+            this.brandCount = filtered.length;
+            this.brandActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
+            this.brandPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
+            this.brandPremium = filtered.filter((u: any) => !!u.isPremium).length;
+          }
           this.onFetchDone();
         },
         error: () => this.onFetchDone()
@@ -535,12 +567,14 @@ export class AdminDashboardComponent implements OnInit {
         next: (data) => {
           const all = Array.isArray(data) ? data : ((data as any)?.data || []);
           this.allPhotographers = all;
-          if (all.length >= AdminDashboardComponent.LIST_LIMIT) this.countsMayBeIncomplete = true;
+          if (all.length >= AdminDashboardComponent.LIST_LIMIT && !this.serverCounts) this.countsMayBeIncomplete = true;
           const filtered = all.filter((u: any) => !this.isDeletedUser(u));
-          this.photographerCount = filtered.length;
-          this.photographerActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
-          this.photographerPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
-          this.photographerPremium = filtered.filter((u: any) => !!u.isPremium).length;
+          if (!this.serverCounts) {
+            this.photographerCount = filtered.length;
+            this.photographerActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
+            this.photographerPending = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'pending').length;
+            this.photographerPremium = filtered.filter((u: any) => !!u.isPremium).length;
+          }
           this.onFetchDone();
         },
         error: () => this.onFetchDone()
