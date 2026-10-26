@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NotificationPreferences, PushNotificationService } from '../../core/push-notification.service';
@@ -53,12 +53,15 @@ export class UserSettingsComponent implements OnInit {
     private readonly plansService: PlansService,
   ) {}
 
+  // The app runs without zone.js: async results must ask for a redraw.
+  private readonly cdr = inject(ChangeDetectorRef);
   exportingData = false;
 
   /** Saves a JSON copy of everything held about this account (DPDP right of access). */
   downloadMyData(): void {
     if (this.exportingData) return;
     this.exportingData = true;
+    this.cdr.detectChanges();
     this.config.exportMyData().subscribe({
       next: (res) => {
         this.exportingData = false;
@@ -70,9 +73,11 @@ export class UserSettingsComponent implements OnInit {
         a.download = `trendstarz-my-data-${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.cdr.detectChanges();
       },
       error: () => {
         this.exportingData = false;
+        this.cdr.detectChanges();
         alert('Could not prepare your data. Please try again in a while.');
       },
     });
@@ -93,6 +98,7 @@ export class UserSettingsComponent implements OnInit {
       },
       error: () => {
         this.loggingOutAll = false;
+        this.cdr.detectChanges();
         alert('Could not log out of all devices. Please try again.');
       },
     });

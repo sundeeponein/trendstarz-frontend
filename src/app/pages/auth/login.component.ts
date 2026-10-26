@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -26,6 +26,8 @@ import { ProfileVisibility } from '../../shared/config.service';
 })
 export class LoginComponent {
   readonly regConfirm = inject(RegistrationConfirmModalService);
+  // The app runs without zone.js: state changes outside navigation must ask for a redraw.
+  private readonly cdr = inject(ChangeDetectorRef);
 
   showVisibilityPrompt = false;
   visibilityPromptBusy = false;
@@ -104,8 +106,9 @@ export class LoginComponent {
       ...(firebaseIdToken ? { firebaseIdToken } : {}),
     };
     this.http.post(`${environment.apiBaseUrl}/auth/login`, loginPayload)
-      .pipe(timeout(5000), catchError(err => {
+      .pipe(timeout(15000), catchError(err => {
         this.loggingIn = false;
+        this.cdr.detectChanges();
         const msg: string = err?.error?.message || '';
         if (msg.toLowerCase().includes('pending')) {
           this.toast.warning(
@@ -229,18 +232,21 @@ export class LoginComponent {
     const code = this.adminCode.trim();
     if (!/^\d{6}$/.test(code) || this.verifyingAdminCode) return;
     this.verifyingAdminCode = true;
+    this.cdr.detectChanges();
     this.http.post<any>(`${environment.apiBaseUrl}/auth/admin-login/verify`, { challenge: this.adminChallenge, code }).subscribe({
       next: (res) => {
         this.verifyingAdminCode = false;
         this.adminChallenge = '';
         this.adminCode = '';
         this.finishLogin(res?.success && res?.data ? res.data : res);
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.verifyingAdminCode = false;
         const msg = String(err?.error?.message || '');
         if (/expired/i.test(msg)) this.adminChallenge = '';
         this.toast.error(msg || 'That code did not work. Try again.');
+        this.cdr.detectChanges();
       },
     });
   }
@@ -251,6 +257,7 @@ export class LoginComponent {
       this.loggingIn = false;
       this.adminChallenge = res.challenge;
       this.adminCodeSentTo = res.sentTo || 'your email';
+      this.cdr.detectChanges();
       return;
     }
     this.session.setToken(res.token);
