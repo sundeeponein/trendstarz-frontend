@@ -134,6 +134,12 @@
         <strong>{{ lastOpenedAt ? (lastOpenedAt | date:'medium') : '-' }}</strong>
       </div>
     </div>
+    <div class="mt-3">
+      <button type="button" class="btn btn-outline-danger btn-sm" (click)="logoutAllDevices()" [disabled]="loggingOutAll">
+        {{ loggingOutAll ? 'Logging out…' : 'Log out of all devices' }}
+      </button>
+      <p class="mb-0 mt-1"><small>Lost a phone or used a shared computer? This ends every session, including this one.</small></p>
+    </div>
   </section>
 
   <app-referral-link-card *ngIf="referralRole" [role]="referralRole" class="settings-section compact"></app-referral-link-card>

@@ -171,6 +171,13 @@
                   <span *ngIf="!emailVerified" class="verified-icon" title="Email verification pending" style="color: #f59e0b; font-size: 1.2em; vertical-align: middle;"><i class="bi bi-hourglass-split"></i></span>
                   <button type="button" class="btn btn-link p-0" *ngIf="isEditMode && emailVerified && !emailEditRequested" (click)="requestEmailEdit()">Edit</button>
                 </div>
+              <div class="mt-2" *ngIf="isEditMode && emailChanged">
+                <label class="small">Current password <span class="text-danger">*</span></label>
+                <input type="password" class="form-control" autocomplete="current-password"
+                  [(ngModel)]="emailChangePassword" [ngModelOptions]="{ standalone: true }"
+                  placeholder="Needed to change your login email" />
+                <small class="text-muted d-block">For your safety, changing the login email needs your current password. Signed in with Google and never set one? Use “Forgot password” first.</small>
+              </div>
                 <small *ngIf="!emailVerified" class="text-muted d-block mt-1">🟡 Pending verification. Please verify the latest email address.</small>
               </div>
               <div class="field-block">

@@ -454,6 +454,11 @@ export class ConfigService {
       );
   }
 
+  /** Ends every session of this account on all devices (including this one). */
+  logoutAllDevices() {
+    return this.http.post(`${this.apiUrl}/auth/logout-all`, {});
+  }
+
   // Change password for logged-in user
   changePassword(currentPassword: string, newPassword: string, confirmPassword: string) {
     return this.http.post(`${this.apiUrl}/auth/change-password`, {

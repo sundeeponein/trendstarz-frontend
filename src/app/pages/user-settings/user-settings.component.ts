@@ -53,6 +53,26 @@ export class UserSettingsComponent implements OnInit {
     private readonly plansService: PlansService,
   ) {}
 
+  loggingOutAll = false;
+
+  /** Ends the sessions on every device (a lost phone, a shared computer), then this one. */
+  logoutAllDevices(): void {
+    if (this.loggingOutAll) return;
+    if (!confirm('Log out of TrendStarZ on every device, including this one?')) return;
+    this.loggingOutAll = true;
+    this.config.logoutAllDevices().subscribe({
+      next: async () => {
+        await this.push.detachFromAccount().catch(() => undefined);
+        this.session.clearSession();
+        this.router.navigate(['/login']);
+      },
+      error: () => {
+        this.loggingOutAll = false;
+        alert('Could not log out of all devices. Please try again.');
+      },
+    });
+  }
+
   ngOnInit(): void {
     const user = this.session.getUser();
     this.lastLoginAt = user?.lastLoginAt || null;

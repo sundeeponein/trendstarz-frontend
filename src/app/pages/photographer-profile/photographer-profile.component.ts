@@ -116,6 +116,14 @@ export class PhotographerProfileComponent implements OnInit {
   emailVerified = false;
   communityProfileUser: any | null = null;
   emailEditRequested = false;
+  /** Current password, asked only when the login email is being changed (the server requires it). */
+  emailChangePassword = '';
+
+  get emailChanged(): boolean {
+    const now = String(this.form.get('email')?.value || '').trim().toLowerCase();
+    const before = String(this.originalFormValue?.email || '').trim().toLowerCase();
+    return !!before && now !== before;
+  }
   showEmailVerificationPrompt = false;
   emailJustChanged = false;
   previousVerifiedEmail = '';
@@ -803,7 +811,7 @@ export class PhotographerProfileComponent implements OnInit {
         this.isEditMode = false;
         this.form.disable({ emitEvent: false });
         // Snapshot originals for cancel
-        this.originalFormValue = this.form.getRawValue();
+        this.originalFormValue = this.form.getRawValue(); this.emailChangePassword = '';
         this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
         this.originalPhotoshootImagesPreview = [...this.photoshootImagesPreview];
@@ -1148,7 +1156,7 @@ export class PhotographerProfileComponent implements OnInit {
     this.submitted = false;
     this.form.enable({ emitEvent: false });
     this.emailEditRequested = !this.emailVerified;
-    this.originalFormValue = this.form.getRawValue();
+    this.originalFormValue = this.form.getRawValue(); this.emailChangePassword = '';
     this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
     this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
     this.originalPhotoshootImagesPreview = [...this.photoshootImagesPreview];
@@ -1299,6 +1307,7 @@ export class PhotographerProfileComponent implements OnInit {
     const token = this.session.getToken();
     const headers = new HttpHeaders({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' });
     this.saving = true;
+    if (this.emailChanged) payload.currentPassword = this.emailChangePassword;
     this.http.patch(`${this.apiUrl}/users/photographers/me/profile`, payload, { headers }).subscribe({
       next: (res: any) => {
         this.saving = false;
@@ -1306,7 +1315,7 @@ export class PhotographerProfileComponent implements OnInit {
         this.submitted = false;
         this.isEditMode = false;
         this.form.disable({ emitEvent: false });
-        this.originalFormValue = this.form.getRawValue();
+        this.originalFormValue = this.form.getRawValue(); this.emailChangePassword = '';
         this.originalPricingState = JSON.parse(JSON.stringify(this.pricingState));
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
         this.originalPhotoshootImagesPreview = [...this.photoshootImagesPreview];

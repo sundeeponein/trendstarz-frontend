@@ -147,6 +147,14 @@ export class BrandProfileComponent implements OnInit {
 
   emailVerified: boolean = false;
   emailEditRequested: boolean = false;
+  /** Current password, asked only when the login email is being changed (the server requires it). */
+  emailChangePassword = '';
+
+  get emailChanged(): boolean {
+    const now = String(this.registrationForm.get('email')?.value || '').trim().toLowerCase();
+    const before = String(this.originalFormValue?.email || '').trim().toLowerCase();
+    return !!before && now !== before;
+  }
   showEmailVerificationPrompt: boolean = false;
   emailJustChanged: boolean = false;
   previousVerifiedEmail: string = '';
@@ -690,7 +698,7 @@ export class BrandProfileComponent implements OnInit {
           this.activePlatformTab = pfKeys.length ? pfKeys[0] : null;
           this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
 
-          this.originalFormValue = this.registrationForm.getRawValue();
+          this.originalFormValue = this.registrationForm.getRawValue(); this.emailChangePassword = '';
           this.premiumStart = profile.premiumStart ? new Date(profile.premiumStart) : null;
           this.premiumEnd = profile.premiumEnd ? new Date(profile.premiumEnd) : null;
           // Load payment status
@@ -1242,6 +1250,7 @@ export class BrandProfileComponent implements OnInit {
     delete payload.confirmPassword;
     delete payload.paymentOption;
     delete payload.isPremium;
+    if (this.emailChanged) payload.currentPassword = this.emailChangePassword;
     delete payload.premiumEnd;
     delete payload.premiumStart;
     delete payload.premiumDuration;
@@ -1255,7 +1264,7 @@ export class BrandProfileComponent implements OnInit {
         this.registrationForm.disable({ emitEvent: false });
         this.registrationForm.get('password')?.disable();
         this.registrationForm.get('confirmPassword')?.disable();
-        this.originalFormValue = this.registrationForm.getRawValue();
+        this.originalFormValue = this.registrationForm.getRawValue(); this.emailChangePassword = '';
         this.originalPlatformForms = JSON.parse(JSON.stringify(this.platformForms));
         this.cd.detectChanges();
         const serverUser = res?.user;
