@@ -93,3 +93,10 @@
   color: #101828;
   font-weight: 700;
 }
+
+.dh-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}

@@ -178,6 +178,29 @@ export class DataHealthComponent implements OnInit {
     });
   }
 
+  verifyBusy = false;
+
+  /** Restore test: the newest backup is downloaded and read back in full on the server. */
+  testRestore(): void {
+    this.verifyBusy = true;
+    this.backupError = '';
+    this.http.post<any>(`${this.url}/backups/verify`, {}).subscribe({
+      next: () => {
+        this.verifyBusy = false;
+        this.loadBackups();
+      },
+      error: (err) => {
+        this.verifyBusy = false;
+        this.backupError = err?.error?.message || 'Restore test failed.';
+        this.loadBackups();
+      },
+    });
+  }
+
+  get lastRestoreTest(): any {
+    return (this.backups?.runs || []).find((r: any) => r.kind === 'verify') || null;
+  }
+
   get lastGoodBackup(): any {
     return (this.backups?.runs || []).find((r: any) => r.status === 'ok') || null;
   }

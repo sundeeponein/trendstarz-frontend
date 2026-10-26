@@ -60,11 +60,21 @@
           Every night at 4:15 AM the whole database is saved, encrypted, as a private file (last 14 days kept).
           <ng-container *ngIf="lastGoodBackup">Last backup: {{ lastGoodBackup.at | date: 'd MMM y, h:mm a' }} ({{ lastGoodBackup.records }} records).</ng-container>
           <ng-container *ngIf="backups && !backups.configured"> Off — set BACKUP_ENCRYPTION_KEY in Railway.</ng-container>
+          <ng-container *ngIf="lastRestoreTest">
+            Last restore test: {{ lastRestoreTest.at | date: 'd MMM y, h:mm a' }} —
+            {{ lastRestoreTest.status === 'verified' ? 'read back in full (' + lastRestoreTest.records + ' records)' : 'FAILED: ' + lastRestoreTest.error }}.
+          </ng-container>
+          Every Sunday the newest backup is downloaded, decrypted and fully read back.
         </p>
       </div>
-      <button type="button" class="dh-run" (click)="backupNow()" [disabled]="backupBusy || (backups && !backups.configured)">
-        <i class="bi bi-cloud-arrow-up" [class.spin]="backupBusy"></i> {{ backupBusy ? 'Backing up…' : 'Back up now' }}
-      </button>
+      <div class="dh-actions">
+        <button type="button" class="dh-run" (click)="backupNow()" [disabled]="backupBusy || (backups && !backups.configured)">
+          <i class="bi bi-cloud-arrow-up" [class.spin]="backupBusy"></i> {{ backupBusy ? 'Backing up…' : 'Back up now' }}
+        </button>
+        <button type="button" class="dh-run" (click)="testRestore()" [disabled]="verifyBusy || (backups && !backups.configured)">
+          <i class="bi bi-shield-check" [class.spin]="verifyBusy"></i> {{ verifyBusy ? 'Testing…' : 'Test restore' }}
+        </button>
+      </div>
     </div>
     <p class="dh-state--error" *ngIf="backupError">{{ backupError }}</p>
     <div class="dh-config" *ngFor="let f of (backups?.files || []) | slice: 0 : 5">
