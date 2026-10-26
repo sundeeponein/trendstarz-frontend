@@ -117,6 +117,13 @@ export class AdminDashboardComponent implements OnInit {
   };
   paymentsSummaryLoading = false;
 
+  /**
+   * The admin lists default to 100 rows: without asking for more, every count here
+   * stopped at 100 (261 influencers showed as 100, 2026-10-26). 1000 is the
+   * endpoint's maximum; reaching it shows a warning instead of a silently low number.
+   */
+  static readonly LIST_LIMIT = 1000;
+  countsMayBeIncomplete = false;
   private allInfluencers: any[] = [];
   private allBrands: any[] = [];
   private allPhotographers: any[] = [];
@@ -487,11 +494,12 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   fetchInfluencers() {
-    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers`, this.getAuthHeaders())
+    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/influencers?limit=${AdminDashboardComponent.LIST_LIMIT}`, this.getAuthHeaders())
       .subscribe({
         next: (data) => {
           const all = Array.isArray(data) ? data : ((data as any)?.data || []);
           this.allInfluencers = all;
+          if (all.length >= AdminDashboardComponent.LIST_LIMIT) this.countsMayBeIncomplete = true;
           const filtered = all.filter((u: any) => !this.isDeletedUser(u));
           this.influencerCount = filtered.length;
           this.influencerActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
@@ -504,11 +512,12 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   fetchBrands() {
-    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/brands`, this.getAuthHeaders())
+    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/brands?limit=${AdminDashboardComponent.LIST_LIMIT}`, this.getAuthHeaders())
       .subscribe({
         next: (data) => {
           const all = Array.isArray(data) ? data : ((data as any)?.data || []);
           this.allBrands = all;
+          if (all.length >= AdminDashboardComponent.LIST_LIMIT) this.countsMayBeIncomplete = true;
           const filtered = all.filter((u: any) => !this.isDeletedUser(u));
           this.brandCount = filtered.length;
           this.brandActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;
@@ -521,11 +530,12 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   fetchPhotographers() {
-    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/photographers`, this.getAuthHeaders())
+    this.http.get<any[]>(`${environment.apiBaseUrl}/admin/photographers?limit=${AdminDashboardComponent.LIST_LIMIT}`, this.getAuthHeaders())
       .subscribe({
         next: (data) => {
           const all = Array.isArray(data) ? data : ((data as any)?.data || []);
           this.allPhotographers = all;
+          if (all.length >= AdminDashboardComponent.LIST_LIMIT) this.countsMayBeIncomplete = true;
           const filtered = all.filter((u: any) => !this.isDeletedUser(u));
           this.photographerCount = filtered.length;
           this.photographerActivated = filtered.filter((u: any) => (u.status || '').toLowerCase() === 'accepted').length;

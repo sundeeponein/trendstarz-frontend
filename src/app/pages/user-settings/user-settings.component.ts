@@ -53,6 +53,31 @@ export class UserSettingsComponent implements OnInit {
     private readonly plansService: PlansService,
   ) {}
 
+  exportingData = false;
+
+  /** Saves a JSON copy of everything held about this account (DPDP right of access). */
+  downloadMyData(): void {
+    if (this.exportingData) return;
+    this.exportingData = true;
+    this.config.exportMyData().subscribe({
+      next: (res) => {
+        this.exportingData = false;
+        const data = res?.success && res?.data ? res.data : res;
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `trendstarz-my-data-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      },
+      error: () => {
+        this.exportingData = false;
+        alert('Could not prepare your data. Please try again in a while.');
+      },
+    });
+  }
+
   loggingOutAll = false;
 
   /** Ends the sessions on every device (a lost phone, a shared computer), then this one. */

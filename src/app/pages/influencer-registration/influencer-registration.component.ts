@@ -48,6 +48,8 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
   styleUrls: ['./influencer-registration.component.scss']
 })
 export class InfluencerRegistrationComponent implements OnInit {
+  /** Explicit consent to the Terms and Privacy Policy (required; recorded on the account). */
+  acceptedTerms = false;
   readonly maxCategories = 5;
   readonly maxCreatorTypes = 3;
   readonly maxCollaborationTypes = 3;
@@ -1075,6 +1077,7 @@ export class InfluencerRegistrationComponent implements OnInit {
     payload.signupAttribution = this.signupAttribution;
     payload.trackingLinkCode = this.trackingLinkCode;
 
+    payload.acceptedTerms = this.acceptedTerms === true;
     this.configService.registerInfluencer(payload).subscribe({
       next: async () => {
         if (!this.localAuthBypassEnabled) {

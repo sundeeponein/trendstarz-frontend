@@ -127,45 +127,7 @@ export class LoginComponent {
         }
         return of(null);
       }))
-      .subscribe((res: any) => {
-        if (!res) return;
-        this.session.setToken(res.token);
-        if (res.user) {
-          this.session.setUser(res.user);
-        }
-
-        if (res.accountDeletionPending) {
-          this.router.navigate(['/account-deletion-pending']);
-          return;
-        }
-
-        const userType = String(res.userType || res.user?.role || '').toLowerCase();
-
-        if (userType === 'admin') {
-          this.router.navigate(['/admin']);
-          return;
-        }
-
-        // Pre-existing accounts that never explicitly chose a profile
-        // visibility get asked once per login, instead of silently staying
-        // on the PUBLIC display default forever.
-        const userId = res.user?.id;
-        if (userId) {
-          this.pendingUserType = userType;
-          this.configService.getProfileVisibility(userId).subscribe({
-            next: (visRes) => {
-              if (!visRes?.isSet) {
-                this.showVisibilityPrompt = true;
-                return;
-              }
-              this.proceedToDashboard(userType);
-            },
-            error: () => this.proceedToDashboard(userType),
-          });
-        } else {
-          this.proceedToDashboard(userType);
-        }
-      });
+      .subscribe((res: any) => this.finishLogin(res));
   }
 
   private proceedToDashboard(userType: string): void {
@@ -255,5 +217,77 @@ export class LoginComponent {
     this.unverifiedEmail = '';
     this.loginForm.get('email')?.setValue('');
     this.loginForm.get('password')?.setValue('');
+  }
+
+  /** Admin two-step login: the challenge from step 1 and where the code was sent. */
+  adminChallenge = '';
+  adminCodeSentTo = '';
+  adminCode = '';
+  verifyingAdminCode = false;
+
+  verifyAdminCode(): void {
+    const code = this.adminCode.trim();
+    if (!/^\d{6}$/.test(code) || this.verifyingAdminCode) return;
+    this.verifyingAdminCode = true;
+    this.http.post<any>(`${environment.apiBaseUrl}/auth/admin-login/verify`, { challenge: this.adminChallenge, code }).subscribe({
+      next: (res) => {
+        this.verifyingAdminCode = false;
+        this.adminChallenge = '';
+        this.adminCode = '';
+        this.finishLogin(res?.success && res?.data ? res.data : res);
+      },
+      error: (err) => {
+        this.verifyingAdminCode = false;
+        const msg = String(err?.error?.message || '');
+        if (/expired/i.test(msg)) this.adminChallenge = '';
+        this.toast.error(msg || 'That code did not work. Try again.');
+      },
+    });
+  }
+
+  private finishLogin(res: any): void {
+    if (!res) return;
+    if (res.twoFactorRequired) {
+      this.loggingIn = false;
+      this.adminChallenge = res.challenge;
+      this.adminCodeSentTo = res.sentTo || 'your email';
+      return;
+    }
+    this.session.setToken(res.token);
+    if (res.user) {
+      this.session.setUser(res.user);
+    }
+
+    if (res.accountDeletionPending) {
+      this.router.navigate(['/account-deletion-pending']);
+      return;
+    }
+
+    const userType = String(res.userType || res.user?.role || '').toLowerCase();
+
+    if (userType === 'admin') {
+      this.router.navigate(['/admin']);
+      return;
+    }
+
+    // Pre-existing accounts that never explicitly chose a profile
+    // visibility get asked once per login, instead of silently staying
+    // on the PUBLIC display default forever.
+    const userId = res.user?.id;
+    if (userId) {
+      this.pendingUserType = userType;
+      this.configService.getProfileVisibility(userId).subscribe({
+        next: (visRes) => {
+          if (!visRes?.isSet) {
+            this.showVisibilityPrompt = true;
+            return;
+          }
+          this.proceedToDashboard(userType);
+        },
+        error: () => this.proceedToDashboard(userType),
+      });
+    } else {
+      this.proceedToDashboard(userType);
+    }
   }
 }

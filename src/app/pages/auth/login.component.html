@@ -28,7 +28,16 @@
         <h2>Welcome back</h2>
         <p class="sub">Please enter your details to sign in.</p>
 
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="off" novalidate>
+        <div *ngIf="adminChallenge" class="admin-2fa">
+          <p class="mb-2">We emailed a 6-digit sign-in code to <strong>{{ adminCodeSentTo }}</strong>. Enter it to finish signing in.</p>
+          <input class="form-control mb-2" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
+            [(ngModel)]="adminCode" [ngModelOptions]="{ standalone: true }" placeholder="123456" (keyup.enter)="verifyAdminCode()" />
+          <button type="button" class="btn btn-primary w-100" (click)="verifyAdminCode()" [disabled]="verifyingAdminCode || adminCode.trim().length !== 6">
+            {{ verifyingAdminCode ? 'Checking…' : 'Verify and sign in' }}
+          </button>
+          <button type="button" class="btn btn-link w-100 mt-1" (click)="adminChallenge = ''; adminCode = ''">Start over</button>
+        </div>
+        <form *ngIf="!adminChallenge" [formGroup]="loginForm" (ngSubmit)="onSubmit()" autocomplete="off" novalidate>
           <div class="mb-3">
             <label class="form-label">Email Address</label>
             <input

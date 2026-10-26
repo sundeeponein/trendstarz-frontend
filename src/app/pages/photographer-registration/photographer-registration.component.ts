@@ -44,6 +44,8 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
   styleUrls: ['./photographer-registration.component.scss'],
 })
 export class PhotographerRegistrationComponent implements OnInit {
+  /** Explicit consent to the Terms and Privacy Policy (required; recorded on the account). */
+  acceptedTerms = false;
   /** 3D-1d: rates below this are refused on save (shared/rates.util). */
   readonly minimumRate = MINIMUM_RATE_RUPEES;
   readonly isBelowMinimumRate = isBelowMinimumRate;
@@ -859,7 +861,7 @@ export class PhotographerRegistrationComponent implements OnInit {
 
     this.pendingVerificationEmail = v.email || '';
     this.registrationError = '';
-    this.config.registerPhotographer(payload).subscribe({
+    this.config.registerPhotographer({ ...payload, acceptedTerms: this.acceptedTerms === true }).subscribe({
       next: async () => {
         if (!this.localAuthBypassEnabled) {
           try {

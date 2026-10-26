@@ -454,6 +454,11 @@ export class ConfigService {
       );
   }
 
+  /** "Download my data": everything TrendStarZ holds about this account. */
+  exportMyData() {
+    return this.http.get<any>(`${this.apiUrl}/users/me/data-export`);
+  }
+
   /** Ends every session of this account on all devices (including this one). */
   logoutAllDevices() {
     return this.http.post(`${this.apiUrl}/auth/logout-all`, {});

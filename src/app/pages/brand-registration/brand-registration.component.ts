@@ -43,6 +43,8 @@ export const passwordMatchValidator: ValidatorFn = (group: AbstractControl) => {
   styleUrls: ['./brand-registration.component.scss'],
 })
 export class BrandRegistrationComponent implements OnInit {
+  /** Explicit consent to the Terms and Privacy Policy (required; recorded on the account). */
+  acceptedTerms = false;
   readonly FREE_SOCIAL_PROFILE_LIMIT = 1;
   readonly currentYear = new Date().getFullYear();
   readonly brandFoundedYears: number[] = Array.from(
@@ -1005,6 +1007,7 @@ export class BrandRegistrationComponent implements OnInit {
     payload.trackingLinkCode = this.trackingLinkCode;
     delete payload.googleMapAddress;
 
+    payload.acceptedTerms = this.acceptedTerms === true;
     this.configService.registerBrand(payload).subscribe({
       next: async () => {
         if (!this.localAuthBypassEnabled) {

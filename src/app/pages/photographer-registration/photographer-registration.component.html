@@ -476,9 +476,18 @@
               Complete your email verification and mobile verification to activate your profile and become eligible for brand campaign invites.
             </p>
 
+          <div class="form-check my-3">
+            <input class="form-check-input" type="checkbox" id="acceptTerms"
+              [(ngModel)]="acceptedTerms" [ngModelOptions]="{ standalone: true }" />
+            <label class="form-check-label" for="acceptTerms">
+              I agree to the <a href="/terms-and-conditions" target="_blank" rel="noopener">Terms of Service</a>
+              and the <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>.
+            </label>
+          </div>
+
             <div class="actions-row dual">
               <button type="button" class="btn btn-outline-secondary" (click)="prevStep()">Back</button>
-              <button type="submit" class="btn btn-primary" [disabled]="uploadingImage || submitting">
+              <button type="submit" class="btn btn-primary" [disabled]="uploadingImage || submitting || !acceptedTerms">
                 {{ submitting ? 'Registering...' : 'Complete Registration' }}
               </button>
             </div>
@@ -487,7 +496,7 @@
           <app-mobile-bottom-actions ariaLabel="Photographer registration actions">
             <button *ngIf="currentStep > 1" type="button" class="btn btn-outline-secondary mobile-bottom-actions__back" (click)="prevStep()"><i class="bi bi-arrow-left"></i><span>Back</span></button>
             <button *ngIf="currentStep < 3" type="button" class="btn btn-primary" (click)="nextStep()"><i class="bi bi-arrow-right"></i><span>Next</span></button>
-            <button *ngIf="currentStep === 3" type="submit" class="btn btn-primary" [disabled]="uploadingImage || submitting">
+            <button *ngIf="currentStep === 3" type="submit" class="btn btn-primary" [disabled]="uploadingImage || submitting || !acceptedTerms">
               <i class="bi bi-person-plus-fill"></i><span>{{ submitting ? 'Registering...' : 'Register' }}</span>
             </button>
           </app-mobile-bottom-actions>
