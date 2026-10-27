@@ -59,10 +59,6 @@
       </button>
     </div>
   </div>
-
-  <p class="text-muted small mb-2" *ngIf="getActiveFilterValue('contactVerification') === 'waiting_on_creator' && creatorFlagReasonsLabel">
-    Holding them up: {{ creatorFlagReasonsLabel }} — shown on their dashboard; nothing for you to do until they fix it.
-  </p>
   <div class="filters-grid" *ngIf="filtersExpanded">
     <select class="verification-filter" [ngModel]="getActiveFilterValue('contactVerification')" (change)="setActiveFilterValue('contactVerification', $any($event.target).value)">
       <option value="">Verification: All</option>

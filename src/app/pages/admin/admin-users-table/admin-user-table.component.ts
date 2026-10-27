@@ -1728,8 +1728,6 @@ export class AdminUserTableComponent implements OnInit {
 
   /** Admin action lists (Verification filter) → role → how many; from admin/one-step-counts. */
   private actionListCounts: Record<string, Record<string, number>> = {};
-  /** Role → open flag code → how many, for "waiting on the creator". */
-  private creatorFlagReasons: Record<string, Record<string, number>> = {};
 
   /** "One step: waiting only for approval (21)" — count for the current tab. */
   actionListLabel(key: string, text: string): string {
@@ -1737,23 +1735,11 @@ export class AdminUserTableComponent implements OnInit {
     return typeof n === 'number' ? `${text} (${n})` : text;
   }
 
-  /** "Tier mismatch 4 · Portfolio missing 3" for the current tab. */
-  get creatorFlagReasonsLabel(): string {
-    return Object.entries(this.creatorFlagReasons[this.activeTab] || {})
-      .sort((a, b) => b[1] - a[1])
-      .map(([code, n]) => {
-        const words = code.toLowerCase().replace(/_/g, ' ');
-        return `${words.charAt(0).toUpperCase()}${words.slice(1)} ${n}`;
-      })
-      .join(' · ');
-  }
-
   private loadActionListCounts(): void {
     this.http.get<any>(`${environment.apiBaseUrl}/admin/one-step-counts`).subscribe({
       next: (res) => {
         const body = res?.data ?? res;
         this.actionListCounts = body?.counts || {};
-        this.creatorFlagReasons = body?.creatorFlagReasons || {};
       },
       error: () => {
         /* labels just show without counts */
