@@ -722,6 +722,8 @@ export class ConfigService {
     creatorEscrowTotal?: number;
     totalCities?: number;
     influencerCategoryCounts?: Record<string, number>;
+    influencerCreatorTypeCounts?: Record<string, number>;
+    professionalCreatorCount?: number;
   }> {
     return this.http.get<any>(`${this.apiUrl}/users/platform-stats`).pipe(
       map((res) => this.extractData<any>(res) || res || {}),

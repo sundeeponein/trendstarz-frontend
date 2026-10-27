@@ -75,6 +75,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   };
   /** The profile (and so defaultPayout) has loaded — the UPI ask can decide. */
   payoutLoaded = false;
+  /** No Creator Type / Specialty yet: brands filtering by type (UGC, Actor…) can't find them. */
+  needsCreatorType = false;
 
   onPayoutSaved(payout: PayoutDetails): void {
     this.defaultPayout = { ...payout };
@@ -254,6 +256,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
               accountHolderName: profile?.payout?.accountHolderName || profile?.name || '',
             };
             this.payoutLoaded = true;
+            this.needsCreatorType =
+              !(profile?.professionalStatus && (profile?.creatorTypes || []).length) && !this.creatorTypeAskDismissed();
             this.myInfluencerSocialMedia = (profile?.socialMedia || []).map((sm: any) => ({ platform: sm.platform || '', tier: sm.tier || '' }));
             this.adminSocialNotifications = profile?.adminSocialNotifications || [];
             this.founderOfferAlreadySeen = !!profile?.founderOfferSeenAt;
@@ -1083,6 +1087,24 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   onMobileVerificationHelp() {
     const numberText = this.verificationCallNumber ? ` Team calls come from ${this.verificationCallNumber}.` : '';
     this.toast.info(`Mobile verification is handled by admin support call for now.${numberText} OTP/SMS flow will be added soon.`);
+  }
+
+  private creatorTypeAskDismissed(): boolean {
+    try {
+      return typeof window !== 'undefined' && sessionStorage.getItem('creatorTypeAskDismissed') === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  dismissCreatorTypeAsk() {
+    this.needsCreatorType = false;
+    try {
+      sessionStorage.setItem('creatorTypeAskDismissed', '1');
+    } catch {
+      /* storage blocked: hidden for this page view only */
+    }
+    this.cdr.markForCheck();
   }
 
   dismissEmailBanner() {

@@ -13,6 +13,7 @@ import { BrandUserCardComponent } from '../../shared/user-card/brand-user-card/b
 import { PhotographerUserCardComponent } from '../../shared/user-card/photographer-user-card/photographer-user-card.component';
 import { UsageSummaryComponent } from '../../shared/components/usage-summary/usage-summary.component';
 import { PlatformStats, formatMilestoneCount } from '../../shared/utils/platform-stats.util';
+import { ALL_PROFESSIONAL_CREATORS, matchesCreatorType } from '../../shared/utils/creator-type.util';
 import { CollaborationScoreUiUtilsService } from '../../services/collaboration-score-ui-utils.service';
 
 type TrendScoreBand = 'scored' | 'growing' | 'campaign_ready' | 'recommended';
@@ -74,6 +75,8 @@ export class SearchComponent implements OnInit {
 
   // Filter options (populated from data)
   categoryOptions: string[] = [];
+  /** Creator Type / Specialty names, for the creator type filter. */
+  creatorTypeOptions: string[] = [];
   brandCategoryOptions: string[] = [];
   locationOptions: string[] = [];
   brandLocationOptions: string[] = [];
@@ -160,6 +163,8 @@ export class SearchComponent implements OnInit {
   infFilters = {
     keyword: '',
     category: '',
+    /** '' = any creator; ALL_PROFESSIONAL_CREATORS = every professional creator; else one type. */
+    creatorType: '',
     location: '',
     tier: '',
     ageRange: '',
@@ -263,6 +268,17 @@ export class SearchComponent implements OnInit {
   nicheOptionLabel(category: string): string {
     const count = this.isInfluencerMode ? this.platformStats?.influencerCategoryCounts?.[category] || 0 : 0;
     return count > 0 ? `${category} (${this.compactCount(count)})` : category;
+  }
+
+  readonly allProfessionalCreators = ALL_PROFESSIONAL_CREATORS;
+
+  /** "Actor (13)" — professional creators of this type that Search can show. */
+  creatorTypeOptionLabel(type: string): string {
+    const count = type === ALL_PROFESSIONAL_CREATORS
+      ? this.platformStats?.professionalCreatorCount || 0
+      : this.platformStats?.influencerCreatorTypeCounts?.[type] || 0;
+    const label = type === ALL_PROFESSIONAL_CREATORS ? 'All professional creators' : type;
+    return count > 0 ? `${label} (${this.compactCount(count)})` : label;
   }
 
   get nicheTotalLabel(): string {
@@ -377,7 +393,7 @@ export class SearchComponent implements OnInit {
 
   get activeFilterCount(): number {
     const values = [this.activeKeyword, this.activeCategory, this.activeLocation, this.activeAgeRange];
-    if (this.isInfluencerMode) values.push(this.infFilters.tier, this.infFilters.trendScore);
+    if (this.isInfluencerMode) values.push(this.infFilters.tier, this.infFilters.trendScore, this.infFilters.creatorType);
     if (this.isPhotographerMode) values.push(this.photographerFilters.skill);
     return values.filter((v) => !!v).length;
   }
@@ -412,6 +428,7 @@ export class SearchComponent implements OnInit {
       this.loadUsageSummary();
     }
     this.loadRoleCategoryOptions();
+    this.loadCreatorTypeOptions();
     this.loadPlatformStats();
     const urlTab = this.route.snapshot.queryParamMap.get('tab') as 'influencers' | 'brands' | 'photographers' | null;
     this.activeTab = this.isValidTab(urlTab) ? urlTab : this.defaultTab;
@@ -431,6 +448,11 @@ export class SearchComponent implements OnInit {
     const urlCategory = (this.route.snapshot.queryParamMap.get('category') || '').trim();
     if (urlCategory && this.activeTab === 'influencers') {
       this.infFilters.category = urlCategory;
+    }
+    // Shared creator-type link, e.g. /search?tab=influencers&creatorType=UGC%20Creator
+    const urlCreatorType = (this.route.snapshot.queryParamMap.get('creatorType') || '').trim();
+    if (urlCreatorType && this.activeTab === 'influencers') {
+      this.infFilters.creatorType = urlCreatorType;
     }
     if (this.activeTab === 'influencers') {
       this.fetchInfluencers({ countSearch: false });
@@ -519,6 +541,17 @@ export class SearchComponent implements OnInit {
     };
   }
 
+  /** Creator Type / Specialty list (admin-managed), for the Search filter. */
+  private loadCreatorTypeOptions(): void {
+    this.config.getCreatorTypeOptions().subscribe({
+      next: (rows: any[]) => {
+        this.creatorTypeOptions = Array.from(new Set((rows || []).map((r: any) => String(r?.name || '').trim()).filter(Boolean)));
+        setTimeout(() => this.cd.detectChanges(), 0);
+      },
+      error: () => {},
+    });
+  }
+
   private loadRoleCategoryOptions(): void {
     this.config.getCategories('influencer').subscribe({
       next: (rows: any[]) => {
@@ -602,6 +635,16 @@ export class SearchComponent implements OnInit {
     this.brandFilters.category = value;
     this.brandsPage = 1;
     this.applyBrandFilters();
+  }
+
+  /** Creator type picked, or "Any creator" (''): filter server-side and keep ?creatorType= in step. */
+  onCreatorTypeChange(value: string) {
+    if (!this.isInfluencerMode) return;
+    this.infFilters.creatorType = value;
+    this.router.navigate([], { queryParams: { creatorType: value || null }, queryParamsHandling: 'merge', replaceUrl: true });
+    this.influencersPage = 1;
+    this.applyInfluencerFilters();
+    this.triggerSearchFetch('filter');
   }
 
   onLocationChange(value: string) {
@@ -697,6 +740,7 @@ export class SearchComponent implements OnInit {
         smartLocationPriority: !this.infFilters.location,
         // Filter server-side so a niche isn't limited to whichever creators land in the first page.
         category: this.infFilters.category || undefined,
+        creatorType: this.infFilters.creatorType || undefined,
         countSearch: !!options?.countSearch,
         countReason: options?.countReason,
       })
@@ -755,6 +799,7 @@ export class SearchComponent implements OnInit {
         viewerCountry: this.currentUser?.location?.country || '',
         smartLocationPriority: !this.infFilters.location,
         category: this.infFilters.category || undefined,
+        creatorType: this.infFilters.creatorType || undefined,
         countSearch: this.loadMoreUsesSearch,
         countReason: 'pagination',
       })
@@ -898,6 +943,7 @@ export class SearchComponent implements OnInit {
         if (!name.includes(kw) && !cats.includes(kw)) return false;
       }
       if (f.category && !(u.categories || []).includes(f.category)) return false;
+      if (f.creatorType && !matchesCreatorType(u, f.creatorType)) return false;
       if (f.location && u.location?.state !== f.location) return false;
       if (f.tier) {
         const tier = this.normalizeTierLabel(this.getInfluencerPrimaryTier(u));
@@ -954,15 +1000,18 @@ export class SearchComponent implements OnInit {
   }
 
   clearInfluencerFilters(countSearch = false) {
-    const hadCategory = !!this.infFilters.category;
-    this.infFilters = { keyword: '', category: '', location: '', tier: '', ageRange: '', minEngagement: 0, trendScore: '' };
+    // Category and creator type are filtered server-side: clearing them needs a refetch.
+    const hadServerFilter = !!this.infFilters.category || !!this.infFilters.creatorType;
+    this.infFilters = { keyword: '', category: '', creatorType: '', location: '', tier: '', ageRange: '', minEngagement: 0, trendScore: '' };
     this.influencersPage = 1;
     this.applyInfluencerFilters();
-    if (hadCategory) this.syncCategoryParam('');
+    if (hadServerFilter) {
+      this.router.navigate([], { queryParams: { category: null, creatorType: null }, queryParamsHandling: 'merge', replaceUrl: true });
+    }
     if (countSearch) {
       this.fetchInfluencers({ countSearch: !this.isAdminUser && !this.isGuestUser, countReason: 'filter' });
-    } else if (hadCategory) {
-      // Category is filtered server-side, so the loaded list must be refetched without it.
+    } else if (hadServerFilter) {
+      // The loaded list was fetched with those filters, so refetch without them.
       this.fetchInfluencers({ countSearch: false });
     }
   }

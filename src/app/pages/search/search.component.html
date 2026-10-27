@@ -78,6 +78,16 @@
         </select>
       </div>
 
+      <!-- Creator Type / Specialty (professional creators, with live counts); shareable as ?creatorType= -->
+      <div class="filter-item" *ngIf="isInfluencerMode && creatorTypeOptions.length">
+        <label class="filter-label" for="f-creator-type">Creator Type</label>
+        <select id="f-creator-type" class="filter-select" [ngModel]="infFilters.creatorType" (ngModelChange)="onCreatorTypeChange($event)">
+          <option value="">Any creator</option>
+          <option [value]="allProfessionalCreators">{{ creatorTypeOptionLabel(allProfessionalCreators) }}</option>
+          <option *ngFor="let type of creatorTypeOptions" [value]="type">{{ creatorTypeOptionLabel(type) }}</option>
+        </select>
+      </div>
+
       <div class="filter-item">
         <label class="filter-label" for="f-location">Location</label>
         <select id="f-location" class="filter-select" [ngModel]="activeLocation" (ngModelChange)="onLocationChange($event)">

@@ -11,6 +11,9 @@ export interface PlatformStats {
   creatorEscrowTotal?: number;
   totalCities?: number;
   influencerCategoryCounts?: Record<string, number>;
+  /** Professional creators per Creator Type / Specialty, as Search filters them. */
+  influencerCreatorTypeCounts?: Record<string, number>;
+  professionalCreatorCount?: number;
 }
 
 /** Below this many verified profiles, show a qualitative label instead of a (small-looking) real count. */

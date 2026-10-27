@@ -21,6 +21,14 @@
   <!-- Admin Social Media Change Notifications -->
   <app-social-confirm-banner editLink="/influencer-profile"></app-social-confirm-banner>
   <app-payout-upi-banner role="influencer" [ready]="payoutLoaded" [payout]="defaultPayout" (saved)="onPayoutSaved($event)"></app-payout-upi-banner>
+  <!-- Brands filter Search by Creator Type (UGC, Actor, Model…): ask creators who haven't picked one -->
+  <div class="alert alert-info d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4" role="status" *ngIf="needsCreatorType">
+    <span><i class="bi bi-person-badge me-2"></i>Are you a UGC creator, actor or model? Add your <strong>Creator Type</strong> so brands searching for it can find you.</span>
+    <span class="d-flex gap-2">
+      <a class="btn btn-sm btn-primary" routerLink="/influencer-profile">Add creator type</a>
+      <button type="button" class="btn btn-sm btn-link" (click)="dismissCreatorTypeAsk()">Later</button>
+    </span>
+  </div>
   <app-admin-social-notice
     class="mb-4 d-block"
     [notifications]="adminSocialNotifications"
