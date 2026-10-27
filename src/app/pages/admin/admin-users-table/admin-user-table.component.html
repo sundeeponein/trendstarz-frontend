@@ -60,6 +60,9 @@
     </div>
   </div>
 
+  <p class="text-muted small mb-2" *ngIf="getActiveFilterValue('contactVerification') === 'waiting_on_creator' && creatorFlagReasonsLabel">
+    Holding them up: {{ creatorFlagReasonsLabel }} — shown on their dashboard; nothing for you to do until they fix it.
+  </p>
   <div class="filters-grid" *ngIf="filtersExpanded">
     <select class="verification-filter" [ngModel]="getActiveFilterValue('contactVerification')" (change)="setActiveFilterValue('contactVerification', $any($event.target).value)">
       <option value="">Verification: All</option>
@@ -75,9 +78,10 @@
       <option value="social_changed">Social media changed — re-review</option>
       <option value="link_reported">Link not working — reported{{ linkReportCountLabel }}</option>
       <option value="callback_requested">Callback Requested</option>
-      <option value="waiting_approval">One step: waiting only for approval</option>
-      <option value="mobile_only">One step: only mobile not verified</option>
-      <option value="back_in_review">Back in review (approved, changed since)</option>
+      <option value="waiting_approval">{{ actionListLabel('waiting_approval', 'One step: waiting only for approval') }}</option>
+      <option value="mobile_only">{{ actionListLabel('mobile_only', 'One step: only mobile not verified') }}</option>
+      <option value="back_in_review">{{ actionListLabel('back_in_review', 'Back in review — needs you') }}</option>
+      <option value="waiting_on_creator">{{ actionListLabel('waiting_on_creator', 'Waiting on the creator to fix a flag') }}</option>
       <option value="featured_eligible">Featured Eligible (Premium + Public)</option>
       <option value="search_eligible">Search Eligible</option>
       <option value="campaign_eligible">Campaign Eligible</option>

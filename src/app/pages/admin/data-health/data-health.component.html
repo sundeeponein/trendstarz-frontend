@@ -52,24 +52,6 @@
     </div>
   </ng-container>
 
-  <!-- Accounts brands can't find yet for one reason an admin can fix -->
-  <div class="dh-card" *ngIf="oneStep">
-    <div class="dh-config-head">
-      <div>
-        <strong>One step from Search</strong>
-        <p class="dh-help">Complete profiles that brands can't find yet, for one reason you can fix. Click a number to open that list.</p>
-      </div>
-    </div>
-    <div class="dh-ok" *ngFor="let line of oneStepLines">
-      <i class="bi" [ngClass]="line.total ? 'bi-arrow-right-circle' : 'bi-check-circle-fill'"></i>
-      {{ line.label }}:
-      <ng-container *ngIf="!line.total">none</ng-container>
-      <ng-container *ngFor="let r of line.roles">
-        <a *ngIf="r.count" [routerLink]="['/admin/admin-user-table']" [queryParams]="{ tab: r.tab, verification: line.key }">{{ r.count }} {{ r.count === 1 ? r.one : r.label }}</a>&nbsp;
-      </ng-container>
-      <span class="dh-explained" *ngIf="line.total">— {{ line.action }}</span>
-    </div>
-  </div>
 
   <div class="dh-card">
     <div class="dh-config-head">
