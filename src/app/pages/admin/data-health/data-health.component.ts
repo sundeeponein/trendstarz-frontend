@@ -94,9 +94,9 @@ export class DataHealthComponent implements OnInit {
     { key: 'back_in_review', label: 'Back in review after a profile or social change', action: 're-review and clear flags' },
   ];
   private static readonly ROLES = [
-    { tab: 'influencer', label: 'influencers' },
-    { tab: 'photographer', label: 'photographers' },
-    { tab: 'brand', label: 'brands' },
+    { tab: 'influencer', label: 'influencers', one: 'influencer' },
+    { tab: 'photographer', label: 'photographers', one: 'photographer' },
+    { tab: 'brand', label: 'brands', one: 'brand' },
   ];
 
   get oneStepLines() {

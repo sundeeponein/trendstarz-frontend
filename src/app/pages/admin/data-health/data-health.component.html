@@ -65,7 +65,7 @@
       {{ line.label }}:
       <ng-container *ngIf="!line.total">none</ng-container>
       <ng-container *ngFor="let r of line.roles">
-        <a *ngIf="r.count" [routerLink]="['/admin/admin-user-table']" [queryParams]="{ tab: r.tab, verification: line.key }">{{ r.count }} {{ r.label }}</a>&nbsp;
+        <a *ngIf="r.count" [routerLink]="['/admin/admin-user-table']" [queryParams]="{ tab: r.tab, verification: line.key }">{{ r.count }} {{ r.count === 1 ? r.one : r.label }}</a>&nbsp;
       </ng-container>
       <span class="dh-explained" *ngIf="line.total">— {{ line.action }}</span>
     </div>
