@@ -81,7 +81,41 @@ export class DataHealthComponent implements OnInit {
     if (this.isBrowser) {
       this.load();
       this.loadBackups();
+      this.loadOneStep();
     }
+  }
+
+  /** "One step from Search" counts: list → role → accounts (same filters as the users table). */
+  oneStep: Record<string, Record<string, number>> | null = null;
+
+  private static readonly ONE_STEP = [
+    { key: 'waiting_approval', label: 'Waiting only for your approval', action: 'review and approve' },
+    { key: 'mobile_only', label: 'Approved, only mobile not verified', action: 'call to verify the number' },
+    { key: 'back_in_review', label: 'Back in review after a profile or social change', action: 're-review and clear flags' },
+  ];
+  private static readonly ROLES = [
+    { tab: 'influencer', label: 'influencers' },
+    { tab: 'photographer', label: 'photographers' },
+    { tab: 'brand', label: 'brands' },
+  ];
+
+  get oneStepLines() {
+    return DataHealthComponent.ONE_STEP.map((line) => {
+      const roles = DataHealthComponent.ROLES.map((r) => ({ ...r, count: this.oneStep?.[line.key]?.[r.tab] || 0 }));
+      return { ...line, roles, total: roles.reduce((sum, r) => sum + r.count, 0) };
+    });
+  }
+
+  private loadOneStep(): void {
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/one-step-counts`).subscribe({
+      next: (res) => {
+        const body = res?.data ?? res;
+        this.oneStep = body?.counts ?? null;
+      },
+      error: () => {
+        this.oneStep = null; // the card just stays hidden
+      },
+    });
   }
 
   get warnings(): IntegrityCheck[] {

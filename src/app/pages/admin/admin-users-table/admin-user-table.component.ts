@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ConfigService } from '../../../shared/config.service';
 import { of } from 'rxjs';
 import { timeout, catchError } from 'rxjs/operators';
@@ -1232,11 +1232,21 @@ export class AdminUserTableComponent implements OnInit {
     private profileVerification: ProfileVerificationService,
     private session: SessionService,
     private collabScoreApi: CollaborationScoreApiService,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit() {
     if (typeof window !== 'undefined') {
       this.filtersExpanded = window.innerWidth >= 768;
+    }
+    // Opened from a Data health list, e.g. ?tab=influencer&verification=waiting_approval
+    const params = this.route.snapshot.queryParamMap;
+    const tab = params.get('tab');
+    if (tab === 'influencer' || tab === 'brand' || tab === 'photographer') this.activeTab = tab;
+    const verification = (params.get('verification') || '').trim();
+    if (verification) {
+      (this.getFiltersForType(this.activeTab) as Record<string, string>)['contactVerification'] = verification;
+      this.filtersExpanded = true;
     }
     const sessionUser = this.session.getUser();
     if (sessionUser) {
