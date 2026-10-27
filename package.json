@@ -44,6 +44,7 @@
     "@angular/service-worker": "21.2.25",
     "@angular/ssr": "21.2.25",
     "@ng-select/ng-select": "^21.0.0",
+    "@vercel/functions": "3.9.11",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "browser-image-compression": "^2.0.2",
