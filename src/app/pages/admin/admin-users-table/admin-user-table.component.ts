@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { socialEditLink } from '../../../shared/profile-edit-link.util';
 import { ConfigService } from '../../../shared/config.service';
 import { of } from 'rxjs';
 import { timeout, catchError } from 'rxjs/operators';
@@ -1886,6 +1887,7 @@ export class AdminUserTableComponent implements OnInit {
   creatorTierVerificationReminderMessage(user: any): string {
     return buildCreatorTierVerificationReminderMessage({
       name: this.getUserDisplayName(user),
+      editLink: socialEditLink(this.selectedRole || this.activeTab),
     });
   }
 

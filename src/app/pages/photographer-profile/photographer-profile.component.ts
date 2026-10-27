@@ -1,9 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { tierOptionsWithCurrent } from '../../shared/tiers.constants';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { wantsSocialEdit } from '../../shared/profile-edit-link.util';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { ConfigService, ProfileVisibility } from '../../shared/config.service';
@@ -818,6 +819,7 @@ export class PhotographerProfileComponent implements OnInit {
         this.originalPhotoshootImagesData = this.photoshootImagesData.map((img) => ({ ...img }));
         this.refreshStepCompletion();
         this.cdr.detectChanges();
+        this.openSocialEditIfLinked();
       },
       error: () => {
         this.loading = false;
@@ -1149,6 +1151,19 @@ export class PhotographerProfileComponent implements OnInit {
     this.photoshootImagesPreview.splice(index, 1);
     this.photoshootImagesData.splice(index, 1);
     this.galleryUploadWarning = '';
+  }
+
+  private readonly route = inject(ActivatedRoute);
+  private socialEditOpened = false;
+
+  /** ?edit=social (admin's WhatsApp reminder link): open the Social Media step ready to edit, once. */
+  private openSocialEditIfLinked(): void {
+    if (this.socialEditOpened || !wantsSocialEdit(this.route.snapshot.queryParamMap)) return;
+    this.socialEditOpened = true;
+    this.enableEdit();
+    this.currentStep = 2;
+    this.refreshStepCompletion();
+    this.cdr.detectChanges();
   }
 
   enableEdit(): void {

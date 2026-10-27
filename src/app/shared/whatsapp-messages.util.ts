@@ -111,11 +111,14 @@ export function premiumGrantedMessage(params: {
 
 export function creatorTierVerificationReminderMessage(params: {
   name: string;
+  /** Opens their Social Media details ready to edit (login first if needed). */
+  editLink?: string;
 }): string {
   return [
     `Hi ${params.name}, your TrendStarz social profile and creator tier verification is still pending.`,
     '',
     'Please update/confirm your social media handle and creator tier details in your profile so we can complete your verification.',
+    ...(params.editLink ? ['', `Update them here (log in if asked):`, params.editLink] : []),
     '',
     'Thank you for joining TrendStarz!',
     '',

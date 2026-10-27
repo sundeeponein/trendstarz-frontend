@@ -9,7 +9,8 @@ import { firstValueFrom, of, forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { wantsSocialEdit } from '../../shared/profile-edit-link.util';
 import { ImageGuidelinesService } from '../../shared/components/image-guidelines-modal/image-guidelines.service';
 import { ResetPasswordModalComponent } from '../../shared/components/reset-password-modal/reset-password-modal.component';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
@@ -879,6 +880,7 @@ export class InfluencerProfileComponent implements OnInit {
             this.latestPendingPayment = payments.find((p: any) => p.status === 'pending' && p.paymentMethod !== 'razorpay') || null;
           });
           this.refreshStepCompletion();
+          this.openSocialEditIfLinked();
         },
         error: (err) => {
           this.registrationError = 'Error fetching profile.';
@@ -1121,6 +1123,19 @@ export class InfluencerProfileComponent implements OnInit {
       error: (err) => {
         this.paymentError = 'Payment failed or could not upgrade. Please try again.';
       }
+    });
+  }
+
+  private readonly route = inject(ActivatedRoute);
+  private socialEditOpened = false;
+
+  /** ?edit=social (admin's WhatsApp reminder link): open the Social Media step ready to edit, once. */
+  private openSocialEditIfLinked(): void {
+    if (this.socialEditOpened || !wantsSocialEdit(this.route.snapshot.queryParamMap)) return;
+    this.socialEditOpened = true;
+    this.enableEdit().then(() => {
+      this.goToStep(2);
+      this.cd.detectChanges();
     });
   }
 
