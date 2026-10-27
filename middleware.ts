@@ -45,7 +45,7 @@ export function previewHtml(p: Preview): string {
   const t = escapeHtml(p.title);
   const d = escapeHtml(p.description);
   const u = escapeHtml(p.url);
-  const img = p.image ? escapeHtml(p.image) : 'https://trendstarz.in/assets/public-banner.png';
+  const img = p.image ? escapeHtml(p.image) : 'https://trendstarz.in/assets/share-banner.jpg';
   return `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8">

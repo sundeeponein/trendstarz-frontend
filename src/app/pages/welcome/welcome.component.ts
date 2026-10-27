@@ -309,12 +309,12 @@ export class WelcomeComponent implements OnInit, OnDestroy {
       { name: 'keywords', content: 'influencer marketing India, hire influencers, photographers for brands, creator marketplace, TrendScore, brand collaborations' },
       { property: 'og:title', content: pageTitle },
       { property: 'og:description', content: description },
-      { property: 'og:image', content: 'logo-trendstarz-logo-text.png' },
+      { property: 'og:image', content: 'https://trendstarz.in/assets/share-banner.jpg' },
       { property: 'og:type', content: 'website' },
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: pageTitle },
       { name: 'twitter:description', content: description },
-      { name: 'twitter:image', content: 'logo-trendstarz-logo-text.png' },
+      { name: 'twitter:image', content: 'https://trendstarz.in/assets/share-banner.jpg' },
     ];
     tags.forEach((tag) => this.meta.updateTag(tag));
     if (!this.isBrowser) return;
