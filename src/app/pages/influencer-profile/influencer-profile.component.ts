@@ -78,7 +78,7 @@ export class InfluencerProfileComponent implements OnInit {
   readonly youtubeCheckFor = youtubeCheckFor;
 
   readonly maxCategories = 5;
-  readonly maxCreatorTypes = 3;
+  readonly maxCreatorTypes = 2;
   readonly maxCollaborationTypes = 3;
   readonly maxAvailableFor = 2;
   premiumMonthlyPrice = 399;
@@ -767,7 +767,8 @@ export class InfluencerProfileComponent implements OnInit {
           ).filter(Boolean);
           const creatorTypeIds = (profile.creatorTypes || [])
             .map((name: string) => String(name || '').trim())
-            .filter(Boolean);
+            .filter(Boolean)
+            .slice(0, this.maxCreatorTypes);
           // Load districts for the state, then patch form
             const patchForm = (districtId: string) => {
             this.registrationForm.patchValue({
@@ -1472,7 +1473,8 @@ export class InfluencerProfileComponent implements OnInit {
     });
     const creatorTypeNames = (raw.creatorTypes || [])
       .map((name: string) => String(name || '').trim())
-      .filter((name: string) => !!name);
+      .filter((name: string) => !!name)
+      .slice(0, this.maxCreatorTypes);
     const influencerCategoryName = raw.influencerCategory
       ? (this.creatorTypeOptions.find((x: any) => x.name === raw.influencerCategory)?.name || raw.influencerCategory)
       : '';
@@ -1666,7 +1668,8 @@ export class InfluencerProfileComponent implements OnInit {
             ).filter(Boolean);
             const creatorTypeIds = (profile.creatorTypes || [])
               .map((name: string) => String(name || '').trim())
-              .filter(Boolean);
+              .filter(Boolean)
+              .slice(0, this.maxCreatorTypes);
             const doPatch = (districtId: string) => {
               this.registrationForm.patchValue({
                 name: profile.name || '',

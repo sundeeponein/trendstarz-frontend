@@ -395,13 +395,14 @@
                 <div class="field-block mt-2" *ngIf="registrationForm.get('professionalStatus')?.value && creatorTypeOptions.length">
                   <app-chip-selection-group
                     label="Creator Type / Specialty"
-                    sublabel="Select your creator type"
+                    sublabel="Select 1 or 2 creator types"
                     [required]="true"
                     [options]="creatorTypeOptions"
                     [selected]="registrationForm.get('creatorTypes')?.value || []"
+                    [max]="maxCreatorTypes"
                     valueKey="name"
                     labelKey="name"
-                    selectionMode="single"
+                    selectionMode="multiple"
                     (selectedChange)="setChipValues('creatorTypes', $event)">
                   </app-chip-selection-group>
                   <div *ngIf="submitted && registrationForm.get('professionalStatus')?.value && !registrationForm.get('creatorTypes')?.value?.length" class="text-danger mt-1">Please select your creator type.</div>

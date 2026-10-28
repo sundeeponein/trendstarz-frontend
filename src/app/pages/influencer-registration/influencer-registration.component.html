@@ -286,13 +286,14 @@
                     <app-chip-selection-group
                       *ngIf="creatorTypeOptions.length; else loadingCreatorTypes"
                       label="Creator Type / Specialty"
-                      sublabel="Select your creator type"
+                      sublabel="Select 1 or 2 creator types"
                       [required]="true"
                       [options]="creatorTypeOptions"
                       [selected]="registrationForm.get('creatorTypes')?.value || []"
+                      [max]="maxCreatorTypes"
                       valueKey="name"
                       labelKey="name"
-                      selectionMode="single"
+                      selectionMode="multiple"
                       (selectedChange)="setChipValues('creatorTypes', $event)">
                     </app-chip-selection-group>
                     <ng-template #loadingCreatorTypes>

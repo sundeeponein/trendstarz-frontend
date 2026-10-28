@@ -51,7 +51,7 @@ export class InfluencerRegistrationComponent implements OnInit {
   /** Explicit consent to the Terms and Privacy Policy (required; recorded on the account). */
   acceptedTerms = false;
   readonly maxCategories = 5;
-  readonly maxCreatorTypes = 3;
+  readonly maxCreatorTypes = 2;
   readonly maxCollaborationTypes = 3;
   readonly maxAvailableFor = 2;
 
