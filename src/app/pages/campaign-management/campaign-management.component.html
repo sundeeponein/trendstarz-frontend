@@ -493,8 +493,9 @@
     <div class="cm-tabs-shell mobile-scroll-shell" *ngIf="showOwnerWorkspaceBoard && showCollaborationsWorkspace">
       <div class="cm-tabs mobile-scroll-row">
         <button
-          *ngFor="let tab of tabs"
+          *ngFor="let tab of visibleTabs"
           class="cm-tab"
+          [class.cm-tab--attention]="tab.key === 'needs_changes'"
           [class.active]="activeTab === tab.key"
           (click)="switchTab(tab.key)"
         >
@@ -623,7 +624,7 @@
           <!-- RIGHT: status badge + action buttons -->
           <div class="ccard-right">
             <span class="status-badge" [ngClass]="isExpired(c) && c.status === 'active' ? 'expired' : c.status">
-              {{ isExpired(c) && c.status === 'active' ? 'EXPIRED' : (c.status | uppercase) }}
+              {{ isExpired(c) && c.status === 'active' ? 'EXPIRED' : campaignStatusBadgeLabel(c.status) }}
             </span>
             <span class="status-badge ready"
                   *ngIf="!isInfluencerBrowseMode && c.status === 'active' && isMinimumParticipantsReached(c)"

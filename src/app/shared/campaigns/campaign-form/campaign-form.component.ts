@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { Campaign, CampaignInfluencer } from '../campaign.model';
-import { ConfigService } from '../../config.service';
+import { ConfigService, HostCommissionPreview } from '../../config.service';
 import { environment } from '../../../../environments/environment';
 import { UserAvatarComponent } from '../../components/user-avatar/user-avatar.component';
 import { TierInfoService } from '../../components/tier-info-modal/tier-info.service';
@@ -424,6 +424,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   selectedPlatforms: string[] = [];
   activePlatformTab = '';
   platformDeliverables: { platform: string; contentTypes: { name: string; enabled: boolean; price: number | null; aspectRatio?: string }[] }[] = [];
+  /** Commission / platform fee this host is charged now (server, same rules as the payment). */
+  hostFees: HostCommissionPreview | null = null;
   /** Video (File Share): email the creator shares the file with; empty = host's login email. */
   fileShareAccessEmail = '';
   readonly fileShareAspectRatios = FILE_SHARE_ASPECT_RATIOS;
@@ -832,6 +834,11 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
         this.equipmentOptions = ['Sony', 'Canon', 'DJI Drone', 'Gimbal'].map((name) => ({ name }));
         this.cd.detectChanges();
       },
+    });
+
+    this.config.getHostCommissionPreview().subscribe((fees) => {
+      this.hostFees = fees;
+      this.cd.detectChanges();
     });
 
     this.config.getSocialMedia('campaign').subscribe(data => {
@@ -1518,6 +1525,44 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     const type = this.selectedCampaignType;
     if (type === 'invite_location') return true;
     return type === 'product' && this.f['productPaymentMode']?.value !== 'product_plus_payment';
+  }
+
+  /**
+   * What the host pays on top of the creator amount, so the total isn't first seen
+   * at payment: commission % (+ GST on it) on paid amounts, or the flat platform
+   * fee per confirmed creator on product-only / location campaigns. Null = nothing extra.
+   */
+  get hostFeeNote(): { label: string; perCreator: number; total: number } | null {
+    const fees = this.hostFees;
+    if (!fees) return null;
+    const gst = Number(fees.gstPercent || 0);
+    const maxInf = Number(this.f['maxInfluencers']?.value || 0);
+    if (this.isBarterCampaign) {
+      const feePaise = this.selectedCampaignType === 'invite_location'
+        ? fees.locationPlatformFeePaise
+        : fees.productPlatformFeePaise;
+      if (!(feePaise > 0)) return null;
+      const perCreator = Math.round(feePaise * (1 + gst / 100)) / 100;
+      return {
+        label: `Platform fee ₹${(feePaise / 100).toLocaleString('en-IN')} per confirmed ${this.inviteRecipientLabelSingular.toLowerCase()} · GST ${gst}%`,
+        perCreator,
+        total: maxInf > 0 ? perCreator * maxInf : 0,
+      };
+    }
+    const percent = fees.platformFeeEnabled ? Number(fees.commissionPercent || 0) : 0;
+    const price = this.isPerContentPricingFlow && this.hasSelectedContentTypePricing
+      ? this.selectedContentTypeMaxPriceRupees
+      : Number(this.f['pricePerInfluencer']?.value || 0);
+    if (!(percent > 0) || !(price > 0)) return null;
+    // Rounded per creator in paise, like the stored transactions.
+    const commissionPaise = Math.round((price * 100 * percent) / 100);
+    const gstPaise = Math.round((commissionPaise * gst) / 100);
+    const perCreator = (price * 100 + commissionPaise + gstPaise) / 100;
+    return {
+      label: `Platform commission ${percent}%${fees.isPremium ? ' (Premium rate)' : ''} · GST ${gst}% on commission`,
+      perCreator,
+      total: maxInf > 0 ? perCreator * maxInf : 0,
+    };
   }
 
   /** A barter plan limit; the server's default when the plan doesn't set it. */

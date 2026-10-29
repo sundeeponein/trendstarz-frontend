@@ -3400,3 +3400,10 @@
   small { color: #6b7280; }
 }
 :host-context([data-theme='dark']) .inv-refund-line { color: #fbbf24; }
+
+/* "Needs Changes" tab: admin sent a campaign back — the host has to act */
+.cm-tab--attention {
+  color: #b45309;
+  .tab-count { background: #fff3e0; color: #b45309; border: 1px solid #fdba74; }
+  .tab-count.active-count { background: #b45309; color: #fff; border-color: #b45309; }
+}

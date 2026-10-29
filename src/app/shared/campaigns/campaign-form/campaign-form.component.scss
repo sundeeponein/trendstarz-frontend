@@ -661,6 +661,7 @@ form {
   font-size: 0.76rem;
   color: $text-muted;
   margin: 0 0 8px;
+  // padding-left:15px;
 }
 
 .chip-more-toggle {
@@ -1777,6 +1778,7 @@ $cf-navy: #151729;
     color: $cf-muted;
     line-height: 1.5;
     margin-top: 8px;
+    // padding-left:15px;
   }
 
   .field-optional {
@@ -2529,6 +2531,22 @@ $cf-navy: #151729;
   }
   .file-share-email {
     margin-top: 12px;
-    max-width: 420px;
+    max-width: 95%;
+    padding:15px;
   }
+}
+
+/* What the host pays on top of creator payments */
+.host-fee-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0 4px;
+  padding: 10px 12px;
+  border: 1px dashed $border;
+  border-radius: 10px;
+  font-size: 13px;
+  color: $text-dark;
+  i { color: $accent; margin-top: 2px; }
+  small { display: block; margin-top: 2px; color: $text-muted; font-size: 12px; }
 }

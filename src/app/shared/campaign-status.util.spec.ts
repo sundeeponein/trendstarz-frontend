@@ -26,4 +26,10 @@ describe('resolveCampaignStatusTab', () => {
   it('moves expired or rejected campaigns to completed', () => {
     expect(resolveCampaignStatusTab('rejected', [], true)).toBe('completed');
   });
+
+  it('puts campaigns admin sent back in Needs Changes, not Drafts', () => {
+    expect(resolveCampaignStatusTab('needs_changes', [], false)).toBe('needs_changes');
+    expect(resolveCampaignStatusTab('draft', [], false)).toBe('draft');
+    expect(resolveCampaignStatusTab('needs_changes', [], true)).toBe('completed');
+  });
 });

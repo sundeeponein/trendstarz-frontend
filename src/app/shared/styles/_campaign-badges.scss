@@ -25,6 +25,7 @@
   &.pending { background: #fff3cd; color: #856404; }
   &.completed { background: #d1ecf1; color: #0c5460; }
   &.draft { background: #e2e3e5; color: #383d41; }
+  &.needs_changes { background: #fff3e0; color: #b45309; border: 1px solid #fdba74; }
   &.expired { background: #fff0f0; color: #e53e3e; border: 1px solid #ffd5cc; }
 }
 

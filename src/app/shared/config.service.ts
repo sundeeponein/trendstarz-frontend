@@ -12,6 +12,17 @@ import { YoutubeCheck } from './youtube-check.util';
 
 export type ProfileVisibility = 'PUBLIC' | 'MEMBERS_ONLY' | 'PRIVATE';
 
+/** What a host is charged on top of creator payments (GET campaign-transactions/my/host-commission). */
+export interface HostCommissionPreview {
+  platformFeeEnabled: boolean;
+  commissionPercent: number;
+  gstPercent: number;
+  isPremium: boolean;
+  /** Flat fee per confirmed creator, paise (0 = none). */
+  productPlatformFeePaise: number;
+  locationPlatformFeePaise: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
   // Stub for brand username uniqueness check
@@ -1160,6 +1171,14 @@ export class ConfigService {
   /** Creator: payout fee (%) on a paid-collab invite — locked = fixed when they accepted. Null on error. */
   getPayoutFeePreview(inviteId: string): Observable<{ feePercent: number; gstPercent?: number; premiumFeePercent?: number | null; locked: boolean } | null> {
     return this.http.get<any>(`${this.apiUrl}/campaign-transactions/payout-fee/${encodeURIComponent(inviteId)}`).pipe(
+      map((res) => this.extractData<any>(res) || res || null),
+      catchError(() => of(null)),
+    );
+  }
+
+  /** Host: commission % / flat platform fee their campaigns are charged now (same rules as payment). Null on error. */
+  getHostCommissionPreview(): Observable<HostCommissionPreview | null> {
+    return this.http.get<any>(`${this.apiUrl}/campaign-transactions/my/host-commission`).pipe(
       map((res) => this.extractData<any>(res) || res || null),
       catchError(() => of(null)),
     );

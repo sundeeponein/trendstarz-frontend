@@ -1,5 +1,5 @@
 import { ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, FINISHED_OR_DISPUTED } from './invite-status';
-export type CampaignStatusTab = 'active' | 'pending' | 'completed' | 'draft';
+export type CampaignStatusTab = 'active' | 'pending' | 'completed' | 'draft' | 'needs_changes';
 
 export function resolveCampaignStatusTab(
   status: string | null | undefined,
@@ -32,7 +32,11 @@ export function resolveCampaignStatusTab(
   if (normalizedStatus === 'pending' || normalizedStatus === 'pending_review') {
     return hasStartedWork ? 'active' : 'pending';
   }
-  if (normalizedStatus === 'rejected' || normalizedStatus === 'needs_changes' || normalizedStatus === 'draft') {
+  // Sent back by admin: its own tab so the host doesn't mistake it for a plain draft.
+  if (normalizedStatus === 'needs_changes') {
+    return hasStartedWork || isExpired ? 'completed' : 'needs_changes';
+  }
+  if (normalizedStatus === 'rejected' || normalizedStatus === 'draft') {
     if (hasStartedWork || isExpired) return 'completed';
   }
   return 'draft';

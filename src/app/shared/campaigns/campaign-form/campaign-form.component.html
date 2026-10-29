@@ -565,6 +565,16 @@
         </div>
         </div>
 
+        <p class="host-fee-note" *ngIf="hostFeeNote as fee">
+          <i class="bi bi-receipt"></i>
+          <span>
+            + {{ fee.label }}<br />
+            <strong>≈ ₹{{ fee.perCreator | number:'1.0-2' }} per {{ inviteRecipientLabelSingular.toLowerCase() }}</strong>
+            <ng-container *ngIf="fee.total > 0"> · ₹{{ fee.total | number:'1.0-2' }} total if max participants accept</ng-container>
+            <small>Charged only for accepted {{ inviteRecipientLabelPlural.toLowerCase() }}. The rate is fixed when each one accepts.</small>
+          </span>
+        </p>
+
         <p class="trust-note"><i class="bi bi-shield-check"></i> Pay only for accepted {{ inviteRecipientLabelPlural.toLowerCase() }}</p>
         <p class="trust-note" *ngIf="selectedCampaignType === 'product' || selectedCampaignType === 'invite_location'">
           <i class="bi bi-info-circle"></i>

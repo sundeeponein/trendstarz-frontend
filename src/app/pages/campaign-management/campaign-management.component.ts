@@ -44,7 +44,7 @@ import { busyUntilText } from '../../shared/availability.util';
 import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-collab-notice.component';
 import { isFileSharePlatform } from '../../shared/file-share-video.util';
 
-type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
+type TabStatus = 'active' | 'pending' | 'completed' | 'draft' | 'needs_changes';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
 type PhotographerWorkspaceView = 'campaign_requests' | 'collaborations';
 type InfluencerWorkspaceTab = 'campaigns' | 'collaborations';
@@ -1027,6 +1027,21 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return this.campaigns.filter(c => this.getCampaignTabStatus(c) === status).length;
   }
 
+  /** Tabs to show: "Needs Changes" only while admin has sent something back (or it's open). */
+  get visibleTabs(): { key: TabStatus; label: string }[] {
+    return this.tabs.filter(
+      (tab) => tab.key !== 'needs_changes' || this.activeTab === 'needs_changes' || this.getCount(tab.key) > 0,
+    );
+  }
+
+  /** Readable status for the card badge ("NEEDS CHANGES", not "NEEDS_CHANGES"). */
+  campaignStatusBadgeLabel(status: unknown): string {
+    const s = String(status || '').toLowerCase();
+    if (s === 'needs_changes') return 'NEEDS CHANGES';
+    if (s === 'pending_review') return 'IN REVIEW';
+    return s.replace(/_/g, ' ').toUpperCase();
+  }
+
   get filteredInvitesByRole(): any[] {
     return this.invites.filter(invite => {
       if (this.inviteTargetRole === 'influencer') {
@@ -1572,6 +1587,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   tabs: { key: TabStatus; label: string }[] = [
     { key: 'active', label: 'Active' },
+    { key: 'needs_changes', label: 'Needs Changes' },
     { key: 'pending', label: 'Pending' },
     { key: 'completed', label: 'Completed' },
     { key: 'draft', label: 'Drafts' },
