@@ -780,7 +780,7 @@
                        [(ngModel)]="fileShareAccessEmail"
                        [ngModelOptions]="{standalone: true}"
                        placeholder="Leave empty to use your login email" />
-                <small class="field-sublabel">Hidden until a creator accepts the invite; then only that creator sees it, to share the file with you. TrendStarZ review also gets access, for safety and disputes. The file is never public.</small>
+                <small class="field-sublabel">Hidden until the collaboration is confirmed (paid collab: your payment verified; product / location: platform fee paid). Then only that creator sees it, to share the file with you. TrendStarZ review also gets access, for safety and disputes. The file is never public.</small>
               </div>
             </div>
             <div *ngIf="activePlatformTab === pd.platform && !isFileSharePlatform(pd.platform)" class="platform-tab-panel">
