@@ -117,7 +117,7 @@
 
     <div *ngIf="isCollaborationConfirmedWaitingStart" class="alert-info mb-3" style="border-left: 4px solid #10b981; background: #ecfdf5; color: #065f46;">
       <i class="bi bi-check-circle-fill" style="color:#10b981"></i>
-      You are now in the <strong>Working</strong> stage. Submit your post URL below to continue.
+      You are now in the <strong>Working</strong> stage. Submit your {{ isFileShare ? 'video link' : 'post URL' }} below to continue.
     </div>
 
     <div *ngIf="isPastPostingDateButStillOpen" class="alert-info mb-3" style="border-left: 4px solid #d97706; background: #fffbeb; color: #92400e;">
@@ -138,11 +138,21 @@
 
       <div class="summary-grid">
         <div class="summary-card" *ngIf="hasPostDetails">
-          <div class="summary-card__title">Post details</div>
+          <div class="summary-card__title">{{ isFileShare ? 'Video delivery' : 'Post details' }}</div>
 
           <div class="summary-row" *ngIf="postUrl">
-            <span class="summary-key">Post URL</span>
+            <span class="summary-key">{{ isFileShare ? 'Video link' : 'Post URL' }}</span>
             <a class="summary-link" [href]="postUrl" target="_blank" rel="noopener">{{ postUrl }}</a>
+          </div>
+
+          <div class="summary-row" *ngIf="isFileShare && acceptedFormatLabel">
+            <span class="summary-key">Format</span>
+            <span class="summary-value">{{ acceptedFormatLabel }}</span>
+          </div>
+
+          <div class="summary-row" *ngIf="deliveryNotes">
+            <span class="summary-key">Submission notes</span>
+            <span class="summary-value summary-value--multiline">{{ deliveryNotes }}</span>
           </div>
 
           <div class="summary-row" *ngIf="selectedPostTypeLabel">
@@ -202,7 +212,7 @@
     </div>
 
     <!-- Campaign platform hint -->
-    <div *ngIf="canEditSubmissionForm && campaignPlatforms.length" class="alert-info alert-info--platform mb-3">
+    <div *ngIf="canEditSubmissionForm && campaignPlatforms.length && !isFileShare" class="alert-info alert-info--platform mb-3">
       <i class="bi bi-info-circle"></i>
       Campaign platforms: <strong>{{ campaignPlatforms.join(', ') }}</strong>.
       Only relevant post types are shown below.
@@ -221,7 +231,71 @@
     <!-- Error -->
     <div *ngIf="error" class="alert-error">{{ error }}</div>
     <!-- ─── SECTION 1: Post Details ─────────────────── -->
-    <div class="form-section" id="resubmit-form" *ngIf="canEditSubmissionForm">
+    <!-- Video (File Share): private file link instead of a social post -->
+    <div class="form-section" id="resubmit-form" *ngIf="canEditSubmissionForm && isFileShare">
+      <div class="section-heading">Submit campaign deliverables</div>
+      <p class="field-hint mb-3">
+        Submit your work according to the deliverables agreed with the brand<span *ngIf="acceptedFormatLabel">: <strong>{{ acceptedFormatLabel }}</strong></span>.
+      </p>
+
+      <div class="field-group">
+        <label class="field-label">Video delivery method <span class="req">*</span></label>
+        <div class="pill-group" role="radiogroup" aria-label="Video delivery method">
+          <button type="button" class="pill" role="radio"
+                  [attr.aria-checked]="deliveryMethod === 'external_link'"
+                  [class.selected]="deliveryMethod === 'external_link'"
+                  (click)="deliveryMethod = 'external_link'">
+            <i class="bi bi-link-45deg"></i> Google Drive / external file link
+          </button>
+          <button type="button" class="pill" role="radio" disabled aria-checked="false"
+                  title="Direct upload is coming later">
+            <i class="bi bi-cloud-arrow-up"></i> Upload video file <span class="opt">(coming soon)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="file-share-access" *ngIf="fileShareAccess">
+        <div class="file-share-access__title"><i class="bi bi-shield-lock"></i> Share access only with</div>
+        <ul class="file-share-access__list">
+          <li *ngIf="fileShareAccess.hostEmail"><span>Brand</span> <strong>{{ fileShareAccess.hostEmail }}</strong></li>
+          <li><span>TrendStarZ review</span> <strong>{{ fileShareAccess.reviewEmail }}</strong> <small>(for safety and dispute handling)</small></li>
+        </ul>
+        <p class="file-share-access__note">Keep the file private: don't use "Anyone with the link". In Google Drive, open Share, add these emails as Viewers, then copy the link.</p>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="fs-video-link">Video link <span class="req">*</span></label>
+        <input id="fs-video-link"
+               type="url"
+               class="field-input"
+               [(ngModel)]="postUrl"
+               [disabled]="isReadOnly"
+               placeholder="https://drive.google.com/…" />
+        <div class="field-error" *ngIf="fileShareLinkError">{{ fileShareLinkError }}</div>
+        <div class="field-hint">
+          Ensure the brand has permission to access the file.
+          <ng-container *ngIf="isFileShareCombined"> Share one folder link containing both the raw and the edited video.</ng-container>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="fs-notes">Submission notes <span class="opt">(optional)</span></label>
+        <textarea id="fs-notes"
+                  class="field-input"
+                  rows="3"
+                  maxlength="1000"
+                  [(ngModel)]="deliveryNotes"
+                  [disabled]="isReadOnly"
+                  placeholder="e.g. which file is which, anything the brand should know"></textarea>
+      </div>
+
+      <label class="file-share-confirm">
+        <input type="checkbox" [(ngModel)]="accessConfirmed" [disabled]="isReadOnly" />
+        <span>I have shared view access with the emails above, and the file is not public.</span>
+      </label>
+    </div>
+
+    <div class="form-section" id="resubmit-form" *ngIf="canEditSubmissionForm && !isFileShare">
       <div class="section-heading">
         <ng-container *ngIf="!isLocationCampaign">Post details</ng-container>
         <ng-container *ngIf="isLocationCampaign">Content details</ng-container>

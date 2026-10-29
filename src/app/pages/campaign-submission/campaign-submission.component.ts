@@ -12,6 +12,7 @@ import { AnalyticsService } from '../../core/analytics.service';
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../shared/utils/image-upload.util';
 import { ConfirmActionModalComponent } from '../../shared/components/confirm-action-modal/confirm-action-modal.component';
 import { SUBMITTED_OR_LATER } from '../../shared/invite-status';
+import { FILE_SHARE_RAW_AND_EDITED, isFileShareLink, isFileSharePlatform } from '../../shared/file-share-video.util';
 
 type PostType = 'reel' | 'video' | 'photo' | 'short' | 'story' | 'thread';
 
@@ -43,6 +44,13 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
   detectedPlatform = '';
 
+  // Video (File Share): the creator sends a private file link instead of a post.
+  /** Emails the creator must share the file with (from the server, after acceptance). */
+  fileShareAccess: { hostEmail: string | null; reviewEmail: string } | null = null;
+  deliveryMethod: 'external_link' | 'upload' = 'external_link';
+  deliveryNotes = '';
+  accessConfirmed = false;
+
   // All supported post types
   readonly allPostTypes: { key: PostType; label: string; platforms: string[] }[] = [
     { key: 'reel',   label: 'Reel',       platforms: ['instagram'] },
@@ -64,6 +72,27 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
   get isLocationCampaign(): boolean {
     return this.campaignType === 'invite_location';
+  }
+
+  get isFileShare(): boolean {
+    return isFileSharePlatform(this.acceptedPlatform);
+  }
+
+  get isFileShareCombined(): boolean {
+    return this.acceptedContentType === FILE_SHARE_RAW_AND_EDITED.toLowerCase();
+  }
+
+  /** Accepted format as the host wrote it, e.g. "Raw video". */
+  get acceptedFormatLabel(): string {
+    return this.acceptedContentType
+      ? this.acceptedContentType.charAt(0).toUpperCase() + this.acceptedContentType.slice(1)
+      : '';
+  }
+
+  get fileShareLinkError(): string {
+    const url = this.postUrl.trim();
+    if (!url || isFileShareLink(url)) return '';
+    return 'Use a Google Drive, Dropbox, OneDrive or WeTransfer link.';
   }
 
   private normalizeSubmissionStatus(rawStatus: string): string {
@@ -175,6 +204,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
           this.campaignId = String(campaign?._id || campaign?.id || '');
           this.acceptedPlatform = String(res?.invite?.selectedPlatform || '').toLowerCase().trim();
           this.acceptedContentType = String(res?.invite?.selectedContentType || '').toLowerCase().trim();
+          this.fileShareAccess = res?.fileShareAccess || null;
           if (campaign) {
             this.campaignTitle = campaign.title || campaign.campaignTitle || this.campaignTitle;
             this.campaignType = campaign.campaignType || '';
@@ -264,6 +294,8 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     this.sharesCount = s.sharesCount ?? null;
     this.reachCount = s.reachCount ?? null;
     this.detectedPlatform = s.postPlatform || '';
+    this.deliveryNotes = s.deliveryNotes || '';
+    this.accessConfirmed = !!s.accessConfirmedAt;
     if (this.hasStatsDetails) this.showStats = true;
   }
 
@@ -272,7 +304,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   }
 
   get hasPostDetails(): boolean {
-    return !!(this.postUrl || this.postType || this.captionUsed);
+    return !!(this.postUrl || this.postType || this.captionUsed || this.deliveryNotes);
   }
 
   get hasProofDetails(): boolean {
@@ -491,6 +523,8 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
       approved:          'Payout Released',
       disputed:          'Under Review',
     };
+    if (this.isFileShare && this.inviteStatus === 'disputed') return 'Revision Requested';
+    if (this.isFileShare && this.inviteStatus === 'completed') return 'Video Approved';
     const base = map[this.inviteStatus] || this.inviteStatus;
     if (this.inviteStatus === 'submitted' && this.existingSubmission?.isLate) {
       const days = this.existingSubmission.daysLate;
@@ -678,6 +712,11 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   canSubmit(): boolean {
     if (!this.canEditSubmissionForm) return false;
     if (this.isSubmissionWindowClosed) return false;
+    if (this.isFileShare) {
+      return this.deliveryMethod === 'external_link'
+        && isFileShareLink(this.postUrl.trim())
+        && this.accessConfirmed;
+    }
     // Location campaigns: postUrl still required, screenshot is optional
     if (this.isLocationCampaign) return !!this.postUrl.trim();
     // Paid/product campaigns: postUrl required; screenshot strongly recommended but optional
@@ -694,6 +733,12 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
         this.error = 'You are in the Working stage. Add your post URL to submit your work.';
       } else if (this.isAwaitingPaymentConfirmation) {
         this.error = 'Payment verification is still in progress. You can start work once the status moves to Working.';
+      } else if (this.isFileShare && !this.postUrl.trim()) {
+        this.error = 'Add the link to your video.';
+      } else if (this.isFileShare && this.fileShareLinkError) {
+        this.error = this.fileShareLinkError;
+      } else if (this.isFileShare) {
+        this.error = 'Confirm you shared access to the video with the emails shown.';
       } else {
         this.error = 'Post URL is required.';
       }
@@ -701,7 +746,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     }
     const submittedPlatform = this.normalizePlatformKey(this.detectPlatformFromUrl(this.postUrl.trim()));
     const acceptedPlatform = this.normalizePlatformKey(this.acceptedPlatform);
-    if (acceptedPlatform && submittedPlatform !== 'other' && submittedPlatform !== acceptedPlatform) {
+    if (!this.isFileShare && acceptedPlatform && submittedPlatform !== 'other' && submittedPlatform !== acceptedPlatform) {
       this.error = `Please submit a ${this.acceptedPlatform} URL as per your accepted platform.`;
       this.cdr.markForCheck();
       return;
@@ -727,6 +772,10 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
     const payload: any = {
       postUrl: this.postUrl.trim(),
     };
+    if (this.isFileShare) {
+      payload.accessConfirmed = this.accessConfirmed;
+      if (this.deliveryNotes.trim()) payload.deliveryNotes = this.deliveryNotes.trim();
+    }
     if (this.postScreenshotUrl) payload.postScreenshotUrl = this.postScreenshotUrl;
 
     if (this.postType) payload.postType = this.postType;

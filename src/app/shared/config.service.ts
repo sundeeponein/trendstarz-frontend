@@ -613,8 +613,10 @@ export class ConfigService {
     );
   }
 
-  getSocialMedia(): Observable<any[]> {
-    return this.http.get<any>(`${this.apiUrl}/social-media`).pipe(
+  /** scope 'campaign' also returns campaign-only entries (Video (File Share)) for the campaign form. */
+  getSocialMedia(scope?: 'campaign'): Observable<any[]> {
+    const query = scope ? `?scope=${scope}` : '';
+    return this.http.get<any>(`${this.apiUrl}/social-media${query}`).pipe(
       map((res) => this.filterVisible(this.extractData<any[]>(res) || []))
     );
   }

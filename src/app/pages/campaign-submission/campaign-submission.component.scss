@@ -644,3 +644,54 @@
   .stats-grid { grid-template-columns: 1fr; }
   .submission-page { padding: 16px 12px 60px; }
 }
+
+// Video (File Share) delivery
+.pill-group .pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  &:hover { border-color: #2a2a2a; color: #aaa; }
+}
+
+.field-error {
+  font-size: 12px;
+  color: #f87171;
+  margin-top: 4px;
+}
+
+.file-share-access {
+  border: 1px solid #2a2a2a;
+  border-left: 3px solid #E8580C;
+  border-radius: 8px;
+  background: #141414;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #ccc;
+
+  &__title {
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 6px;
+    i { color: #E8580C; margin-right: 4px; }
+  }
+  &__list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 8px;
+    li { padding: 2px 0; overflow-wrap: anywhere; }
+    span { color: #888; margin-right: 4px; }
+    strong { color: #fff; }
+    small { color: #888; }
+  }
+  &__note { margin: 0; font-size: 12px; color: #999; }
+}
+
+.file-share-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #ccc;
+  cursor: pointer;
+  input { margin-top: 3px; accent-color: #E8580C; }
+}

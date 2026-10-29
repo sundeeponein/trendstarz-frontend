@@ -16,6 +16,7 @@ import { TrackingLinksApiService, TrackingLink } from '../tracking-links/trackin
 import { PromoLinkCardComponent } from '../promo-link-card/promo-link-card.component';
 import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, PAID_NOT_DISPUTED, PAID_OR_LATER, SUBMITTED_OR_LATER } from '../invite-status';
 import { creatorPayoutBreakdown, formatRupeesFromPaise } from '../creator-payout.util';
+import { aspectRatioLabel, fileShareChoices, isFileSharePlatform } from '../file-share-video.util';
 
 export type HostShareMessageType = 'accepted' | 'submitted' | 'startWork' | 'inviteOnly' | 'postingReminder';
 
@@ -847,7 +848,10 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     for (const row of sm) {
       for (const ct of row?.contentTypes || []) {
         if (ct?.enabled) {
-          rows.push({ platform: row.platform || '', contentType: ct.name || '', price: Number(ct.price) || 0 });
+          const contentType = isFileSharePlatform(row.platform) && ct.aspectRatio
+            ? `${ct.name || ''} (${aspectRatioLabel(ct.aspectRatio)})`
+            : ct.name || '';
+          rows.push({ platform: row.platform || '', contentType, price: Number(ct.price) || 0 });
         }
       }
     }
@@ -1176,7 +1180,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       for (const row of sm) {
         const rowPlatform = this.normalized(row?.platform || '');
         if (locked && rowPlatform && rowPlatform !== locked) continue;
-        if (!locked && qualifying.size && rowPlatform && !qualifying.has(rowPlatform)) continue;
+        if (!locked && qualifying.size && rowPlatform && !qualifying.has(rowPlatform) && !isFileSharePlatform(rowPlatform)) continue;
         const platform = this.platformLabel(row?.platform || '');
         for (const ct of row?.contentTypes || []) {
           if (ct?.enabled) outputs.push(`${platform} ${ct.name}`);
@@ -1212,7 +1216,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       const list = c.socialMedia.map((sm: any) => ({ platform: sm.platform || '' }));
       const qualifying = this.qualifyingPlatformKeySet;
       if (!this.lockedPlatform && qualifying.size) {
-        const filteredByQual = list.filter((p: any) => qualifying.has(this.normalized(p.platform)));
+        const filteredByQual = list.filter((p: any) => qualifying.has(this.normalized(p.platform)) || isFileSharePlatform(p.platform));
         return filteredByQual.length ? filteredByQual : [];
       }
       if (!this.lockedPlatform) return list;
@@ -1257,6 +1261,19 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     const out: ContentTypeOption[] = [];
     for (const row of sm) {
       const platform = row.platform || '';
+      // Video (File Share): each enabled format, plus "Raw + Edited video" when both are offered.
+      if (isFileSharePlatform(platform)) {
+        for (const choice of fileShareChoices(row)) {
+          out.push({
+            key: `${platform}::${choice.contentType}`,
+            platform,
+            contentType: choice.contentType,
+            price: choice.price,
+            label: `${this.platformLabel(platform)} · ${choice.contentType}${choice.aspectRatio ? ` (${choice.aspectRatio})` : ''}`,
+          });
+        }
+        continue;
+      }
       for (const ct of row.contentTypes || []) {
         if (ct.enabled) {
           out.push({
@@ -1276,7 +1293,8 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     const qualifying = this.qualifyingPlatformKeySet;
     return this.contentTypeOptions.filter((opt) => {
       if (!this.isOptionSelectable(opt)) return false;
-      if (!this.lockedPlatform && qualifying.size) return qualifying.has(this.normalized(opt.platform));
+      // Video (File Share) needs no social account, so it never depends on the creator's tiers.
+      if (!this.lockedPlatform && qualifying.size) return qualifying.has(this.normalized(opt.platform)) || isFileSharePlatform(opt.platform);
       return true;
     });
   }
@@ -1304,7 +1322,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     const opts = this.displayContentTypeOptions || [];
     const userSet = this.userSocialPlatformKeySet;
     if (!userSet.size) return opts; // if user has no platforms recorded, keep all selectable
-    return opts.filter((opt) => userSet.has(this.normalized(opt.platform)));
+    return opts.filter((opt) => userSet.has(this.normalized(opt.platform)) || isFileSharePlatform(opt.platform));
   }
 
   get matchingPlatforms(): { platform: string }[] {
@@ -1342,7 +1360,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     const opts = this.displayContentTypeOptions || [];
     const userSet = this.userSocialPlatformKeySet;
     if (!userSet.size) return [];
-    return opts.filter((opt) => !userSet.has(this.normalized(opt.platform)));
+    return opts.filter((opt) => !userSet.has(this.normalized(opt.platform)) && !isFileSharePlatform(opt.platform));
   }
 
   private normalized(v: string): string {
@@ -1373,7 +1391,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     for (const row of sm) {
       const platform = String(row?.platform || '').trim();
       if (!platform) continue;
-      if (qualifying.size && !qualifying.has(this.normalized(platform))) continue;
+      if (qualifying.size && !qualifying.has(this.normalized(platform)) && !isFileSharePlatform(platform)) continue;
       const hasEnabled = Array.isArray(row?.contentTypes) && row.contentTypes.some((ct: any) => !!ct?.enabled);
       if (hasEnabled) platforms.add(this.normalized(platform));
     }

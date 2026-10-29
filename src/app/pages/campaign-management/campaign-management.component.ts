@@ -42,6 +42,7 @@ import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVER
 import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, FINISHED, FINISHED_OR_DISPUTED, OPEN_WORK, PAID_OR_LATER, SUBMITTED_OR_LATER, isNoShowInvite } from '../../shared/invite-status';
 import { busyUntilText } from '../../shared/availability.util';
 import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-collab-notice.component';
+import { isFileSharePlatform } from '../../shared/file-share-video.util';
 
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
@@ -5300,9 +5301,25 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return url;
   }
 
+  /** Video (File Share): delivered as a private file link, reviewed like a post. */
+  isFileShareSubmission(sub: any): boolean {
+    return isFileSharePlatform(sub?.postPlatform);
+  }
+
+  submissionStatusLabel(sub: any): string {
+    if (this.isFileShareSubmission(sub)) {
+      const s = String(sub?.status || '').toLowerCase();
+      if (s === 'submitted') return 'Submitted';
+      if (s === 'disputed') return 'Revision Requested';
+      if (s === 'approved') return 'Approved';
+    }
+    return this.brandInviteStatusLabel(sub?.status);
+  }
+
   getPostTypeLabel(platform: string, type: string): string {
     const p = (platform || '').toLowerCase();
     const t = (type || '').toLowerCase();
+    if (isFileSharePlatform(p)) return 'Video (File Share)';
     if (p === 'youtube') {
       if (t === 'short') return 'YT · Short';
       if (t === 'video') return 'YT · Video';

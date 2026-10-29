@@ -855,7 +855,7 @@
                         {{ getPostTypeLabel(workedSub.postPlatform, workedSub.postType) }} shared
                       </span>
                       <a *ngIf="workedSub.postUrl" [href]="workedSub.postUrl" target="_blank" rel="noopener" (click)="$event.stopPropagation()">
-                        View post
+                        {{ isFileShareSubmission(workedSub) ? 'View video' : 'View post' }}
                       </a>
                     </div>
                     <!-- Promotion link, tagged with this creator's utm_source -->
@@ -1072,9 +1072,11 @@
                         <i class="bi bi-twitter-x" *ngIf="sub.postPlatform?.toLowerCase() === 'twitter'"></i>
                         <i class="bi bi-tiktok" *ngIf="sub.postPlatform?.toLowerCase() === 'tiktok'"></i>
                         <i class="bi bi-camera-video" *ngIf="!sub.postPlatform"></i>
+                        <i class="bi bi-cloud-arrow-up" *ngIf="isFileShareSubmission(sub)"></i>
                         {{ getPostTypeLabel(sub.postPlatform, sub.postType) }}
+                        <ng-container *ngIf="isFileShareSubmission(sub) && inv.selectedContentType"> · {{ inv.selectedContentType }}</ng-container>
                       </span>
-                      <span class="sub-status-chip ms-auto" [ngClass]="'sub-status-' + sub.status">{{ brandInviteStatusLabel(sub.status) }}</span>
+                      <span class="sub-status-chip ms-auto" [ngClass]="'sub-status-' + sub.status">{{ submissionStatusLabel(sub) }}</span>
                     </div>
 
                     <!-- Post link -->
@@ -1083,8 +1085,14 @@
                       <a [href]="sub.postUrl" target="_blank" rel="noopener">{{ sub.postUrl }}</a>
                     </div>
                     <div class="sub-submitted-at" *ngIf="submissionSubmittedAtText(sub)">
-                      <i class="bi bi-clock-history"></i> Posted on {{ submissionSubmittedAtText(sub) }}
+                      <i class="bi bi-clock-history"></i> {{ isFileShareSubmission(sub) ? 'Delivered on' : 'Posted on' }} {{ submissionSubmittedAtText(sub) }}
                     </div>
+                    <div class="sub-post-link" *ngIf="isFileShareSubmission(sub) && sub.deliveryNotes">
+                      <i class="bi bi-chat-left-text"></i> {{ sub.deliveryNotes }}
+                    </div>
+                    <small class="text-muted d-block" *ngIf="isFileShareSubmission(sub)">
+                      Private file link, shared with you and TrendStarZ review. If you can't open it, request a revision.
+                    </small>
 
                     <!-- Screenshots -->
                     <div class="sub-screenshots" *ngIf="sub.postScreenshotUrl">

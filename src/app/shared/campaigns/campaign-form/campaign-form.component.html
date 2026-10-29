@@ -733,7 +733,57 @@
 
           <!-- Active tab panel -->
           <ng-container *ngFor="let pd of platformDeliverables">
-            <div *ngIf="activePlatformTab === pd.platform" class="platform-tab-panel">
+            <div *ngIf="activePlatformTab === pd.platform && isFileSharePlatform(pd.platform)" class="platform-tab-panel file-share-panel">
+              <p class="field-sublabel">
+                For videos delivered directly to you, not published on the creator's social media account.
+                The creator shares a private Google Drive / file link with you.
+              </p>
+              <div *ngFor="let ct of pd.contentTypes" class="file-share-format" [class.ct-row--on]="ct.enabled">
+                <div class="platform-ct-row">
+                  <label class="ct-toggle">
+                    <input type="checkbox" [(ngModel)]="ct.enabled" [ngModelOptions]="{standalone: true}" />
+                    <span class="ct-name">{{ ct.name }}</span>
+                    <span class="file-share-hint">{{ fileShareFormatHint(ct.name) }}</span>
+                  </label>
+                  <div class="ct-price-wrap"
+                       *ngIf="isPerContentPricingFlow"
+                       [class.ct-price-wrap--disabled]="!ct.enabled">
+                    <span class="ct-rupee">₹</span>
+                    <input type="number"
+                           [(ngModel)]="ct.price"
+                           [ngModelOptions]="{standalone: true}"
+                           class="ct-price-input"
+                           placeholder="0"
+                           min="0"
+                           [attr.aria-label]="ct.name + ' price (₹)'"
+                           [attr.disabled]="ct.enabled ? null : ''" />
+                  </div>
+                </div>
+                
+                <fieldset class="file-share-ratio" *ngIf="ct.enabled">
+                  <legend class="field-label">Aspect ratio <span class="required">*</span></legend>
+                  <label class="file-share-ratio__option" *ngFor="let r of fileShareAspectRatios">
+                    <input type="radio"
+                           [name]="'fs-ratio-' + ct.name"
+                           [value]="r.value"
+                           [(ngModel)]="ct.aspectRatio"
+                           [ngModelOptions]="{standalone: true}" />
+                    <span>{{ r.label }}</span>
+                  </label>
+                </fieldset>
+              </div>
+              <div class="file-share-email">
+                <label class="field-label" for="fs-access-email">Share the video with <span class="opt">(optional)</span></label>
+                <input id="fs-access-email"
+                       type="email"
+                       class="form-control form-control-sm"
+                       [(ngModel)]="fileShareAccessEmail"
+                       [ngModelOptions]="{standalone: true}"
+                       placeholder="Leave empty to use your login email" />
+                <small class="field-sublabel">Hidden until a creator accepts the invite; then only that creator sees it, to share the file with you. TrendStarZ review also gets access, for safety and disputes. The file is never public.</small>
+              </div>
+            </div>
+            <div *ngIf="activePlatformTab === pd.platform && !isFileSharePlatform(pd.platform)" class="platform-tab-panel">
               <div *ngFor="let ct of pd.contentTypes" class="platform-ct-row" [class.ct-row--on]="ct.enabled">
                 <label class="ct-toggle">
                   <input type="checkbox" [(ngModel)]="ct.enabled" [ngModelOptions]="{standalone: true}" />

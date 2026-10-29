@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
 import { TIER_ORDER, normalizeTierLabel } from '../tiers.constants';
 import { ACCEPTED_OR_LATER, PAID_OR_LATER, SUBMITTED_OR_LATER } from '../invite-status';
+import { fileShareChoices, isFileSharePlatform } from '../file-share-video.util';
 
 export interface InvitePayoutDetails {
   upiId: string;
@@ -782,7 +783,7 @@ export class CampaignInviteCardComponent {
       for (const row of sm) {
         const rowPlatform = this.normalized(row?.platform || '');
         if (locked && rowPlatform && rowPlatform !== locked) continue;
-        if (!locked && qualifying.size && rowPlatform && !qualifying.has(rowPlatform)) continue;
+        if (!locked && qualifying.size && rowPlatform && !qualifying.has(rowPlatform) && !isFileSharePlatform(rowPlatform)) continue;
         const platform = this.platformLabel(row?.platform || '');
         for (const ct of row?.contentTypes || []) {
           if (ct?.enabled) outputs.push(`${platform} ${ct.name}`);
@@ -864,7 +865,7 @@ export class CampaignInviteCardComponent {
     for (const row of sm) {
       const platform = String(row?.platform || '').trim();
       if (!platform) continue;
-      if (qualifying.size && !qualifying.has(this.normalized(platform))) continue;
+      if (qualifying.size && !qualifying.has(this.normalized(platform)) && !isFileSharePlatform(platform)) continue;
       const hasEnabled = Array.isArray(row?.contentTypes) && row.contentTypes.some((ct: any) => !!ct?.enabled);
       if (hasEnabled) platforms.add(this.normalized(platform));
     }
@@ -887,6 +888,19 @@ export class CampaignInviteCardComponent {
     const out: ContentTypeOption[] = [];
     for (const row of sm) {
       const platform = row.platform || '';
+      // Video (File Share): each enabled format, plus "Raw + Edited video" when both are offered.
+      if (isFileSharePlatform(platform)) {
+        for (const choice of fileShareChoices(row)) {
+          out.push({
+            key: `${platform}::${choice.contentType}`,
+            platform,
+            contentType: choice.contentType,
+            price: choice.price,
+            label: `${this.platformLabel(platform)} · ${choice.contentType}`,
+          });
+        }
+        continue;
+      }
       for (const ct of row.contentTypes || []) {
         if (ct.enabled) {
           out.push({
@@ -907,7 +921,7 @@ export class CampaignInviteCardComponent {
     return this.contentTypeOptions.filter((opt) => {
       if (!this.isOptionSelectable(opt)) return false;
       if (!this.lockedPlatform && qualifying.size) {
-        return qualifying.has(this.normalized(opt.platform));
+        return qualifying.has(this.normalized(opt.platform)) || isFileSharePlatform(opt.platform);
       }
       return true;
     });

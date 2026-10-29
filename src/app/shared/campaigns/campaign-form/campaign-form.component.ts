@@ -30,6 +30,7 @@ import { MobileBottomActionsComponent } from '../../components/mobile-bottom-act
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../utils/image-upload.util';
 import { ACCEPTED_NOT_DISPUTED } from '../../invite-status';
 import { busyUntilText } from '../../availability.util';
+import { FILE_SHARE_ASPECT_RATIOS, FILE_SHARE_FORMATS, isFileSharePlatform } from '../../file-share-video.util';
 
 
 
@@ -422,7 +423,11 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   selectedCategories: string[] = [];
   selectedPlatforms: string[] = [];
   activePlatformTab = '';
-  platformDeliverables: { platform: string; contentTypes: { name: string; enabled: boolean; price: number | null }[] }[] = [];
+  platformDeliverables: { platform: string; contentTypes: { name: string; enabled: boolean; price: number | null; aspectRatio?: string }[] }[] = [];
+  /** Video (File Share): email the creator shares the file with; empty = host's login email. */
+  fileShareAccessEmail = '';
+  readonly fileShareAspectRatios = FILE_SHARE_ASPECT_RATIOS;
+  readonly isFileSharePlatform = isFileSharePlatform;
   platformsList: any[] = [];
   campaignTypeConfigs: Array<{
     key: string;
@@ -829,7 +834,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       },
     });
 
-    this.config.getSocialMedia().subscribe(data => {
+    this.config.getSocialMedia('campaign').subscribe(data => {
       this.platformsList = Array.isArray(data) ? data : [];
       this.cd.detectChanges();
     });
@@ -953,6 +958,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       selectedPhotographerDeliverables: this.selectedPhotographerDeliverables,
       photographerPricingPrices: this.photographerPricingPrices,
       platformDeliverables: this.platformDeliverables,
+      fileShareAccessEmail: this.fileShareAccessEmail,
     };
   }
 
@@ -992,6 +998,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     this.selectedPhotographerDeliverables = [...(data.selectedPhotographerDeliverables || [])];
     this.photographerPricingPrices = { ...(data.photographerPricingPrices || {}) };
     this.platformDeliverables = Array.isArray(data.platformDeliverables) ? data.platformDeliverables : [];
+    this.fileShareAccessEmail = String(data.fileShareAccessEmail || '');
     this.selectedPlatforms = this.platformDeliverables.map((pd) => pd.platform);
     this.activePlatformTab = this.selectedPlatforms[0] || '';
     this.applyCampaignTypeValidators(String(this.f['campaignType'].value || ''));
@@ -1586,6 +1593,22 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     return this.enabledContentTypesCount > 0;
   }
 
+  get hasFileSharePlatform(): boolean {
+    return (this.platformDeliverables || []).some((pd) => isFileSharePlatform(pd.platform));
+  }
+
+  /** Every enabled Video (File Share) format needs an aspect ratio. */
+  get fileShareAspectRatioMissing(): boolean {
+    return (this.platformDeliverables || [])
+      .filter((pd) => isFileSharePlatform(pd.platform))
+      .flatMap((pd) => pd.contentTypes || [])
+      .some((ct) => ct.enabled && !ct.aspectRatio);
+  }
+
+  fileShareFormatHint(name: string): string {
+    return FILE_SHARE_FORMATS.find((f) => f.name === name)?.hint || '';
+  }
+
   get hasValidEnabledContentTypePricing(): boolean {
     const enabled = (this.platformDeliverables || [])
       .flatMap((pd) => (pd?.contentTypes || []))
@@ -1806,8 +1829,10 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
             name: ct.name,
             enabled: ct.enabled ?? false,
             price: ct.price ?? null,
+            ...(isFileSharePlatform(sm.platform) ? { aspectRatio: ct.aspectRatio || '' } : {}),
           })),
         }));
+        this.fileShareAccessEmail = String(campaign.fileShareAccessEmail || '');
         this.selectedPlatforms = this.platformDeliverables.map((pd) => pd.platform);
         this.activePlatformTab = this.selectedPlatforms[0] || '';
       }
@@ -1857,7 +1882,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
         || this.f['pricePerInfluencer'].disabled
         || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
       const platformValid = !this.shouldShowPlatformSelection
-        || (this.platformDeliverables.length > 0 && this.hasEnabledContentTypes);
+        || (this.platformDeliverables.length > 0 && this.hasEnabledContentTypes && !this.fileShareAspectRatioMissing);
       const perContentPriceValid = !this.isPerContentPricingFlow || this.hasValidEnabledContentTypePricing;
       return !!(
         priceValid &&
@@ -1875,7 +1900,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       || this.f['pricePerInfluencer'].disabled
       || (this.f['pricePerInfluencer'].value > 0 && this.f['pricePerInfluencer'].valid);
     const platformValid = !this.shouldShowPlatformSelection
-      || (this.platformDeliverables.length > 0 && this.hasEnabledContentTypes);
+      || (this.platformDeliverables.length > 0 && this.hasEnabledContentTypes && !this.fileShareAspectRatioMissing);
     const perContentPriceValid = !this.isPerContentPricingFlow || this.hasValidEnabledContentTypePricing;
     return !!(
       priceValid &&
@@ -1920,6 +1945,9 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       if (this.shouldShowPlatformSelection && !this.hasEnabledContentTypes) {
         return 'Enable at least one content type.';
       }
+      if (this.shouldShowPlatformSelection && this.fileShareAspectRatioMissing) {
+        return 'Choose an aspect ratio for each video format.';
+      }
       if (this.isPerContentPricingFlow && !this.hasValidEnabledContentTypePricing) {
         return 'Enter a valid price for each enabled content type.';
       }
@@ -1951,6 +1979,9 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     }
     if (this.shouldShowPlatformSelection && !this.hasEnabledContentTypes) {
       return 'Enable at least one content type.';
+    }
+    if (this.shouldShowPlatformSelection && this.fileShareAspectRatioMissing) {
+      return 'Choose an aspect ratio for each video format.';
     }
     if (this.isPerContentPricingFlow && !this.hasValidEnabledContentTypePricing) {
       return 'Enter a valid price for each enabled content type.';
@@ -3032,9 +3063,12 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     } else {
       this.selectedPlatforms.push(p.name);
       const found = this.getPlatformOptions().find(pl => pl.name === p.name) || p;
-      const cts = (found.contentTypes || [])
-        .filter((ct: any) => ct.visible !== false)
-        .map((ct: any) => ({ name: ct.name, enabled: false, price: null as number | null }));
+      // Video (File Share) formats live in code (admin only shows/hides the platform).
+      const cts = isFileSharePlatform(p.name)
+        ? FILE_SHARE_FORMATS.map((ct) => ({ name: ct.name, enabled: false, price: null as number | null, aspectRatio: '' }))
+        : (found.contentTypes || [])
+          .filter((ct: any) => ct.visible !== false)
+          .map((ct: any) => ({ name: ct.name, enabled: false, price: null as number | null }));
       this.platformDeliverables.push({ platform: p.name, contentTypes: cts });
       // auto-activate newly added platform tab
       this.activePlatformTab = p.name;
@@ -3054,6 +3088,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
 
   getPlatformIcon(name: string): string {
     const n = (name || '').toLowerCase();
+    if (isFileSharePlatform(name)) return 'bi bi-cloud-arrow-up';
     if (n.includes('instagram')) return 'bi bi-instagram';
     if (n.includes('youtube')) return 'bi bi-youtube';
     if (n.includes('twitter') || n.includes('x')) return 'bi bi-twitter-x';
@@ -3238,7 +3273,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
                 contentTypes: pd.contentTypes.map(ct => ({
                   name: ct.name,
                   enabled: ct.enabled,
-                  price: ct.price
+                  price: ct.price,
+                  ...(isFileSharePlatform(pd.platform) ? { aspectRatio: ct.aspectRatio || undefined } : {}),
                 }))
               }))
             : [])
@@ -3247,9 +3283,11 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
             contentTypes: pd.contentTypes.map(ct => ({
               name: ct.name,
               enabled: ct.enabled,
-              price: ct.price
+              price: ct.price,
+              ...(isFileSharePlatform(pd.platform) ? { aspectRatio: ct.aspectRatio || undefined } : {}),
             }))
           }))),
+      fileShareAccessEmail: this.hasFileSharePlatform ? this.fileShareAccessEmail.trim() : undefined,
     };
     payload.acceptanceDeadline = payload.acceptanceDeadline
       ? new Date(payload.acceptanceDeadline).toISOString()
@@ -3359,7 +3397,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
                 contentTypes: pd.contentTypes.map(ct => ({
                   name: ct.name,
                   enabled: ct.enabled,
-                  price: ct.price
+                  price: ct.price,
+                  ...(isFileSharePlatform(pd.platform) ? { aspectRatio: ct.aspectRatio || undefined } : {}),
                 }))
               }))
             : [])
@@ -3368,9 +3407,11 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
             contentTypes: pd.contentTypes.map(ct => ({
               name: ct.name,
               enabled: ct.enabled,
-              price: ct.price
+              price: ct.price,
+              ...(isFileSharePlatform(pd.platform) ? { aspectRatio: ct.aspectRatio || undefined } : {}),
             }))
           }))),
+      fileShareAccessEmail: this.hasFileSharePlatform ? this.fileShareAccessEmail.trim() : undefined,
       deliverables: this.isPhotographerCreator || this.isInvitingPhotographers
         ? this.selectedPhotographerDeliverables
         : this.getInfluencerDeliverables(),

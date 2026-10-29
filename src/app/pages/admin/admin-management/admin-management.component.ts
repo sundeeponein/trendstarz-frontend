@@ -397,6 +397,8 @@ export class AdminManagementComponent implements OnInit {
     // after Razorpay automation lands — repurposed as "Need help?" channel.
     supportContactEnabled: true,
     supportContactEmail: 'support@trendstarz.in',
+    // Video (File Share): creators share the file with this address too (dispute review).
+    fileShareReviewEmail: '',
     supportContactPhone: '',
     supportContactWhatsapp: '',
     supportContactMessage: '',
@@ -809,6 +811,7 @@ export class AdminManagementComponent implements OnInit {
           : 'razorpay_fallback';
         this.settings.supportContactEnabled = data?.supportContactEnabled !== false;
         this.settings.supportContactEmail = data?.supportContactEmail || 'support@trendstarz.in';
+        this.settings.fileShareReviewEmail = data?.fileShareReviewEmail || '';
         this.settings.supportContactPhone = data?.supportContactPhone || '';
         this.settings.supportContactWhatsapp = data?.supportContactWhatsapp || '';
         this.settings.supportContactMessage = data?.supportContactMessage || '';

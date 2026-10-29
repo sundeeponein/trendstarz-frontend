@@ -2497,3 +2497,38 @@ $cf-navy: #151729;
   font-weight: 600;
   color: #b45309;
 }
+
+/* Video (File Share) deliverable */
+.file-share-panel {
+  .file-share-format {
+    border-bottom: 1px solid $border;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+  }
+  .ct-toggle { flex-wrap: wrap; column-gap: 8px; }
+  .file-share-hint {
+    font-size: 12px;
+    color: $text-muted;
+    &::before { content: "|"; margin-right: 8px; color: $border; }
+  }
+  .file-share-ratio {
+    margin: 0 0 4px 28px;
+    padding: 0;
+    border: 0;
+    .field-label { font-size: 13px; margin-bottom: 4px; padding: 0; }
+  }
+  .file-share-ratio__option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    font-size: 13px;
+    cursor: pointer;
+    color: #0b1220;
+    input { accent-color: $accent; margin: 0; }
+  }
+  .file-share-email {
+    margin-top: 12px;
+    max-width: 420px;
+  }
+}

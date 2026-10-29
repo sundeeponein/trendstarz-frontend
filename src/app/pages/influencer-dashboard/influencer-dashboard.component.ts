@@ -38,6 +38,7 @@ import { CollaborationScoreApiService, CollaborationAudit } from '../../services
 import { CollaborationScoreSummaryWidgetComponent } from '../../shared/collaboration-score/collaboration-score-summary-widget.component';
 import { FINISHED } from '../../shared/invite-status';
 import { AdminSocialNoticeComponent } from '../../shared/admin-social-notice/admin-social-notice.component';
+import { fileShareChoices, isFileSharePlatform } from '../../shared/file-share-video.util';
 
 @Component({
   selector: 'app-influencer-dashboard',
@@ -806,6 +807,18 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     const options: { key: string; label: string; platform: string; contentType: string; price: number }[] = [];
     for (const sm of socialMedia) {
       const platform = sm.platform || '';
+      if (isFileSharePlatform(platform)) {
+        for (const choice of fileShareChoices(sm)) {
+          options.push({
+            key: `${platform}::${choice.contentType}`,
+            platform,
+            contentType: choice.contentType,
+            price: choice.price,
+            label: `${platform} · ${choice.contentType}`,
+          });
+        }
+        continue;
+      }
       for (const ct of (sm.contentTypes || [])) {
         if (ct.enabled) {
           options.push({
