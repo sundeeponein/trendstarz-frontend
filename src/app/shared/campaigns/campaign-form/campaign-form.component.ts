@@ -1866,22 +1866,27 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
         this.selectedPhotographerServices = this.asStringArray(campaign.platforms);
         this.selectedPhotographerDeliverables = [...deliverables];
       }
-      const existingSocialMedia = campaign.socialMedia;
-      if (Array.isArray(existingSocialMedia) && existingSocialMedia.length) {
-        this.platformDeliverables = existingSocialMedia.map((sm: any) => ({
-          platform: sm.platform,
-          contentTypes: (sm.contentTypes || []).map((ct: any) => ({
-            name: ct.name,
-            enabled: ct.enabled ?? false,
-            price: ct.price ?? null,
-            ...(isFileSharePlatform(sm.platform) ? { aspectRatio: ct.aspectRatio || '' } : {}),
-          })),
-        }));
-        this.fileShareAccessEmail = String(campaign.fileShareAccessEmail || '');
-        this.selectedPlatforms = this.platformDeliverables.map((pd) => pd.platform);
-        this.activePlatformTab = this.selectedPlatforms[0] || '';
-      }
     }
+    // Both hosts save platforms here (photographer: per-content pricing flow).
+    this.hydratePlatformDeliverablesFromCampaign(campaign);
+  }
+
+  /** Platforms, content types (incl. Video (File Share) aspect ratios) and the share email. */
+  private hydratePlatformDeliverablesFromCampaign(campaign: any): void {
+    const existingSocialMedia = campaign.socialMedia;
+    if (!Array.isArray(existingSocialMedia) || !existingSocialMedia.length) return;
+    this.platformDeliverables = existingSocialMedia.map((sm: any) => ({
+      platform: sm.platform,
+      contentTypes: (sm.contentTypes || []).map((ct: any) => ({
+        name: ct.name,
+        enabled: ct.enabled ?? false,
+        price: ct.price ?? null,
+        ...(isFileSharePlatform(sm.platform) ? { aspectRatio: ct.aspectRatio || '' } : {}),
+      })),
+    }));
+    this.fileShareAccessEmail = String(campaign.fileShareAccessEmail || '');
+    this.selectedPlatforms = this.platformDeliverables.map((pd) => pd.platform);
+    this.activePlatformTab = this.selectedPlatforms[0] || '';
   }
 
   // ── Stepper helpers ──────────────────────────────────────────
