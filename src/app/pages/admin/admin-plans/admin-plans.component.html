@@ -246,7 +246,7 @@
         <div>
           <label>Offer Ends At</label>
           <input type="date" [ngModel]="dateInputValue(editingPlan.founderOfferEndsAt)" (ngModelChange)="editingPlan.founderOfferEndsAt = $event || null" />
-          <small class="field-hint">Leave empty to use only audience/window rules.</small>
+          <small class="field-hint">Offer runs until 23:59 IST on this date. After it, the discounts and bonus months above stop and checkout charges the standard price. Leave empty for no end date.</small>
         </div>
       </div>
 

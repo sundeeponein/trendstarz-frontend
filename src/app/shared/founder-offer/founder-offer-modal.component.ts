@@ -159,7 +159,12 @@ export class FounderOfferModalComponent implements OnChanges {
         // "ends in N days" always counts from this view, not from registration —
         // otherwise existing users (registered long before this feature shipped)
         // would see the offer with the countdown already silently expired.
-        this.daysLeft = paidPlan?.founderOfferWindowDays || 7;
+        // With an admin end date (sent as 23:59 IST of that day) the price really
+        // goes back then, so count down to it instead.
+        const endsAt = paidPlan?.founderOfferEndsAt ? new Date(paidPlan.founderOfferEndsAt).getTime() : NaN;
+        this.daysLeft = Number.isFinite(endsAt)
+          ? Math.max(0, Math.ceil((endsAt - Date.now()) / (24 * 60 * 60 * 1000)))
+          : paidPlan?.founderOfferWindowDays || 7;
         this.options = buildFounderOfferOptions(paidPlan);
       });
     }

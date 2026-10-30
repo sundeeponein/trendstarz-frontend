@@ -50,8 +50,8 @@
       </div>
 
       <div class="comparison-plan pro-plan" *ngIf="displayPaidPlan as proPlan">
-        <div class="limited-offer">{{ bestOfferLabel }}</div>
-        <div class="plan-kicker pro">{{ proPlan.name || proPlanName }}</div>
+        <div class="limited-offer" *ngIf="planDiscountPercent > 0 || bonusMonths > 0 || founderBonusMonths > 0">{{ bestOfferLabel }}</div>
+        <div class="plan-kicker pro">{{ isCreatorMembership ? 'Premium Creator Membership' : (proPlan.name || proPlanName) }}</div>
 
         <div class="pro-price-row">
           <span class="price-original-strike" *ngIf="planDiscountPercent > 0">₹{{ selectedDurationPrice }}</span>
@@ -78,6 +78,7 @@
           <span class="pill pill-save" *ngIf="planDiscountPercent > 0">Save ₹{{ discountAmount }}</span>
           <span class="pill pill-discount" *ngIf="planDiscountPercent > 0">{{ planDiscountPercent }}% Discount</span>
           <span class="pill pill-bonus" *ngIf="bonusMonths > 0 || founderBonusMonths > 0">Pay {{ baseMonths }}, get {{ totalMonths }}</span>
+          <span class="pill pill-discount" *ngIf="offerEndsLabel">Offer ends {{ offerEndsLabel }}</span>
         </div>
 
         <div class="feature-stack pro-features">
@@ -100,6 +101,11 @@
           <i class="bi bi-eye"></i>
           <span>{{ getContactVisibilityLabel(proPlan) }}</span>
         </div>
+
+        <div class="plan-terms">
+          <p>Renews at the offer price running at that time, or the standard ₹{{ selectedDurationPrice | number }}/{{ durationPeriodLabel }} if no offer is running. No auto-renew; you choose whether to renew.</p>
+          <p *ngIf="isCreatorMembership">Trendstarz Creator Membership provides access to the creator collaboration platform and eligibility for relevant brand campaign opportunities. Campaign invitations and selection depend on brand requirements, creator suitability and campaign availability. Membership does not guarantee paid campaigns, campaign selection or earnings. Trendstarz commission applies to paid collaborations.</p>
+        </div>
       </div>
     </div>
 
@@ -120,7 +126,7 @@
 
     <!-- Order summary bar -->
     <div class="order-bar" *ngIf="selectedPlan">
-      <span class="order-bar-label">{{ selectedPlan.name }} · {{ selectedDuration?.label }}</span>
+      <span class="order-bar-label">{{ paidPlanTitle }} · {{ selectedDuration?.label }}</span>
       <span class="order-bar-amount">
         <span *ngIf="planDiscountPercent > 0">
           <span class="amount-original">₹{{ selectedDuration?.price }}</span>
@@ -131,8 +137,14 @@
       </span>
     </div>
 
-    <!-- Coupon code -->
-    <div class="coupon-row">
+    <!-- Renewal + refund terms, shown before either payment method -->
+    <div class="plan-terms payment-terms">
+      <p>Renews at the offer price running at that time, or the standard ₹{{ selectedDurationPrice | number }}/{{ durationPeriodLabel }} if no offer is running. No auto-renew; you choose whether to renew.</p>
+      <p><strong>No refunds once activated.</strong> Cancelling stops the next renewal; your membership stays active until its end date.</p>
+    </div>
+
+    <!-- Coupon code (not while an offer discount is running — checkout refuses it) -->
+    <div class="coupon-row" *ngIf="planDiscountPercent === 0">
       <input
         class="form-input coupon-input"
         type="text"
@@ -182,7 +194,7 @@
       <app-payment-checkout
         *ngIf="selectedDuration"
         title=""
-        [chip]="(selectedPlan?.name || '') + ' Premium'"
+        [chip]="paidPlanTitle"
         [amountRupees]="finalPrice"
         [breakdown]="paymentBreakdown"
         [transactionNote]="paymentTransactionNote"
@@ -243,8 +255,8 @@
     <h2>Payment Recorded!</h2>
     <p><strong>Status: Pending Admin Approval</strong></p>
     <div *ngIf="selectedPlan" class="success-plan-details">
-      <p><strong>Plan:</strong> {{ selectedPlan.name }} Premium</p>
-      <p><strong>Amount:</strong> {{ selectedDuration?.price }}</p>
+      <p><strong>Plan:</strong> {{ paidPlanTitle }}</p>
+      <p><strong>Amount:</strong> ₹{{ finalPrice }}</p>
       <p><strong>Transaction ID:</strong> {{ upiRef }}</p>
     </div>
     <p>Your UPI payment has been recorded. The admin will verify the transaction and activate your Premium membership shortly. You'll be notified via email once approved.</p>

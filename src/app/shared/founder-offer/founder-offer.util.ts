@@ -22,13 +22,19 @@ export function buildFounderOfferOptions(plan: Plan | undefined): FounderOfferOp
   if (!plan) return [];
   const discountMonthly = offerValue(plan, 'discountMonthly');
   const discountQuarterly = offerValue(plan, 'discountQuarterly');
+  const discountYearly = offerValue(plan, 'discountYearly');
   const bonusMonthly = offerValue(plan, 'bonusMonthsMonthly') + offerValue(plan, 'founderBonusMonthsMonthly');
   const bonusQuarterly = offerValue(plan, 'bonusMonthsQuarterly') + offerValue(plan, 'founderBonusMonthsQuarterly');
+  const bonusYearly = offerValue(plan, 'bonusMonthsYearly') + offerValue(plan, 'founderBonusMonthsYearly');
 
   const monthlyOriginal = plan.price?.monthly || 0;
   const quarterlyOriginal = plan.price?.quarterly || 0;
+  const yearlyOriginal = plan.price?.yearly || 0;
   const monthlyPrice = Math.round(monthlyOriginal * (1 - discountMonthly / 100));
   const quarterlyPrice = Math.round(quarterlyOriginal * (1 - discountQuarterly / 100));
+  const yearlyPrice = Math.round(yearlyOriginal * (1 - discountYearly / 100));
+  // The yearly deal is the headline when it has one; otherwise quarterly as before.
+  const yearlyRecommended = yearlyPrice > 0 && (discountYearly > 0 || bonusYearly > 0);
 
   const options: FounderOfferOption[] = [];
   if (monthlyPrice > 0) {
@@ -52,7 +58,19 @@ export function buildFounderOfferOptions(plan: Plan | undefined): FounderOfferOp
       originalPrice: quarterlyOriginal,
       price: quarterlyPrice,
       discountPercent: discountQuarterly,
-      recommended: true,
+      recommended: !yearlyRecommended,
+    });
+  }
+  if (yearlyPrice > 0) {
+    options.push({
+      cycleLabel: 'Yearly',
+      baseMonths: 12,
+      bonusMonths: bonusYearly,
+      totalMonths: 12 + bonusYearly,
+      originalPrice: yearlyOriginal,
+      price: yearlyPrice,
+      discountPercent: discountYearly,
+      recommended: yearlyRecommended,
     });
   }
   return options;
@@ -62,7 +80,10 @@ export function buildFounderOfferOptions(plan: Plan | undefined): FounderOfferOp
 export function hasRealFounderOffer(plan: Plan | undefined): boolean {
   if (!plan) return false;
   if ((plan.price?.monthly || 0) <= 0 && (plan.price?.quarterly || 0) <= 0) return false;
-  const hasDiscount = offerValue(plan, 'discountMonthly') > 0 || offerValue(plan, 'discountQuarterly') > 0;
+  const hasDiscount =
+    offerValue(plan, 'discountMonthly') > 0 ||
+    offerValue(plan, 'discountQuarterly') > 0 ||
+    offerValue(plan, 'discountYearly') > 0;
   const hasBonus =
     offerValue(plan, 'bonusMonthsMonthly') > 0 ||
     offerValue(plan, 'bonusMonthsQuarterly') > 0 ||

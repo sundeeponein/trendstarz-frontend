@@ -222,6 +222,26 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
     return 'mo';
   }
 
+  /** Influencers buy the "Premium Creator Membership"; other roles keep their plan name. */
+  get isCreatorMembership(): boolean {
+    return this.selectedRole === 'influencer';
+  }
+
+  /** Full product name for the order bar, checkout chip and UPI note. */
+  get paidPlanTitle(): string {
+    if (this.isCreatorMembership) return 'Premium Creator Membership';
+    return (this.selectedPlan?.name || this.proPlanName) + ' Premium';
+  }
+
+  /** "10 Nov" while the price offer has an admin end date (sent as 23:59 IST of that day). */
+  get offerEndsLabel(): string {
+    const raw = this.displayPaidPlan?.founderOfferEndsAt;
+    if (!raw || this.planDiscountPercent <= 0 || this.couponApplied) return '';
+    const endsAt = new Date(raw);
+    if (!Number.isFinite(endsAt.getTime()) || endsAt.getTime() < Date.now()) return '';
+    return endsAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
+  }
+
   get bestOfferLabel(): string {
     if (this.discountLabel) return this.discountLabel;
     if (this.planDiscountPercent > 0) return 'Limited Time Offer';
@@ -361,7 +381,7 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
   }
 
   get paymentTransactionNote(): string {
-    return (this.selectedPlan?.name || 'TrendstarZ') + ' Premium';
+    return this.paidPlanTitle;
   }
 
   getContactVisibilityLabel(plan: Plan): string {
@@ -377,6 +397,11 @@ export class PremiumUpgradeComponent implements OnInit, OnDestroy {
 
   applyCoupon() {
     this.couponError = '';
+    // Same rule as checkout: coupons only when no offer discount is running.
+    if (this.planDiscountPercent > 0) {
+      this.couponError = "Coupons can't be used while an offer is running.";
+      return;
+    }
     // Simple coupon: TRENDSTARZ10 = 10% off
     const code = this.couponCode.trim().toUpperCase();
     if (code === 'TRENDSTARZ10') {

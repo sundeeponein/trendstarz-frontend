@@ -346,7 +346,9 @@ export class AdminPlansComponent implements OnInit {
     const count = Number(this.editingPlan?.founderOfferAudienceCount || 0);
     if (cap > 0 && count >= cap) return 'CAP REACHED';
     if (this.editingPlan?.founderOfferEndsAt) {
-      const endsAt = new Date(this.editingPlan.founderOfferEndsAt).getTime();
+      // The offer runs to 23:59 IST on the chosen date (same as checkout).
+      const day = this.dateInputValue(this.editingPlan.founderOfferEndsAt);
+      const endsAt = day ? new Date(`${day}T23:59:59.999+05:30`).getTime() : NaN;
       if (Number.isFinite(endsAt) && endsAt < Date.now()) return 'ENDED';
     }
     if (forNew && forExisting) return 'ALL USERS';
