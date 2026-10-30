@@ -42,20 +42,6 @@ export class AdminPlansComponent implements OnInit {
     return this.influencerPlans;
   }
 
-  // Quick reference so trial days across roles are visible without switching tabs —
-  // avoids the "is this plan's trial different on purpose or did I forget it" confusion.
-  get trialDaysSummary(): { label: string; days: number }[] {
-    const trialDaysOf = (plans: Plan[]) => {
-      const plan = plans.find(p => p.highlight) || plans[0];
-      return plan?.offers?.find(o => o.key === 'trialPeriodDays')?.value ?? 0;
-    };
-    return [
-      { label: 'Influencer Pro', days: trialDaysOf(this.influencerPlans) },
-      { label: 'Brand Pro', days: trialDaysOf(this.brandPlans) },
-      { label: 'Photo/Video Pro', days: trialDaysOf(this.photographerPlans) },
-    ];
-  }
-
   readonly masterFeatures: { [k: string]: { key: string; label: string }[] } = {
     INFLUENCER: [
       { key: 'publicProfileListing', label: 'Public profile listing' },
@@ -96,7 +82,6 @@ export class AdminPlansComponent implements OnInit {
 
   readonly masterOffers: { [k: string]: { key: string; label: string }[] } = {
     INFLUENCER: [
-      { key: 'trialPeriodDays', label: 'Trial period (days)' },
       { key: 'discountMonthly', label: 'Monthly Discount (%)' },
       { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
       { key: 'discountYearly', label: 'Yearly Discount (%)' },
@@ -108,7 +93,6 @@ export class AdminPlansComponent implements OnInit {
       { key: 'founderBonusMonthsYearly', label: 'Founder Offer Bonus Months (Yearly)' },
     ],
     BRAND: [
-      { key: 'trialPeriodDays', label: 'Trial period (days)' },
       { key: 'discountMonthly', label: 'Monthly Discount (%)' },
       { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
       { key: 'discountYearly', label: 'Yearly Discount (%)' },
@@ -120,7 +104,6 @@ export class AdminPlansComponent implements OnInit {
       { key: 'founderBonusMonthsYearly', label: 'Founder Offer Bonus Months (Yearly)' },
     ],
     PHOTOGRAPHER: [
-      { key: 'trialPeriodDays', label: 'Trial period (days)' },
       { key: 'discountMonthly', label: 'Monthly Discount (%)' },
       { key: 'discountQuarterly', label: 'Quarterly Discount (%)' },
       { key: 'discountYearly', label: 'Yearly Discount (%)' },

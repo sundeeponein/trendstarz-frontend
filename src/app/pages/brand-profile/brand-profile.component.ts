@@ -794,9 +794,7 @@ export class BrandProfileComponent implements OnInit {
     if (plan?.discountLabel) return plan.discountLabel + bonusSuffix;
     if (discountPercent > 0) return `Founding member pricing · Save ${discountPercent}%${bonusSuffix}`;
     if (bonusMonths > 0) return `Pay 1 month, get ${1 + bonusMonths} months`;
-    const hasTrialOffer = Array.isArray(plan?.offers)
-      && plan.offers.some((item) => item.key === 'trialPeriodDays' && Number(item.value) > 0);
-    return hasTrialOffer ? 'Early Access Offer' : '';
+    return '';
   }
 
   // Sanitize brand username input (replace spaces with hyphens, remove invalid chars)

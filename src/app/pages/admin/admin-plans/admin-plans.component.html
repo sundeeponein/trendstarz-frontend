@@ -40,14 +40,6 @@
       No plans found. Click <strong>Seed Default Plans</strong> to get started.
     </div>
 
-    <div class="trial-summary-card" *ngIf="!loading && plans.length > 0">
-      <div class="trial-summary-title">Recommended</div>
-      <div class="trial-summary-row" *ngFor="let r of trialDaysSummary">
-        <span class="trial-summary-label">{{ r.label }}</span>
-        <span class="trial-summary-days">Trial Days: {{ r.days }}</span>
-      </div>
-    </div>
-
     <div class="role-tabs" role="tablist" aria-label="Plan Roles">
       <button class="role-tab" [class.active]="activeTab === 'INFLUENCER'" (click)="setTab('INFLUENCER')">Influencers</button>
       <button class="role-tab" [class.active]="activeTab === 'BRAND'" (click)="setTab('BRAND')">Brands</button>
@@ -210,20 +202,7 @@
           <div class="cycle-final">Final Duration: <strong>{{ getFinalDuration('yearly') }} mo</strong></div>
         </div>
       </div>
-      <p class="section-hint">Bonus Months here apply to <strong>every</strong> purchase of that cycle. The Founder Offer popup below can add an <strong>extra</strong> bonus on top, only for users who still qualify when their payment is approved.</p>
-
-      <div class="form-row two-col">
-        <div>
-          <label>Offer ends (discounts, bonus and popup)</label>
-          <input type="date" [ngModel]="dateInputValue(editingPlan.founderOfferEndsAt)" (ngModelChange)="editingPlan.founderOfferEndsAt = $event || null" />
-          <small class="field-hint">Offer runs until 23:59 IST on this date. After it, the discounts and bonus months above stop, the popup stops, and checkout charges the standard price. Leave empty for no end date. Changing this date (or the popup title) starts a new offer: users who saw the popup before see it once more.</small>
-        </div>
-        <div>
-          <label>Trial Days</label>
-          <input type="number" [value]="getOfferValue('trialPeriodDays')" min="0" (input)="setOfferValue('trialPeriodDays', $event.target.valueAsNumber)" />
-          <small class="field-hint">Label only: shows "Early Access Offer" when no discount is set. No free days are granted.</small>
-        </div>
-      </div>
+      <p class="section-hint">Bonus Months here apply to <strong>every</strong> purchase of that cycle. The Founder Offer popup below can add an <strong>extra</strong> bonus on top, only for users who still qualify when their payment is approved. Discounts and bonus months stop on the popup's <strong>Offer Ends At</strong> date below.</p>
     </div>
 
     <div class="plan-card-section">
@@ -252,8 +231,9 @@
           <small class="field-hint">Current {{ editingPlan.userType | titlecase }} count: {{ editingPlan.founderOfferAudienceCount || 0 }}</small>
         </div>
         <div>
-          <label>Offer ends</label>
-          <small class="field-hint">Set in Pricing &amp; Discounts above: one date ends the discounts, bonus months and this popup together.</small>
+          <label>Offer Ends At</label>
+          <input type="date" [ngModel]="dateInputValue(editingPlan.founderOfferEndsAt)" (ngModelChange)="editingPlan.founderOfferEndsAt = $event || null" />
+          <small class="field-hint">Offer runs until 23:59 IST on this date. After it, this popup and the discounts and bonus months in Pricing &amp; Discounts stop, and checkout charges the standard price. Leave empty for no end date. Changing this date (or the popup title) starts a new offer: users who saw the popup before see it once more.</small>
         </div>
       </div>
 
