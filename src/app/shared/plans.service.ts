@@ -257,6 +257,8 @@ export interface OfferEmailPreview {
   blockedReason: string;
   recipients: number;
   alreadySent: number;
+  // Paid by UPI/QR, waiting for admin approval — not emailed.
+  awaitingApproval: number;
   notYetSent: number;
   defaultBenefits: string[];
   benefits: string[];
@@ -269,6 +271,7 @@ export interface OfferEmailPreview {
     sent: number;
     failed: number;
     skippedBlocked: number;
+    skippedPaid: number;
     stoppedReason: string;
   } | null;
 }

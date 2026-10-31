@@ -274,7 +274,7 @@
         <span>Email offer to free {{ editingPlan.userType | titlecase }}s</span>
         <button type="button" class="btn btn-secondary offer-email-toggle" (click)="toggleOfferEmail()">{{ offerEmailOpen ? 'Hide' : 'Open' }}</button>
       </div>
-      <p class="section-hint">Sends only when you press <strong>Send</strong>. Uses the <strong>saved</strong> plan (prices and Offer Ends At), so save changes first. Skips Premium, deleted, opted-out and Brevo-blocked addresses, and never sends the same email to anyone twice.</p>
+      <p class="section-hint">Sends only when you press <strong>Send</strong>. Uses the <strong>saved</strong> plan (prices and Offer Ends At), so save changes first. Skips Premium, anyone with a UPI payment awaiting approval, deleted, opted-out and Brevo-blocked addresses, and never sends the same email to anyone twice.</p>
 
       <ng-container *ngIf="offerEmailOpen">
         <div class="form-row two-col">
@@ -288,7 +288,7 @@
           <div *ngIf="offerEmail">
             <label>Recipients</label>
             <div class="offer-email-counts">
-              {{ offerEmail.recipients }} free · {{ offerEmail.alreadySent }} already sent · <strong>{{ offerEmail.notYetSent }} not yet sent</strong>
+              {{ offerEmail.recipients }} free · {{ offerEmail.alreadySent }} already sent · {{ offerEmail.awaitingApproval }} paid, awaiting approval · <strong>{{ offerEmail.notYetSent }} not yet sent</strong>
             </div>
           </div>
         </div>
@@ -328,7 +328,7 @@
 
         <div class="offer-email-progress" *ngIf="offerEmail?.progress as p">
           <strong>{{ p.finishedAt ? 'Last send finished' : 'Sending…' }}</strong>
-          {{ p.sent }} sent · {{ p.failed }} failed · {{ p.skippedBlocked }} skipped (blocked)
+          {{ p.sent }} sent · {{ p.failed }} failed · {{ p.skippedBlocked }} skipped (blocked) · {{ p.skippedPaid }} skipped (paid meanwhile)
           <div *ngIf="p.stoppedReason" class="field-hint">{{ p.stoppedReason }}</div>
         </div>
       </ng-container>
