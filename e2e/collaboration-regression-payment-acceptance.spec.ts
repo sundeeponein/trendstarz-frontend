@@ -234,3 +234,57 @@ test('collaboration paid_collab: verification pending disables Pay button but Vi
   expect(status.verificationPending).toBe(true);
   expect(status.canOpenPay).toBe(false);
 });
+
+test('photographer collaboration contact reveal requires payment_confirmed even when unlocked', async ({ page }) => {
+  const collab = {
+    ...BASE_COLLAB,
+    _id: 'collab_contact_gate_001',
+    campaignType: 'invite_location',
+    acceptanceDeadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+  };
+
+  const acceptedUnlocked = [{
+    ...ACCEPTED_INVITE,
+    _id: 'collab_contact_acc_001',
+    campaignId: collab._id,
+    status: 'accepted',
+    unlocked: true,
+  }];
+  const paidUnlocked = [{
+    ...ACCEPTED_INVITE,
+    _id: 'collab_contact_paid_001',
+    campaignId: collab._id,
+    status: 'payment_confirmed',
+    unlocked: true,
+  }];
+
+  await setPhotographerAuth(page);
+  await mockCommonRoutes(page);
+  await mockCampaignPage(page, collab, acceptedUnlocked);
+
+  await page.goto('/campaigns');
+  await seedCollabState(page, collab, acceptedUnlocked);
+
+  const acceptedVisible = await page.evaluate(() => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return true;
+    const comp = ng.getComponent(el);
+    const inv = (comp.invites || [])[0];
+    if (!inv) return true;
+    return !!comp.canRevealInviteContact(inv);
+  });
+  expect(acceptedVisible).toBe(false);
+
+  await seedCollabState(page, collab, paidUnlocked);
+  const paidVisible = await page.evaluate(() => {
+    const el = document.querySelector('app-campaign-management');
+    const ng = (window as any).ng;
+    if (!el || !ng) return false;
+    const comp = ng.getComponent(el);
+    const inv = (comp.invites || [])[0];
+    if (!inv) return false;
+    return !!comp.canRevealInviteContact(inv);
+  });
+  expect(paidVisible).toBe(true);
+});

@@ -344,3 +344,14 @@
   }
   .txn-summary { flex-direction: column; }
 }
+
+.txn-card__hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #475569;
+}
+
+:host-context([data-theme='dark']) .txn-card__hint {
+  color: #cbd5e1;
+}

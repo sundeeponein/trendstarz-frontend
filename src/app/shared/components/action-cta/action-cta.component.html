@@ -1,0 +1,18 @@
+<article class="action-cta text-white" [attr.aria-label]="ariaLabel">
+  <div class="action-cta__body">
+    <div class="action-cta__copy">
+      <span *ngIf="kicker" class="action-cta__kicker"><span class="dot"></span>{{ kicker }}</span>
+      <h2 class="action-cta__heading">{{ heading }}</h2>
+      <p class="action-cta__description">{{ description }}</p>
+    </div>
+
+    <div class="action-cta__buttons">
+      <a class="action-cta__button" [routerLink]="buttonRoute" (click)="onButtonClick($event)">
+        {{ buttonLabel }} <i class="bi bi-arrow-right" aria-hidden="true"></i>
+      </a>
+      <a *ngIf="secondaryLabel" class="action-cta__button action-cta__button--secondary" [routerLink]="secondaryRoute">
+        <i *ngIf="secondaryIcon" class="bi {{ secondaryIcon }}" aria-hidden="true"></i> {{ secondaryLabel }}
+      </a>
+    </div>
+  </div>
+</article>
