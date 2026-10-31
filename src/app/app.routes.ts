@@ -104,6 +104,8 @@ export const routes: Routes = [
 	{ path: 'verify-email', loadComponent: () => import('./pages/verify-email/verify-email.component').then(m => m.VerifyEmailComponent) },
 	{ path: 'forgot-password', loadChildren: () => import('./pages/auth/forgot-password.module').then(m => m.ForgotPasswordModule) },
 	{ path: 'reset-password', loadComponent: () => import('./pages/auth/reset-password.component').then(m => m.ResetPasswordComponent) },
+	// "Stop offer emails" link in Premium offer emails.
+	{ path: 'offer-emails/unsubscribe', loadComponent: () => import('./pages/offer-email-unsubscribe/offer-email-unsubscribe.component').then(m => m.OfferEmailUnsubscribeComponent) },
 	// Short tracked promo link — logs the click server-side, then redirects to the campaign's destination.
 	{ path: 'r/:code', loadComponent: () => import('./pages/tracking-redirect/tracking-redirect.component').then(m => m.TrackingRedirectComponent) },
 	// Old links still in sent emails/WhatsApp/notifications — the campaigns page is /campaigns

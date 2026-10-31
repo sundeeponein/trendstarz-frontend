@@ -215,4 +215,60 @@ export class PlansService {
     return this.http
       .post<any>(`${environment.apiBaseUrl}/plans/admin/seed`, {}, { headers: this.getHeaders() });
   }
+
+  // ── Offer email to free creators (Admin → Plans) ──────────────────────────
+
+  adminOfferEmailPreview(id: string, kind: OfferEmailKind, benefits?: string[]): Observable<OfferEmailPreview> {
+    return this.http.post<OfferEmailPreview>(
+      `${environment.apiBaseUrl}/plans/admin/${id}/offer-email/preview`,
+      { kind, ...(benefits ? { benefits } : {}) },
+      { headers: this.getHeaders() },
+    );
+  }
+
+  adminOfferEmailTest(id: string, kind: OfferEmailKind, to: string, benefits: string[]): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/plans/admin/${id}/offer-email/test`,
+      { kind, to, benefits },
+      { headers: this.getHeaders() },
+    );
+  }
+
+  adminOfferEmailSend(id: string, kind: OfferEmailKind, benefits: string[], limit: number): Observable<any> {
+    return this.http.post<any>(
+      `${environment.apiBaseUrl}/plans/admin/${id}/offer-email/send`,
+      { kind, benefits, limit },
+      { headers: this.getHeaders() },
+    );
+  }
+
+  /** Public: the "Stop offer emails" link in offer emails. */
+  unsubscribeOfferEmails(token: string): Observable<any> {
+    return this.http.post<any>(`${environment.apiBaseUrl}/plans/offer-emails/unsubscribe`, { t: token });
+  }
+}
+
+export type OfferEmailKind = 'launch' | 'reminder';
+
+export interface OfferEmailPreview {
+  success: boolean;
+  kind: OfferEmailKind;
+  canSend: boolean;
+  blockedReason: string;
+  recipients: number;
+  alreadySent: number;
+  notYetSent: number;
+  defaultBenefits: string[];
+  benefits: string[];
+  subject: string;
+  html: string;
+  sendLimit: number;
+  progress: {
+    startedAt: string;
+    finishedAt: string | null;
+    sent: number;
+    failed: number;
+    skippedBlocked: number;
+    stoppedReason: string;
+  } | null;
 }

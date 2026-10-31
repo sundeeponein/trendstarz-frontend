@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PlansService, Plan, visiblePlanLimits } from '../../../shared/plans.service';
+import { PlansService, Plan, visiblePlanLimits, OfferEmailKind, OfferEmailPreview } from '../../../shared/plans.service';
 import { AdminConfirmDialogComponent } from '../../../shared/admin-confirm-dialog/admin-confirm-dialog.component';
 
 type LimitGroup = 'browse' | 'host' | 'creator' | 'profile';
@@ -21,7 +22,7 @@ interface MasterLimit {
   templateUrl: './admin-plans.component.html',
   styleUrls: ['./admin-plans.component.scss'],
 })
-export class AdminPlansComponent implements OnInit {
+export class AdminPlansComponent implements OnInit, OnDestroy {
   confirmDialogOpen = false;
   confirmDialogMessage = '';
   confirmDialogAction: (() => void) | null = null;
@@ -195,10 +196,17 @@ export class AdminPlansComponent implements OnInit {
 
   readonly userTypes = ['INFLUENCER', 'BRAND', 'PHOTOGRAPHER'];
 
-  constructor(private plansService: PlansService) {}
+  constructor(
+    private plansService: PlansService,
+    private sanitizer: DomSanitizer,
+  ) {}
 
   ngOnInit() {
     this.loadPlans();
+  }
+
+  ngOnDestroy() {
+    if (this.offerEmailPoll) clearTimeout(this.offerEmailPoll);
   }
 
   showConfirm(message: string, action: () => void) {
@@ -484,6 +492,121 @@ export class AdminPlansComponent implements OnInit {
     if (this.editingPlan) {
       this.syncContactVisibilityFeature(this.editingPlan);
     }
+    this.resetOfferEmail();
+  }
+
+  // ── Email offer to free creators ───────────────────────────────────────────
+  // Uses the SAVED plan on the server (prices, end date), not unsaved edits.
+
+  offerEmailOpen = false;
+  offerEmailKind: OfferEmailKind = 'launch';
+  offerEmail: OfferEmailPreview | null = null;
+  offerEmailBenefitsText = '';
+  offerEmailHtml: SafeHtml | null = null;
+  offerEmailTestTo = '';
+  offerEmailLimit = 250;
+  offerEmailBusy = false;
+  offerEmailMsg = '';
+  offerEmailErr = '';
+  private offerEmailPoll: ReturnType<typeof setTimeout> | null = null;
+
+  private resetOfferEmail() {
+    if (this.offerEmailPoll) clearTimeout(this.offerEmailPoll);
+    this.offerEmailPoll = null;
+    this.offerEmailOpen = false;
+    this.offerEmail = null;
+    this.offerEmailHtml = null;
+    this.offerEmailBenefitsText = '';
+    this.offerEmailMsg = '';
+    this.offerEmailErr = '';
+  }
+
+  private get offerEmailBenefits(): string[] {
+    return this.offerEmailBenefitsText.split('\n').map((l) => l.trim()).filter(Boolean);
+  }
+
+  toggleOfferEmail() {
+    this.offerEmailOpen = !this.offerEmailOpen;
+    if (this.offerEmailOpen && !this.offerEmail) this.loadOfferEmail(true);
+  }
+
+  onOfferEmailKindChange() {
+    this.loadOfferEmail(false);
+  }
+
+  /** resetBenefits: fill the benefit lines from the live Premium vs Free plan. */
+  loadOfferEmail(resetBenefits: boolean) {
+    const id = this.editingPlan?._id;
+    if (!id) return;
+    this.offerEmailErr = '';
+    this.plansService
+      .adminOfferEmailPreview(id, this.offerEmailKind, resetBenefits ? undefined : this.offerEmailBenefits)
+      .subscribe({
+        next: (r) => {
+          this.offerEmail = r;
+          if (resetBenefits) this.offerEmailBenefitsText = (r.benefits || []).join('\n');
+          this.offerEmailHtml = this.sanitizer.bypassSecurityTrustHtml(r.html || '');
+          if (!this.offerEmailLimit) this.offerEmailLimit = r.sendLimit || 250;
+          this.pollOfferEmailWhileSending();
+        },
+        error: (e) => (this.offerEmailErr = e?.error?.message || 'Could not load the email preview.'),
+      });
+  }
+
+  private pollOfferEmailWhileSending() {
+    if (this.offerEmailPoll) clearTimeout(this.offerEmailPoll);
+    this.offerEmailPoll = null;
+    const p = this.offerEmail?.progress;
+    if (p && !p.finishedAt && this.offerEmailOpen) {
+      this.offerEmailPoll = setTimeout(() => this.loadOfferEmail(false), 3000);
+    }
+  }
+
+  sendOfferEmailTest() {
+    const id = this.editingPlan?._id;
+    if (!id || this.offerEmailBusy) return;
+    this.offerEmailBusy = true;
+    this.offerEmailMsg = '';
+    this.offerEmailErr = '';
+    this.plansService.adminOfferEmailTest(id, this.offerEmailKind, this.offerEmailTestTo, this.offerEmailBenefits).subscribe({
+      next: (r) => {
+        this.offerEmailBusy = false;
+        this.offerEmailMsg = `Test sent to ${r.to}. Check the inbox (and spam) before sending to everyone.`;
+      },
+      error: (e) => {
+        this.offerEmailBusy = false;
+        this.offerEmailErr = e?.error?.message || 'Test email failed.';
+      },
+    });
+  }
+
+  confirmSendOfferEmail() {
+    const id = this.editingPlan?._id;
+    const pending = this.offerEmail?.notYetSent || 0;
+    if (!id || !pending) return;
+    const count = Math.min(pending, this.offerEmailLimit || 250);
+    const label = this.offerEmailKind === 'reminder' ? 'reminder' : 'offer';
+    this.showConfirm(
+      `Send the ${label} email to ${count} free creator${count === 1 ? '' : 's'} now? This cannot be undone. People already sent this email are skipped.`,
+      () => this.sendOfferEmail(id),
+    );
+  }
+
+  private sendOfferEmail(id: string) {
+    this.offerEmailBusy = true;
+    this.offerEmailMsg = '';
+    this.offerEmailErr = '';
+    this.plansService.adminOfferEmailSend(id, this.offerEmailKind, this.offerEmailBenefits, this.offerEmailLimit).subscribe({
+      next: () => {
+        this.offerEmailBusy = false;
+        this.offerEmailMsg = 'Sending started. Progress updates below.';
+        this.loadOfferEmail(false);
+      },
+      error: (e) => {
+        this.offerEmailBusy = false;
+        this.offerEmailErr = e?.error?.message || 'Could not start sending.';
+      },
+    });
   }
 
   onContactVisibilityPolicyChange() {
@@ -498,6 +621,7 @@ export class AdminPlansComponent implements OnInit {
   }
 
   cancelEdit() {
+    this.resetOfferEmail();
     this.editingPlan = null;
     this.isCreating = false;
     this.saving = false;

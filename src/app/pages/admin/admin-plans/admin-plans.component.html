@@ -267,6 +267,73 @@
       </div>
     </div>
 
+    <!-- Email offer to free creators: admin-triggered, uses the saved plan -->
+    <div class="plan-card-section" *ngIf="!isCreating && editingPlan._id">
+      <div class="plan-card-section-header">
+        <i class="bi bi-envelope"></i>
+        <span>Email offer to free {{ editingPlan.userType | titlecase }}s</span>
+        <button type="button" class="btn btn-secondary offer-email-toggle" (click)="toggleOfferEmail()">{{ offerEmailOpen ? 'Hide' : 'Open' }}</button>
+      </div>
+      <p class="section-hint">Sends only when you press <strong>Send</strong>. Uses the <strong>saved</strong> plan (prices and Offer Ends At), so save changes first. Skips Premium, deleted, opted-out and Brevo-blocked addresses, and never sends the same email to anyone twice.</p>
+
+      <ng-container *ngIf="offerEmailOpen">
+        <div class="form-row two-col">
+          <div>
+            <label>Email</label>
+            <select [(ngModel)]="offerEmailKind" (ngModelChange)="onOfferEmailKindChange()">
+              <option value="launch">Launch (offer announcement)</option>
+              <option value="reminder">Reminder (offer ending soon)</option>
+            </select>
+          </div>
+          <div *ngIf="offerEmail">
+            <label>Recipients</label>
+            <div class="offer-email-counts">
+              {{ offerEmail.recipients }} free · {{ offerEmail.alreadySent }} already sent · <strong>{{ offerEmail.notYetSent }} not yet sent</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="offer-email-alert error" *ngIf="offerEmail && !offerEmail.canSend">{{ offerEmail.blockedReason }}</div>
+        <div class="offer-email-alert error" *ngIf="offerEmailErr">{{ offerEmailErr }}</div>
+        <div class="offer-email-alert ok" *ngIf="offerEmailMsg">{{ offerEmailMsg }}</div>
+
+        <div class="form-row" *ngIf="offerEmailKind === 'launch'">
+          <label>Benefits (one per line)</label>
+          <textarea rows="5" [(ngModel)]="offerEmailBenefitsText" placeholder="One benefit per line"></textarea>
+          <small class="field-hint">Filled from what Premium adds over Free in this plan and the fee settings. Only list what is live today. <a href="javascript:void(0)" (click)="loadOfferEmail(true)">Reset</a> · <a href="javascript:void(0)" (click)="loadOfferEmail(false)">Update preview</a></small>
+        </div>
+
+        <div class="form-row" *ngIf="offerEmail">
+          <label>Preview: {{ offerEmail.subject }}</label>
+          <iframe class="offer-email-preview" [srcdoc]="offerEmailHtml" title="Email preview" sandbox=""></iframe>
+        </div>
+
+        <div class="form-row two-col">
+          <div>
+            <label>Send a test to</label>
+            <input type="email" [(ngModel)]="offerEmailTestTo" placeholder="you@example.com" />
+            <button type="button" class="btn btn-secondary offer-email-btn" [disabled]="offerEmailBusy || !offerEmailTestTo || !offerEmail?.canSend" (click)="sendOfferEmailTest()">Send test</button>
+          </div>
+          <div>
+            <label>Max emails this press</label>
+            <input type="number" [(ngModel)]="offerEmailLimit" min="1" max="2000" />
+            <small class="field-hint">Brevo's free plan allows 300 emails a day (all emails, incl. OTPs). Keep it at 250 and press again the next day for the rest.</small>
+            <button type="button" class="btn btn-primary offer-email-btn"
+              [disabled]="offerEmailBusy || !offerEmail?.canSend || !offerEmail?.notYetSent || (offerEmail?.progress && !offerEmail?.progress?.finishedAt)"
+              (click)="confirmSendOfferEmail()">
+              Send to {{ (offerEmail?.notYetSent || 0) < offerEmailLimit ? (offerEmail?.notYetSent || 0) : offerEmailLimit }} creators
+            </button>
+          </div>
+        </div>
+
+        <div class="offer-email-progress" *ngIf="offerEmail?.progress as p">
+          <strong>{{ p.finishedAt ? 'Last send finished' : 'Sending…' }}</strong>
+          {{ p.sent }} sent · {{ p.failed }} failed · {{ p.skippedBlocked }} skipped (blocked)
+          <div *ngIf="p.stoppedReason" class="field-hint">{{ p.stoppedReason }}</div>
+        </div>
+      </ng-container>
+    </div>
+
     <!-- Features section: always show all for type -->
     <div class="plan-card-section">
       <div class="plan-card-section-header">

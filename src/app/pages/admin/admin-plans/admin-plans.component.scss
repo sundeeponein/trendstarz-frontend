@@ -193,6 +193,8 @@
 
   input[type=text],
   input[type=number],
+  input[type=email],
+  textarea,
   select {
     padding: 8px 10px;
     border: 1px solid #d1d5db;
@@ -477,3 +479,31 @@
 .limit-clean-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-right: 12px; }
 .limit-clean-hint { font-size: 0.74rem; color: #6b7280; line-height: 1.35; }
 .limit-clean-warn { font-size: 0.74rem; color: #b45309; line-height: 1.35; }
+
+/* ── Email offer to free creators ──────────────────────────────────────── */
+.offer-email-toggle { margin-left: auto; padding: 4px 12px; font-size: 0.8rem; }
+.offer-email-counts { padding: 8px 0; font-size: 0.9rem; color: #374151; }
+.offer-email-alert {
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 0.88rem;
+  &.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+  &.ok { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+}
+.offer-email-preview {
+  width: 100%;
+  height: 520px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+.offer-email-btn { margin-top: 8px; }
+.form-row textarea { max-width: 100%; font-family: inherit; resize: vertical; }
+.offer-email-progress {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.88rem;
+}
