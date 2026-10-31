@@ -2,7 +2,7 @@
   <admin-confirm-dialog
     [open]="confirmDialogOpen"
     [message]="confirmDialogMessage"
-    confirmText="Delete"
+    [confirmText]="confirmDialogConfirmText"
     cancelText="Cancel"
     (confirm)="onConfirmDialogConfirm()"
     (cancel)="onConfirmDialogCancel()"

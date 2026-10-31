@@ -25,6 +25,7 @@ interface MasterLimit {
 export class AdminPlansComponent implements OnInit, OnDestroy {
   confirmDialogOpen = false;
   confirmDialogMessage = '';
+  confirmDialogConfirmText = 'Delete';
   confirmDialogAction: (() => void) | null = null;
 
   influencerPlans: Plan[] = [];
@@ -209,8 +210,9 @@ export class AdminPlansComponent implements OnInit, OnDestroy {
     if (this.offerEmailPoll) clearTimeout(this.offerEmailPoll);
   }
 
-  showConfirm(message: string, action: () => void) {
+  showConfirm(message: string, action: () => void, confirmText = 'Delete') {
     this.confirmDialogMessage = message;
+    this.confirmDialogConfirmText = confirmText;
     this.confirmDialogAction = action;
     this.confirmDialogOpen = true;
   }
@@ -589,6 +591,7 @@ export class AdminPlansComponent implements OnInit, OnDestroy {
     this.showConfirm(
       `Send the ${label} email to ${count} free creator${count === 1 ? '' : 's'} now? This cannot be undone. People already sent this email are skipped.`,
       () => this.sendOfferEmail(id),
+      'Send emails',
     );
   }
 
