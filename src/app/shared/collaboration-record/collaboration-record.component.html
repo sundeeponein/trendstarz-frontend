@@ -1,0 +1,55 @@
+<section class="cr-card">
+  <div class="cr-head">
+    <h5 class="cr-title"><i class="bi bi-clipboard-data"></i> {{ owner ? 'Your collaboration record' : 'Collaboration record' }}</h5>
+    <span class="cr-private"><i class="bi bi-lock"></i> {{ owner ? 'Only you and TrendStarz can see this' : 'Not shown publicly' }}</span>
+  </div>
+
+  <p class="cr-muted" *ngIf="loading">Loading…</p>
+  <p class="cr-error" *ngIf="error">{{ error }}</p>
+
+  <ng-container *ngIf="!loading && !error">
+    <ng-container *ngTemplateOutlet="side; context: { s: asCreator, title: 'Invites received (as creator)', creator: true }"></ng-container>
+    <ng-container *ngTemplateOutlet="side; context: { s: asHost, title: 'Invites sent (as host)', creator: false }"></ng-container>
+    <p class="cr-muted" *ngIf="!asCreator && !asHost">No invites yet.</p>
+  </ng-container>
+</section>
+
+<ng-template #side let-s="s" let-title="title" let-creator="creator">
+  <div class="cr-side" *ngIf="s">
+    <div class="cr-side-head">
+      <h6>{{ title }}</h6>
+      <span class="cr-total">{{ s.total }} invite{{ s.total === 1 ? '' : 's' }}<ng-container *ngIf="!creator && s.campaigns !== undefined"> · {{ s.campaigns }} campaign{{ s.campaigns === 1 ? '' : 's' }}</ng-container></span>
+    </div>
+
+    <p class="cr-muted" *ngIf="s.total === 0">{{ creator ? 'No invites received yet.' : 'No invites sent yet.' }}</p>
+
+    <ng-container *ngIf="s.total > 0">
+      <div class="cr-rates">
+        <div class="cr-rate">
+          <span class="cr-rate-value">{{ rate(s.acceptanceRate) }}</span>
+          <span class="cr-rate-label">Accepted</span>
+        </div>
+        <div class="cr-rate">
+          <span class="cr-rate-value">{{ rate(s.completionRate) }}</span>
+          <span class="cr-rate-label">Completed after accepting</span>
+        </div>
+      </div>
+
+      <div class="cr-grid">
+        <div class="cr-tile"><span class="cr-num">{{ s.accepted }}</span><span class="cr-label">Accepted</span></div>
+        <div class="cr-tile good"><span class="cr-num">{{ s.completedOnTime }}</span><span class="cr-label">Completed on time</span></div>
+        <div class="cr-tile warn"><span class="cr-num">{{ s.completedLate }}</span><span class="cr-label">Completed late</span></div>
+        <div class="cr-tile bad">
+          <span class="cr-num">{{ s.didNotPost }}</span>
+          <span class="cr-label">Accepted, didn't post</span>
+          <span class="cr-sub" *ngIf="s.didNotPostExcused">{{ s.didNotPostExcused }} excused by admin</span>
+        </div>
+        <div class="cr-tile"><span class="cr-num">{{ s.inProgress }}</span><span class="cr-label">In progress</span></div>
+        <div class="cr-tile" *ngIf="s.disputed"><span class="cr-num">{{ s.disputed }}</span><span class="cr-label">Disputed</span></div>
+        <div class="cr-tile"><span class="cr-num">{{ s.declined }}</span><span class="cr-label">Declined</span></div>
+        <div class="cr-tile"><span class="cr-num">{{ s.awaitingReply }}</span><span class="cr-label">Awaiting reply</span></div>
+        <div class="cr-tile"><span class="cr-num">{{ s.noResponse }}</span><span class="cr-label">Expired / withdrawn</span></div>
+      </div>
+    </ng-container>
+  </div>
+</ng-template>

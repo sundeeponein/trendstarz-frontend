@@ -1,3 +1,4 @@
+import { CollaborationRecordComponent } from '../../../shared/collaboration-record/collaboration-record.component';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -159,6 +160,7 @@ function savedUser(res: any): any {
   selector: 'app-admin-user-table',
   standalone: true,
   imports: [
+    CollaborationRecordComponent,
     CommonModule,
     FormsModule,
     RouterModule,
@@ -1244,6 +1246,8 @@ export class AdminUserTableComponent implements OnInit {
     const params = this.route.snapshot.queryParamMap;
     const tab = params.get('tab');
     if (tab === 'influencer' || tab === 'brand' || tab === 'photographer') this.activeTab = tab;
+    // Opened from Collaboration records: ?tab=influencer&open=<id> opens that user's View panel.
+    this.pendingOpenUserId = (params.get('open') || '').trim();
     const verification = (params.get('verification') || '').trim();
     if (verification) {
       (this.getFiltersForType(this.activeTab) as Record<string, string>)['contactVerification'] = verification;
@@ -1398,6 +1402,7 @@ export class AdminUserTableComponent implements OnInit {
         this.applyFilters(userType);
         this.updateAllFilterOptions(userType);
         this.refreshSelectedUserFromLists();
+        this.openPendingUser(users);
         this.isLoading = false;
         this.cd.detectChanges();
       });
@@ -2342,6 +2347,17 @@ export class AdminUserTableComponent implements OnInit {
   }
 
   onPageChange(page: number): void { this.currentPage = page; }
+
+  /** Set from ?open=<id>; opened once, after that tab's list loads. */
+  private pendingOpenUserId = '';
+
+  private openPendingUser(users: any[]): void {
+    if (!this.pendingOpenUserId) return;
+    const user = users.find((u: any) => String(u?._id) === this.pendingOpenUserId);
+    if (!user) return;
+    this.pendingOpenUserId = '';
+    this.openUserDetails(user);
+  }
 
   openUserDetails(user: any): void {
     this.selectedUser = user;

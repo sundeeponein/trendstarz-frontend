@@ -1,3 +1,4 @@
+import { CollaborationRecordComponent } from '../../shared/collaboration-record/collaboration-record.component';
 
 import { environment } from '../../../environments/environment';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
@@ -36,7 +37,7 @@ import { paymentAmountRupees } from '../../shared/payment-amount.util';
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
+  imports: [CollaborationRecordComponent, CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })

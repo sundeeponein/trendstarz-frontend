@@ -1,3 +1,4 @@
+import { CollaborationRecordComponent } from '../../shared/collaboration-record/collaboration-record.component';
 import { environment } from '../../../environments/environment';
 import { CollaborationScoreApiService } from '../../services/collaboration-score-api.service';
 import { Component, OnInit, ChangeDetectorRef, NgZone, inject } from '@angular/core';
@@ -42,7 +43,7 @@ import { upiIdValidator } from '../../shared/upi.util';
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, SocialPlatformFieldComponent],
+  imports: [CollaborationRecordComponent, CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, SocialPlatformFieldComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })

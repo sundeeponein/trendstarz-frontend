@@ -1,3 +1,4 @@
+import { CollaborationRecordComponent } from '../../shared/collaboration-record/collaboration-record.component';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { tierOptionsWithCurrent } from '../../shared/tiers.constants';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -40,7 +41,7 @@ import { upiIdValidator } from '../../shared/upi.util';
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [RateReviewNoteComponent, YoutubeCheckNoteComponent, CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
+  imports: [CollaborationRecordComponent, RateReviewNoteComponent, YoutubeCheckNoteComponent, CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })

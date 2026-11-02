@@ -1100,6 +1100,13 @@
           ></textarea>
           <button class="btn btn-sm btn-outline-secondary" (click)="saveSelectedUserNotes()">Save Notes</button>
         </div>
+
+        <app-collaboration-record
+          class="full-width"
+          mode="admin"
+          [userId]="selectedUser._id"
+          [role]="selectedRole"
+        ></app-collaboration-record>
       </div>
 
       <div class="modal-footer details-actions border-0">

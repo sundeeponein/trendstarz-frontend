@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { ConfigService } from '../../shared/config.service';
 import { SessionService } from '../../core/session.service';
 import { AdminLayoutComponent } from './admin-layout.component';
+import { PushNotificationService } from '../../core/push-notification.service';
 
 describe('AdminLayoutComponent — grouped admin menu', () => {
   let fixture: ComponentFixture<AdminLayoutComponent>;
@@ -21,6 +22,8 @@ describe('AdminLayoutComponent — grouped admin menu', () => {
         provideRouter([]),
         { provide: ConfigService, useValue: { adminCountOpenDisputes: () => of({ count: 0 }) } },
         { provide: SessionService, useValue: { getToken: () => null, clearSession: () => {} } },
+        // The real one needs the service worker (SwPush), which tests don't load.
+        { provide: PushNotificationService, useValue: { init: () => {}, enable: async () => false, isSupported: () => false } },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(AdminLayoutComponent);
@@ -32,7 +35,7 @@ describe('AdminLayoutComponent — grouped admin menu', () => {
     expect(topLevel()).toEqual(['Users', 'Review', 'Payments', 'Disputes', 'Link Analytics', 'Reviews', 'Data health']);
   });
 
-  it('Users opens Users list, Deleted users, Matching Evidence and Tier Review; Review opens Campaigns and Collaborations', () => {
+  it('Users opens Users list, Deleted users, Matching Evidence, Tier Review and Collaboration records; Review opens Campaigns and Collaborations', () => {
     const items = (label: string) => {
       const btn = Array.from(el().querySelectorAll<HTMLButtonElement>('.nav-dropdown-toggle')).find(
         (b) => b.textContent!.trim() === label,
@@ -49,6 +52,7 @@ describe('AdminLayoutComponent — grouped admin menu', () => {
       ['Deleted users', '/admin/deleted-users'],
       ['Matching Evidence', '/admin/matching-evidence'],
       ['Tier Review', '/admin/tier-review'],
+      ['Collaboration records', '/admin/collaboration-records'],
     ]);
     expect(items('Review')).toEqual([
       ['Campaigns', '/admin/campaign-review'],
