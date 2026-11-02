@@ -996,10 +996,27 @@ export class CampaignReviewComponent implements OnInit {
     return forkJoin(requests);
   }
 
+  /** Admin follow-up per invite id: who is being waited on and whether they opened it. */
+  selectedCampaignFollowUps: Record<string, any> = {};
+
+  private loadFollowUps(campaignId: string): void {
+    this.selectedCampaignFollowUps = {};
+    if (!campaignId) return;
+    this.http.get<any>(`${environment.apiBaseUrl}/invite-views/admin/campaign/${encodeURIComponent(campaignId)}`).subscribe({
+      next: (res) => {
+        if (String(this.selectedCampaign?._id || '') !== campaignId) return;
+        this.selectedCampaignFollowUps = res?.followUps || {};
+        this.cdr.detectChanges();
+      },
+      error: () => {},
+    });
+  }
+
   openCampaignPreview(campaign: any) {
     this.selectedCampaign = campaign;
     this.selectedCampaignPreviewInvite = this.buildSelectedCampaignInvite(campaign);
     const campaignId = String(campaign?._id || '').trim();
+    this.loadFollowUps(campaignId);
     this.selectedCampaignShareMessages = null;
     this.selectedCampaignShareMessagesLoading = true;
     this.fetchShareMessages(campaignId, (messages) => {

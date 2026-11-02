@@ -71,6 +71,8 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   /** Campaign owner's read-only view: show everything they entered, no tracked-link creation. */
   @Input() hostView = false;
   @Input() adminInviteProgressLoading = false;
+  /** Admin only: follow-up state per invite id (GET /invite-views/admin/campaign/:id). */
+  @Input() adminFollowUps: Record<string, any> = {};
   @Input() adminCanApprove = true;
   @Input() adminCanRequestChanges = true;
   @Input() adminCanReject = true;
@@ -438,7 +440,48 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       this.cdr.detectChanges();
     }
     if (changes['invite'] || changes['visible']) this.loadPayoutFee();
+    if (changes['invite'] || changes['visible']) this.recordRecipientView();
     if (changes['visible']) this.loadWorkflowHours();
+  }
+
+  /** Admin: the follow-up for this row, only while someone is being waited on. */
+  followUpFor(item: any): any | null {
+    const fu = this.adminFollowUps?.[String(item?.inviteId || '')];
+    return fu?.waitingOn ? fu : null;
+  }
+
+  followUpPhone(fu: any): string {
+    return String((fu?.waitingOn === 'host' ? fu?.hostPhone : fu?.creatorPhone) || '');
+  }
+
+  followUpWhatsAppLink(item: any, fu: any): string {
+    const name = (fu?.waitingOn === 'host' ? fu?.hostName : fu?.creatorName) || 'there';
+    const title = this.campaign?.title || 'the campaign';
+    const text =
+      fu?.waitingOn === 'host'
+        ? `Hi ${name}, this is TrendStarz. ${item?.participantName || 'A creator'} is waiting on you for "${title}" (${String(fu?.reason || '').toLowerCase()}). Please open your campaign on TrendStarz to continue. Need help? Just reply here.`
+        : `Hi ${name}, this is TrendStarz. You have a pending step for "${title}" (${String(fu?.reason || '').toLowerCase()}). Please open the invite on TrendStarz to respond. Need help? Just reply here.`;
+    return buildWhatsAppLink(this.followUpPhone(fu), text) || '#';
+  }
+
+  timeAgo(value: any): string {
+    const t = value ? new Date(value).getTime() : NaN;
+    if (!Number.isFinite(t)) return '';
+    const mins = Math.max(0, Math.round((Date.now() - t) / 60000));
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.round(mins / 60);
+    if (hours < 48) return `${hours}h ago`;
+    return `${Math.round(hours / 24)}d ago`;
+  }
+
+  private viewRecordedFor = '';
+
+  /** Admin follow-up: the recipient opened this invite (the server ignores anyone else). */
+  private recordRecipientView(): void {
+    const id = String(this.inviteId || '');
+    if (!this.visible || !id || this.adminReview || this.hostView || this.viewRecordedFor === id) return;
+    this.viewRecordedFor = id;
+    this.config.recordInviteView(id);
   }
 
   /** Creator's payout fee on this paid collab (%), from the server; 0 until known. */

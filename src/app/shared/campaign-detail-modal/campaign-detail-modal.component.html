@@ -494,6 +494,32 @@
                     <div class="cdm-creator-card__negotiation-total" *ngIf="adminInviteOfferTotalText(item)">
                       {{ adminInviteOfferTotalText(item) }}
                     </div>
+                    <!-- Admin follow-up: who we're waiting on, have they opened it / been active since. Admin only. -->
+                    <div class="cdm-followup" *ngIf="adminReview && followUpFor(item) as fu">
+                      <div class="cdm-followup__head">
+                        <i class="bi bi-hourglass-split"></i>
+                        Waiting on <strong>{{ fu.waitingOn === 'host' ? 'host' : 'creator' }}</strong>: {{ fu.reason }}
+                        <span class="cdm-followup__since" *ngIf="fu.since">· {{ timeAgo(fu.since) }}</span>
+                      </div>
+                      <div class="cdm-followup__line">
+                        <span [class.cdm-followup--ok]="fu.seenSince" [class.cdm-followup--no]="!fu.seenSince">
+                          <i class="bi" [ngClass]="fu.seenSince ? 'bi-eye' : 'bi-eye-slash'"></i>
+                          {{ fu.waitingOn === 'host' ? 'Host opened campaign' : 'Creator opened invite' }}:
+                          {{ (fu.waitingOn === 'host' ? fu.hostLastSeenAt : fu.creatorLastSeenAt) ? timeAgo(fu.waitingOn === 'host' ? fu.hostLastSeenAt : fu.creatorLastSeenAt) : 'never' }}
+                        </span>
+                        <span [class.cdm-followup--ok]="fu.activeSince" [class.cdm-followup--no]="!fu.activeSince">
+                          · Last active: {{ (fu.waitingOn === 'host' ? fu.hostLastActiveAt : fu.creatorLastActiveAt) ? timeAgo(fu.waitingOn === 'host' ? fu.hostLastActiveAt : fu.creatorLastActiveAt) : 'never' }}
+                        </span>
+                      </div>
+                      <div class="cdm-followup__actions" *ngIf="followUpPhone(fu)">
+                        <a class="cdm-followup__btn" target="_blank" rel="noopener" [href]="followUpWhatsAppLink(item, fu)" (click)="$event.stopPropagation()">
+                          <i class="bi bi-whatsapp"></i> WhatsApp {{ fu.waitingOn === 'host' ? 'host' : 'creator' }}
+                        </a>
+                        <a class="cdm-followup__btn" [href]="'tel:+91' + followUpPhone(fu)" (click)="$event.stopPropagation()">
+                          <i class="bi bi-telephone"></i> Call {{ followUpPhone(fu) }}
+                        </a>
+                      </div>
+                    </div>
                     <!-- Promotion link, tagged with this creator's utm_source -->
                     <app-promo-link-card
                       *ngIf="adminInviteShowsPromotionLink(item)"

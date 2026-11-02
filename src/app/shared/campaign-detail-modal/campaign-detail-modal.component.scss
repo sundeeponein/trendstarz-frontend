@@ -1427,3 +1427,33 @@ $dk-orange:    #e06030;
   &--net { color: #1a1a2e; font-weight: 700; border-top: 1px dashed #e5e7eb; margin-top: 2px; padding-top: 2px; }
 }
 .cdm-net-payout__premium { margin-top: 4px; color: #7c3aed; font-weight: 600; }
+
+/* ── Admin follow-up (who is being waited on; admin review only) ── */
+.cdm-followup {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  font-size: 0.8rem;
+  color: #374151;
+}
+.cdm-followup__head i { color: #ea580c; margin-right: 2px; }
+.cdm-followup__since { color: #6b7280; }
+.cdm-followup__line { margin-top: 3px; }
+.cdm-followup--ok { color: #15803d; }
+.cdm-followup--no { color: #b91c1c; }
+.cdm-followup__actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.cdm-followup__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #1f2937;
+  text-decoration: none;
+  font-weight: 600;
+  &:hover { background: #f3f4f6; }
+}

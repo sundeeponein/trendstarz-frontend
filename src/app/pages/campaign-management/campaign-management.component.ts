@@ -2446,6 +2446,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   openInvitePanel(campaign: Campaign) {
+    if (campaign?._id) this.config.recordCampaignView(campaign._id);
     this.invitePanelCampaign = campaign;
     this.invitePanelOpen = true;
     this.inviteTab = 'invited';
@@ -3916,6 +3917,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   openHostCampaignView(c: any): void {
     const id = String(c?._id || '');
     if (!id) return;
+    this.config.recordCampaignView(id);
     this.hostViewLoadingId = id;
     // List rows can be partial — load the full campaign so assets/hashtags are present.
     // getCampaignById resolves null on failure — fall back to the list row then.

@@ -1398,6 +1398,18 @@ export class ConfigService {
       );
   }
 
+  /** Admin follow-up only: the recipient opened this invite. Fire-and-forget. */
+  recordInviteView(inviteId: string): void {
+    if (!inviteId) return;
+    this.http.post(`${this.apiUrl}/invite-views/invite/${encodeURIComponent(inviteId)}`, {}).subscribe({ error: () => {} });
+  }
+
+  /** Admin follow-up only: the host opened their campaign. Fire-and-forget. */
+  recordCampaignView(campaignId: string): void {
+    if (!campaignId) return;
+    this.http.post(`${this.apiUrl}/invite-views/campaign/${encodeURIComponent(campaignId)}`, {}).subscribe({ error: () => {} });
+  }
+
   getInvitesByCampaign(campaignId: string): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/campaign-invites/campaign/${campaignId}`).pipe(
       map(res => { const d = this.extractData<any>(res); return Array.isArray(d) ? d : (d?.data ?? []); }),
