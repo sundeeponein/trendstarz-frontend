@@ -512,7 +512,12 @@
                         </span>
                       </div>
                       <div class="cdm-followup__actions" *ngIf="followUpPhone(fu)">
-                        <a class="cdm-followup__btn" target="_blank" rel="noopener" [href]="followUpWhatsAppLink(item, fu)" (click)="$event.stopPropagation()">
+                        <!-- Same message as the row's Invite / Accepted buttons, so the wording never differs. -->
+                        <button type="button" class="cdm-followup__btn" *ngIf="followUpMessageType(item, fu) as type" (click)="openHostShareMessage(item, type, $event)">
+                          <i class="bi bi-whatsapp"></i> WhatsApp {{ fu.waitingOn === 'host' ? 'host' : 'creator' }}
+                        </button>
+                        <!-- No existing message for "host hasn't answered a counter-offer". -->
+                        <a class="cdm-followup__btn" *ngIf="!followUpMessageType(item, fu)" target="_blank" rel="noopener" [href]="followUpWhatsAppLink(item, fu)" (click)="$event.stopPropagation()">
                           <i class="bi bi-whatsapp"></i> WhatsApp {{ fu.waitingOn === 'host' ? 'host' : 'creator' }}
                         </a>
                         <a class="cdm-followup__btn" [href]="'tel:+91' + followUpPhone(fu)" (click)="$event.stopPropagation()">

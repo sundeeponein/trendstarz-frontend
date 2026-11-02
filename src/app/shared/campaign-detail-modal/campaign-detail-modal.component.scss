@@ -1445,6 +1445,8 @@ $dk-orange:    #e06030;
 .cdm-followup--no { color: #b91c1c; }
 .cdm-followup__actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .cdm-followup__btn {
+  font: inherit;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 4px;

@@ -454,6 +454,17 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return String((fu?.waitingOn === 'host' ? fu?.hostPhone : fu?.creatorPhone) || '');
   }
 
+  /**
+   * The existing message to reuse for this follow-up: the "Invite" message while
+   * the creator owes a reply, the "Accepted" message while the host owes payment.
+   * Null when no existing message fits (host hasn't answered a counter-offer).
+   */
+  followUpMessageType(item: any, fu: any): HostShareMessageType | null {
+    if (fu?.waitingOn === 'creator') return this.isInviteOnlyMessageAvailable(item) ? 'inviteOnly' : null;
+    if (fu?.waitingOn === 'host') return this.isHostAcceptedMessageAvailable(item) ? 'accepted' : null;
+    return null;
+  }
+
   followUpWhatsAppLink(item: any, fu: any): string {
     const name = (fu?.waitingOn === 'host' ? fu?.hostName : fu?.creatorName) || 'there';
     const title = this.campaign?.title || 'the campaign';
