@@ -17,7 +17,7 @@ import { PAID_COLLAB_TERMS, PAID_COLLAB_TERMS_V2_ADDITIONS } from './paid-collab
       </ul>
       <label class="pct-check">
         <input type="checkbox" [checked]="accepted" (change)="toggle($event)" />
-        <span>I agree to these paid-collaboration terms.</span>
+        <span>I agree to these paid-campaign terms.</span>
       </label>
     </div>
   `,

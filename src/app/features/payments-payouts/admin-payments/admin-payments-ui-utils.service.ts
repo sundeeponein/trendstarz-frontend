@@ -28,7 +28,7 @@ export class AdminPaymentsUiUtilsService {
   }
 
   getTransactionLabel(type: 'paid_collab' | 'platform_fee'): string {
-    return type === 'platform_fee' ? 'Platform Fee' : 'Paid Collab';
+    return type === 'platform_fee' ? 'Platform Fee' : 'Paid Campaign';
   }
 
   collectionStatusLabel(status: string): string {

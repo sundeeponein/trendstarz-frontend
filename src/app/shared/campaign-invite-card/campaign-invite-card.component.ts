@@ -5,6 +5,14 @@ import { environment } from '../../../environments/environment';
 import { TIER_ORDER, normalizeTierLabel } from '../tiers.constants';
 import { ACCEPTED_OR_LATER, PAID_OR_LATER, SUBMITTED_OR_LATER } from '../invite-status';
 import { fileShareChoices, isFileSharePlatform } from '../file-share-video.util';
+import {
+  CampaignSenderRole,
+  NOT_INSTAGRAM_COLLAB_NOTE,
+  campaignSenderIcon,
+  campaignSenderLabel,
+  campaignSenderNote,
+  campaignSenderRole,
+} from '../campaign-sender.util';
 
 export interface InvitePayoutDetails {
   upiId: string;
@@ -172,7 +180,7 @@ export class CampaignInviteCardComponent {
   get showMissedAcceptance(): boolean { return this.isActionableStatus && this.isAcceptanceExpired && !this.isCampaignClosed; }
   get missedAcceptanceText(): string {
     return this.isCollabInvite
-      ? 'You have missed the collaboration invitation.'
+      ? 'You have missed the campaign invitation.'
       : 'You have missed the campaign invitation.';
   }
 
@@ -434,7 +442,7 @@ export class CampaignInviteCardComponent {
   get campaignTypeKey(): string { return (this.campaign?.campaignType || '').toLowerCase(); }
   get campaignTypeLabel(): string {
     const m: Record<string, string> = {
-      paid_collab: 'Paid Collab',
+      paid_collab: 'Paid Campaign',
       product: 'Product / Barter',
       invite_location: 'Invite to Location',
     };
@@ -968,12 +976,24 @@ export class CampaignInviteCardComponent {
   get isCollabInvite(): boolean {
     return (this.brand?.role === 'photographer') || (this.campaign?.ownerType === 'photographer');
   }
+  /** Who sent it. Photographer inboxes get `invite.sender`; elsewhere a photographer-owned campaign means a photographer. */
+  get senderRole(): CampaignSenderRole {
+    return campaignSenderRole(this.invite?.sender?.role, this.isCollabInvite ? 'photographer' : 'brand');
+  }
   /** Human-readable invite type shown as a badge on the card header */
   get inviteTypeLabel(): string {
-    return this.isCollabInvite ? 'Collaboration' : 'Brand Campaign';
+    return campaignSenderLabel(this.senderRole);
   }
   get inviteTypeIcon(): string {
-    return this.isCollabInvite ? 'bi-camera-reels' : 'bi-megaphone';
+    return campaignSenderIcon(this.senderRole);
+  }
+  get senderNote(): string {
+    return campaignSenderNote(this.senderRole);
+  }
+  readonly notInstagramCollabNote = NOT_INSTAGRAM_COLLAB_NOTE;
+  /** The explainer is shown while the recipient is still deciding. */
+  get showSenderNote(): boolean {
+    return this.isActionable;
   }
 
   get brandName(): string {

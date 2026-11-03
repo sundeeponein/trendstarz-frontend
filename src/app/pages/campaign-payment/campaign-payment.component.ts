@@ -154,8 +154,8 @@ export class CampaignPaymentComponent implements OnInit, OnChanges {
   // ── Helpers / display ──────────────────────────────────
   get campaignTypeLabel(): string {
     const m: Record<string, string> = {
-      paid_collab: 'Paid Collaboration',
-      product: 'Product Collaboration',
+      paid_collab: 'Paid Campaign',
+      product: 'Product Campaign',
       invite_location: 'Invite to Location',
     };
     return m[(this.calculated?.campaignType || '').toLowerCase()] || 'Campaign';

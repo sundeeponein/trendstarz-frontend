@@ -94,7 +94,7 @@ export class AdminManagementComponent implements OnInit {
   userTagsRoleTab: 'influencer' | 'brand' | 'photographer' | 'commission' = 'influencer';
   collaborationAvailabilityRoleTab: CollaborationAvailabilityRole = 'influencer';
   collaborationAvailabilitySections: CollaborationAvailabilitySection[] = [
-    { title: 'Collaboration Types', role: 'influencer', key: 'collaborationTypes' },
+    { title: 'Campaign Types', role: 'influencer', key: 'collaborationTypes' },
     { title: 'Preferences', role: 'influencer', key: 'preferences' },
     { title: 'Available For', role: 'influencer', key: 'availableFor' },
     { title: 'Preferences', role: 'photographer', key: 'preferences' },
@@ -1015,7 +1015,7 @@ export class AdminManagementComponent implements OnInit {
   resetCampaignTypeConfigs(): void {
     this.settings.campaignTypeConfigs = this.campaignTypeConfigDefaults.map((item) => ({ ...item }));
     this.settings.campaignAccessModeConfigs = this.campaignAccessModeConfigDefaults.map((item) => ({ ...item }));
-    this.campaignTypeResetMessage = 'Campaign, collaboration, and access mode rules restored to the default baseline. Save Settings to persist them.';
+    this.campaignTypeResetMessage = 'Campaign type and access mode rules restored to the default baseline. Save Settings to persist them.';
     this.cdr.detectChanges();
     setTimeout(() => {
       this.campaignTypeResetMessage = '';

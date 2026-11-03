@@ -29,7 +29,7 @@ export class FaqAccordionComponent implements OnInit, OnDestroy {
   @Input() schemaItems?: FaqAccordionItem[];
   @Input() showSchema = true;
   @Input() schemaId = 'trendstarz-faq-schema';
-  @Input() ctaHeading = 'Ready to grow your collaborations?';
+  @Input() ctaHeading = 'Ready to grow your campaigns?';
   @Input() ctaButtons: FaqCtaButton[] = [
     { label: 'Join as Influencer', route: '/register-influencer', className: 'btn btn-primary' },
     { label: 'Join as Brand', route: '/register-brand', className: 'btn btn-outline-dark' },

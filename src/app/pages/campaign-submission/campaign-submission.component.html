@@ -50,7 +50,7 @@
       <div class="review-period-box__title">24-hour Review Period</div>
       <p class="review-period-box__desc">
         Your post has been submitted successfully. The host has 24 hours to report any issues.
-        If no issue is reported, this collaboration will be completed automatically.
+        If no issue is reported, this campaign will be completed automatically.
       </p>
       <div class="review-period-box__countdown">
         <i class="bi bi-hourglass-split"></i>
@@ -83,7 +83,7 @@
       <ng-container *ngIf="canResubmitDispute; else disputeEscalatedNotice">
         <div class="dispute-box__countdown">
           <i class="bi bi-hourglass-split"></i>
-          Respond within {{ disputeCountdownText }} or this collaboration will be automatically cancelled.
+          Respond within {{ disputeCountdownText }} or this campaign will be automatically cancelled.
         </div>
         <div class="dispute-box__actions">
           <button type="button" class="btn-orange" (click)="scrollToResubmitForm()">
@@ -496,7 +496,7 @@
   <!-- Withdraw confirmation -->
   <app-confirm-action-modal
     [isOpen]="showWithdrawConfirm"
-    title="Withdraw from this collaboration?"
+    title="Withdraw from this campaign?"
     confirmLabel="Withdraw"
     confirmLoadingLabel="Withdrawing…"
     [submitting]="disputeActionSubmitting"

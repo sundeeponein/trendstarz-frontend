@@ -411,7 +411,7 @@
             [routerLink]="['/admin/collaboration-score', selectedUser?._id]"
             [queryParams]="{ role: selectedRole, username: selectedUser?.username || '' , verified: (selectedUser?.verifiedByTrendStarz === true).toString()}"
           >
-            View Collaboration Details
+            View Campaign Details
           </button>
         </div>
 
@@ -742,7 +742,7 @@
               <div>{{ getUserCreatorTypesLabel(selectedUser) !== '-' ? 'Professional Creator (' + getUserCreatorTypesLabel(selectedUser) + ')' : 'Professional Creator' }}</div>
             </div>
             <div *ngIf="(selectedRole) === 'influencer'">
-              <label>Collaboration Availability</label>
+              <label>Campaign Availability</label>
               <div>{{ getUserCollaborationAvailabilityLabel(selectedUser) }}</div>
             </div>
             <div>

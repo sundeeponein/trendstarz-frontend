@@ -15,7 +15,7 @@
     <button class="tab-chip" [class.active]="activeTab === 'socialMedia'" (click)="setTab('socialMedia')">Social</button>
     <button class="tab-chip" [class.active]="activeTab === 'categories'" (click)="setTab('categories')">Categories</button>
     <button class="tab-chip" [class.active]="activeTab === 'userTags'" (click)="setTab('userTags')">User Tags</button>
-    <button class="tab-chip" [class.active]="activeTab === 'collaborationAvailability'" (click)="setTab('collaborationAvailability')">Collab Availability</button>
+    <button class="tab-chip" [class.active]="activeTab === 'collaborationAvailability'" (click)="setTab('collaborationAvailability')">Campaign Availability</button>
     <button class="tab-chip" [class.active]="activeTab === 'location'" (click)="setTab('location')">Locations</button>
     <button class="tab-chip" [class.active]="activeTab === 'languages'" (click)="setTab('languages')">Languages</button>
     <button class="tab-chip" [class.active]="activeTab === 'tiers'" (click)="setTab('tiers')">Tiers</button>
@@ -349,10 +349,10 @@
   </div>
 
   <div *ngIf="activeTab === 'collaborationAvailability'">
-    <h2>Manage Collaboration Availability</h2>
-    <p class="text-muted mb-3">Control the options shown in influencer and photographer collaboration availability sections.</p>
+    <h2>Manage Campaign Availability</h2>
+    <p class="text-muted mb-3">Control the options shown in influencer and photographer campaign availability sections.</p>
 
-    <div class="section-tabs mb-3" aria-label="Collaboration availability role tabs">
+    <div class="section-tabs mb-3" aria-label="Campaign availability role tabs">
       <button class="tab-chip" [class.active]="collaborationAvailabilityRoleTab === 'influencer'" (click)="setCollaborationAvailabilityRoleTab('influencer')">Influencer</button>
       <button class="tab-chip" [class.active]="collaborationAvailabilityRoleTab === 'photographer'" (click)="setCollaborationAvailabilityRoleTab('photographer')">Photo/Videographer</button>
     </div>
@@ -670,7 +670,7 @@
                 <tr>
                   <td>
                     <div class="fw-semibold">Photographer host</div>
-                    <small class="text-muted">A photographer creating a paid collab — invites influencers</small>
+                    <small class="text-muted">A photographer creating a paid campaign — invites influencers</small>
                   </td>
                   <td>
                     <div class="input-group input-group-sm">
@@ -708,7 +708,7 @@
                 <tr class="table-light"><td colspan="3" class="fw-semibold" style="font-size:0.82rem;">Deducted from what the creator receives — locked when they accept, shown on their invite</td></tr>
                 <tr>
                   <td>
-                    <div class="fw-semibold">Influencer receiving a paid collab</div>
+                    <div class="fw-semibold">Influencer receiving a paid campaign</div>
                     <small class="text-muted">Payout fee on the agreed amount</small>
                   </td>
                   <td>
@@ -727,7 +727,7 @@
                 </tr>
                 <tr>
                   <td>
-                    <div class="fw-semibold">Photographer receiving a paid collab</div>
+                    <div class="fw-semibold">Photographer receiving a paid campaign</div>
                     <small class="text-muted">Payout fee on the agreed amount</small>
                   </td>
                   <td>
@@ -748,7 +748,7 @@
               </table>
             </div>
             <div class="p-2 rounded" style="background:#f8fafc; border:1px dashed #cbd5e1; font-size:0.8rem;">
-              <strong>Example — ₹1,000 paid collab, brand → influencer:</strong>
+              <strong>Example — ₹1,000 paid campaign, brand → influencer:</strong>
               <div *ngFor="let ex of feeExamples">{{ ex }}</div>
             </div>
           </div>
@@ -783,13 +783,13 @@
             </div>
             <small class="text-light-emphasis d-block">
               Auto-complete starts after the host mark-completed lock expires. Use 0 for immediate release after the previous step is complete.
-              If a disputed influencer neither resubmits nor withdraws within the respond-to-dispute window, the collaboration is auto-cancelled and the host is marked refunded.
+              If a disputed influencer neither resubmits nor withdraws within the respond-to-dispute window, the campaign is auto-cancelled and the host is marked refunded.
               If a campaign is left untouched past its end date plus this grace period, it closes automatically — any paid participant who never submitted is closed and the host's refund goes on a 7-day review hold (Payments → Refunds), even if the host never clicks End Campaign.
             </small>
           </div>
 
           <div class="mb-3">
-            <h6 class="mb-2">Paid-collaboration terms v2 (paid-slot rule + fee credit)</h6>
+            <h6 class="mb-2">Paid-campaign terms v2 (paid-slot rule + fee credit)</h6>
             <p class="text-light-emphasis mb-2" style="font-size:0.85rem;">
               From this date: a paid invite stays counted in the campaign invite limit after it closes, and on a no-post
               refund the creator's amount is refunded by UPI while the platform fee becomes 12-month TrendStarZ credit.
@@ -939,7 +939,7 @@
                 <div class="col-12">
                   <div class="p-2 rounded" style="background:#e8f5e9; border:1px solid #c8e6c9;">
                     <strong style="color:#1b5e20;">Regular campaigns</strong><br>
-                    <small style="color:#388e3c;">Paid collab · Product · Location invite · Reel collab · Portfolio</small>
+                    <small style="color:#388e3c;">Paid campaign · Product · Location invite · Reel campaign · Portfolio</small>
                     <div class="mt-1" style="color:#2e7d32;">
                       Host pays: agreed amount + host commission (brand {{ effectiveRoleFee('brandFeePercent') }}%) + GST on the commission<br>
                       Creator receives: agreed amount − creator payout fee (Recipient Payout Fee above)<br>
@@ -1910,8 +1910,8 @@
     <div class="settings-row row-expanded mt-3">
       <div class="settings-row-header">
         <div class="settings-info">
-          <strong>Collaboration Approval Workflow</strong>
-          <p>Configure moderation mode for photographer collaboration requests.</p>
+          <strong>Campaign Approval Workflow</strong>
+          <p>Configure moderation mode for photographer campaign requests.</p>
         </div>
         <div class="form-check form-switch settings-toggle">
           <input
@@ -1932,10 +1932,10 @@
         <span class="conditions-label">Current moderation mode:</span>
         <div class="condition-item">
           <span class="condition-name" *ngIf="settings.collaborationApprovalMode === 'manual'">
-            Manual: New collaboration submits as <strong>Pending Review</strong> and needs admin decision.
+            Manual: New campaign submits as <strong>Pending Review</strong> and needs admin decision.
           </span>
           <span class="condition-name" *ngIf="settings.collaborationApprovalMode === 'auto_live'">
-            Auto-live: Collaboration goes public immediately (still appears in admin queue for audit).
+            Auto-live: Campaign goes public immediately (still appears in admin queue for audit).
           </span>
         </div>
       </div>
@@ -1943,7 +1943,7 @@
       <div class="settings-conditions">
         <div class="condition-item">
           <span class="condition-name">
-            Review submissions on the separate <a routerLink="/admin/collaboration-review">Collaboration Review</a> page.
+            Review submissions on the separate <a routerLink="/admin/collaboration-review">Creator Campaign Review</a> page.
           </span>
         </div>
       </div>
@@ -2074,8 +2074,8 @@
     <div class="settings-row row-expanded mt-3">
       <div class="settings-row-header">
         <div class="settings-info">
-          <strong>Collaboration Types (Photographer → Influencer)</strong>
-          <p>Control visibility and premium lock for photographer-led collaboration types.</p>
+          <strong>Campaign Types (Photographer → Influencer)</strong>
+          <p>Control visibility and premium lock for photographer-led campaign types.</p>
         </div>
       </div>
 
@@ -2083,7 +2083,7 @@
         <table class="table table-sm align-middle mb-0 campaign-type-table">
           <thead>
             <tr>
-	              <th>Collaboration Type</th>
+	              <th>Campaign Type</th>
 	              <th>Order</th>
 	              <th>Enabled</th>
               <th>Premium only</th>
@@ -2104,7 +2104,7 @@
                     [ngModelOptions]="{ standalone: true }"
                     (ngModelChange)="onCampaignTypeSortOrderChange('photographer', item)"
                   />
-                  <div class="btn-group btn-group-sm" role="group" aria-label="Collaboration type order controls">
+                  <div class="btn-group btn-group-sm" role="group" aria-label="Campaign type order controls">
                     <button
                       type="button"
                       class="btn btn-outline-secondary"

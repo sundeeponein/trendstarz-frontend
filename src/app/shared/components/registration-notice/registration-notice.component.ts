@@ -22,9 +22,9 @@ export class RegistrationNoticeComponent {
 
     switch (this.role) {
       case 'influencer':
-        return 'Registration does not guarantee collaborations, campaign approvals, creator selections, or paid promotions.';
+        return 'Registration does not guarantee campaigns, campaign approvals, creator selections, or paid promotions.';
       case 'photographer':
-        return 'Registration does not guarantee project assignments, collaborations, or paid opportunities.';
+        return 'Registration does not guarantee project assignments, campaigns, or paid opportunities.';
       case 'brand':
         return 'Creator participation depends on creator interest, eligibility, availability, and campaign requirements.';
       default:

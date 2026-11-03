@@ -17,10 +17,10 @@ const ROLE_CONFIG: Record<RegistrationRole, RoleConfig> = {
     title: 'Influencer / Creator',
     heading: 'Join as an Influencer / Creator',
     points: [
-      'I want to receive collaboration opportunities from brands.',
+      'I want to receive campaign opportunities from brands.',
       'I want to promote products, services, events, or businesses through my social media accounts.',
     ],
-    disclaimer: 'Registration does not guarantee collaborations, campaign approvals, project assignments, or paid opportunities.',
+    disclaimer: 'Registration does not guarantee campaigns, campaign approvals, project assignments, or paid opportunities.',
     buttonLabel: 'Continue as Influencer',
   },
   brand: {
@@ -30,7 +30,7 @@ const ROLE_CONFIG: Record<RegistrationRole, RoleConfig> = {
     points: [
       'I am registering to hire Influencers, Creators, Photographers, or Videographers.',
       'I want to promote my business, products, services, or campaigns.',
-      'I understand this account is for marketing and collaboration management.',
+      'I understand this account is for marketing and campaign management.',
     ],
     buttonLabel: 'Continue as Brand',
   },
@@ -43,7 +43,7 @@ const ROLE_CONFIG: Record<RegistrationRole, RoleConfig> = {
       'I want to collaborate with Brands and Influencers.',
       'I understand this account is not an Influencer profile.',
     ],
-    disclaimer: 'Registration does not guarantee collaborations, campaign approvals, project assignments, or paid opportunities.',
+    disclaimer: 'Registration does not guarantee campaigns, campaign approvals, project assignments, or paid opportunities.',
     buttonLabel: 'Continue as Photographer / Videographer',
   },
 };

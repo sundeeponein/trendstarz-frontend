@@ -123,7 +123,7 @@
           <li>Create your reel, short or post as per the campaign description and guidelines, and post it on your chosen date.</li>
           <li>Submit the post link in TrendStarZ (Invites → <strong>Submit your post</strong>).</li>
           <li>The host has {{ hoursLabel(workflowHours.approval + workflowHours.autoComplete) }} to check it. If something doesn't match the description or guidelines, they'll raise an issue and you can fix it.</li>
-          <li>After that your collaboration is completed, and TrendStarZ sends your payout to the UPI ID above within {{ hoursLabel(workflowHours.release) }}.</li>
+          <li>After that your campaign is completed, and TrendStarZ sends your payout to the UPI ID above within {{ hoursLabel(workflowHours.release) }}.</li>
         </ol>
       </div>
 
@@ -134,8 +134,8 @@
           <li *ngIf="isProduct">The host sends you the product. Your posting window starts when it's delivered.</li>
           <li *ngIf="isInviteLocation">Visit the location on your chosen date. The host checks you in.</li>
           <li>Create your reel, short or post as per the campaign description and guidelines, and submit the post link in TrendStarZ (Invites → <strong>Submit your post</strong>).</li>
-          <li>The host has {{ hoursLabel(workflowHours.approval + workflowHours.autoComplete) }} to check it. After that the collaboration is completed.</li>
-          <li>If you don't post, the collaboration closes as a no-show and still uses one of your monthly invite slots.</li>
+          <li>The host has {{ hoursLabel(workflowHours.approval + workflowHours.autoComplete) }} to check it. After that the campaign is completed.</li>
+          <li>If you don't post, the campaign closes as a no-show and still uses one of your monthly invite slots.</li>
         </ol>
         <p class="cdm-howpaid__note">
           TrendStarZ connects you with the host and tracks your post link.
@@ -241,7 +241,7 @@
 
           <!-- Product collab -->
           <div class="cdm-section" *ngIf="isProduct">
-            <div class="cdm-section__label">PRODUCT COLLABORATION</div>
+            <div class="cdm-section__label">PRODUCT CAMPAIGN</div>
             <div class="cdm-brief-box">
               <div *ngIf="productDescription" style="white-space:pre-wrap;" class="mb-2">{{ productDescription }}</div>
               <div *ngIf="productValueText"><i class="bi bi-box-seam"></i> <strong>Product worth {{ productValueText }}</strong></div>
@@ -395,12 +395,21 @@
           </div>
 
 
+          <!-- Before accepting: what this campaign asks for (not an Instagram Collab request) -->
+          <div class="cdm-protection-note" *ngIf="isPending && !adminReview">
+            <i class="bi bi-info-circle-fill"></i>
+            <div>
+              <strong>{{ senderLabel }}</strong>
+              <span>{{ senderNote }} {{ notInstagramCollabNote }}</span>
+            </div>
+          </div>
+
           <!-- Paid collab, before accepting: the rules that apply once payment is confirmed -->
           <div class="cdm-protection-note" *ngIf="isPending && !adminReview && isPaidCollab">
             <i class="bi bi-shield-lock-fill"></i>
             <div>
-              <strong>Paid collaboration protection</strong>
-              <span>Once payment is confirmed, the collaboration follows TrendStarZ's platform rules. Only TrendStarZ can cancel a confirmed paid collaboration.</span>
+              <strong>Paid campaign protection</strong>
+              <span>Once payment is confirmed, the campaign follows TrendStarZ's platform rules. Only TrendStarZ can cancel a confirmed paid campaign.</span>
             </div>
           </div>
 

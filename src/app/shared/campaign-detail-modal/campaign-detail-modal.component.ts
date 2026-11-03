@@ -17,6 +17,13 @@ import { PromoLinkCardComponent } from '../promo-link-card/promo-link-card.compo
 import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, ACCEPTED_THROUGH_SUBMITTED, PAID_NOT_DISPUTED, PAID_OR_LATER, SUBMITTED_OR_LATER } from '../invite-status';
 import { creatorPayoutBreakdown, formatRupeesFromPaise } from '../creator-payout.util';
 import { aspectRatioLabel, fileShareChoices, isFileSharePlatform } from '../file-share-video.util';
+import {
+  CampaignSenderRole,
+  NOT_INSTAGRAM_COLLAB_NOTE,
+  campaignSenderLabel,
+  campaignSenderNote,
+  campaignSenderRole,
+} from '../campaign-sender.util';
 
 export type HostShareMessageType = 'accepted' | 'submitted' | 'startWork' | 'inviteOnly' | 'postingReminder';
 
@@ -1019,8 +1026,8 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   get campaignTypeLabel(): string {
     const m: Record<string, string> = {
-      paid_collab: 'Paid Collab',
-      product: 'Product Collab',
+      paid_collab: 'Paid Campaign',
+      product: 'Product Campaign',
       invite_location: 'Invite to Location',
     };
     return m[this.campaignTypeKey] || '';
@@ -1485,6 +1492,13 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     const brandRole = String(this.brand?.role || '').toLowerCase();
     return ownerType === 'photographer' || requestKind === 'photographer_collaboration' || brandRole === 'photographer';
   }
+
+  get senderRole(): CampaignSenderRole {
+    return campaignSenderRole(this.invite?.sender?.role, this.isPhotographerCollabFlow ? 'photographer' : 'brand');
+  }
+  get senderLabel(): string { return campaignSenderLabel(this.senderRole); }
+  get senderNote(): string { return campaignSenderNote(this.senderRole); }
+  readonly notInstagramCollabNote = NOT_INSTAGRAM_COLLAB_NOTE;
 
   get counterReasonOptions(): string[] {
     if (this.isPhotographerCollabFlow) {

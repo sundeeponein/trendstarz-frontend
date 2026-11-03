@@ -6,7 +6,7 @@
   <!-- Header -->
   <div class="cp-header">
     <div>
-      <h3 class="cp-title">{{ isPlatformFee ? 'Confirm Collaboration' : 'Pay for Campaign' }}</h3>
+      <h3 class="cp-title">{{ isPlatformFee ? 'Confirm Creator' : 'Pay for Campaign' }}</h3>
       <p class="cp-sub" *ngIf="calculated">
         <span class="cp-type-chip">{{ campaignTypeLabel }}</span>
         <span class="cp-accepted" *ngIf="!payeeNames.length">{{ calculated.acceptedCount }} accepted influencer{{ calculated.acceptedCount === 1 ? '' : 's' }}</span>
@@ -62,7 +62,7 @@
           <span>Total to pay</span>
           <span class="cp-total-val">{{ formatINR(totalToPay) }}</span>
         </div>
-        <small class="cp-row-label d-block mt-2">A fixed service charge for confirming this collaboration — the creator is not paid through TrendStarZ.</small>
+        <small class="cp-row-label d-block mt-2">A fixed service charge for confirming this campaign — the creator is not paid through TrendStarZ.</small>
       </div>
 
       <!-- Breakdown card -->
@@ -254,7 +254,7 @@
   <div class="cp-body" *ngIf="!loading && activeTab === 'status'">
     <div class="cp-status-header">
       <i class="bi bi-journal-check"></i>
-      <span>Payment status for your campaign collaborations</span>
+      <span>Payment status for your campaigns</span>
     </div>
 
     <div *ngIf="statusTransactions.length === 0" class="cp-empty">

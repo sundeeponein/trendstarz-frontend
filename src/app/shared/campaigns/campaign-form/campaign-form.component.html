@@ -7,7 +7,7 @@
         <!-- ── Breadcrumb ── -->
         <div class="cf-topbar">
         <nav class="cf-crumbs" aria-label="Breadcrumb">
-          <a routerLink="/campaigns">{{ isPhotographerCreator ? 'Collaborations' : 'Campaigns' }}</a>
+          <a routerLink="/campaigns">{{ isPhotographerCreator ? 'Creator Campaigns' : 'Campaigns' }}</a>
           <i class="bi bi-chevron-right" aria-hidden="true"></i>
           <span>{{ isEdit ? 'Edit' : 'New' }} {{ formTitleNoun }}</span>
           <i class="bi bi-chevron-right" aria-hidden="true"></i>
@@ -35,7 +35,7 @@
             <p class="form-subtitle">
               Fill in details, then invite creators.
               <button type="button" class="form-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
-                <i class="bi bi-diagram-3"></i> {{ isPhotographerCreator ? 'How collaboration requests work' : 'How campaigns work' }}
+                <i class="bi bi-diagram-3"></i> {{ isPhotographerCreator ? 'How campaign requests work' : 'How campaigns work' }}
               </button>
             </p>
           </div>
@@ -110,7 +110,7 @@
         </div>
 
         <div class="field-group">
-          <label class="field-label">{{ campaignTypeFieldLabel }} <span class="required">*</span> <i class="bi bi-info-circle" title="What is each collaboration type?" (click)="flowHelp.openCollaborationTypeGuide(f['campaignType']?.value)"></i> </label>
+          <label class="field-label">{{ campaignTypeFieldLabel }} <span class="required">*</span> <i class="bi bi-info-circle" title="What is each campaign type?" (click)="flowHelp.openCollaborationTypeGuide(f['campaignType']?.value)"></i> </label>
           <select formControlName="campaignType" class="field-input">
             <option *ngFor="let opt of getCampaignTypeOptions()" [value]="opt.value" [disabled]="opt.enabled === false || (!hasPremium && !!opt.premiumOnly)">
               {{ opt.label }}{{ (!hasPremium && !!opt.premiumOnly) ? ' 🔒 Premium' : '' }}{{ (opt.enabled === false) ? ' (Unavailable)' : '' }}
@@ -124,22 +124,22 @@
           <!-- Per-type explanation hints -->
           <p class="field-sublabel cf-type-hint" *ngIf="f['campaignType'].value === 'paid_collab'">
             <i class="bi bi-cash-stack"></i>
-            <strong>Paid Collab</strong> — You pay the influencer a fixed fee to create and post content (Reel, Story, etc.). You review the submitted post. Best for awareness, launches, and product promotions.
+            <strong>Paid Campaign</strong> — You pay the influencer a fixed fee to create and post content (Reel, Story, etc.). You review the submitted post. Best for awareness, launches, and product promotions.
           </p>
           <p class="field-sublabel cf-type-hint" *ngIf="f['campaignType'].value === 'product'">
             <i class="bi bi-gift"></i>
-            <strong>Product Collab</strong> — You send a free product to the influencer in exchange for an honest review or post. No cash payment — the product itself is the compensation. Best for unboxing, reviews, and lifestyle integrations.
+            <strong>Product Campaign</strong> — You send a free product to the influencer in exchange for an honest review or post. No cash payment — the product itself is the compensation. Best for unboxing, reviews, and lifestyle integrations.
           </p>
           <p class="field-sublabel cf-type-hint" *ngIf="f['campaignType'].value === 'invite_location'">
             <i class="bi bi-geo-alt"></i>
-            <strong>Invite to Location</strong> — You invite the influencer to visit your store, event, or venue for on-site content creation. Attendance itself completes the collaboration. Best for restaurants, launches, and experience-based brands.
+            <strong>Invite to Location</strong> — You invite the influencer to visit your store, event, or venue for on-site content creation. Attendance itself completes the campaign. Best for restaurants, launches, and experience-based brands.
           </p>
         </div>
 
         <div class="field-group">
           <div class="field-label-row">
             <label class="field-label">
-              {{ isPhotographerCreator ? 'Collaboration Title' : 'Campaign title' }} <span class="required">*</span>
+              {{ isPhotographerCreator ? 'Campaign Title' : 'Campaign title' }} <span class="required">*</span>
               <span class="lock-badge" *ngIf="isApprovalLocked"><i class="bi bi-lock-fill"></i> Locked</span>
             </label>
             <span class="cf-counter" [class.is-near]="titleLength > titleMaxLength - 10">{{ titleLength }} / {{ titleMaxLength }} characters</span>
@@ -166,7 +166,7 @@
         <div class="field-group">
           <div class="field-label-row">
             <label class="field-label">
-              {{ isPhotographerCreator ? 'Collaboration description' : 'Campaign description' }}
+              {{ isPhotographerCreator ? 'Campaign description' : 'Campaign description' }}
               <span class="lock-badge" *ngIf="isAcceptanceLocked"><i class="bi bi-lock-fill"></i> Locked</span>
             </label>
             <button
@@ -282,14 +282,14 @@
           </p>
 
           <!-- <p class="field-sublabel">
-            <i class="bi bi-info-circle"></i> Before acceptance, only area/locality is shown. Exact venue details are shared after collaboration confirmation.
+            <i class="bi bi-info-circle"></i> Before acceptance, only area/locality is shown. Exact venue details are shared after campaign confirmation.
           </p> -->
         </div>
 
         <!-- Product Collab + brand→photographer: explicit “no shoot location” note -->
         <div class="field-group" *ngIf="isInvitingPhotographers && f['campaignType'].value === 'product'">
           <p class="field-sublabel">
-            <i class="bi bi-box-seam"></i> <strong>No shoot location needed.</strong> For a Product Collab, the product is shipped to the photographer's own studio/setup — they shoot it there. The photographer's shipping address is collected on acceptance.
+            <i class="bi bi-box-seam"></i> <strong>No shoot location needed.</strong> For a Product Campaign, the product is shipped to the photographer's own studio/setup — they shoot it there. The photographer's shipping address is collected on acceptance.
           </p>
         </div>
 
@@ -297,8 +297,8 @@
         <div class="field-group" *ngIf="selectedCampaignType === 'invite_location' && !isInvitingPhotographers && !isPhotographerCreator">
           <label class="field-label">Venue details <span class="required">*</span></label>
           <input type="text" formControlName="venueName" class="field-input" placeholder="Venue name (optional)" />
-          <input type="text" formControlName="venueAddress" class="field-input mt-2" placeholder="Collaboration area / locality" />
-          <span class="field-error" *ngIf="f['venueAddress'].touched && f['venueAddress'].invalid">Collaboration area / locality is required</span>
+          <input type="text" formControlName="venueAddress" class="field-input mt-2" placeholder="Campaign area / locality" />
+          <span class="field-error" *ngIf="f['venueAddress'].touched && f['venueAddress'].invalid">Campaign area / locality is required</span>
           <div class="field-row mt-2">
             <div class="field-group half">
               <input type="text" formControlName="venueCity" class="field-input" placeholder="City / Town / Locality name" />
@@ -509,17 +509,17 @@
           <label class="field-label mt-3">Payment mode</label>
           <div class="chip-list">
             <label class="chip" [class.chip--selected]="f['productPaymentMode'].value === 'product_only'">
-              <input type="radio" formControlName="productPaymentMode" value="product_only" hidden /> Product Collaboration (No Payment)
+              <input type="radio" formControlName="productPaymentMode" value="product_only" hidden /> Product Campaign (No Payment)
             </label>
             <label class="chip" [class.chip--selected]="f['productPaymentMode'].value === 'product_plus_payment'">
-              <input type="radio" formControlName="productPaymentMode" value="product_plus_payment" hidden /> Product + Paid Collaboration
+              <input type="radio" formControlName="productPaymentMode" value="product_plus_payment" hidden /> Product + Paid Campaign
             </label>
           </div>
           <p class="field-sublabel" *ngIf="f['productPaymentMode'].value === 'product_only' && !isInvitingPhotographers">
             <i class="bi bi-info-circle"></i> Influencer receives the product only — no cash payment involved.
           </p>
           <p class="field-sublabel" *ngIf="f['productPaymentMode'].value === 'product_only' && isInvitingPhotographers">
-            <i class="bi bi-info-circle"></i> <strong>Product Collab</strong> — You send a free product to the creator in exchange for a professional shoot / honest review content. No cash payment — the product itself is the compensation. Best for unboxing edits, product photography, and lifestyle integrations.
+            <i class="bi bi-info-circle"></i> <strong>Product Campaign</strong> — You send a free product to the creator in exchange for a professional shoot / honest review content. No cash payment — the product itself is the compensation. Best for unboxing edits, product photography, and lifestyle integrations.
           </p>
           <p class="field-sublabel" *ngIf="f['productPaymentMode'].value === 'product_plus_payment'">
             <i class="bi bi-info-circle"></i> In addition to the product, {{ isInvitingPhotographers ? 'the creator' : 'influencer' }} will receive a cash payment.
@@ -619,7 +619,7 @@
             (selectedChange)="setSmartMatchValues('lookingForCreatorTypes', $event)">
           </app-chip-selection-group>
 
-          <label class="field-label smart-match-subtitle">Collaboration Preference</label>
+          <label class="field-label smart-match-subtitle">Campaign Preference</label>
           <div class="smart-radio-row">
             <label class="smart-radio" *ngFor="let item of collaborationPreferenceOptions">
               <input type="radio"
@@ -683,7 +683,7 @@
               </button>
             </div>
 
-            <label class="field-label smart-match-subtitle">Collaboration Preference</label>
+            <label class="field-label smart-match-subtitle">Campaign Preference</label>
             <div class="smart-radio-row">
               <label class="smart-radio" *ngFor="let item of photographerCollaborationPreferenceOptions">
                 <input type="radio"
@@ -790,7 +790,7 @@
                        [(ngModel)]="fileShareAccessEmail"
                        [ngModelOptions]="{standalone: true}"
                        placeholder="Leave empty to use your login email" />
-                <small class="field-sublabel">Hidden until the collaboration is confirmed (paid collab: your payment verified; product / location: platform fee paid). Then only that creator sees it, to share the file with you. TrendStarZ review also gets access, for safety and disputes. The file is never public.</small>
+                <small class="field-sublabel">Hidden until the campaign is confirmed (paid campaign: your payment verified; product / location: platform fee paid). Then only that creator sees it, to share the file with you. TrendStarZ review also gets access, for safety and disputes. The file is never public.</small>
               </div>
             </div>
             <div *ngIf="activePlatformTab === pd.platform && !isFileSharePlatform(pd.platform)" class="platform-tab-panel">
@@ -1072,21 +1072,21 @@
 
           <div class="open-campaign-info">
             <div class="open-campaign-icon"><i class="bi bi-globe2"></i></div>
-            <h4>{{ isPhotographerCreator ? 'Open Collaboration — Creators apply directly' : ('Open Campaign — ' + inviteRecipientLabelPlural + ' apply directly') }}</h4>
+            <h4>{{ isPhotographerCreator ? 'Open Campaign — Creators apply directly' : ('Open Campaign — ' + inviteRecipientLabelPlural + ' apply directly') }}</h4>
             <p>
-              This is a <strong>Tier-filtered open</strong> {{ isPhotographerCreator ? 'collaboration' : 'campaign' }}. Once published, eligible {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }}
+              This is a <strong>Tier-filtered open</strong> campaign. Once published, eligible {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }}
               who meet your minimum tier requirement can discover it and send an application.
-              {{ isPhotographerCreator ? 'Collaborations' : 'Campaigns' }} are submitted for admin approval before they become publicly visible.
+              Campaigns are submitted for admin approval before they become publicly visible.
             </p>
             <ul class="open-campaign-steps">
-              <li><i class="bi bi-1-circle-fill"></i> Submit {{ isPhotographerCreator ? 'collaboration' : 'campaign' }} for admin moderation</li>
-              <li><i class="bi bi-2-circle-fill"></i> Approved {{ isPhotographerCreator ? 'collaborations' : 'campaigns' }} become visible to eligible {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }}</li>
+              <li><i class="bi bi-1-circle-fill"></i> Submit campaign for admin moderation</li>
+              <li><i class="bi bi-2-circle-fill"></i> Approved campaigns become visible to eligible {{ isPhotographerCreator ? 'creators' : inviteRecipientLabelPlural.toLowerCase() }}</li>
               <li><i class="bi bi-3-circle-fill"></i> {{ isPhotographerCreator ? 'Creators' : inviteRecipientLabelPlural }} matching your minimum tier apply</li>
               <li><i class="bi bi-4-circle-fill"></i> You review applicants from the dashboard</li>
             </ul>
             <p class="field-sublabel" style="margin-top:12px;">
               <i class="bi bi-info-circle"></i>
-              You can also manually invite specific {{ isPhotographerCreator ? 'creators' : 'influencers' }} from the {{ isPhotographerCreator ? 'collaboration' : 'campaign' }} dashboard after saving.
+              You can also manually invite specific {{ isPhotographerCreator ? 'creators' : 'influencers' }} from the campaign dashboard after saving.
             </p>
           </div>
 
@@ -1205,7 +1205,7 @@
                 <span class="target-categories-card__row-value">{{ selectedPhotographerDeliverables.join(' • ') }}</span>
               </div>
               <div class="target-categories-card__row" *ngIf="inviteRecipientRole === 'influencer' && preferredCollaborationPreference">
-                <span class="target-categories-card__row-label">Collaboration Preference</span>
+                <span class="target-categories-card__row-label">Campaign Preference</span>
                 <span class="target-categories-card__row-value">{{ preferredCollaborationPreference }}</span>
               </div>
               <div class="target-categories-card__row" *ngIf="inviteRecipientRole === 'photographer' && photographerEquipmentPreference.length">
@@ -1213,7 +1213,7 @@
                 <span class="target-categories-card__row-value">{{ photographerEquipmentPreference.join(' • ') }}</span>
               </div>
               <div class="target-categories-card__row" *ngIf="inviteRecipientRole === 'photographer' && photographerCollaborationPreference">
-                <span class="target-categories-card__row-label">Collaboration</span>
+                <span class="target-categories-card__row-label">Campaign</span>
                 <span class="target-categories-card__row-value">{{ photographerCollaborationPreference }}</span>
               </div>
             </div>

@@ -3,11 +3,11 @@ import { FaqAccordionItem } from './faq-accordion.component';
 export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
   {
     question: 'What is TrendStarz and how does it verify creators?',
-    answer: 'TrendStarz is a creator collaboration platform connecting brands with influencers and photo/videographers across India. A profile gets the Verified badge only after the TrendStarz team reviews and approves it, and its email and mobile number have been verified.'
+    answer: 'TrendStarz is a creator campaign platform connecting brands with influencers and photo/videographers across India. A profile gets the Verified badge only after the TrendStarz team reviews and approves it, and its email and mobile number have been verified.'
   },
   {
     question: 'Who can join TrendStarz?',
-    answer: 'Influencers, brands, photographers, videographers, models, and content creators can join TrendStarz and build professional collaborations.'
+    answer: 'Influencers, brands, photographers, videographers, models, and content creators can join TrendStarz and work on professional campaigns.'
   },
   {
     question: 'Is TrendStarz free to use for creators and brands?',
@@ -19,27 +19,27 @@ export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
   },
   {
     question: 'How do influencers receive payouts?',
-    answer: 'Submit your post link in TrendStarz. Once the host approves it, or their review time passes with no issue raised, the collaboration is completed and TrendStarz sends the agreed amount to the UPI ID on your profile. You can follow every payout on your Transactions page.'
+    answer: 'Submit your post link in TrendStarz. Once the host approves it, or their review time passes with no issue raised, the campaign is completed and TrendStarz sends the agreed amount to the UPI ID on your profile. You can follow every payout on your Transactions page.'
   },
   {
-    question: 'What does TrendStarz do in product (barter) and location-visit collaborations?',
+    question: 'What does TrendStarz do in product (barter) and location-visit campaigns?',
     answer: 'TrendStarz connects you, tracks the shipping or visit date, and tracks the post link the creator submits (with the host review and no-show rules). The product itself (its quality and delivery) or the visit, and the content the creator posts, are between the host and the creator — TrendStarz isn\'t responsible for them.'
   },
   {
     question: 'How do brands use TrendStarz?',
-    answer: 'Brands can post campaigns, discover creators, review profiles, and connect with influencers for promotions and collaborations.'
+    answer: 'Brands can post campaigns, discover creators, review profiles, and connect with influencers for promotions.'
   },
   {
     question: 'How do influencers benefit from TrendStarz?',
     answer: 'Influencers can showcase their profiles, apply to campaigns, connect with brands, and collaborate with photographers and creators.'
   },
   {
-    question: 'What is the difference between Campaigns and Collaborations?',
-    answer: 'Campaigns are promotional opportunities posted by brands for influencers or creators. Collaborations are networking or creative partnership opportunities between creators, influencers, photographers, or brands.'
+    question: 'Who can send a campaign invite?',
+    answer: 'Brands send campaigns to influencers and photographers. Photographers can send campaigns to influencers (for example for a shoot), and influencers can send campaigns to photographers or videographers. Each invite shows who it is from. A TrendStarz campaign invitation is not an Instagram native Collab post invitation: you create the content as per the brief and deliver or post it as agreed.'
   },
   {
     question: 'Are campaigns verified?',
-    answer: 'Campaigns and collaboration requests are reviewed by the TrendStarz admin team before being published to improve trust and reduce spam.'
+    answer: 'Campaigns are reviewed by the TrendStarz admin team before being published to improve trust and reduce spam.'
   },
   {
     question: 'Can small influencers join?',
@@ -51,11 +51,11 @@ export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
   },
   {
     question: 'How do I get started?',
-    answer: 'Simply create an account, complete your profile, and start exploring campaigns and collaborations.'
+    answer: 'Simply create an account, complete your profile, and start exploring campaigns.'
   },
   {
-    question: 'How do collaborations get approved?',
-    answer: 'Campaigns and collaboration requests submitted on TrendStarz are reviewed by the admin team before being published. This helps maintain quality, reduce spam, and improve trust across the platform.'
+    question: 'How do campaigns get approved?',
+    answer: 'Campaigns submitted on TrendStarz are reviewed by the admin team before being published. This helps maintain quality, reduce spam, and improve trust across the platform.'
   },
   // {
   //   question: 'Can agencies join TrendStarz?',
@@ -79,7 +79,7 @@ export const TRENDSTARZ_FAQ_ITEMS: FaqAccordionItem[] = [
   // },
   {
     question: 'How does TrendStarz handle fake users or spam?',
-    answer: 'TrendStarz reviews campaigns and collaboration requests to help reduce spam and maintain a safer collaboration environment. Additional moderation and verification systems will continue improving over time.'
+    answer: 'TrendStarz reviews campaigns to help reduce spam and keep the platform safe. Additional moderation and verification systems will continue improving over time.'
   },
   {
     question: 'Does TrendStarz support paid campaigns?',

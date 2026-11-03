@@ -777,12 +777,12 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
     if ((status === 'accepted' || status === 'counter_sent') && this.inviteRequiresShippingAddress(invite)) {
       const campaign = invite?.campaignId || {};
       this.shippingModal.prompt({
-        campaignTitle: campaign?.title || campaign?.name || 'Product collab',
+        campaignTitle: campaign?.title || campaign?.name || 'Product campaign',
         productLabel: campaign?.productDescription
           || (campaign?.productValue ? `Product value ₹${campaign.productValue}` : undefined),
       }).then((address) => {
         if (!address) {
-          this.toast.error('Shipping address is required to accept this product collab.');
+          this.toast.error('Shipping address is required to accept this product campaign.');
           return;
         }
         finish(address);

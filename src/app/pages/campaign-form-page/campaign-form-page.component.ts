@@ -211,7 +211,7 @@ export class CampaignFormPageComponent implements OnInit {
       ? inviteRecipientIds
       : (Array.isArray(inviteInfluencerIds) ? inviteInfluencerIds : []);
     const campaignPayload = { ...campaignData, inviteRecipientRole: recipientRole, brandId: requesterId };
-    const entityNoun = this.creatorRole === 'brand' ? 'Campaign' : 'Collaboration';
+    const entityNoun = 'Campaign';
 
     this.saving = true;
 

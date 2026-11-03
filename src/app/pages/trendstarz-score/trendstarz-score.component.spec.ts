@@ -44,7 +44,7 @@ describe('TrendstarzScoreComponent', () => {
 
     const title = TestBed.inject(Title);
     const meta = TestBed.inject(Meta);
-    expect(title.getTitle()).toBe('TrendScore by TrendStarz | Measure Your Collaboration Readiness');
+    expect(title.getTitle()).toBe('TrendScore by TrendStarz | Measure Your Campaign Readiness');
     expect(meta.getTag('name="description"')?.content).toContain('Discover your TrendScore');
   });
 

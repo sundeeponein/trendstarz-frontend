@@ -39,7 +39,7 @@ export class ProfileVisibilitySelectorComponent {
       badge: 'Recommended',
       label: 'Public (Guests & Logged-in Users)',
       description:
-        'Best for creators looking for brand collaborations. Visible to visitors, in creator/brand search, and eligible for the homepage Featured sections (Premium).',
+        'Best for creators looking for brand campaigns. Visible to visitors, in creator/brand search, and eligible for the homepage Featured sections (Premium).',
     },
     {
       value: 'MEMBERS_ONLY',

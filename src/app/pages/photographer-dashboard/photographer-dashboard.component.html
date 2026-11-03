@@ -211,14 +211,14 @@
     <div class="section-card mb-4">
       <div class="section-title d-flex align-items-center mb-3">
         <span class="dot dot--blue me-2"></span>
-        Active Collaborations
+        Active Campaigns
         <span class="section-count ms-2">{{ activeCollaborations.length }}</span>
       </div>
 
       <div *ngIf="!brandInvitesLoading && activeCollaborations.length === 0" class="section-empty py-4">
         <div class="section-empty-icon"><i class="bi bi-rocket"></i></div>
         <div class="section-empty-title">No active work</div>
-        <div class="section-empty-desc">Accepted collaborations in progress will appear here.</div>
+        <div class="section-empty-desc">Accepted campaigns in progress will appear here.</div>
       </div>
 
       <div class="brand-campaign-list" *ngIf="activeCollaborations.length > 0">
@@ -317,7 +317,7 @@
           <tbody>
             <tr *ngFor="let tx of pendingPaymentHistory">
               <td>{{ tx.campaignTitle || '—' }}</td>
-              <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Collab' : 'Platform Fee' }}</td>
+              <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Campaign' : 'Platform Fee' }}</td>
               <td>
                 <span *ngIf="tx.recipientRole === 'photographer'">+{{ formatPaise(tx.recipientPayout) }}</span>
                 <span *ngIf="tx.payerRole === 'photographer'">-{{ formatPaise(tx.payerTotal) }}</span>

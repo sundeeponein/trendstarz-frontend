@@ -35,7 +35,7 @@ describe('AdminLayoutComponent — grouped admin menu', () => {
     expect(topLevel()).toEqual(['Users', 'Review', 'Payments', 'Disputes', 'Link Analytics', 'Reviews', 'Data health']);
   });
 
-  it('Users opens Users list, Deleted users, Matching Evidence, Tier Review and Collaboration records; Review opens Campaigns and Collaborations', () => {
+  it('Users opens Users list, Deleted users, Matching Evidence, Tier Review and Campaign records; Review opens Campaigns and Creator Campaigns', () => {
     const items = (label: string) => {
       const btn = Array.from(el().querySelectorAll<HTMLButtonElement>('.nav-dropdown-toggle')).find(
         (b) => b.textContent!.trim() === label,
@@ -52,11 +52,11 @@ describe('AdminLayoutComponent — grouped admin menu', () => {
       ['Deleted users', '/admin/deleted-users'],
       ['Matching Evidence', '/admin/matching-evidence'],
       ['Tier Review', '/admin/tier-review'],
-      ['Collaboration records', '/admin/collaboration-records'],
+      ['Campaign records', '/admin/collaboration-records'],
     ]);
     expect(items('Review')).toEqual([
       ['Campaigns', '/admin/campaign-review'],
-      ['Collaborations', '/admin/collaboration-review'],
+      ['Creator Campaigns', '/admin/collaboration-review'],
     ]);
   });
 

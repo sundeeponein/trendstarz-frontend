@@ -26,10 +26,10 @@
       <div>
         <strong class="text-black">Current moderation mode</strong>
         <p class="text-black" *ngIf="(isCollaborationScope ? collaborationApprovalMode : campaignApprovalMode) === 'manual'">
-          Manual: New {{ isCollaborationScope ? 'collaboration' : 'campaign' }} submits as <strong>Pending Review</strong> and needs admin decision.
+          Manual: New {{ isCollaborationScope ? 'creator campaign' : 'campaign' }} submits as <strong>Pending Review</strong> and needs admin decision.
         </p>
         <p class="text-black" *ngIf="(isCollaborationScope ? collaborationApprovalMode : campaignApprovalMode) === 'auto_live'">
-          Auto-live: {{ isCollaborationScope ? 'Collaboration' : 'Campaign' }} goes public immediately (still appears in admin queue for audit).
+          Auto-live: {{ isCollaborationScope ? 'Creator campaign' : 'Campaign' }} goes public immediately (still appears in admin queue for audit).
         </p>
       </div>
     </div>

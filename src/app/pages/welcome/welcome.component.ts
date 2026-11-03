@@ -306,7 +306,7 @@ export class WelcomeComponent implements OnInit, OnDestroy {
     // updateTag (not addTags) so returning to the home page doesn't stack duplicate tags.
     const tags: MetaDefinition[] = [
       { name: 'description', content: description },
-      { name: 'keywords', content: 'influencer marketing India, hire influencers, photographers for brands, creator marketplace, TrendScore, brand collaborations' },
+      { name: 'keywords', content: 'influencer marketing India, hire influencers, photographers for brands, creator marketplace, TrendScore, brand campaigns' },
       { property: 'og:title', content: pageTitle },
       { property: 'og:description', content: description },
       { property: 'og:image', content: 'https://trendstarz.in/assets/share-banner.jpg' },

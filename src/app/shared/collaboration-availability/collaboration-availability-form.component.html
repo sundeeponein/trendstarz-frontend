@@ -1,10 +1,10 @@
 <section class="ca-form" [formGroup]="form" *ngIf="form">
-  <h3 class="m-0">Collaboration Availability</h3>
+  <h3 class="m-0">Campaign Availability</h3>
   <small class="text-black">
-    Improve your visibility and receive better collaboration invites from brands, photographers and agencies.
+    Improve your visibility and receive better campaign invites from brands, photographers and agencies.
   </small>
 
-  <div class="ca-choice mt-4" role="radiogroup" aria-label="Collaboration availability">
+  <div class="ca-choice mt-4" role="radiogroup" aria-label="Campaign availability">
     <label class="ca-choice-option" [class.selected]="availabilityChoice === 'available'">
       <input
         type="radio"
@@ -13,7 +13,7 @@
         [disabled]="availabilityLocked"
         (change)="chooseAvailability('available')"
       />
-      <span>{{ role === 'influencer' ? 'Open for Collaborations & Shoots' : 'Open for Collaborations' }}</span>
+      <span>{{ role === 'influencer' ? 'Open for Campaigns & Shoots' : 'Open for Campaigns' }}</span>
     </label>
     <label class="ca-choice-option" [class.selected]="availabilityChoice === 'not_available'">
       <input
@@ -49,7 +49,7 @@
 
   <ng-container *ngIf="form.get('enabled')?.value">
     <div class="ca-field" *ngIf="role === 'influencer' && (!readonly || optionsForField('collaborationTypes', influencerOptions.collaborationTypes || []).length)">
-      <label>Collaboration Types</label>
+      <label>Campaign Types</label>
       <div class="ca-chip-row">
         <button
           type="button"
@@ -65,7 +65,7 @@
     </div>
 
     <div class="ca-field" *ngIf="!readonly || optionsForField('availableFor', roleOptions.availableFor || []).length">
-      <label>{{ role === 'influencer' ? 'Collaboration Preference' : 'Preferred Collaboration Type' }}</label>
+      <label>{{ role === 'influencer' ? 'Campaign Preference' : 'Preferred Campaign Type' }}</label>
       <div class="ca-radio-row">
         <label class="ca-radio" *ngFor="let item of roleOptions.preferences || []">
           <input type="radio" formControlName="preference" [value]="item.name" [disabled]="readonly" />

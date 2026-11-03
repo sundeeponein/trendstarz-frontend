@@ -66,7 +66,7 @@ export class CollaborationRecordComponent implements OnChanges {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.error = 'Could not load the collaboration record.';
+        this.error = 'Could not load the campaign record.';
         this.loading = false;
         this.cdr.markForCheck();
       },

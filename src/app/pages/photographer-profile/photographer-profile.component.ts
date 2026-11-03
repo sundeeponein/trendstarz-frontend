@@ -1230,7 +1230,7 @@ export class PhotographerProfileComponent implements OnInit {
       return;
     }
     if (this.form.get('collaborationAvailability.enabled')?.value && !this.form.get('collaborationAvailability.preference')?.value) {
-      this.toast.error('Please select a preferred collaboration type.');
+      this.toast.error('Please select a preferred campaign type.');
       this.currentStep = 2;
       this.cdr.detectChanges();
       return;

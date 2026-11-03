@@ -255,7 +255,7 @@ export class App implements OnInit {
       },
       '/faqs': {
         title: 'Frequently Asked Questions | TrendStarz',
-        description: 'Search answers about TrendStarz accounts, collaborations, campaigns, payments, and future features.',
+        description: 'Search answers about TrendStarz accounts, campaigns, payments, and future features.',
       },
       '/features': {
         title: 'How TrendStarz Works for Brands & Influencers',
@@ -275,7 +275,7 @@ export class App implements OnInit {
       },
       '/how-it-works/photographers': {
         title: 'How TrendStarz Works for Photographers',
-        description: 'Learn how photographers can receive collaboration requests, confirm deliverables, and complete shoots on TrendStarz.',
+        description: 'Learn how photographers can receive campaign requests, confirm deliverables, and complete shoots on TrendStarz.',
       },
       '/features/influencers': {
         title: 'How TrendStarz Works for Influencers',
@@ -287,7 +287,7 @@ export class App implements OnInit {
       },
       '/features/photographers': {
         title: 'How TrendStarz Works for Photographers',
-        description: 'Learn how photographers can receive collaboration requests, confirm deliverables, and complete shoots on TrendStarz.',
+        description: 'Learn how photographers can receive campaign requests, confirm deliverables, and complete shoots on TrendStarz.',
       },
       '/register-influencer': {
         title: 'Influencer Registration | TrendStarz',
@@ -299,16 +299,16 @@ export class App implements OnInit {
       },
       '/register-photographer': {
         title: 'Photographer Registration | TrendStarz',
-        description: 'Join TrendStarz as a photographer and create your profile to find collaboration opportunities with brands and creators.',
+        description: 'Join TrendStarz as a photographer and create your profile to find campaign opportunities with brands and creators.',
       },
       '/auth/login': {
         title: 'Login | TrendStarz',
-        description: 'Login to your TrendStarz account to manage profile, campaigns, and collaborations.',
+        description: 'Login to your TrendStarz account to manage your profile and campaigns.',
         robots: 'noindex, nofollow',
       },
       '/login': {
         title: 'Login | TrendStarz',
-        description: 'Login to your TrendStarz account to manage profile, campaigns, and collaborations.',
+        description: 'Login to your TrendStarz account to manage your profile and campaigns.',
         robots: 'noindex, nofollow',
       },
       '/verify-email': {
@@ -350,14 +350,14 @@ export class App implements OnInit {
     if (path.startsWith('/influencer/')) {
       return {
         title: 'Influencer Profile | TrendStarz',
-        description: 'View influencer profile details and collaboration highlights on TrendStarz.',
+        description: 'View influencer profile details and campaign highlights on TrendStarz.',
       };
     }
 
     if (path.startsWith('/brand/')) {
       return {
         title: 'Brand Profile | TrendStarz',
-        description: 'View brand profile and campaign collaboration details on TrendStarz.',
+        description: 'View brand profile and campaign details on TrendStarz.',
       };
     }
 

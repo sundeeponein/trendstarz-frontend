@@ -33,7 +33,7 @@ const FLAG_LABELS: Record<string, string> = {
   host_repeat_refunds: 'Host: 2+ refunds in 90 days',
   creator_repeat_no_post: 'Creator: 2+ no-post closures in 90 days',
   replaced_after_no_post: 'Host invited another creator within 7 days',
-  host_no_post_rate: 'Host: 2+ no-posts in last 5 paid collaborations',
+  host_no_post_rate: 'Host: 2+ no-posts in last 5 paid campaigns',
 };
 
 const ANSWER_LABELS: Record<string, string> = {

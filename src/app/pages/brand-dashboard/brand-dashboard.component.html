@@ -148,7 +148,7 @@
         <div *ngIf="activeCampaignList.length === 0" class="section-empty">
           <div class="section-empty-icon"><i class="bi bi-megaphone"></i></div>
           <div class="section-empty-title">No active campaigns</div>
-          <div class="section-empty-desc">Active campaigns and collaborations will appear here.</div>
+          <div class="section-empty-desc">Active campaigns will appear here.</div>
           <a routerLink="/campaigns/new" class="section-empty-action"><i class="bi bi-plus-circle"></i> Create New Campaign</a>
         </div>
         <ul *ngIf="activeCampaignList.length > 0" class="list-group mb-2">
@@ -231,7 +231,7 @@
         <tbody>
           <tr *ngFor="let tx of pendingPaymentHistory">
             <td>{{ tx.campaignTitle || '—' }}</td>
-            <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Collab' : 'Platform Fee' }}</td>
+            <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Campaign' : 'Platform Fee' }}</td>
             <td>{{ formatPaise(tx.payerTotal) }}</td>
             <td>{{ tx.collectionStatus === 'proof_submitted' ? 'Proof Under Review' : 'Awaiting Payment' }}</td>
             <td>{{ formatDate(tx.updatedAt || tx.createdAt) }}</td>

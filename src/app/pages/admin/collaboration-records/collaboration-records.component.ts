@@ -65,7 +65,7 @@ export class CollaborationRecordsComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.error = 'Could not load collaboration records.';
+        this.error = 'Could not load campaign records.';
         this.loading = false;
         this.cdr.markForCheck();
       },

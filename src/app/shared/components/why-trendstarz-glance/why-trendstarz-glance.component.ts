@@ -22,7 +22,7 @@ export interface TrendstarzGlanceCounter {
 })
 export class WhyTrendstarzGlanceComponent {
   @Input() heading = 'Why TrendStarz';
-  @Input() subheading = "Built for India's growing creator economy, providing institutional-grade tools for modern collaborations.";
+  @Input() subheading = "Built for India's growing creator economy, providing institutional-grade tools for modern campaigns.";
   @Input() learnMoreRoute = '/why-trendstarz';
 
   @Input() benefits: WhyTrendstarzBenefit[] = [

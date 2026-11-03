@@ -123,8 +123,8 @@ export class AdminPlansComponent implements OnInit, OnDestroy {
     INFLUENCER: [
       { key: 'dailyProfileViewLimit', group: 'browse', label: 'Daily profile views', hint: 'Profiles they can open per day.' },
       { key: 'dailySearchLimit', group: 'browse', label: 'Daily searches', hint: 'Searches they can run per day.' },
-      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns or collabs they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
-      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid collab or Product + Paid campaign.' },
+      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
+      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid campaign or Product + Paid campaign.' },
       { key: 'maxBarterCampaignsPerMonth', group: 'host', label: '… of which barter / location (max)', hint: 'How many of the monthly campaigns may be product-only barter or location visits.', default: 2 },
       { key: 'maxInvitesPerBarterCampaign', group: 'host', label: 'Invites per barter / location campaign', hint: 'Creators they can invite to one barter or location campaign.', default: 3 },
       { key: 'maxAcceptedPerBarterCampaign', group: 'host', label: 'Accepted creators per barter / location campaign', hint: 'The campaign closes once this many creators accept.', default: 1 },
@@ -135,8 +135,8 @@ export class AdminPlansComponent implements OnInit, OnDestroy {
       // 'maxTeamSeats' intentionally omitted — no team-member feature exists yet to enforce it.
       { key: 'dailyProfileViewLimit', group: 'browse', label: 'Daily profile views', hint: 'Profiles they can open per day.' },
       { key: 'dailySearchLimit', group: 'browse', label: 'Daily searches', hint: 'Searches they can run per day.' },
-      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns or collabs they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
-      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid collab or Product + Paid campaign.' },
+      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
+      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid campaign or Product + Paid campaign.' },
       { key: 'maxBarterCampaignsPerMonth', group: 'host', label: '… of which barter / location (max)', hint: 'How many of the monthly campaigns may be product-only barter or location visits.', default: 2 },
       { key: 'maxInvitesPerBarterCampaign', group: 'host', label: 'Invites per barter / location campaign', hint: 'Creators they can invite to one barter or location campaign.', default: 3 },
       { key: 'maxAcceptedPerBarterCampaign', group: 'host', label: 'Accepted creators per barter / location campaign', hint: 'The campaign closes once this many creators accept.', default: 1 },
@@ -144,8 +144,8 @@ export class AdminPlansComponent implements OnInit, OnDestroy {
     PHOTOGRAPHER: [
       { key: 'dailyProfileViewLimit', group: 'browse', label: 'Daily profile views', hint: 'Profiles they can open per day.' },
       { key: 'dailySearchLimit', group: 'browse', label: 'Daily searches', hint: 'Searches they can run per day.' },
-      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns or collabs they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
-      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid collab or Product + Paid campaign.' },
+      { key: 'maxActiveCampaigns', group: 'host', label: 'Campaigns per month (all types)', hint: 'Campaigns they can submit per plan month. Completed ones still count; drafts and rejected don\'t.' },
+      { key: 'maxInvitesPerCampaign', group: 'host', label: 'Invites per paid campaign', hint: 'Creators they can invite to one paid campaign or Product + Paid campaign.' },
       { key: 'maxBarterCampaignsPerMonth', group: 'host', label: '… of which barter / location (max)', hint: 'How many of the monthly campaigns may be product-only barter or location visits.', default: 2 },
       { key: 'maxInvitesPerBarterCampaign', group: 'host', label: 'Invites per barter / location campaign', hint: 'Creators they can invite to one barter or location campaign.', default: 3 },
       { key: 'maxAcceptedPerBarterCampaign', group: 'host', label: 'Accepted creators per barter / location campaign', hint: 'The campaign closes once this many creators accept.', default: 1 },
@@ -157,7 +157,7 @@ export class AdminPlansComponent implements OnInit, OnDestroy {
   /** Editor sections, in order — each shows only the limits that belong to it. */
   readonly limitGroups: { id: LimitGroup; title: string; subtitle: string }[] = [
     { id: 'browse', title: 'Browsing', subtitle: 'Discovering profiles on TrendStarZ.' },
-    { id: 'host', title: 'As a host — running campaigns & sending invites', subtitle: 'Applies when this user creates a campaign or collab.' },
+    { id: 'host', title: 'As a host — running campaigns & sending invites', subtitle: 'Applies when this user creates a campaign.' },
     { id: 'creator', title: 'As a creator — receiving invites', subtitle: 'Applies when hosts invite this user.' },
     { id: 'profile', title: 'Profile & media', subtitle: 'Uploads on their profile.' },
   ];

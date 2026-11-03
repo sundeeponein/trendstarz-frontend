@@ -379,7 +379,7 @@ export class InfluencerProfileViewComponent implements OnInit {
       : '';
     const followers = this.formatFollowers(this.getTotalFollowers());
     const title = `${name}${categories ? ' - ' + categories : ''} | Influencer | TrendStarz`;
-    const description = `Discover ${name}${categories ? ' (' + categories + ')' : ''} on TrendStarz. ${followers} followers. Contact for collaborations, campaigns, and brand partnerships.`;
+    const description = `Discover ${name}${categories ? ' (' + categories + ')' : ''} on TrendStarz. ${followers} followers. Contact for campaigns and brand partnerships.`;
     const canonical = `https://trendstarz.in/influencer/${influencer?.username || ''}`;
 
     this.titleService.setTitle(title);
@@ -408,7 +408,7 @@ export class InfluencerProfileViewComponent implements OnInit {
 
   private setDefaultMetadata(): void {
     const title = 'Influencer Profile | TrendStarz';
-    const description = 'View influencer profile details and collaboration highlights on TrendStarz.';
+    const description = 'View influencer profile details and campaign highlights on TrendStarz.';
     this.titleService.setTitle(title);
     this.meta.updateTag({ name: 'description', content: description });
     this.meta.updateTag({ name: 'robots', content: 'noindex, nofollow' });

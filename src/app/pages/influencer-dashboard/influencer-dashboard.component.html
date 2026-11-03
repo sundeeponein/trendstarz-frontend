@@ -9,7 +9,7 @@
     <div class="dashboard-welcome-left">
       <span class="dashboard-kicker"><span class="dot"></span> Creator dashboard</span>
       <h1 class="welcome-title">Welcome, <span class="welcome-name">{{ dashboard?.user?.name || 'Influencer' }}</span></h1>
-      <div class="welcome-subtitle">Here is what is happening with your campaigns, collaborations and earnings today.</div>
+      <div class="welcome-subtitle">Here is what is happening with your campaigns and earnings today.</div>
     </div>
     <div class="dashboard-welcome-right account-meta-card">
       <div><strong>Registered on</strong> <span>{{ firstRegisteredAtDisplay ? (firstRegisteredAtDisplay | date:'medium') : '-' }}</span></div>
@@ -135,14 +135,14 @@
         <span class="role-tile__icon role-tile__icon--green" aria-hidden="true"><i class="bi bi-camera"></i></span>
         <div class="role-tile__body">
           <div class="role-tile__value">{{ collaborationRequestsCount }}</div>
-          <div class="role-tile__label">Collaboration requests from photo/videographers</div>
+          <div class="role-tile__label">Campaign requests from photo/videographers</div>
           <div class="role-tile__meta">
             Active: <strong>{{ collaborationRequestsActiveCount }}</strong>
             · Pending review: <strong>{{ collaborationRequestsPendingReviewCount }}</strong>
           </div>
         </div>
         <button type="button" class="role-tile__cta" (click)="openCampaignManagement('collaborations')">
-          Manage collaboration requests <i class="bi bi-arrow-right"></i>
+          Manage campaign requests <i class="bi bi-arrow-right"></i>
         </button>
       </div>
     </div>
@@ -217,7 +217,7 @@
     <div *ngIf="invites.length === 0" class="section-empty py-4">
       <div class="section-empty-icon"><i class="bi bi-inbox"></i></div>
       <div class="section-empty-title">No new invites</div>
-      <div class="section-empty-desc">When brands invite you to collaborate, they will appear here.</div>
+      <div class="section-empty-desc">When brands invite you to their campaigns, they will appear here.</div>
     </div>
 
     <div class="invite-list invite-list--compact" *ngIf="invites.length > 0">
@@ -249,16 +249,16 @@
   <div id="collab-requests" *ngIf="!loading" class="section-card mb-4">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--purple me-2"></span>
-      Photo/Videographer Collaboration Requests
+      Photo/Videographer Campaign Requests
       <span class="source-badge source-badge--collab ms-2">From photo/videographers</span>
       <span class="section-count ms-2">{{ collaborationRequests.length }}</span>
     </div>
 
     <div *ngIf="collaborationRequests.length === 0" class="section-empty py-3">
       <div class="section-empty-icon"><i class="bi bi-camera-reels"></i></div>
-      <div class="section-empty-title">No collaboration requests yet</div>
-      <div class="section-empty-desc">When photo/videographers send collaboration requests, they will appear here.</div>
-      <button type="button" class="section-empty-action" (click)="openCampaignManagement('collaborations')"><i class="bi bi-arrow-right-circle"></i> Open Collaborations</button>
+      <div class="section-empty-title">No campaign requests yet</div>
+      <div class="section-empty-desc">When photo/videographers send campaign requests, they will appear here.</div>
+      <button type="button" class="section-empty-action" (click)="openCampaignManagement('collaborations')"><i class="bi bi-arrow-right-circle"></i> Open Campaigns</button>
     </div>
 
     <div *ngFor="let c of collaborationRequests" class="active-camp-card" (click)="openCampaignManagement('collaborations')">
@@ -290,7 +290,7 @@
 
     <div class="txn-see-all" *ngIf="collaborationRequests.length">
       <a routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }" class="txn-see-all__link">
-        <i class="bi bi-arrow-right-circle"></i> Manage all collaboration requests
+        <i class="bi bi-arrow-right-circle"></i> Manage all campaign requests
       </a>
     </div>
   </div>
@@ -340,7 +340,7 @@
         <tbody>
           <tr *ngFor="let tx of pendingPaymentHistory">
             <td>{{ tx.campaignTitle || '—' }}</td>
-            <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Collab' : 'Platform Fee' }}</td>
+            <td>{{ tx.transactionType === 'paid_collab' ? 'Paid Campaign' : 'Platform Fee' }}</td>
             <td>
               <span *ngIf="tx.recipientRole === 'influencer'">+{{ formatPaise(tx.recipientPayout) }}</span>
               <span *ngIf="tx.payerRole === 'influencer'">-{{ formatPaise(tx.payerTotal) }}</span>

@@ -671,7 +671,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
 
   get submissionWindowClosedText(): string {
     const closesAtText = this.formatDateTime(this.postingSubmissionClosesAt) || 'the deadline';
-    return `Submission window closed on ${closesAtText}. You can no longer submit for this collaboration.`;
+    return `Submission window closed on ${closesAtText}. You can no longer submit for this campaign.`;
   }
 
   get submissionReviewStatusMessage(): string {

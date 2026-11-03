@@ -701,7 +701,7 @@ export class InfluencerRegistrationComponent implements OnInit {
       if (this.registrationForm.get('collaborationAvailability.enabled')?.value) {
         this.registrationForm.get('collaborationAvailability.collaborationTypes')?.markAsTouched();
         if (!(this.registrationForm.get('collaborationAvailability.collaborationTypes')?.value?.length > 0)) {
-          this.registrationError = 'Please select at least one collaboration type.';
+          this.registrationError = 'Please select at least one campaign type.';
           return false;
         }
       }

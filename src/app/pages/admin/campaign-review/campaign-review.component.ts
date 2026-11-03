@@ -193,16 +193,16 @@ export class CampaignReviewComponent implements OnInit {
   }
 
   get queueTitle(): string {
-    return this.isCollaborationScope ? 'Collaboration Approval Queue' : 'Campaign Approval Queue';
+    return this.isCollaborationScope ? 'Creator Campaign Approval Queue' : 'Campaign Approval Queue';
   }
 
   get pageTitle(): string {
-    return this.isCollaborationScope ? 'Collaboration Review' : 'Campaign Review';
+    return this.isCollaborationScope ? 'Creator Campaign Review' : 'Campaign Review';
   }
 
   get pageSubtitle(): string {
     return this.isCollaborationScope
-      ? 'Approve, reject, or request changes for collaborations submitted by photographers.'
+      ? 'Approve, reject, or request changes for campaigns submitted by photographers.'
       : 'Approve, reject, or request changes for campaigns submitted by brands.';
   }
 
@@ -1191,8 +1191,8 @@ export class CampaignReviewComponent implements OnInit {
   campaignPreviewType(campaign: any): string {
     const key = String(campaign?.campaignType || '').trim().toLowerCase();
     const labels: Record<string, string> = {
-      paid_collab: 'Paid Collab',
-      product: 'Product Collab',
+      paid_collab: 'Paid Campaign',
+      product: 'Product Campaign',
       invite_location: 'Invite to Location',
     };
     return labels[key] || campaign?.campaignType || 'Campaign';

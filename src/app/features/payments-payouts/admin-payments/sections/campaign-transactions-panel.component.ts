@@ -665,7 +665,7 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
   payoutTimingSubtext(tx: CampaignTransaction): string {
     if (tx.payoutStatus === 'paid') return '';
     if (tx.payoutStatus === 'skipped') {
-      return 'No submission was made — this collaboration will not be paid out.';
+      return 'No submission was made — this campaign will not be paid out.';
     }
     if (tx.payoutStatus === 'frozen') {
       return 'Payout is on hold pending dispute resolution by admin.';

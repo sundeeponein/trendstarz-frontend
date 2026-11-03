@@ -370,7 +370,7 @@ export class BrandProfileViewComponent implements OnInit {
     const followers = this.formatFollowers(this.getTotalFollowers());
     const campaignCount = (this.activePublicCampaigns || []).length;
     const title = `${name} | Brand | TrendStarz`;
-    const description = `Discover ${name} on TrendStarz. ${followers} followers. ${campaignCount} active campaigns. Contact for influencer collaborations and brand partnerships.`;
+    const description = `Discover ${name} on TrendStarz. ${followers} followers. ${campaignCount} active campaigns. Contact for influencer campaigns and brand partnerships.`;
     const canonical = `https://trendstarz.in/brand/${brand?.brandUsername || brand?.brandName || ''}`;
 
     this.titleService.setTitle(title);
@@ -400,7 +400,7 @@ export class BrandProfileViewComponent implements OnInit {
 
   private setDefaultMetadata(): void {
     const title = 'Brand Profile | TrendStarz';
-    const description = 'View brand profile and campaign collaboration details on TrendStarz.';
+    const description = 'View brand profile and campaign details on TrendStarz.';
     this.titleService.setTitle(title);
     this.meta.updateTag({ name: 'description', content: description });
     this.meta.updateTag({ name: 'robots', content: 'noindex, nofollow' });

@@ -153,7 +153,7 @@ describe('RefundsPanelComponent (Admin → Payments → Refunds)', () => {
     ]);
     const el = fixture.nativeElement as HTMLElement;
     expect(text(el)).toContain('Host invited another creator within 7 days');
-    expect(text(el)).toContain('Host: 2+ no-posts in last 5 paid collaborations');
+    expect(text(el)).toContain('Host: 2+ no-posts in last 5 paid campaigns');
     expect(text(el)).toContain('Creator: Host asked me not to post');
     expect(text(el)).toContain('Fee credit waiting for review');
     (Array.from(el.querySelectorAll('button')).find((b) => b.textContent!.includes('Issue fee credit')) as HTMLElement).click();

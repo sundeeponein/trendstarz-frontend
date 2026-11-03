@@ -31,7 +31,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { label: 'Deleted users', link: '/admin/deleted-users', icon: 'bi-trash3' },
       { label: 'Matching Evidence', link: '/admin/matching-evidence', icon: 'bi-clipboard-data' },
       { label: 'Tier Review', link: '/admin/tier-review', icon: 'bi-patch-check' },
-      { label: 'Collaboration records', link: '/admin/collaboration-records', icon: 'bi-clipboard-data' },
+      { label: 'Campaign records', link: '/admin/collaboration-records', icon: 'bi-clipboard-data' },
     ],
   },
   {
@@ -40,7 +40,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     icon: 'bi-kanban',
     items: [
       { label: 'Campaigns', link: '/admin/campaign-review', icon: 'bi-kanban' },
-      { label: 'Collaborations', link: '/admin/collaboration-review', icon: 'bi-camera-reels' },
+      { label: 'Creator Campaigns', link: '/admin/collaboration-review', icon: 'bi-camera-reels' },
     ],
   },
 ];

@@ -64,7 +64,7 @@
         </div>
 
         <div class="detail-locked" *ngIf="isLoggedIn && !canOpenSocialProfiles">
-          <i class="bi bi-lock-fill"></i> Upgrade to Premium to open creator social profiles and send collaboration invites.
+          <i class="bi bi-lock-fill"></i> Upgrade to Premium to open creator social profiles and send campaign invites.
         </div>
 
         <!-- Stats row -->
@@ -113,7 +113,7 @@
           </div>
 
           <div class="detail-row" *ngIf="paidRecord">
-            <div><span class="detail-key">Paid collaborations</span></div>
+            <div><span class="detail-key">Paid campaigns</span></div>
             <span class="detail-val">{{ paidRecord.completed }} completed · {{ paidRecord.missed }} missed</span>
             <div class="detail-caption">On TrendStarZ. Excused or disputed closures are not counted.</div>
           </div>
@@ -211,7 +211,7 @@
           variant="influencer"
           [platforms]="influencer.socialMedia || []"
           [locked]="!isProViewer || !!influencer.socialMediaRestricted"
-          lockedMessage="Upgrade to Premium to open creator social profiles and send collaboration invites."
+          lockedMessage="Upgrade to Premium to open creator social profiles and send campaign invites."
           [canOpen]="isProViewer && canOpenSocialProfiles"
           [isProViewer]="isProViewer"
           [showEngagement]="true"

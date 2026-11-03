@@ -287,7 +287,7 @@
               </div>
 
               <ng-container *ngIf="activePlatformTab">
-                <small>“Accurate profile information improves visibility and brand collaboration opportunities.”</small>
+                <small>“Accurate profile information improves visibility and brand campaign opportunities.”</small>
                 <div *ngFor="let platform of selectedPlatforms()" [hidden]="platform._id !== activePlatformTab" class="platform-details-card m-2">
                   <div class="platform-details-header">
                     <i [class]="platform.icon" [style.color]="platform.color" class="platform-icon"></i>
@@ -386,7 +386,7 @@
             <div class="field-block full-width" formGroupName="contact">
               <label class="contact-section-label">How to Contact you? <span class="text-danger">*</span></label>
               <div class="text-muted mt-1" style="font-size:0.9em;">
-                Contact details are shared in campaign/collaboration flow only after payment is confirmed and contact unlock is completed.
+                Contact details are shared in campaign flow only after payment is confirmed and contact unlock is completed.
                 Email is shown only when email is verified. Call/WhatsApp are shown only when mobile is verified.
                 <br>
                 <span class="text-warning">⚠️ Unverified contact details may cause you to miss important campaigns or relevant opportunities.</span>

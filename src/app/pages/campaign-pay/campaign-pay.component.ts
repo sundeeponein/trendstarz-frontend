@@ -81,8 +81,8 @@ export class CampaignPayComponent implements OnInit {
     this.trustLabels = c.trustLabels || [];
 
     const typeMap: Record<string, string> = {
-      paid_collab: 'Paid Collaboration',
-      product: 'Product Collaboration',
+      paid_collab: 'Paid Campaign',
+      product: 'Product Campaign',
       invite_location: 'Invite to Location',
     };
     this.chip = typeMap[(c.campaignType || '').toLowerCase()] || 'Campaign';

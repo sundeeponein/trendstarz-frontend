@@ -113,7 +113,7 @@ export class TrendstarzScoreComponent implements OnInit, AfterViewInit, OnDestro
       role: 'Influencers',
       icon: 'bi-camera-reels-fill',
       tint: 'orange',
-      benefits: ['Build stronger creator profiles', 'Improve collaboration readiness', 'Attract more campaigns'],
+      benefits: ['Build stronger creator profiles', 'Improve campaign readiness', 'Attract more campaigns'],
     },
     {
       role: 'Photographers',
@@ -125,7 +125,7 @@ export class TrendstarzScoreComponent implements OnInit, AfterViewInit, OnDestro
       role: 'Videographers',
       icon: 'bi-camera-video-fill',
       tint: 'purple',
-      benefits: ['Demonstrate production quality', 'Grow collaboration opportunities'],
+      benefits: ['Demonstrate production quality', 'Grow campaign opportunities'],
     },
     {
       role: 'Brands',
@@ -210,12 +210,12 @@ export class TrendstarzScoreComponent implements OnInit, AfterViewInit, OnDestro
         range: range(t.partiallyReadyMinScore, t.campaignReadyMinScore - 1), label: 'Growing', stage: 'Rising talent',
         icon: 'bi-graph-up-arrow', tint: 'blue',
         text: 'A solid base with an active audience. Partially campaign-ready — consistency and branding will lift you further.',
-        unlockPrefix: 'Good fit', unlockIcon: 'bi-gift', unlock: 'Product collaborations & gifting campaigns',
+        unlockPrefix: 'Good fit', unlockIcon: 'bi-gift', unlock: 'Product campaigns & gifting campaigns',
       },
       {
         range: range(t.campaignReadyMinScore, t.trendstarzRecommendedMinScore - 1), label: 'Campaign Ready', stage: 'Paid-collab ready',
         icon: 'bi-patch-check', tint: 'orange', highlight: true,
-        text: 'Complete profile, steady posting and everything set up to take paid brand collaborations, including UPI payouts.',
+        text: 'Complete profile, steady posting and everything set up to take paid brand campaigns, including UPI payouts.',
         unlockPrefix: 'Unlocks', unlockIcon: 'bi-cash-coin', unlock: 'Campaign Ready badge on your search card',
       },
       {
@@ -283,7 +283,7 @@ export class TrendstarzScoreComponent implements OnInit, AfterViewInit, OnDestro
     {
       question: 'What is TrendScore?',
       answer:
-        'TrendScore is a marketplace quality score that helps creators understand their collaboration readiness and helps brands discover profiles worth working with — based on multiple quality indicators, not follower count alone.',
+        'TrendScore is a marketplace quality score that helps creators understand their campaign readiness and helps brands discover profiles worth working with — based on multiple quality indicators, not follower count alone.',
     },
     {
       question: "Why can't Instagram be checked using only a profile URL?",
@@ -326,11 +326,11 @@ export class TrendstarzScoreComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   ngOnInit(): void {
-    this.title.setTitle('TrendScore by TrendStarz | Measure Your Collaboration Readiness');
+    this.title.setTitle('TrendScore by TrendStarz | Measure Your Campaign Readiness');
     this.meta.updateTag({
       name: 'description',
       content:
-        'Discover your TrendScore to understand your collaboration readiness, improve your creator profile, and attract more brand opportunities.',
+        'Discover your TrendScore to understand your campaign readiness, improve your creator profile, and attract more brand opportunities.',
     });
     if (this.isBrowser) {
       this.scoreApi.getPlatformFlags().subscribe({

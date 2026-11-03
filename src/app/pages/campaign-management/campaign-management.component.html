@@ -40,8 +40,8 @@
     <div class="ocp-pills">
       <span class="ocp-pill ocp-pill--type" *ngIf="openCampaignPreview.campaignType">
         <i class="bi bi-tag-fill"></i>
-        {{ openCampaignPreview.campaignType === 'paid_collab' ? 'Paid Collab' :
-           openCampaignPreview.campaignType === 'product' ? 'Product Collab' :
+        {{ openCampaignPreview.campaignType === 'paid_collab' ? 'Paid Campaign' :
+           openCampaignPreview.campaignType === 'product' ? 'Product Campaign' :
            openCampaignPreview.campaignType === 'invite_location' ? 'Invite to Location' :
            openCampaignPreview.campaignType }}
       </span>
@@ -118,7 +118,7 @@
   <!-- Loading -->
   <div *ngIf="loading" class="text-center py-5">
     <div class="spinner-border text-warning" role="status"></div>
-    <p class="mt-2 text-muted">Loading {{ isInfluencerView ? (isInfluencerCollaborationsView ? 'collaborations' : 'campaigns') : (isPhotographerView ? (isPhotographerCampaignRequestsView ? 'campaign requests' : 'collaborations') : 'campaigns') }}...</p>
+    <p class="mt-2 text-muted">Loading {{ isInfluencerView ? (isInfluencerCollaborationsView ? 'campaigns' : 'campaigns') : (isPhotographerView ? (isPhotographerCampaignRequestsView ? 'campaign requests' : 'campaigns') : 'campaigns') }}...</p>
   </div>
 
   <!-- Campaign payment modal (brand-facing) -->
@@ -161,7 +161,7 @@
         </button>
         <button class="btn btn-create" (click)="openCreateForm()"
                 [disabled]="!brandId || isActiveQuotaFull"
-                [title]="isActiveQuotaFull ? ('Monthly ' + quotaEntitySingularLabel + ' slots used (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + ').' + (slotsResetLabel ? ' Slots reset on ' + slotsResetLabel + '.' : '') + ' Upgrade to Premium for more.') : ((isPhotographerView || isInfluencerCollaborationsView) ? 'Create a new collaboration' : 'Create a new campaign request')">
+                [title]="isActiveQuotaFull ? ('Monthly ' + quotaEntitySingularLabel + ' slots used (' + summaryActiveCampaigns + '/' + maxActiveCampaigns + ').' + (slotsResetLabel ? ' Slots reset on ' + slotsResetLabel + '.' : '') + ' Upgrade to Premium for more.') : ((isPhotographerView || isInfluencerCollaborationsView) ? 'Create a new campaign' : 'Create a new campaign request')">
           <i class="bi bi-plus-circle-fill"></i>
           {{ createButtonLabel }}
         </button>
@@ -324,7 +324,7 @@
       <div class="ci-header">
         <div>
           <h1 class="ci-title">Campaign Inbox</h1>
-          <p class="ci-subtitle">Manage your invitations and active collaborations with precision.</p>
+          <p class="ci-subtitle">Manage your invitations and active campaigns with precision.</p>
         </div>
         <div class="ci-header-actions">
           <button type="button" class="ci-refresh-btn" title="Refresh" [disabled]="myInvitesLoading" (click)="reloadMyInvites()">
@@ -443,7 +443,7 @@
         <div class="ci-empty ci-empty--first" *ngIf="myInvites.length === 0">
           <div class="ci-empty-icon">📢</div>
           <div class="ci-empty-title">No more campaigns found</div>
-          <div class="ci-empty-sub">You've reached the end of your inbox. We'll notify you as soon as new brands want to collaborate with you.</div>
+          <div class="ci-empty-sub">You've reached the end of your inbox. We'll notify you as soon as brands invite you to new campaigns.</div>
           <a class="ci-empty-link" routerLink="/search">Check suggested brands <i class="bi bi-arrow-right"></i></a>
         </div>
       </div>
@@ -689,7 +689,7 @@
               <div class="pay-now-nudge-text">
                 <strong>{{ payableInvites(c).length }}
                   influencer{{ payableInvites(c).length === 1 ? ' has' : 's have' }} accepted</strong>
-                — Pay TrendStarz to confirm the collaboration and let them begin creating content.
+                — Pay TrendStarz to confirm the campaign and let them begin creating content.
                 <span *ngIf="payableInvites(c).length > 1">You can also confirm them one by one below.</span>
               </div>
               <button class="btn-pay-now" (click)="openPayment(c._id)" [disabled]="!canOpenPaymentForCampaign(c)">
@@ -784,7 +784,7 @@
             <!-- Invited recipients list -->
             <div class="completed-worked-note" *ngIf="c.status === 'completed'">
               <i class="bi bi-stars"></i>
-              Showing everyone who accepted this {{ isPhotographerView ? 'collaboration' : 'campaign' }} — including anyone who didn't post.
+              Showing everyone who accepted this campaign — including anyone who didn't post.
             </div>
 
             <div class="expand-inf-list" *ngIf="getExpandDisplayInvites(c).length > 0">
@@ -939,7 +939,7 @@
                       *ngIf="canShowConfirmCollaboration(inv, c)"
                       (click)="payForInvite(c, inv); $event.stopPropagation()"
                       [title]="isFeeCampaign(c) ? 'Pay the ' + platformFeeLabel(inv) + ' platform fee (+ GST) to confirm this creator' : 'Pay for this creator only'">
-                      <i class="bi bi-lock-fill"></i> Confirm Collaboration
+                      <i class="bi bi-lock-fill"></i> Confirm Creator
                     </button>
                     <span class="inv-pay-chip inv-pay-chip--review" *ngIf="(c.campaignType === 'paid_collab' || isFeeCampaign(c)) && isInvitePaymentUnderReview(inv)"
                       title="Your payment for this creator is being verified by TrendStarZ">
@@ -991,7 +991,7 @@
                             type="button"
                             *ngIf="canWriteReviewForInvite(inv, c)"
                             (click)="openWriteReview(inv, $event)"
-                            title="Write a review for this completed collaboration">
+                            title="Write a review for this completed campaign">
                       <i class="bi bi-star-fill"></i> Write Review
                     </button>
 
@@ -1202,7 +1202,7 @@
                         Review period active. Manual review unlocks in {{ getSubmissionApprovalWaitText(sub) }} (at {{ getSubmissionApprovalUnlockAtText(sub) }}).
                         <p class="review-period-box__desc">
                           This post has been submitted for review. You have {{ getSubmissionAutoCompleteDelayLabel() }} to report any issues.
-                          If no issue is reported, this collaboration will be completed automatically.
+                          If no issue is reported, this campaign will be completed automatically.
                         </p>
                       </div>
                       <div class="sub-metrics-empty" *ngIf="isSubmissionAutoCompleteWindowExpired(sub)">
@@ -1315,7 +1315,7 @@
                   <i class="bi bi-pencil"></i> Edit
                 </button>
                 <button class="btn-expand-end" *ngIf="canDeletePendingCampaign(c)" (click)="onDelete(c)">
-                  <i class="bi bi-trash"></i> Delete {{ isPhotographerView ? 'collaboration' : 'campaign' }}
+                  <i class="bi bi-trash"></i> Delete campaign
                 </button>
               </ng-container>
 
@@ -1325,7 +1325,7 @@
                   <i class="bi bi-pencil"></i> Edit
                 </button>
                 <button class="btn-expand-end" *ngIf="canDeletePendingCampaign(c)" (click)="onDelete(c)">
-                  <i class="bi bi-trash"></i> Delete {{ isPhotographerView ? 'collaboration' : 'campaign' }}
+                  <i class="bi bi-trash"></i> Delete campaign
                 </button>
               </ng-container>
 
@@ -1338,7 +1338,7 @@
                   <i class="bi bi-pencil"></i> Edit
                 </button>
                 <button class="btn-expand-end" *ngIf="canDeletePendingCampaign(c)" (click)="onDelete(c)">
-                  <i class="bi bi-trash"></i> Delete {{ isPhotographerView ? 'collaboration' : 'campaign' }}
+                  <i class="bi bi-trash"></i> Delete campaign
                 </button>
               </ng-container>
 
@@ -1356,7 +1356,7 @@
                   {{ submittingReviewId === c._id ? 'Submitting...' : 'Submit for Review' }}
                 </button>
                 <button class="btn-expand-end" *ngIf="canDeletePendingCampaign(c)" (click)="onDelete(c)">
-                  <i class="bi bi-trash"></i> Delete {{ isPhotographerView ? 'collaboration' : 'campaign' }}
+                  <i class="bi bi-trash"></i> Delete campaign
                 </button>
               </ng-container>
 
@@ -1374,7 +1374,7 @@
                   {{ submittingReviewId === c._id ? 'Submitting...' : 'Resubmit for Review' }}
                 </button>
                 <button class="btn-expand-end" *ngIf="canDeletePendingCampaign(c)" (click)="onDelete(c)">
-                  <i class="bi bi-trash"></i> Delete {{ isPhotographerView ? 'collaboration' : 'campaign' }}
+                  <i class="bi bi-trash"></i> Delete campaign
                 </button>
                 <button class="btn-expand-duplicate" (click)="duplicateCampaign(c)">
                   <i class="bi bi-copy"></i> Duplicate
@@ -1401,10 +1401,10 @@
         <i class="bi bi-megaphone"></i>
         <p *ngIf="!isInfluencerBrowseMode && showCollaborationsWorkspace">No {{ activeTab }} campaigns yet.</p>
         <p *ngIf="isPhotographerCampaignRequestsView">No campaign requests yet.</p>
-        <p *ngIf="isInfluencerBrowseMode && isInfluencerCollaborationsView && influencerCollabSubview === 'invited'">No open collaborations available right now. Check back soon!</p>
-        <p *ngIf="!isInfluencerBrowseMode && isInfluencerCollaborationsView && influencerCollabSubview === 'created'">No collaborations created yet.</p>
+        <p *ngIf="isInfluencerBrowseMode && isInfluencerCollaborationsView && influencerCollabSubview === 'invited'">No open campaigns available right now. Check back soon!</p>
+        <p *ngIf="!isInfluencerBrowseMode && isInfluencerCollaborationsView && influencerCollabSubview === 'created'">No campaigns created yet.</p>
         <p *ngIf="isInfluencerBrowseMode && !isInfluencerCollaborationsView">No open campaigns available right now. Check back soon!</p>
-        <button class="btn btn-create-sm" (click)="openCreateForm()" *ngIf="canCreateCollaborations" [disabled]="!brandId || isActiveQuotaFull">{{ (isPhotographerView || isInfluencerCollaborationsView) ? 'Create your collaboration' : 'Create your campaign' }}</button>
+        <button class="btn btn-create-sm" (click)="openCreateForm()" *ngIf="canCreateCollaborations" [disabled]="!brandId || isActiveQuotaFull">{{ (isPhotographerView || isInfluencerCollaborationsView) ? 'Create your campaign' : 'Create your campaign' }}</button>
           <div *ngIf="showUpgradeBanner && planLimitError" class="upgrade-banner">
             <app-upgrade-banner [message]="planLimitError"></app-upgrade-banner>
           </div>
@@ -1418,7 +1418,7 @@
       [pageSize]="pageSize"
       [currentPage]="currentPage"
       [pageSizeOptions]="pageSizeOptions"
-      [entityLabel]="isPhotographerView ? 'collaborations' : 'campaigns'"
+      entityLabel="campaigns"
       (pageChange)="onPageChange($event)"
       (pageSizeChange)="onPageSizeChange($event)">
     </app-paginator>
@@ -1604,7 +1604,7 @@
                       *ngIf="canShowConfirmCollaboration(inv, invitePanelCampaign)"
                       (click)="payForInvite(invitePanelCampaign, inv)"
                       [title]="isFeeCampaign(invitePanelCampaign) ? 'Pay the ' + platformFeeLabel(inv) + ' platform fee (+ GST) to confirm this creator' : 'Pay for this creator only'">
-                <i class="bi bi-lock-fill"></i> Confirm Collaboration
+                <i class="bi bi-lock-fill"></i> Confirm Creator
               </button>
               <span class="inv-pay-chip inv-pay-chip--review" *ngIf="(invitePanelCampaign?.campaignType === 'paid_collab' || isFeeCampaign(invitePanelCampaign)) && isInvitePaymentUnderReview(inv)"
                     title="Your payment for this creator is being verified by TrendStarZ">
@@ -1623,7 +1623,7 @@
                   <i class="bi bi-lock-fill"></i>
                   {{ inv.unlocked
                     ? 'Contact and venue details unlock after accepted + sender unlock, or payment confirmation.'
-                    : 'Contact and location details become available after collaboration confirmation.' }}
+                    : 'Contact and location details become available after campaign confirmation.' }}
                 </small>
               </div>
               <!-- Brand actions row -->
@@ -1739,7 +1739,7 @@
             [class.chip--selected]="isInviteSmartMatchSelected('invitePreferredCreatorTypes', item.name)"
             (click)="toggleInviteSmartMatchValue('invitePreferredCreatorTypes', item.name)">{{ item.name }}</button>
         </div>
-        <span class="invite-smart-match__label">Collaboration Preference</span>
+        <span class="invite-smart-match__label">Campaign Preference</span>
         <div class="invite-smart-radio-row">
           <label class="invite-smart-radio" *ngFor="let item of inviteCollaborationPreferenceOptions">
             <input type="radio"
@@ -1750,7 +1750,7 @@
             <span>{{ item.name }}</span>
           </label>
         </div>
-        <span class="invite-smart-match__label">Open for Collaboration Types</span>
+        <span class="invite-smart-match__label">Open for Campaign Types</span>
         <div class="chip-list chip-list--sm">
           <button type="button" class="chip chip--sm"
             *ngFor="let item of inviteOpenCollaborationTypeOptions"
@@ -1774,7 +1774,7 @@
         </div>
         <small>Helps match your requirement with suitable creators.</small>
 
-        <span class="invite-smart-match__label">Collaboration Preference</span>
+        <span class="invite-smart-match__label">Campaign Preference</span>
         <div class="invite-smart-radio-row">
           <label class="invite-smart-radio" *ngFor="let item of invitePhotographerCollaborationPreferenceOptions">
             <input type="radio"
@@ -1958,7 +1958,7 @@
       confirmLoadingLabel="Saving..."
       (closed)="closeVisitConfirmModal()"
       (confirmed)="confirmParticipantVisited()">
-    <p class="invite-action-modal__help">Confirm that this participant has arrived at the collaboration location?</p>
+    <p class="invite-action-modal__help">Confirm that this participant has arrived at the campaign location?</p>
   </app-confirm-action-modal>
 
   <!-- ─── Revised Counter Modal (brand sends revised amount) ─── -->

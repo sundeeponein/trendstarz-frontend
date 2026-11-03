@@ -110,7 +110,7 @@ export const DEFAULT_HERO_CARDS: HeroShowcaseCard[] = [
 export class HeroBannerComponent implements OnChanges, OnDestroy {
   private static readonly ROTATE_MS = 6000;
 
-  @Input() badge = 'The Creator Collaboration Platform';
+  @Input() badge = 'The Creator Campaign Platform';
   @Input() titleMain = 'Where Brands Meet';
   @Input() titleHighlight = 'Creators & Photographers';
   @Input() subtitle = 'Brands find talent. Creators get discovered. Photographers get hired.';
@@ -121,7 +121,7 @@ export class HeroBannerComponent implements OnChanges, OnDestroy {
   ];
   /** When non-empty (logged-in users), replaces the audience CTAs. */
   @Input() actions: HeroAction[] = [];
-  @Input() trustItems: string[] = ['Verified profiles', 'Direct collaboration', 'Secure payments'];
+  @Input() trustItems: string[] = ['Verified profiles', 'Direct campaigns', 'Secure payments'];
   /** Live platform counts; the strip is hidden until at least one is available. */
   @Input() stats: HeroStat[] = [];
   /** True while stats are loading — placeholder tiles hold the row's space so nothing jumps. */

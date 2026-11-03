@@ -213,8 +213,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
 
   readonly DESCRIPTION_TEMPLATES: Record<string, string> = {
     paid_collab: `What we expect:\n• Create 1 Reel / Short Video showcasing the product\n• Highlight key benefits, usage, or experience in your own style\n• Maintain a natural, audience-friendly tone (no hard selling)\n\nContent Guidelines:\n• Duration: 15–45 seconds\n• Platform: Instagram (Reels) / YouTube Shorts\n• Mention brand handle & use provided hashtags\n• Include CTA: "Check out the link / visit the brand page"\n\nDeliverables:\n• 1 Reel + optional Story (if agreed)\n• Share insights (views, reach, engagement) after posting\n\nTimeline:\n• Content to be posted within 5–7 days / on selected date Range days after product delivery / brief approval\n\nPayment:\n• Fixed payment: ₹XXXX (as agreed)\n• Payment will be processed after content submission/approval\n\nImportant Notes:\n• Content should be original and not reused from past posts\n• Brand reserves the right to request minor edits before posting\n• No offensive or misleading content`,
-    product: `We are offering a product-based collaboration where influencers receive our product in exchange for content creation.\n\nWhat you'll receive:\n• Free product worth ₹XXXX\n• Delivered to your address after acceptance\n\nWhat we expect:\n• Create 1 Reel / Post featuring the product\n• Showcase real usage, experience, or styling\n• Keep content authentic and engaging\n\nContent Guidelines:\n• Platform: Instagram / YouTube Shorts (as selected)\n• Tag our brand account & use provided hashtags\n• Mention this is a collaboration (#gifted / #collab)\n\nDeliverables:\n• 1 Reel OR Post (based on your selection)\n• Optional Story (if comfortable)\n\nTimeline:\n• Post within 5–7 days / on selected date Range, after receiving the product\n\nImportant Notes:\n• No monetary payment is involved in this collaboration\n• Content should be original and not reused\n• Brand may request minor edits before posting`,
-    invite_location: `We are inviting influencers to attend an exclusive on-location experience and create engaging content around it.\n\nEvent Details:\n• 📍 Area/Locality: [City / Locality]\n• 📅 Date: [Event Date]\n• ⏰ Time: [Start – End Time]\n\nWhat you'll experience:\n• Access to our venue/event (e.g., restaurant launch, store opening, experience zone)\n• Complimentary services/products during the visit\n\nWhat we expect:\n• Visit the location during the scheduled time\n• Create live or post-event content based on your experience\n• Capture ambience, product/service, and overall vibe\n\nContent Guidelines:\n• Platform: Instagram / YouTube (as selected)\n• Tag our brand account & location\n• Use provided hashtags\n• Maintain authentic storytelling (no forced promotion)\n\nDeliverables:\n• 1 Reel or Post from the location\n• Optional Stories during visit (preferred)\n\nTimeline:\n• Stories: during the visit\n• Reel/Post: within 2–3 days after visit\n\nImportant Notes:\n• This is an invite-only collaboration (no product shipping)\n• Influencers must confirm availability before acceptance\n• Exact venue details unlock after collaboration confirmation\n• Only influencers who attend the location will be eligible for collaboration benefits`,
+    product: `We are offering a product-based campaign where influencers receive our product in exchange for content creation.\n\nWhat you'll receive:\n• Free product worth ₹XXXX\n• Delivered to your address after acceptance\n\nWhat we expect:\n• Create 1 Reel / Post featuring the product\n• Showcase real usage, experience, or styling\n• Keep content authentic and engaging\n\nContent Guidelines:\n• Platform: Instagram / YouTube Shorts (as selected)\n• Tag our brand account & use provided hashtags\n• Mention this is a campaign (#gifted / #campaign)\n\nDeliverables:\n• 1 Reel OR Post (based on your selection)\n• Optional Story (if comfortable)\n\nTimeline:\n• Post within 5–7 days / on selected date Range, after receiving the product\n\nImportant Notes:\n• No monetary payment is involved in this campaign\n• Content should be original and not reused\n• Brand may request minor edits before posting`,
+    invite_location: `We are inviting influencers to attend an exclusive on-location experience and create engaging content around it.\n\nEvent Details:\n• 📍 Area/Locality: [City / Locality]\n• 📅 Date: [Event Date]\n• ⏰ Time: [Start – End Time]\n\nWhat you'll experience:\n• Access to our venue/event (e.g., restaurant launch, store opening, experience zone)\n• Complimentary services/products during the visit\n\nWhat we expect:\n• Visit the location during the scheduled time\n• Create live or post-event content based on your experience\n• Capture ambience, product/service, and overall vibe\n\nContent Guidelines:\n• Platform: Instagram / YouTube (as selected)\n• Tag our brand account & location\n• Use provided hashtags\n• Maintain authentic storytelling (no forced promotion)\n\nDeliverables:\n• 1 Reel or Post from the location\n• Optional Stories during visit (preferred)\n\nTimeline:\n• Stories: during the visit\n• Reel/Post: within 2–3 days after visit\n\nImportant Notes:\n• This is an invite-only campaign (no product shipping)\n• Influencers must confirm availability before acceptance\n• Exact venue details unlock after campaign confirmation\n• Only influencers who attend the location will be eligible for campaign benefits`,
   };
 
   readonly DESCRIPTION_MODE_EXAMPLES: Record<string, string> = {
@@ -258,10 +258,10 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
         heading: 'What to cover in your description',
         variant: 'tip',
         copyable: false,
-        body: `• Goal of the collaboration (launch, awareness, conversions)\n• What the ${audienceSingular} will create — including expected deliverables (e.g. 1 Reel, 2 Stories)\n• Tone and creative direction (do/don't)\n• Any platform / hashtag / CTA requirements\n\nTimeline and payment are captured in the form fields below — you do not need to repeat them in the description.`,
+        body: `• Goal of the campaign (launch, awareness, conversions)\n• What the ${audienceSingular} will create — including expected deliverables (e.g. 1 Reel, 2 Stories)\n• Tone and creative direction (do/don't)\n• Any platform / hashtag / CTA requirements\n\nTimeline and payment are captured in the form fields below — you do not need to repeat them in the description.`,
       });
       content.sections.push({
-        heading: invitingPhotographers ? 'Sample brief (Paid creative requirement)' : 'Sample brief (Paid collaboration)',
+        heading: invitingPhotographers ? 'Sample brief (Paid creative requirement)' : 'Sample brief (Paid campaign)',
         body: invitingPhotographers
           ? `What we expect:\n• 1 short-form video (Reel / Short) showcasing the product\n• Highlight key features in your own style\n• Maintain a natural, audience-friendly tone\n\nContent Guidelines:\n• Duration: 15–45 seconds\n• Vertical 9:16 format preferred\n• Mention brand handle & provided hashtags\n• Include CTA: "Check link in bio / visit our page"`
           : `What we expect:\n• Create 1 Reel / Short Video showcasing the product\n• Highlight key benefits, usage, or experience in your own style\n• Maintain a natural, audience-friendly tone (no hard selling)\n\nContent Guidelines:\n• Duration: 15–45 seconds\n• Platform: Instagram (Reels) / YouTube Shorts\n• Mention brand handle & use provided hashtags\n• Include CTA: "Check out the link / visit the brand page"`,
@@ -273,23 +273,23 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     } else if (type === 'product') {
       const paymentMode = String(this.f['productPaymentMode']?.value || 'product_only');
       content.sections.push({
-        heading: invitingPhotographers ? 'What "Product Collab" means for photo/videographers' : 'What "Product Collab" means',
+        heading: invitingPhotographers ? 'What "Product Campaign" means for photo/videographers' : 'What "Product Campaign" means',
         variant: 'tip',
         copyable: false,
         body: invitingPhotographers
-          ? `Product Collab — You send a free product to the creator in exchange for a professional shoot / honest review content. No cash payment — the product itself is the compensation. Best suited for unboxing edits, product photography, lifestyle integrations and review reels.`
-          : `Product Collab — You send a free product to the influencer in exchange for an honest review or post. No cash payment — the product itself is the compensation. Best for unboxing, reviews, and lifestyle integrations.`,
+          ? `Product Campaign — You send a free product to the creator in exchange for a professional shoot / honest review content. No cash payment — the product itself is the compensation. Best suited for unboxing edits, product photography, lifestyle integrations and review reels.`
+          : `Product Campaign — You send a free product to the influencer in exchange for an honest review or post. No cash payment — the product itself is the compensation. Best for unboxing, reviews, and lifestyle integrations.`,
       });
       content.sections.push({
-        heading: 'Sample brief (Product collaboration)',
+        heading: 'Sample brief (Product campaign)',
         body: invitingPhotographers
           ? `We are offering a product-based creative requirement where photo/videographers receive our product to produce shoot content.\n\nWhat you'll receive:\n• Free product worth ₹XXXX\n• Delivered to your shoot address after acceptance\n\nWhat we expect:\n• 1 Reel / Short Video OR a photo set featuring the product\n• Showcase product styling, detailing, real usage\n• Provide raw + edited deliverables as agreed`
-          : `We are offering a product-based collaboration where influencers receive our product in exchange for content creation.\n\nWhat you'll receive:\n• Free product worth ₹XXXX\n• Delivered to your address after acceptance\n\nWhat we expect:\n• Create 1 Reel / Post featuring the product\n• Showcase real usage, experience, or styling\n• Keep content authentic and engaging`,
+          : `We are offering a product-based campaign where influencers receive our product in exchange for content creation.\n\nWhat you'll receive:\n• Free product worth ₹XXXX\n• Delivered to your address after acceptance\n\nWhat we expect:\n• Create 1 Reel / Post featuring the product\n• Showcase real usage, experience, or styling\n• Keep content authentic and engaging`,
       });
       content.sections.push({
         heading: 'Important notes',
         body: paymentMode === 'product_only'
-          ? `• ${invitingPhotographers ? 'No monetary payment is involved — the product is the compensation' : 'No monetary payment is involved in this collaboration'}\n• Content should be original and not reused\n• Brand may request minor edits before posting`
+          ? `• ${invitingPhotographers ? 'No monetary payment is involved — the product is the compensation' : 'No monetary payment is involved in this campaign'}\n• Content should be original and not reused\n• Brand may request minor edits before posting`
           : `• In addition to the product, a cash component will be paid as per the campaign budget\n• Content should be original and not reused\n• Brand may request minor edits before posting`,
       });
       content.sections.push({
@@ -311,14 +311,14 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       });
       content.sections.push({
         heading: 'Important notes',
-        body: `• This is an invite-only collaboration (no product shipping)\n• ${invitingPhotographers ? 'Creators' : 'Influencers'} must confirm availability before acceptance\n• Only ${audience} who attend the location will be eligible for collaboration benefits`,
+        body: `• This is an invite-only campaign (no product shipping)\n• ${invitingPhotographers ? 'Creators' : 'Influencers'} must confirm availability before acceptance\n• Only ${audience} who attend the location will be eligible for campaign benefits`,
       });
     } else {
       content.sections.push({
         heading: 'Tips for writing a clear description',
         variant: 'tip',
         copyable: false,
-        body: `• State the goal of the collaboration\n• Describe the content you expect (format, tone) and expected deliverables\n• Mention any platform / hashtag / CTA requirements\n• Timeline and payment go in the fields below — no need to repeat here.`,
+        body: `• State the goal of the campaign\n• Describe the content you expect (format, tone) and expected deliverables\n• Mention any platform / hashtag / CTA requirements\n• Timeline and payment go in the fields below — no need to repeat here.`,
       });
     }
 
@@ -1232,12 +1232,12 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   get formTitleNoun(): string {
-    if (this.isPhotographerCreator) return 'Collaboration Request';
+    if (this.isPhotographerCreator) return 'Campaign Request';
     return this.isInvitingPhotographers ? 'Creative Requirement' : 'Campaign';
   }
 
   get detailsStepLabel(): string {
-    if (this.isPhotographerCreator) return 'Collaboration details';
+    if (this.isPhotographerCreator) return 'Campaign details';
     return this.isInvitingPhotographers ? 'Creative requirement details' : 'Campaign details';
   }
 
@@ -1251,7 +1251,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   get campaignTypeFieldLabel(): string {
-    if (this.isPhotographerCreator) return 'Collaboration Type';
+    if (this.isPhotographerCreator) return 'Campaign Type';
     return this.isInvitingPhotographers ? 'Requirement Type' : 'Campaign Type';
   }
 
@@ -1301,7 +1301,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   get campaignModeFieldLabel(): string {
-    if (this.isPhotographerCreator) return 'Collaboration access mode';
+    if (this.isPhotographerCreator) return 'Campaign access mode';
     return this.isInvitingPhotographers ? 'Requirement access mode' : 'Campaign access mode';
   }
 

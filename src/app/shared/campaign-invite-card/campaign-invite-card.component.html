@@ -10,7 +10,7 @@
         <span *ngIf="!brandLogo || logoErrored">{{ brandInitial }}</span>
       </div>
       <div class="cic-brand-labels">
-        <span class="cic-brand-role">{{ isCollabInvite ? 'COLLAB' : 'BRAND' }}</span>
+        <span class="cic-brand-role">{{ senderRole | uppercase }}</span>
         <span class="cic-brand-name">{{ brandName }}</span>
       </div>
     </div>
@@ -33,6 +33,10 @@
 
       <!-- Campaign title -->
       <div class="cic-title">{{ campaignTitle }}</div>
+      <div class="cic-sender-note" *ngIf="showSenderNote">
+        <i class="bi bi-info-circle"></i>
+        <span>{{ senderNote }} {{ notInstagramCollabNote }}</span>
+      </div>
 
       <!-- Meta strip -->
       <div class="cic-meta-strip">

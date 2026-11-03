@@ -399,12 +399,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get pageTitle(): string {
     if (this.isInfluencerView) {
-      return this.isInfluencerCollaborationsView ? 'Collaborations' : 'Campaign Requests';
+      return this.isInfluencerCollaborationsView ? 'Creator Campaigns' : 'Campaign Requests';
     }
     if (this.isPhotographerView) {
       return this.isPhotographerCampaignRequestsView
         ? 'Campaign Requests'
-        : 'Collaborations';
+        : 'Creator Campaigns';
     }
     return 'Campaign Requests';
   }
@@ -412,21 +412,21 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   get pageSubtitle(): string {
     if (this.isInfluencerView) {
       return this.isInfluencerCollaborationsView
-        ? 'Browse active collaboration requests from photographers and videographers.'
+        ? 'Browse active campaign requests from photographers and videographers.'
         : 'Browse active campaign requests from brands.';
     }
     if (this.isPhotographerView) {
       return this.isPhotographerCampaignRequestsView
         ? 'View and respond to campaign requests sent by brands.'
-        : 'Create and manage collaborations you send to influencers.';
+        : 'Create and manage campaigns you send to influencers.';
     }
     return 'Create campaign requests for influencers or creative requirements for photographers.';
   }
 
   get createButtonLabel(): string {
     if (this.isActiveQuotaFull) return 'Quota full';
-    if (this.isInfluencerCollaborationsView) return 'Create Collaboration';
-    if (this.isPhotographerView) return 'Create Collaboration';
+    if (this.isInfluencerCollaborationsView) return 'Create Campaign';
+    if (this.isPhotographerView) return 'Create Campaign';
     return 'Create Campaign Request';
   }
 
@@ -488,11 +488,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   }
 
   get quotaEntityPluralLabel(): string {
-    return (this.isPhotographerView || this.isInfluencerCollaborationsView) ? 'collaborations' : 'campaigns';
+    return 'campaigns';
   }
 
   get quotaEntitySingularLabel(): string {
-    return (this.isPhotographerView || this.isInfluencerCollaborationsView) ? 'collaboration' : 'campaign';
+    return 'campaign';
   }
 
   get quotaChipTitle(): string {
@@ -506,13 +506,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get influencerInboxSubtitle(): string {
     return this.isInfluencerCollaborationsView
-      ? 'Received collaboration invitations'
+      ? 'Received campaign invitations'
       : 'Received campaign invitations';
   }
 
   get influencerInboxEmptySubtitle(): string {
     if (this.isInfluencerCollaborationsView) {
-      return 'Browse open collaborations below — creators (influencers/photographers) will invite you here for collaboration.';
+      return 'Browse open campaigns below — creators (influencers/photographers) will invite you to their campaigns here.';
     }
     return 'Browse open campaigns below — brands will invite you here for campaign requests.';
   }
@@ -527,21 +527,21 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (this.isPhotographerCampaignRequestsView) {
       return 'Received campaign invitations from brands';
     }
-    return 'Received collaboration invitations';
+    return 'Received campaign invitations';
   }
 
   get photographerInboxEmptySubtitle(): string {
     if (this.isPhotographerCampaignRequestsView) {
       return 'Brands will invite you here when they want to work with you on a campaign.';
     }
-    return 'Influencers will invite you here for collaboration.';
+    return 'Influencers will invite you to their campaigns here.';
   }
 
   get totalRequestsLabel(): string {
     if (this.isPhotographerView) {
       return this.isPhotographerCampaignRequestsView
         ? 'Total Campaign Requests'
-        : 'Total Collaborations';
+        : 'Total Campaigns';
     }
     return 'Total Campaigns';
   }
@@ -1549,10 +1549,6 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   private isBrandCampaign(campaign: any): boolean {
     return !this.isCollaborationCampaign(campaign);
   }
-  /** Human-readable type label for an invite card */
-  getInviteTypeLabel(inv: any): string {
-    return this.isCollabInvite(inv) ? 'Collaboration' : 'Brand Campaign';
-  }
   get myInvitesFiltered(): any[] {
     if (this.myInviteTab === 'missed') return this.myInvitesMissed;
     if (this.myInviteTab === 'accepted') return this.myInvitesAccepted;
@@ -2075,7 +2071,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (status === 'accepted' && this.inviteRequiresShippingAddress(invite)) {
       this.promptShippingAddressForInvite(invite).then((address) => {
         if (!address) {
-          this.toast.error('Shipping address is required to accept this product collab.');
+          this.toast.error('Shipping address is required to accept this product campaign.');
           return;
         }
         finish(address);
@@ -2202,7 +2198,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if ((status === 'accepted' || status === 'counter_sent') && this.inviteRequiresShippingAddress(invite)) {
       this.promptShippingAddressForInvite(invite).then((address) => {
         if (!address) {
-          this.toast.error('Shipping address is required to accept this product collab.');
+          this.toast.error('Shipping address is required to accept this product campaign.');
           return;
         }
         finish(address);
@@ -2223,7 +2219,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   private promptShippingAddressForInvite(invite: any): Promise<ShippingAddress | null> {
     const campaign = invite?.campaignId || {};
     return this.shippingModal.prompt({
-      campaignTitle: campaign?.title || campaign?.name || 'Product collab',
+      campaignTitle: campaign?.title || campaign?.name || 'Product campaign',
       productLabel: campaign?.productDescription
         || (campaign?.productValue ? `Product value ₹${campaign.productValue}` : undefined),
     });
@@ -2355,7 +2351,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const noun = this.isPhotographerView ? 'collaboration' : 'campaign';
+    const noun = 'campaign';
     const confirmed = typeof window === 'undefined'
       ? true
       : window.confirm(`Delete this ${noun}? This action cannot be undone.`);
@@ -4364,7 +4360,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if ((status === 'accepted' || status === 'counter_sent') && this.inviteRequiresShippingAddress(invite)) {
       this.promptShippingAddressForInvite(invite).then((address) => {
         if (!address) {
-          this.toast.error('Shipping address is required to accept this product collab.');
+          this.toast.error('Shipping address is required to accept this product campaign.');
           return;
         }
         finish(address);
@@ -5275,7 +5271,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         if (this.getSubmissionForInvite(c, inv)) {
           this.toggleSubmission(inviteId);
         } else if (alreadyLoaded) {
-          this.toast.error('No post has been submitted for this collaboration yet.');
+          this.toast.error('No post has been submitted for this campaign yet.');
         } else {
           this.toast.error('Submission details are still syncing. Please try again shortly.');
         }

@@ -619,7 +619,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       if (!this.hasSelectedPricing) return;
       if (!this.platformsValid) return;
       if (this.form.get('collaborationAvailability.enabled')?.value && !this.form.get('collaborationAvailability.preference')?.value) {
-        this.registrationError = 'Please select a preferred collaboration type.';
+        this.registrationError = 'Please select a preferred campaign type.';
         return;
       }
       this.step2Complete = true;
@@ -747,7 +747,7 @@ export class PhotographerRegistrationComponent implements OnInit {
       return;
     }
     if (this.form.get('collaborationAvailability.enabled')?.value && !this.form.get('collaborationAvailability.preference')?.value) {
-      this.registrationError = 'Please select a preferred collaboration type.';
+      this.registrationError = 'Please select a preferred campaign type.';
       this.currentStep = 2;
       this.cdr.detectChanges();
       return;
