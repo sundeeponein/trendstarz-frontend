@@ -67,7 +67,7 @@ export class CampaignPayComponent implements OnInit {
     this.totalRupees = this.p2r(c.amountDueUpi ?? (Number(c.payerTotal || 0) + Number(c.gstAmount || 0)));
 
     const rows: BreakdownRow[] = [
-      { label: 'Price per influencer', value: this.fmt(this.p2r(c.pricePerInfluencer)) },
+      { label: 'Price per influencer', value: c.pricePerCreator === null ? 'Varies by creator' : this.fmt(this.p2r(c.pricePerCreator ?? c.pricePerInfluencer)) },
       { label: 'Accepted influencers', value: '× ' + accepted },
       { label: 'Agreed amount', value: this.fmt(this.p2r(c.agreedAmount)), strong: true },
       c.platformFeeEnabled

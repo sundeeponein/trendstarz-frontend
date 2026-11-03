@@ -46,8 +46,8 @@
       <div class="cmp-info-row" *ngIf="campaign.status">
         <span>Campaign state</span><strong>{{ campaign.status }}</strong>
       </div>
-      <div class="cmp-info-row" *ngIf="campaign.pricePerInfluencer">
-        <span>Price per influencer</span><strong>{{ formatINR(campaign.pricePerInfluencer) }}</strong>
+      <div class="cmp-info-row" *ngIf="calculatedPayment?.pricePerCreator || campaign.pricePerInfluencer">
+        <span>Price per influencer</span><strong>{{ formatINR(calculatedPayment?.pricePerCreator || campaign.pricePerInfluencer) }}</strong>
       </div>
       <div class="cmp-summary-note">
         <i class="bi bi-info-circle"></i>

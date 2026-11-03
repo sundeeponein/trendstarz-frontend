@@ -69,7 +69,7 @@
       <div class="cp-card" *ngIf="!isPlatformFee">
         <div class="cp-row">
           <span class="cp-row-label">Price per influencer</span>
-          <span class="cp-row-val">{{ formatINR(calculated.pricePerInfluencer) }}</span>
+          <span class="cp-row-val">{{ calculated.pricePerCreator === null ? 'Varies by creator' : formatINR(calculated.pricePerCreator ?? calculated.pricePerInfluencer) }}</span>
         </div>
         <div class="cp-row">
           <span class="cp-row-label">Accepted influencers</span>
