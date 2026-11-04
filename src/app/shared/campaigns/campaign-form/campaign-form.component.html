@@ -591,6 +591,7 @@
             valueKey="name"
             labelKey="name"
             [max]="maxTargetCategories"
+            [readonly]="isAcceptanceLocked"
             [emptyText]="'Loading ' + inviteRecipientLabelPlural.toLowerCase() + ' categories…'"
             (selectedChange)="setTargetCategories($event)">
           </app-chip-selection-group>
@@ -908,7 +909,7 @@
             </div>
             <div class="field-group half">
               <select formControlName="targetDistrict" class="field-input"
-                      [attr.disabled]="!f['targetState'].value || !targetDistricts.length ? true : null">
+                      [attr.disabled]="!f['targetState'].value || !targetDistricts.length || isApprovalLocked ? true : null">
                 <option value="">{{ f['targetState'].value ? (targetDistricts.length ? 'All districts' : 'Loading…') : 'Select state first' }}</option>
                 <option *ngFor="let d of targetDistricts" [value]="d.name">{{ d.name }}</option>
               </select>

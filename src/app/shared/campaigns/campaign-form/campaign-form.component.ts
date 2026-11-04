@@ -1180,6 +1180,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       'title', 'campaignType', 'pricePerInfluencer',
       'budgetMin', 'budgetMax',
       'productPaymentMode', 'productPaymentAmount', 'productShippingRequired',
+      // Who it's for — community posts quote these (server: assertTargetingLocked).
+      'campaignMode', 'targetState', 'targetDistrict', 'minInfluencerTier',
     ];
     setLock(approvalLockedFields, this.isApprovalLocked);
 
@@ -1467,6 +1469,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private ensureCampaignModeSelection(): void {
+    // Locked after approval: never switch a live campaign's mode behind the host's back.
+    if (this.isApprovalLocked) return;
     const selected = String(this.form?.get('campaignMode')?.value || 'invite_only');
     const canUse = (mode: { value: string; enabled?: boolean; premiumOnly?: boolean }) =>
       mode.enabled !== false && (this.hasPremium || !mode.premiumOnly);
