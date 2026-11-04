@@ -466,6 +466,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return this.influencerCollabSubview === 'invited';
   }
 
+  /** null until the profile loads, so the hint never flashes. */
+  myInfluencerHasNiche: boolean | null = null;
+
+  get showAddNicheHint(): boolean {
+    return this.isInfluencerBrowseMode && !this.isInfluencerCollaborationsView && this.myInfluencerHasNiche === false;
+  }
+
   get isInfluencerBrowseMode(): boolean {
     return this.isInfluencerView && !(
       this.isInfluencerCollaborationsView && this.influencerCollabSubview === 'created'
@@ -1813,6 +1820,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
             platform: sm.platform || '',
             tier: sm.tier || '',
           }));
+          this.myInfluencerHasNiche = (profile?.categories || []).some((c: any) => String(c || '').trim());
           this.cd.detectChanges();
         },
         error: () => { /* non-fatal */ },
@@ -4026,7 +4034,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       this.cd.detectChanges();
       return;
     }
-    this.showError('This campaign is closed or not open for your profile (state, district or tier).');
+    this.showError('This campaign is closed or not open for your profile (state, district, tier or niche).');
   }
 
   openOpenCampaign(campaign: Campaign, event?: Event) {

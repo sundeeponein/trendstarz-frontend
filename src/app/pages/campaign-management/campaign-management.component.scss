@@ -3416,3 +3416,20 @@
   .tab-count { background: #fff3e0; color: #b45309; border: 1px solid #fdba74; }
   .tab-count.active-count { background: #b45309; color: #fff; border-color: #b45309; }
 }
+
+.cm-niche-hint {
+  align-items: center;
+  background: #fff8e6;
+  border: 1px solid #f5d98b;
+  border-radius: 8px;
+  color: #6b4e00;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+  gap: 0.5rem;
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.85rem;
+
+  span { flex: 1 1 220px; min-width: 0; }
+  a { font-weight: 700; white-space: nowrap; }
+}

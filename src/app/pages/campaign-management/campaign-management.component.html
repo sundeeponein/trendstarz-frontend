@@ -509,6 +509,13 @@
       </div>
     </div>
 
+    <!-- Niche-limited open campaigns are hidden from creators with no niche -->
+    <div class="cm-niche-hint" *ngIf="showAddNicheHint">
+      <i class="bi bi-tags"></i>
+      <span>Add your niche to see more campaigns. Many hosts pick niches (Travel, Food, Beauty…) and only matching creators see those campaigns.</span>
+      <a routerLink="/influencer-profile">Add niche</a>
+    </div>
+
     <!-- Campaign cards -->
     <div class="campaign-cards" *ngIf="showCollaborationsWorkspace && showOwnerWorkspaceBoard && pagedCampaigns.length; else emptyState">
       <div class="campaign-card"
