@@ -37,7 +37,7 @@
             [class.disabled]="messagesLoading || !postingReminderWhatsAppLink"
             [attr.href]="postingReminderWhatsAppLink || null"
             [attr.aria-disabled]="messagesLoading || !postingReminderWhatsAppLink">
-            <i class="bi bi-whatsapp"></i> Send via WhatsApp
+            <i class="bi bi-whatsapp"></i> Send to host
           </a>
         </div>
         <pre *ngIf="!messagesLoading">{{ postingReminderMessage }}</pre>
@@ -63,7 +63,7 @@
             [class.disabled]="messagesLoading || !inviteOnlyWhatsAppLink"
             [attr.href]="inviteOnlyWhatsAppLink || null"
             [attr.aria-disabled]="messagesLoading || !inviteOnlyWhatsAppLink">
-            <i class="bi bi-whatsapp"></i> Send via WhatsApp
+            <i class="bi bi-whatsapp"></i> Send to host
           </a>
         </div>
         <pre *ngIf="!messagesLoading">{{ inviteOnlyMessage }}</pre>
@@ -89,8 +89,49 @@
             [class.disabled]="messagesLoading || !openCampaignWhatsAppLink"
             [attr.href]="openCampaignWhatsAppLink || null"
             [attr.aria-disabled]="messagesLoading || !openCampaignWhatsAppLink">
-            <i class="bi bi-whatsapp"></i> Send via WhatsApp
+            <i class="bi bi-whatsapp"></i> Send to host
           </a>
+        </div>
+
+        <div class="campaign-alert-message__community" *ngIf="isApprovedStatus">
+          <strong>Post to {{ communityTargetLabel }}</strong>
+          <p class="campaign-alert-message__community-help">
+            WhatsApp can't post to a community automatically. Tap Share, then pick the community's Announcements group.
+          </p>
+          <p *ngIf="!messagesLoading && communityRows.length === 0" class="campaign-alert-message__community-missing">
+            No community set up{{ communityState ? ' for ' + communityState : '' }}. Add one in Admin → Community Management.
+          </p>
+          <div class="campaign-alert-message__community-row" *ngFor="let c of communityRows">
+            <span class="campaign-alert-message__community-name">
+              {{ c.communityName || c.state }}
+              <small *ngIf="!c.isActive" class="campaign-alert-message__community-missing">
+                {{ c.communityLink ? 'Inactive' : 'Not configured (no WhatsApp link)' }}
+              </small>
+            </span>
+            <span class="campaign-alert-message__community-actions">
+              <a
+                class="btn btn-sm campaign-alert-message__wa-btn"
+                target="_blank"
+                rel="noopener"
+                [class.disabled]="messagesLoading || !c.isActive || !openCampaignShareLink"
+                [attr.href]="(c.isActive && openCampaignShareLink) || null"
+                [attr.aria-disabled]="messagesLoading || !c.isActive || !openCampaignShareLink">
+                <i class="bi bi-whatsapp"></i> Share
+              </a>
+              <button type="button" class="btn btn-sm campaign-alert-message__copy-btn" [disabled]="messagesLoading" (click)="copyOpenCampaignMessage()">
+                Copy
+              </button>
+              <a
+                class="btn btn-sm btn-outline-secondary"
+                target="_blank"
+                rel="noopener"
+                [class.disabled]="!c.communityLink"
+                [attr.href]="c.communityLink || null"
+                [attr.aria-disabled]="!c.communityLink">
+                Open community
+              </a>
+            </span>
+          </div>
         </div>
         <pre *ngIf="!messagesLoading">{{ openCampaignMessage }}</pre>
         <p *ngIf="messagesLoading" class="campaign-alert-message__loading">Loading message…</p>
@@ -115,7 +156,7 @@
             [class.disabled]="messagesLoading || !ownerApprovedWhatsAppLink"
             [attr.href]="ownerApprovedWhatsAppLink || null"
             [attr.aria-disabled]="messagesLoading || !ownerApprovedWhatsAppLink">
-            <i class="bi bi-whatsapp"></i> Send via WhatsApp
+            <i class="bi bi-whatsapp"></i> Send to host
           </a>
         </div>
         <pre *ngIf="!messagesLoading">{{ ownerApprovedMessage }}</pre>

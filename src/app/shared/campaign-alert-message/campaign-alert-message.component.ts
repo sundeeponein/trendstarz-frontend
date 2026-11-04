@@ -4,6 +4,13 @@ import { copyTextToClipboard } from '../referral-link.util';
 import { buildWhatsAppLink } from '../whatsapp-messages.util';
 import { ACCEPTED_NOT_DISPUTED } from '../invite-status';
 
+export interface CampaignCommunity {
+  state: string;
+  communityName: string;
+  communityLink: string;
+  isActive: boolean;
+}
+
 @Component({
   selector: 'app-campaign-alert-message',
   standalone: true,
@@ -27,6 +34,9 @@ export class CampaignAlertMessageComponent {
   @Input() ownerApprovedMessage = '';
   @Input() ownerPhone = '';
   @Input() messagesLoading = false;
+  /** State WhatsApp community (or every active one for all-India campaigns) to post the open-campaign message in. */
+  @Input() communities: CampaignCommunity[] = [];
+  @Input() communityState = '';
 
   /** The message templates are independent accordions within the body. */
   inviteMessageExpanded = false;
@@ -48,6 +58,21 @@ export class CampaignAlertMessageComponent {
 
   get postingReminderWhatsAppLink(): string | null {
     return buildWhatsAppLink(this.ownerPhone, this.postingReminderMessage);
+  }
+
+  /** Opens WhatsApp with the message filled in and no recipient, so admin picks the community. */
+  get openCampaignShareLink(): string | null {
+    const text = String(this.openCampaignMessage || '').trim();
+    // Not wa.me: its redirect mangles 4-byte emoji (see buildWhatsAppLink).
+    return text ? `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}` : null;
+  }
+
+  get communityRows(): CampaignCommunity[] {
+    return Array.isArray(this.communities) ? this.communities : [];
+  }
+
+  get communityTargetLabel(): string {
+    return this.communityState ? `${this.communityState} community` : 'all state communities (no state set)';
   }
 
   get isOpenToAll(): boolean {

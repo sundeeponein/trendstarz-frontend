@@ -7,6 +7,10 @@
     [openCampaignMessage]="approvedCampaignShareMessages?.openCampaignMessage || ''"
     [inviteOnlyMessage]="approvedCampaignShareMessages?.inviteOnlyMessage || ''"
     [postingReminderMessage]="approvedCampaignShareMessages?.postingReminderMessage || ''"
+    [ownerApprovedMessage]="approvedCampaignShareMessages?.ownerApprovedMessage || ''"
+    [ownerPhone]="approvedCampaignShareMessages?.ownerPhone || ''"
+    [communities]="approvedCampaignShareMessages?.communities || []"
+    [communityState]="approvedCampaignShareMessages?.communityState || ''"
     [messagesLoading]="approvedCampaignShareMessagesLoading"
     (copyAlert)="copyCampaignAlertMessage($event)"
   ></app-campaign-alert-message>

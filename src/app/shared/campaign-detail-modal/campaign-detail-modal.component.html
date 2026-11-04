@@ -741,6 +741,8 @@
         [postingReminderMessage]="adminShareMessages?.postingReminderMessage || ''"
         [ownerApprovedMessage]="adminShareMessages?.ownerApprovedMessage || ''"
         [ownerPhone]="adminShareMessages?.ownerPhone || ''"
+        [communities]="adminShareMessages?.communities || []"
+        [communityState]="adminShareMessages?.communityState || ''"
         [messagesLoading]="adminShareMessagesLoading"
         (copyAlert)="copyAdminAlertMessage($event)">
       </app-campaign-alert-message>

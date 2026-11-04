@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { catchError, map, of, forkJoin, Observable } from 'rxjs';
 import { CampaignDetailModalComponent, HostShareMessageType } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
-import { CampaignAlertMessageComponent } from '../../../shared/campaign-alert-message/campaign-alert-message.component';
+import { CampaignAlertMessageComponent, CampaignCommunity } from '../../../shared/campaign-alert-message/campaign-alert-message.component';
 import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 import { environment } from '../../../../environments/environment';
 import { ToastService } from '../../../shared/toast/toast.service';
@@ -21,6 +21,8 @@ interface CampaignShareMessages {
   postingReminderMessage: string;
   ownerApprovedMessage: string | null;
   ownerPhone: string;
+  communities?: CampaignCommunity[];
+  communityState?: string;
 }
 
 @Component({

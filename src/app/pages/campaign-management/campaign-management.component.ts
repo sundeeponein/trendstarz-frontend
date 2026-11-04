@@ -651,11 +651,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         this.myInvites = invites;
         this.trackCompletionFromInviteStatuses(invites);
         this.myInvitesLoading = false;
+        this.openLinkedCampaign();
         this.cd.detectChanges();
       },
       error: () => {
         this.myInvites = [];
         this.myInvitesLoading = false;
+        this.openLinkedCampaign();
         this.cd.detectChanges();
       }
     });
@@ -680,6 +682,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
         this.loadInfluencerOwnedCampaignInvitesForAwareness();
         this.campaignLoadError = '';
         this.loading = false;
+        this.openLinkedCampaign();
         this.cd.detectChanges();
       },
       error: () => {
@@ -1775,6 +1778,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
 
     if (this.isInfluencerView) {
+      // Community posts link to /campaigns?open=<id>; read once so tab switches don't reopen it.
+      this.linkedOpenCampaignId = String(this.route.snapshot.queryParamMap.get('open') || '').trim();
       this.route.queryParamMap.subscribe((params) => {
         const tab = this.normalizeInfluencerWorkspaceTab(params.get('tab'));
         this.influencerWorkspaceTab = tab;
@@ -3998,6 +4003,30 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const qual = camp ? this.getQualifyingPlatformAndTier(camp) : null;
     this.invitePreviewQualifyingPlatform = qual?.platform || null;
     this.invitePreviewQualifyingTier = qual?.tier || null;
+  }
+
+  /** Campaign id from a community-post link (?open=), cleared once handled. */
+  private linkedOpenCampaignId = '';
+
+  /** Opens the linked campaign once both invites and open campaigns have loaded. */
+  private openLinkedCampaign() {
+    const campaignId = this.linkedOpenCampaignId;
+    if (!campaignId || this.myInvitesLoading || this.loading || this.isInfluencerCollaborationsView) return;
+    this.linkedOpenCampaignId = '';
+    const campaign = (this.campaigns || []).find((c: any) => String(c?._id || '') === campaignId);
+    if (campaign) {
+      this.openOpenCampaign(campaign);
+      return;
+    }
+    const existing = this.myInvites.find(
+      (inv: any) => String(inv?.campaignId?._id || inv?.campaignId || '') === campaignId,
+    );
+    if (existing) {
+      this.openInvitePreview(existing);
+      this.cd.detectChanges();
+      return;
+    }
+    this.showError('This campaign is closed or not open for your profile (state, district or tier).');
   }
 
   openOpenCampaign(campaign: Campaign, event?: Event) {

@@ -9,7 +9,7 @@ import { environment } from '../../../environments/environment';
 import { UserAvatarComponent } from '../components/user-avatar/user-avatar.component';
 import { OfferTrailComponent } from '../offer-trail/offer-trail.component';
 import { buildAdminOfferTrailText, buildAdminOfferTotalText } from '../offer-trail.util';
-import { CampaignAlertMessageComponent } from '../campaign-alert-message/campaign-alert-message.component';
+import { CampaignAlertMessageComponent, CampaignCommunity } from '../campaign-alert-message/campaign-alert-message.component';
 import { campaignIdLabel, copyTextToClipboard } from '../referral-link.util';
 import { paymentReleaseMessage as buildPaymentReleaseMessage, buildWhatsAppLink } from '../whatsapp-messages.util';
 import { TrackingLinksApiService, TrackingLink } from '../tracking-links/tracking-links-api.service';
@@ -85,7 +85,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Input() adminCanRequestChanges = true;
   @Input() adminCanReject = true;
   /** Server-rendered "Ready to Share" message text — see campaign-alert-message.component.ts for why this isn't computed client-side. */
-  @Input() adminShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string; ownerApprovedMessage?: string | null; ownerPhone?: string } | null = null;
+  @Input() adminShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string; ownerApprovedMessage?: string | null; ownerPhone?: string; communities?: CampaignCommunity[]; communityState?: string } | null = null;
   @Input() adminShareMessagesLoading = false;
   @Input() set initialPostDate(v: string | undefined) {
     if (v) this.postDate = v;

@@ -192,3 +192,45 @@ pre {
     flex: 0 1 auto;
   }
 }
+
+.campaign-alert-message__community {
+  border-top: 1px dashed #d9e2ec;
+  margin: 0.85rem 0;
+  padding-top: 0.85rem;
+}
+
+.campaign-alert-message__community-help {
+  color: #52606d;
+  font-size: 0.84rem;
+  margin: 0.25rem 0 0.6rem;
+}
+
+.campaign-alert-message__community-missing {
+  color: #b44d12;
+  font-size: 0.82rem;
+  margin: 0 0 0.5rem;
+}
+
+.campaign-alert-message__community-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+
+  & + & { border-top: 1px solid #f0f2f5; }
+}
+
+.campaign-alert-message__community-name {
+  display: flex;
+  flex-direction: column;
+  font-weight: 700;
+  min-width: 0;
+}
+
+.campaign-alert-message__community-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
