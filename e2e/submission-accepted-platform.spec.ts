@@ -17,16 +17,17 @@ async function setAuthToken(page: Page) {
   }, { jwt: fakeJwt });
 }
 
-test('Submission page prefers accepted platform/content only', async ({ page }) => {
+test('Submission page prefers accepted platform/content once payment is confirmed', async ({ page }) => {
   await setAuthToken(page);
 
-  // Mock invite+campaign indicating accepted platform YouTube Shorts
+  // Mock invite+campaign indicating accepted platform YouTube Shorts.
+  // For paid_collab, form is editable only after payment is confirmed.
   const invite = {
     _id: 'inv_accept_123',
     selectedPlatform: 'YouTube',
     selectedContentType: 'Shorts',
     selectedPostDate: '2026-05-08',
-    status: 'accepted',
+    status: 'payment_confirmed',
     campaign: {
       _id: 'camp_e2e',
       title: 'Qualify Campaign',

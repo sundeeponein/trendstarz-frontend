@@ -118,44 +118,33 @@ test.describe('Admin Dashboard', () => {
 
 // ──────────────── Admin User Table ────────────────────────────
 test.describe('Admin User Table', () => {
-  async function ensureFiltersVisible(page: Page) {
-    const statusFilter = page.locator('#status-filter');
-    if (await statusFilter.count()) {
-      return;
-    }
-    const toggleBtn = page.locator('button.filter-toggle-btn');
-    if (await toggleBtn.count()) {
-      await toggleBtn.first().click({ force: true });
-      await page.waitForSelector('#status-filter', { state: 'visible', timeout: 10000 });
-    }
+  async function openFirstUserDetails(page: Page) {
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
+    const viewBtn = page.locator('table.users-table tbody tr').first().locator('button[title="View Details"]');
+    await viewBtn.scrollIntoViewIfNeeded();
+    await viewBtn.click({ force: true });
+    await expect(page.locator('.modal-content.details-modal')).toBeVisible({ timeout: 5000 });
   }
 
   test.beforeEach(async ({ page }) => {
     await setAdminAuth(page);
     await mockAdminRoutes(page);
-    // Navigate via client-side routing to avoid SSR TransferState caching empty data
-    await page.goto('/admin/admin-dashboard');
-    await page.waitForSelector('h2', { state: 'visible' });
-    await page.waitForSelector('a[routerlink="/admin/admin-user-table"]', { state: 'attached', timeout: 10000 });
-    // Navigate to User Management — on mobile, the nav tab is hidden, so use JS click
-    await page.evaluate(() => {
-      const link = document.querySelector('a[routerlink="/admin/admin-user-table"]') as HTMLElement;
-      if (link) link.click();
-    });
-    await page.waitForSelector('h2:has-text("Admin Users")', { state: 'visible', timeout: 10000 });
+    // Navigate directly to user-table route to avoid nav-link visibility variance across layouts/viewports.
+    await page.goto('/admin/admin-user-table');
+    await page.waitForSelector('h4:has-text("Admin Users")', { state: 'visible', timeout: 10000 });
     // Wait for the user table and active tab to be present (robust for zone-less CD)
-    await page.waitForSelector('button.tab-btn.active', { state: 'visible', timeout: 10000 });
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
+    await page.waitForSelector('button.role-tab.active', { state: 'visible', timeout: 10000 });
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
   });
 
   test('renders user table heading and influencer tab active by default', async ({ page }) => {
-    await expect(page.locator('h2')).toContainText('Admin Users');
-    await expect(page.locator('button.tab-btn.active')).toContainText('Influencers');
+    await expect(page.locator('h4')).toContainText('Admin Users');
+    await expect(page.locator('button.role-tab.active')).toContainText('Influencers');
   });
 
   test('shows influencer rows in table', async ({ page }) => {
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
-    const rows = page.locator('table.admin-table tbody tr');
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
+    const rows = page.locator('table.users-table tbody tr');
     await expect(rows).toHaveCount(2);
     await expect(rows.first()).toContainText('Influencer One');
   });
@@ -163,48 +152,48 @@ test.describe('Admin User Table', () => {
   test('switches to Brands tab and shows brand rows', async ({ page }) => {
     // On mobile, tab buttons may be obscured — use JS click
     await page.evaluate(() => {
-      const btns = document.querySelectorAll('button.tab-btn');
+      const btns = document.querySelectorAll('button.role-tab');
       btns.forEach(btn => { if (btn.textContent?.trim() === 'Brands') (btn as HTMLElement).click(); });
     });
     await page.waitForTimeout(1000);
     // Trigger CD
     await page.locator('body').click();
     await page.waitForTimeout(500);
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
-    const rows = page.locator('table.admin-table tbody tr');
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
+    const rows = page.locator('table.users-table tbody tr');
     await expect(rows).toHaveCount(2);
     await expect(rows.first()).toContainText('Brand One');
   });
 
   test('filters influencers by status', async ({ page }) => {
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
-    await ensureFiltersVisible(page);
-    await page.selectOption('#status-filter', 'accepted');
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
+    const statusFilter = page.locator('.filters-grid select').nth(0);
+    await statusFilter.selectOption('accepted');
     await page.waitForTimeout(500);
     await page.locator('body').click();
     await page.waitForTimeout(500);
-    const rows = page.locator('table.admin-table tbody tr');
+    const rows = page.locator('table.users-table tbody tr');
     await expect(rows).toHaveCount(1);
     await expect(rows.first()).toContainText('Influencer Two');
   });
 
   test('filters influencers by premium status', async ({ page }) => {
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
-    await ensureFiltersVisible(page);
-    await page.selectOption('#premium-filter', 'free');
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
+    const premiumFilter = page.locator('.filters-grid select').nth(1);
+    await premiumFilter.selectOption('free');
     await page.waitForTimeout(500);
     await page.locator('body').click();
     await page.waitForTimeout(500);
-    const rows = page.locator('table.admin-table tbody tr');
+    const rows = page.locator('table.users-table tbody tr');
     await expect(rows).toHaveCount(1);
     await expect(rows.first()).toContainText('Influencer One');
   });
 
   test('accept user triggers confirm dialog and API call', async ({ page }) => {
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
     const apiCalled = page.waitForResponse(resp => resp.url().includes('/accept'), { timeout: 5000 }).catch(() => null);
     // Click accept on the first (pending) influencer
-    const acceptBtn = page.locator('table.admin-table tbody tr').first().locator('button[title="Accept"]');
+    const acceptBtn = page.locator('table.users-table tbody tr').first().locator('button[title="Accept"]');
     await acceptBtn.scrollIntoViewIfNeeded();
     await acceptBtn.click({ force: true });
     // Trigger CD for potential action handling in zone-less mode
@@ -221,9 +210,9 @@ test.describe('Admin User Table', () => {
   });
 
   test('decline user triggers confirm dialog and API call', async ({ page }) => {
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
     const apiCalled = page.waitForResponse(resp => resp.url().includes('/decline'), { timeout: 5000 }).catch(() => null);
-    const declineBtn = page.locator('table.admin-table tbody tr').first().locator('button[title="Decline"]');
+    const declineBtn = page.locator('table.users-table tbody tr').first().locator('button[title="Decline"]');
     await declineBtn.scrollIntoViewIfNeeded();
     await declineBtn.click({ force: true });
     await page.locator('body').click();
@@ -239,9 +228,10 @@ test.describe('Admin User Table', () => {
   });
 
   test('delete user triggers confirm dialog and API call', async ({ page }) => {
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
     const apiCalled = page.waitForResponse(resp => resp.url().includes('/delete'), { timeout: 5000 }).catch(() => null);
-    const deleteBtn = page.locator('table.admin-table tbody tr').first().locator('button.btn-danger');
+    await openFirstUserDetails(page);
+    const deleteBtn = page.locator('.modal-footer.details-actions button[title="Delete"]');
     await deleteBtn.scrollIntoViewIfNeeded();
     await deleteBtn.click({ force: true });
     await page.locator('body').click();
@@ -257,9 +247,9 @@ test.describe('Admin User Table', () => {
   });
 
   test('Set Premium opens modal with duration radio buttons', async ({ page }) => {
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
-    // First influencer is not premium → has "Set Premium" button
-    await page.locator('table.admin-table tbody tr').first().locator('button:has-text("Set Premium")').click({ force: true });
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
+    await openFirstUserDetails(page);
+    await page.locator('.modal-footer.details-actions button:has-text("Set Premium")').click({ force: true });
     await page.waitForTimeout(500);
     await page.locator('body').click();
     await page.waitForTimeout(500);
@@ -272,8 +262,9 @@ test.describe('Admin User Table', () => {
   });
 
   test('Set Premium confirm sends API call with duration', async ({ page }) => {
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
-    await page.locator('table.admin-table tbody tr').first().locator('button:has-text("Set Premium")').click({ force: true });
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
+    await openFirstUserDetails(page);
+    await page.locator('.modal-footer.details-actions button:has-text("Set Premium")').click({ force: true });
     await page.waitForTimeout(500);
     await page.locator('body').click();
     await page.waitForTimeout(500);
@@ -289,8 +280,9 @@ test.describe('Admin User Table', () => {
   });
 
   test('tag modal keeps one regular tag and one commission tag selected at a time', async ({ page }) => {
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
-    await page.locator('table.admin-table tbody tr').first().locator('button:has-text("Edit Tags")').click({ force: true });
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
+    await openFirstUserDetails(page);
+    await page.locator('.modal-footer.details-actions button:has-text("Edit Tags")').click({ force: true });
     await page.waitForSelector('.modal-body', { state: 'visible', timeout: 5000 });
 
     const regularGroup = page.locator('.modal-body div.d-flex.flex-wrap.gap-2').first();
@@ -310,18 +302,17 @@ test.describe('Admin User Table', () => {
   });
 
   test('reset filters clears all dropdowns', async ({ page }) => {
-    await page.waitForSelector('table.admin-table tbody tr', { state: 'visible', timeout: 10000 });
-    await ensureFiltersVisible(page);
+    await page.waitForSelector('table.users-table tbody tr', { state: 'visible', timeout: 10000 });
     // Apply a filter first
-    await page.selectOption('#status-filter', 'accepted');
+    await page.locator('.filters-grid select').nth(0).selectOption('accepted');
     await page.waitForTimeout(300);
     // Reset
-    await page.click('button:has-text("Reset Filters")');
+    await page.click('button.reset-btn');
     await page.waitForTimeout(500);
     await page.locator('body').click();
     await page.waitForTimeout(500);
     // All rows should be visible again
-    const rows = page.locator('table.admin-table tbody tr');
+    const rows = page.locator('table.users-table tbody tr');
     await expect(rows).toHaveCount(2);
   });
 });

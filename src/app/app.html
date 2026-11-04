@@ -3,5 +3,17 @@
 <router-outlet></router-outlet>
 <app-toast-host></app-toast-host>
 <app-tier-info-modal></app-tier-info-modal>
-<app-flow-help-modal></app-flow-help-modal>
+<!-- Loaded the first time help is opened (keeps it out of the first download). -->
+@defer (when flowHelp.isOpen) {
+  <app-flow-help-modal></app-flow-help-modal>
+}
 <app-pwa-install-banner></app-pwa-install-banner>
+@if (mustChangePassword) {
+  @defer (on immediate) {
+    <app-reset-password-modal
+      [visible]="true"
+      [required]="true"
+      (changed)="onTemporaryPasswordChanged()"
+    ></app-reset-password-modal>
+  }
+}

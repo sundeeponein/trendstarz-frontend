@@ -114,7 +114,7 @@ export class FlowHelpModalService {
       postAcceptByType: [
         {
           key: 'paid_collab',
-          label: 'Paid collaboration',
+          label: 'Paid campaign',
           nextSteps: [
             'Confirm accepted influencer details and lock post date/content type.',
             'Share final brief with CTA, brand mentions, and expected deliverables.',
@@ -123,7 +123,7 @@ export class FlowHelpModalService {
         },
         {
           key: 'product',
-          label: 'Product collaboration',
+          label: 'Product campaign',
           nextSteps: [
             'Arrange product dispatch details immediately after acceptance.',
             'Share usage points, unboxing expectations, and posting deadline.',
@@ -143,7 +143,7 @@ export class FlowHelpModalService {
       example: {
         title: 'Sample Campaign (reference before final submit)',
         fields: [
-          { label: 'Campaign type', value: 'Paid collaboration' },
+          { label: 'Campaign type', value: 'Paid campaign' },
           { label: 'Title', value: 'Summer Drop 2026 Launch Reel' },
           { label: 'Timeline', value: '05 May 2026 - 20 May 2026' },
           { label: 'Price / influencer', value: 'Rs 1,500' },
@@ -203,11 +203,11 @@ export class FlowHelpModalService {
   // ── Collaboration Type explainer ──────────────────────────────────────────
   openCollaborationTypeGuide(selectedType?: string): void {
     this.content = {
-      title: 'Collaboration Types — What do they mean?',
+      title: 'Campaign Types — What do they mean?',
       subtitle: 'Choose the type that matches how you want to work with influencers',
       sections: [
         {
-          title: '💰 Paid Collab',
+          title: '💰 Paid Campaign',
           points: [
             'You pay the influencer a fixed fee to create and publish content.',
             'Best for: product launches, brand awareness, seasonal promotions.',
@@ -217,7 +217,7 @@ export class FlowHelpModalService {
           ]
         },
         {
-          title: '🎁 Product Collab (Premium)',
+          title: '🎁 Product Campaign (Premium)',
           points: [
             'You send a free product to the influencer — no cash payment involved.',
             'The product itself is the compensation for the content created.',
@@ -230,7 +230,7 @@ export class FlowHelpModalService {
           title: '📍 Invite to Location (Premium)',
           points: [
             'You invite the influencer to visit your physical store, venue, or event.',
-            'The visit and on-site content creation completes the collaboration.',
+            'The visit and on-site content creation completes the campaign.',
             'Best for: restaurants, cafes, retail stores, brand events, launches, showrooms.',
             'How it works: Invite → Influencer accepts with a visit date → They attend and create on-site content → Submit → You review.',
             'Great for experience-first brands where being physically present matters.',
@@ -239,18 +239,18 @@ export class FlowHelpModalService {
         {
           title: 'Which type should I choose?',
           points: [
-            'Cash budget available → use Paid Collab.',
-            'Sending products for review → use Product Collab.',
+            'Cash budget available → use Paid Campaign.',
+            'Sending products for review → use Product Campaign.',
             'Running an event or have a physical location → use Invite to Location.',
-            'Product Collab and Invite to Location require a Premium plan.',
+            'Product Campaign and Invite to Location require a Premium plan.',
           ]
         }
       ],
       ...(selectedType ? {
         example: {
           title: `Currently selected: ${
-            selectedType === 'paid_collab' ? '💰 Paid Collab' :
-            selectedType === 'product' ? '🎁 Product Collab' :
+            selectedType === 'paid_collab' ? '💰 Paid Campaign' :
+            selectedType === 'product' ? '🎁 Product Campaign' :
             selectedType === 'invite_location' ? '📍 Invite to Location' : selectedType
           }`,
           fields: selectedType === 'paid_collab' ? [
@@ -279,7 +279,7 @@ export class FlowHelpModalService {
   openCampaignFlowDiagram(): void {
     this.content = {
       mode: 'diagram',
-      title: 'Campaign Collaboration Flow',
+      title: 'Campaign Flow',
       subtitle: 'How brands, influencers, and admin work together — end to end',
       stateLabels: [
         'Draft', 'Published', 'Accepted',
@@ -429,7 +429,7 @@ export class FlowHelpModalService {
         }
       ],
       brandUxLabels: [
-        { label: 'Pay to confirm collaboration', color: 'orange' },
+        { label: 'Confirm creator', color: 'orange' },
         { label: 'Waiting for submission', color: 'blue' },
         { label: 'Review content', color: 'blue' },
         { label: 'Approved', color: 'green' },
@@ -461,7 +461,7 @@ export class FlowHelpModalService {
         }
       ],
       disputeNote: 'Disputes freeze payment immediately. Admin / support team reviews evidence from both sides and releases to the winning party. Partial penalty support is a future feature.',
-      futureNote: 'Designed for future upgrade: Razorpay / Stripe replaces manual UPI for auto-capture. Auto-escrow and auto-payout slots in without schema changes.'
+      futureNote: 'Designed for future upgrade: Razorpay replaces manual UPI for auto-capture. Auto-escrow and auto-payout slots in without schema changes.'
     };
     this.isOpen = true;
   }

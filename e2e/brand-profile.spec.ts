@@ -18,6 +18,7 @@ const MOCK_BRAND_PROFILE = {
   email: 'brand@e2e.com',
   phoneNumber: '9876543220',
   contactPersonName: 'Test Contact',
+  description: 'Test brand description for E2E.',
   categories: ['Fashion'],
   languages: ['English'],
   location: { state: 'Maharashtra', district: 'Mumbai' },

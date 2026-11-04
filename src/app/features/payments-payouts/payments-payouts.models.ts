@@ -2,18 +2,34 @@ export interface CampaignTransaction {
   _id: string;
   campaignId: string;
   inviteId?: string;
-  transactionType: 'paid_collab' | 'pay_to_join';
+  transactionType: 'paid_collab' | 'platform_fee';
+  /** platform_fee rows: the invite the fee confirmed. */
+  feeInviteId?: string;
+  /** platform_fee rows: refunded to the host as TrendStarZ credit. */
+  feeCreditedAt?: string | null;
+  /** platform_fee rows: verified, creator was a no-show, not yet credited — admin may refund as credit. */
+  feeRefundable?: boolean;
   direction: 'brand_to_influencer' | 'influencer_to_brand';
-  payerRole: 'brand' | 'influencer';
+  payerRole: 'brand' | 'influencer' | 'photographer';
   payerId?: string;
-  recipientRole: 'brand' | 'influencer';
+  recipientRole: 'brand' | 'influencer' | 'photographer';
   recipientId?: string;
   agreedAmount: number;
   platformFee: number;
   payerTotal: number;
   recipientPayout: number;
-  /** Payment gateway. MVP = manual_upi. Future: razorpay, stripe. */
-  gateway?: 'manual_upi' | 'razorpay' | 'stripe';
+  /** Fee deducted from the creator's payout (paise). */
+  recipientFee?: number;
+  /** GST on the creator payout fee (paise), deducted from the payout. */
+  recipientFeeGst?: number;
+  /** GST charged on the commission / platform fee (paise) — collected for the government. */
+  gstAmount?: number;
+  /** Payment gateway. MVP = manual_upi. Future: razorpay. */
+  gateway?: 'manual_upi' | 'razorpay';
+  gatewayOrderId?: string;
+  gatewayPaymentId?: string;
+  gatewaySignature?: string;
+  gatewayVerifiedAt?: string;
   collectionStatus: 'awaiting_payment' | 'proof_submitted' | 'verified' | 'failed';
   /** frozen = disputed, payout on hold until admin resolves. */
   payoutStatus: 'pending' | 'processing' | 'paid' | 'skipped' | 'frozen';
@@ -29,9 +45,19 @@ export interface CampaignTransaction {
   resolvedAt?: string;
   adminNotes?: string;
   utrNumber?: string;
+  /** One host payment (one UTR / order) — shared by every creator it paid for. */
+  paymentBatchId?: string;
   paymentProofUrl?: string;
   payoutUpiId?: string;
   payoutUtr?: string;
+  payoutGatewayProvider?: 'manual_upi' | 'razorpayx';
+  payoutTransferId?: string;
+  payoutTransferStatus?: string;
+  payoutFailureReason?: string;
+  payoutRetryCount?: number;
+  payoutLastRetryAt?: string;
+  payoutInitiatedAt?: string;
+  payoutSettledAt?: string;
   createdAt: string;
   updatedAt?: string;
   collectedAt?: string;
@@ -39,7 +65,7 @@ export interface CampaignTransaction {
   /** Recipient profile snapshot enriched by listForAdmin (admin view only). */
   recipient?: {
     id?: string;
-    role?: 'brand' | 'influencer';
+    role?: 'brand' | 'influencer' | 'photographer';
     name?: string;
     email?: string;
     mobile?: string;
@@ -47,23 +73,163 @@ export interface CampaignTransaction {
     payoutMobile?: string;
     payoutName?: string;
     lastConfirmedAt?: string;
+    /** When the creator last changed their UPI ID. */
+    payoutUpiChangedAt?: string | null;
   };
   /** Payer profile snapshot enriched by listForAdmin (admin view only). */
   payer?: {
     id?: string;
-    role?: 'brand' | 'influencer';
+    role?: 'brand' | 'influencer' | 'photographer';
     name?: string;
     email?: string;
     mobile?: string;
   };
+  inviteSnapshot?: {
+    id?: string;
+    status?: string;
+    unlocked?: boolean;
+    unlockType?: string;
+    agreedAmount?: number;
+    agreedAmountPaise?: number;
+    counterOfferStatus?: string;
+    counterOfferedAmount?: number;
+    counterOfferedAmountPaise?: number;
+    counterRequestedAmount?: number;
+    counterRequestedAmountPaise?: number;
+    counterResolvedAt?: string | null;
+    acceptedAt?: string | null;
+    completedAt?: string | null;
+    updatedAt?: string | null;
+  } | null;
 }
 
 export interface TransactionSummary {
   collected: number;
   fees: number;
+  /** Payout fees taken from creators. */
+  creatorFees?: number;
+  /** Host commission + creator payout fees (TrendStarZ revenue, before refunds). */
+  platformRevenue?: number;
+  /** GST on both fees — owed to the government, not revenue. */
+  gstCollected?: number;
   pendingPayouts: number;
   paidOut: number;
+  /** Money actually transferred back (UTR recorded). */
+  refunded?: number;
+  /** Classified as owed — not yet transferred. */
+  refundDue?: number;
+  refundDueCount?: number;
+  /** Under the 7-day review — not owed yet. */
+  refundOnHold?: number;
+  refundOnHoldCount?: number;
+  /** Old "refund to host" rows whose real payment history is unconfirmed. */
+  legacyUnconfirmed?: number;
+  legacyUnconfirmedCount?: number;
+  settlementPending?: number;
+  settlementPendingCount?: number;
   netBalance: number;
+}
+
+export type RefundState = 'on_hold' | 'owed' | 'sent' | 'settlement' | 'legacy_unconfirmed';
+
+export interface RefundHistoryEntry {
+  at: string;
+  action: string;
+  by?: string | null;
+  byRole: 'admin' | 'system' | 'host' | 'creator';
+  note?: string;
+  amount?: number;
+  utr?: string;
+  url?: string;
+}
+
+/** One row of the admin Refunds queue (GET campaign-transactions/admin/refunds). */
+export interface RefundQueueItem {
+  _id: string;
+  state: RefundState;
+  campaignId: string;
+  campaignTitle: string;
+  campaignNumber?: string | number | null;
+  inviteId: string;
+  inviteStatus: string | null;
+  withdrawnAt?: string | null;
+  withdrawnReason?: string | null;
+  selectedPlatform?: string | null;
+  hostName: string;
+  hostRole: string;
+  creatorName: string;
+  creatorRole: string;
+  creatorSocial: { platform: string; platformKey?: string; handle: string }[];
+  agreedAmount: number;
+  platformFee: number;
+  payerTotal: number;
+  refundAmount?: number | null;
+  refundHoldUntil?: string | null;
+  refundOwedAt?: string | null;
+  refundUtr?: string | null;
+  refundTransferDate?: string | null;
+  refundSentAt?: string | null;
+  latePost?: {
+    url?: string;
+    note?: string;
+    submittedAt?: string;
+    originalDeadline?: string;
+    status?: 'pending' | 'approved' | 'rejected';
+    reviewNote?: string;
+  } | null;
+  settlement?: {
+    status?: 'awaiting_host_repayment' | 'repaid' | 'exception_approved';
+    amount?: number;
+    hostRepaymentUtr?: string;
+    exceptionReason?: string;
+  } | null;
+  openReport: boolean;
+  reportCategory?: string | null;
+  reportReason?: string | null;
+  termsAcceptance?: {
+    host?: { acceptedAt?: string; version?: string };
+    creator?: { acceptedAt?: string; version?: string };
+  } | null;
+  flags: (
+    | 'repeat_pair'
+    | 'host_repeat_refunds'
+    | 'creator_repeat_no_post'
+    | 'replaced_after_no_post'
+    | 'host_no_post_rate'
+  )[];
+  /** "fee_credit" = terms v2: creator amount back by UPI, platform fee as credit. */
+  refundPolicy?: 'full_refund' | 'fee_credit';
+  cashRefundDue?: number;
+  feeCredit?: { status?: 'needs_review' | 'issued' | 'withheld' | 'reversed'; amount?: number; note?: string } | null;
+  feeCreditAmount?: number;
+  creditApplied?: number;
+  compensation?: { amount?: number; note?: string } | null;
+  closureAnswers?: {
+    creator?: { answer?: string; details?: string; link?: string; at?: string };
+    host?: { answer?: string; details?: string; link?: string; at?: string };
+  } | null;
+  slotRestored?: { at?: string; reason?: string } | null;
+  missExcused?: { at?: string; reason?: string } | null;
+  paidSlot?: boolean;
+  history: RefundHistoryEntry[];
+}
+
+export interface CancelRequestItem {
+  inviteId: string;
+  status: string;
+  campaignTitle: string;
+  campaignNumber?: number | string | null;
+  hostName: string;
+  creatorName: string;
+  selectedPostDate?: string | null;
+  agreedAmount: number;
+  request: {
+    type: 'cancel' | 'pause';
+    requestedByRole: 'host' | 'creator';
+    reason: string;
+    at: string;
+    status: string;
+  };
 }
 
 export interface PremiumPayment {
@@ -75,13 +241,22 @@ export interface PremiumPayment {
     email?: string;
   };
   transactionId: string;
+  orderId?: string;
+  paymentId?: string;
   amount: number;
   premiumDuration: '1m' | '3m' | '1y';
-  paymentMethod: 'upi' | 'qr';
+  paymentMethod: 'upi' | 'qr' | 'razorpay';
+  gatewayProvider?: 'manual_upi' | 'razorpay';
+  paymentStatus?: 'created' | 'authorized' | 'captured' | 'failed' | 'refunded';
+  refundStatus?: 'none' | 'requested' | 'processed' | 'failed';
+  purpose?: 'subscription' | 'invite_unlock' | 'campaign_payment';
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   approvedAt?: string;
   approvalNotes?: string;
+  refundedAt?: string;
+  refundAmount?: number;
+  refundReason?: string;
 }
 
 export interface PendingPremiumPaymentsResponse {

@@ -26,6 +26,12 @@ export class AnalyticsService implements OnDestroy {
   private readonly FLUSH_INTERVAL_MS = 30000; // 30 seconds
   private readonly ANALYTICS_ENDPOINT = `${environment.apiBaseUrl}/analytics/events`;
   private readonly GA_MEASUREMENT_ID = 'G-5912TSJYW5';
+  private readonly onPageHide = () => this.flush();
+  private readonly onVisibilityChange = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+      this.flush();
+    }
+  };
 
   private readonly blockedPathPrefixes = ['/admin'];
   private readonly publicExactPaths = new Set([
@@ -45,6 +51,8 @@ export class AnalyticsService implements OnDestroy {
     '/register-influencer',
     '/register-brand',
     '/register-photographer',
+    '/trendstarz-score',
+    '/audit',
     '/login',
     '/auth/login',
     '/auth',
@@ -80,15 +88,19 @@ export class AnalyticsService implements OnDestroy {
         }
       }, this.FLUSH_INTERVAL_MS);
 
-      // Flush on page unload
-      window.addEventListener('beforeunload', () => this.flush());
-      window.addEventListener('unload', () => this.flush());
+      // Flush when tab is hidden or page is put in bfcache-friendly pagehide state.
+      window.addEventListener('pagehide', this.onPageHide);
+      document.addEventListener('visibilitychange', this.onVisibilityChange);
     }
   }
 
   private cleanup(): void {
     if (this.flushTimer) {
       clearInterval(this.flushTimer);
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pagehide', this.onPageHide);
+      document.removeEventListener('visibilitychange', this.onVisibilityChange);
     }
     this.flush();
   }
@@ -153,6 +165,31 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
+   * Track profile card click behavior from Search results, including
+   * whether navigation was allowed or blocked by plan restrictions.
+   */
+  trackSearchProfileCardClick(context: {
+    targetRole: 'influencer' | 'photographer' | 'brand';
+    outcome: 'allowed' | 'blocked';
+    targetId?: string;
+    targetUsername?: string;
+  }): void {
+    const viewer = this.session.getUser();
+    const viewerTier = viewer ? (viewer.isPremium ? 'pro' : 'free') : 'guest';
+    const eventData = {
+      targetRole: context.targetRole,
+      outcome: context.outcome,
+      targetId: context.targetId || null,
+      targetUsername: context.targetUsername || null,
+      viewerTier,
+      viewerRole: String(viewer?.role || '').toLowerCase() || 'guest',
+    };
+    this.logEvent('search_profile_card_click', eventData);
+    this.sendToGA4('search_profile_card_click', eventData);
+    this.sendToClarity('search_profile_card_click', eventData);
+  }
+
+  /**
    * Track campaign invite sent event (for end-to-end campaign flow metrics).
    */
   trackCampaignInviteSent(context: {
@@ -193,22 +230,167 @@ export class AnalyticsService implements OnDestroy {
   }
 
   /**
+   * Home hero — one of the "I'm a Brand / Influencer / Photo/Videographer" CTAs.
+   * Separate event names so each audience's conversion is visible on its own.
+   */
+  trackHeroAudienceClick(audience: 'brand' | 'influencer' | 'photographer'): void {
+    const eventName = audience === 'photographer' ? 'hero_photovideographer_click' : `hero_${audience}_click`;
+    this.logEvent(eventName, { audience });
+    this.sendToGA4(eventName, { audience });
+    this.sendToClarity(eventName, { audience });
+  }
+
+  /**
+   * TrendStarz Score landing page (/trendstarz-score) — "Check My Score" CTA click.
+   */
+  trackTrendstarzScoreCheckClicked(context: { loggedIn: boolean; destination: string }): void {
+    const eventData = { loggedIn: context.loggedIn, destination: context.destination };
+    this.logEvent('trendstarz_score_check_clicked', eventData);
+    this.sendToGA4('trendstarz_score_check_clicked', eventData);
+    this.sendToClarity('trendstarz_score_check_clicked', eventData);
+  }
+
+  /**
+   * TrendStarz Score landing page — an FAQ item was expanded.
+   */
+  trackTrendstarzScoreFaqExpanded(context: { question: string }): void {
+    const eventData = { question: context.question };
+    this.logEvent('trendstarz_score_faq_expanded', eventData);
+    this.sendToGA4('trendstarz_score_faq_expanded', eventData);
+    this.sendToClarity('trendstarz_score_faq_expanded', eventData);
+  }
+
+  /**
+   * TrendStarz Score landing page — the Supported Platforms section scrolled into view.
+   */
+  trackTrendstarzScorePlatformSectionViewed(): void {
+    this.logEvent('trendstarz_score_platform_section_viewed');
+    this.sendToGA4('trendstarz_score_platform_section_viewed', {});
+    this.sendToClarity('trendstarz_score_platform_section_viewed', {});
+  }
+
+  /**
+   * TrendStarz Score Center — "Sync Latest Profile" clicked.
+   */
+  trackCollabSyncStarted(): void {
+    this.logEvent('collab_sync_started');
+    this.sendToGA4('collab_sync_started', {});
+    this.sendToClarity('collab_sync_started', {});
+  }
+
+  /**
+   * TrendStarz Score Center — a Sync call finished (success or failure).
+   */
+  trackCollabSyncCompleted(context: { success: boolean }): void {
+    const eventData = { success: context.success };
+    this.logEvent('collab_sync_completed', eventData);
+    this.sendToGA4('collab_sync_completed', eventData);
+    this.sendToClarity('collab_sync_completed', eventData);
+  }
+
+  /**
+   * TrendStarz Score Center — a Sync found at least one changed platform.
+   */
+  trackCollabSyncChangesDetected(context: { platforms: string[] }): void {
+    const eventData = { platforms: context.platforms };
+    this.logEvent('collab_sync_changes_detected', eventData);
+    this.sendToGA4('collab_sync_changes_detected', eventData);
+    this.sendToClarity('collab_sync_changes_detected', eventData);
+  }
+
+  /**
+   * TrendStarz Score Center — a Sync found nothing changed.
+   */
+  trackCollabSyncNoChanges(): void {
+    this.logEvent('collab_sync_no_changes');
+    this.sendToGA4('collab_sync_no_changes', {});
+    this.sendToClarity('collab_sync_no_changes', {});
+  }
+
+  /**
+   * TrendStarz Score Center — the paid "Re-Analyze" button was clicked
+   * (only reachable once Sync has detected a change).
+   */
+  trackCollabReanalyzeClicked(): void {
+    this.logEvent('collab_reanalyze_clicked');
+    this.sendToGA4('collab_reanalyze_clicked', {});
+    this.sendToClarity('collab_reanalyze_clicked', {});
+  }
+
+  /**
+   * TrendStarz Score Center — the ₹49 re-analysis Razorpay checkout opened.
+   */
+  trackCollabPaymentStarted(): void {
+    this.logEvent('collab_payment_started');
+    this.sendToGA4('collab_payment_started', {});
+    this.sendToClarity('collab_payment_started', {});
+  }
+
+  /**
+   * TrendStarz Score Center — the re-analysis payment was verified and a new audit ran.
+   */
+  trackCollabPaymentSuccess(): void {
+    this.logEvent('collab_payment_success');
+    this.sendToGA4('collab_payment_success', {});
+    this.sendToClarity('collab_payment_success', {});
+  }
+
+  /**
+   * TrendStarz Score Center — the re-analysis payment failed or was cancelled.
+   */
+  trackCollabPaymentFailed(context: { reason?: string }): void {
+    const eventData = { reason: context.reason || null };
+    this.logEvent('collab_payment_failed', eventData);
+    this.sendToGA4('collab_payment_failed', eventData);
+    this.sendToClarity('collab_payment_failed', eventData);
+  }
+
+  /**
    * Track SPA page views for public/user-facing pages only.
    */
   trackPageView(rawUrl: string, pageTitle?: string): void {
     const path = this.normalizePath(rawUrl);
     this.updateGlobalAnalyticsDisableFlag(path);
     if (!this.shouldTrackPath(path)) return;
-    if (!this.shouldTrackPublicPageView(path)) return;
 
+    // GA counts every non-admin page, so logged-in creators and hosts working
+    // in their dashboards show as active users. utm_* (e.g. WhatsApp community
+    // links) rides on the first page view only, so GA credits the visit's source.
     const eventData = {
       page_path: path,
-      page_location: this.getAbsoluteUrl(path),
+      page_location: this.getAbsoluteUrl(path) + this.takeLandingUtm(),
       page_title: pageTitle || (typeof document !== 'undefined' ? document.title : undefined),
     };
 
-    this.logEvent('page_view', { pagePath: path });
+    // Our own events log keeps public pages only (unchanged volume).
+    if (this.shouldTrackPublicPageView(path)) this.logEvent('page_view', { pagePath: path });
     this.sendToGA4('page_view', eventData);
+  }
+
+  /** utm_* from the URL the visitor landed on, read once at startup. */
+  private landingUtm = AnalyticsService.readLandingUtm();
+
+  /** "?utm_source=…" the first time, "" after — later pages keep the same session source. */
+  private takeLandingUtm(): string {
+    const utm = this.landingUtm;
+    this.landingUtm = '';
+    return utm;
+  }
+
+  /** Only utm_* survive: other query values (reset tokens, invite ids) never go to GA. */
+  static readLandingUtm(search = typeof window !== 'undefined' ? window.location.search : ''): string {
+    let params = new URLSearchParams(search || '');
+    // Signed out, the login guard moves the link into ?returnUrl=/campaigns?open=…&utm_…
+    const returnUrl = params.get('returnUrl') || '';
+    if (![...params.keys()].some((k) => k.startsWith('utm_')) && returnUrl.includes('?')) {
+      params = new URLSearchParams(returnUrl.slice(returnUrl.indexOf('?')));
+    }
+    const kept = new URLSearchParams();
+    params.forEach((value, key) => {
+      if (/^utm_(source|medium|campaign|content|term)$/.test(key) && value) kept.set(key, value.slice(0, 100));
+    });
+    const text = kept.toString();
+    return text ? `?${text}` : '';
   }
 
   /**

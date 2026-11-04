@@ -25,17 +25,5 @@
         ]
       }
     }
-  ],
-  "dataGroups": [
-    {
-      "name": "api-campaigns",
-      "urls": ["/api/campaigns/**"],
-      "cacheConfig": {
-        "strategy": "freshness",
-        "maxSize": 20,
-        "maxAge": "5m",
-        "timeout": "10s"
-      }
-    }
   ]
 }

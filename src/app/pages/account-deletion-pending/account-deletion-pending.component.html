@@ -1,0 +1,27 @@
+<div class="deletion-pending-page">
+  <div class="deletion-pending-card" *ngIf="!loading">
+    <h1>Your account is scheduled for deletion</h1>
+
+    <ng-container *ngIf="deletionPending">
+      <p *ngIf="daysRemaining !== null">
+        Your public profile has been removed from search and homepage features.
+        You have <strong>{{ daysRemaining }}</strong> day{{ daysRemaining === 1 ? '' : 's' }} left to cancel before
+        your account and data are permanently deleted.
+      </p>
+      <p *ngIf="daysRemaining === null">
+        Your public profile has been removed from search and homepage features.
+      </p>
+
+      <p class="error" *ngIf="error">{{ error }}</p>
+
+      <div class="deletion-pending-actions">
+        <button type="button" class="btn btn-primary" [disabled]="cancelling" (click)="cancelDeletion()">
+          {{ cancelling ? 'Cancelling…' : 'Cancel Deletion' }}
+        </button>
+        <button type="button" class="btn btn-outline-secondary" [disabled]="cancelling" (click)="goToLogin()">
+          Log Out
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>

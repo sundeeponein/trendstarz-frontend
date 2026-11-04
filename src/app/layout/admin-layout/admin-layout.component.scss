@@ -4,6 +4,86 @@
 .admin-navbar {
   @include shared.navbar-base;
 
+  // Grouped menu dropdowns (Users / Review). Kept outside navbar-content's @content,
+  // which the shared mixin places inside the icons area, where .navbar-tabs never matches.
+  .navbar-tabs {
+    .nav-dropdown {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+
+      .nav-tab-parent {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .nav-dropdown-toggle {
+        gap: 0.3rem;
+        height: 100%;
+        border: none;
+        background: transparent;
+        font: inherit;
+        font-size: clamp(0.9rem, 1vw, 1rem);
+        font-weight: 500;
+        color: shared.$text-muted;
+        padding: 0 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+
+        i {
+          font-size: 0.85rem;
+          line-height: 1;
+        }
+
+        &:hover {
+          color: shared.$text-white;
+        }
+      }
+
+      .nav-submenu {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        min-width: 180px;
+        background: rgba(7, 20, 52, 0.96);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        padding: 0.35rem;
+        z-index: 30;
+      }
+
+      .nav-submenu-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 0.7rem;
+        border-radius: 8px;
+        color: shared.$text-muted !important;
+        text-decoration: none !important;
+        font-size: 0.9rem;
+        white-space: nowrap;
+
+        &:hover,
+        &.active {
+          color: shared.$text-white;
+          background: rgba(255, 107, 53, 0.2);
+        }
+      }
+
+      &.active .nav-tab-parent {
+        color: shared.$orange-primary;
+      }
+
+      &.open {
+        .nav-dropdown-toggle {
+          color: shared.$orange-primary;
+        }
+      }
+    }
+  }
+
   @include shared.navbar-content {
     // Unique to admin navbar: btn-primary in icons row
     .btn-primary {
@@ -17,76 +97,7 @@
       }
     }
 
-    .navbar-tabs {
-      .nav-dropdown {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
 
-        .nav-tab-parent {
-          display: inline-flex;
-          align-items: center;
-        }
-
-        .nav-dropdown-toggle {
-          border: none;
-          background: transparent;
-          color: shared.$text-muted;
-          padding: 0 0.5rem;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-
-          i {
-            font-size: 0.85rem;
-            line-height: 1;
-          }
-
-          &:hover {
-            color: shared.$text-white;
-          }
-        }
-
-        .nav-submenu {
-          position: absolute;
-          top: calc(100% + 8px);
-          left: 0;
-          min-width: 180px;
-          background: rgba(7, 20, 52, 0.96);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 10px;
-          padding: 0.35rem;
-          z-index: 30;
-        }
-
-        .nav-submenu-item {
-          display: block;
-          padding: 0.55rem 0.7rem;
-          border-radius: 8px;
-          color: shared.$text-muted !important;
-          text-decoration: none !important;
-          font-size: 0.9rem;
-          white-space: nowrap;
-
-          &:hover,
-          &.active {
-            color: shared.$text-white;
-            background: rgba(255, 107, 53, 0.2);
-          }
-        }
-
-        &.active .nav-tab-parent {
-          color: shared.$orange-primary;
-        }
-
-        &.open {
-          .nav-dropdown-toggle {
-            color: shared.$orange-primary;
-          }
-        }
-      }
-    }
   }
 
   // Unique to admin navbar: search box
@@ -200,16 +211,30 @@
     margin-left: 1.2rem;
     opacity: 0.9;
   }
+
+  .mobile-group-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
 }
 
 // Admin content area
 .admin-container {
-  background: linear-gradient(135deg, shared.$primary-dark 0%, shared.$secondary-dark 100%);
-  min-height: calc(100vh - 70px);
-  padding: 2rem;
+  background: #f6f7fb;
+  min-height: calc(100vh - 92px);
+  padding: 0;
 
-  @media (max-width: 768px) { padding: 1rem; }
+  @media (max-width: 768px) {
+    min-height: calc(100vh - 70px);
+  }
 }
 
 :host ::ng-deep { @include shared.ng-deep-overrides; }
-

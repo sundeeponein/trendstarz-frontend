@@ -23,7 +23,7 @@ export class PremiumPaymentsAdminApiService {
   }
 
   listByStatus(
-    status: 'approved' | 'rejected',
+    status: 'approved' | 'rejected' | 'refunded',
     headers: HttpHeaders,
   ): Observable<{ payments: PremiumPayment[] }> {
     return this.http.get<{ payments: PremiumPayment[] }>(
@@ -50,5 +50,39 @@ export class PremiumPaymentsAdminApiService {
       { reason },
       { headers },
     );
+  }
+
+  refundPayment(
+    paymentId: string,
+    reason: string,
+    headers: HttpHeaders,
+  ): Observable<{ message?: string }> {
+    return this.http.patch<{ message?: string }>(
+      `${environment.apiBaseUrl}/payment/${paymentId}/refund`,
+      { reason },
+      { headers },
+    );
+  }
+
+  getSummary(headers: HttpHeaders): Observable<{
+    success: boolean;
+    data: {
+      received: number;
+      pending: number;
+      rejected: number;
+      refunded: number;
+      netReceived: number;
+    };
+  }> {
+    return this.http.get<{
+      success: boolean;
+      data: {
+        received: number;
+        pending: number;
+        rejected: number;
+        refunded: number;
+        netReceived: number;
+      };
+    }>(`${environment.apiBaseUrl}/payment/summary`, { headers });
   }
 }

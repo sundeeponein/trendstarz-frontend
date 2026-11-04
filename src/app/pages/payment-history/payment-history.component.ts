@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { SessionService } from '../../core/session.service';
 import { WarmupService } from '../../core/warmup.service';
+import { paymentAmountRupees } from '../../shared/payment-amount.util';
 
 @Component({
   selector: 'app-payment-history',
@@ -118,5 +119,37 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
       case '1y': return '1 Year';
       default: return d;
     }
+  }
+
+  getDisplayAmount(payment: any): number {
+    return paymentAmountRupees(payment);
+  }
+
+  getModeLabel(payment: any): string {
+    if (payment?.gatewayProvider === 'razorpay') return 'Razorpay';
+    return payment?.paymentMethod === 'qr' ? 'Manual QR' : 'Manual UPI';
+  }
+
+  getGatewayStatusLabel(payment: any): string {
+    if (payment?.gatewayProvider === 'razorpay') {
+      const map: Record<string, string> = {
+        created: 'Order Created',
+        authorized: 'Authorized',
+        captured: 'Captured',
+        failed: 'Failed',
+        refunded: 'Refunded',
+      };
+      return map[String(payment?.paymentStatus || '')] || 'In Progress';
+    }
+    if (payment?.status === 'approved') return 'Admin Verified';
+    if (payment?.status === 'rejected') return 'Rejected';
+    return 'Pending Admin Review';
+  }
+
+  getReferenceLabel(payment: any): string {
+    if (payment?.gatewayProvider === 'razorpay') {
+      return String(payment?.paymentId || payment?.orderId || payment?.transactionId || '-');
+    }
+    return String(payment?.transactionId || '-');
   }
 }
