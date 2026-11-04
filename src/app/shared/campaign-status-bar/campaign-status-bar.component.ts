@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 const STEPS = [
+  { key: 'ready',           label: 'Ready to start' },
   { key: 'working',         label: 'Working' },
   { key: 'submitted',       label: 'Submitted' },
   { key: 'under_review',    label: 'Under Review' },
@@ -104,16 +105,16 @@ export class CampaignStatusBarComponent {
   get currentStepKey(): string {
     const normalized = String(this.status || '').toLowerCase().trim();
     const stageMap: Record<string, string> = {
-      pending: 'working',
+      pending: 'ready',
       accepted: 'working',
-      payment_confirmed: 'working',
+      payment_confirmed: 'ready',
       working: 'working',
       submitted: 'under_review',
       disputed: 'under_review',
       completed: 'completed',
       approved: 'payout_released',
     };
-    return stageMap[normalized] || 'working';
+    return stageMap[normalized] || 'ready';
   }
 
   isDone(index: number): boolean {

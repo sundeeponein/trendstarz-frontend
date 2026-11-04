@@ -44,6 +44,7 @@ import { busyUntilText } from '../../shared/availability.util';
 import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-collab-notice.component';
 import { isFileSharePlatform } from '../../shared/file-share-video.util';
 
+import { confirmedAwaitingStartLabel } from '../../shared/invite-status-labels.util';
 type TabStatus = 'active' | 'pending' | 'completed' | 'draft' | 'needs_changes';
 type InviteActionReasonModalMode = 'withdraw' | 'decline_accepted' | 'report';
 type PhotographerWorkspaceView = 'campaign_requests' | 'collaborations';
@@ -1995,7 +1996,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     const s = String(status || '').toLowerCase();
     if (s === 'pending' || s === 'invited') return 'Pending';
     if (s === 'counter_sent') return 'Counter Sent';
-    if (s === 'payment_confirmed') return 'Confirmed — Start Work';
+    if (s === 'payment_confirmed') return confirmedAwaitingStartLabel('host');
     if (s === 'accepted' || s === 'working') return 'Working';
     if (s === 'submitted' || s === 'disputed') return 'Under Review';
     if (s === 'declined') return 'Declined';
@@ -3868,7 +3869,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       invited: 'Invited',
       counter_sent: 'Confirmation Pending',
       accepted: campaignType === 'paid_collab' ? 'Confirmation Pending' : 'Working',
-      payment_confirmed: 'Confirmed — Start Work',
+      payment_confirmed: confirmedAwaitingStartLabel('creator'),
       working: 'Working',
       submitted: 'Under Review',
       // Don't imply payout is already released just because the host
@@ -4846,7 +4847,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       invited:           'Invited',
       counter_sent:      'Counter Received',
       accepted:          'Working',
-      payment_confirmed: 'Confirmed — Start Work',
+      payment_confirmed: confirmedAwaitingStartLabel('host'),
       working:           'Working',
       submitted:         'Submitted',
       // No transaction loaded yet (or none exists) — still don't imply payout

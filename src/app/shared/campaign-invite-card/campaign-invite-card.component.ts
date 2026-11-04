@@ -14,6 +14,7 @@ import {
   campaignSenderRole,
 } from '../campaign-sender.util';
 
+import { confirmedAwaitingStartLabel } from '../invite-status-labels.util';
 export interface InvitePayoutDetails {
   upiId: string;
   mobile: string;
@@ -404,7 +405,7 @@ export class CampaignInviteCardComponent {
       invited:           'Invited',
       counter_sent:      'Confirmation Pending',
       accepted:          this.campaignTypeKey === 'paid_collab' ? 'Confirmation Pending' : 'Working',
-      payment_confirmed: 'Confirmed — Start Work',
+      payment_confirmed: confirmedAwaitingStartLabel('creator'),
       working:           'Working',
       submitted:         'Under Review',
       completed:         'Completed',

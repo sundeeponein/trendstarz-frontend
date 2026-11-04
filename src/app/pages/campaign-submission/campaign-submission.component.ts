@@ -14,6 +14,7 @@ import { ConfirmActionModalComponent } from '../../shared/components/confirm-act
 import { SUBMITTED_OR_LATER } from '../../shared/invite-status';
 import { FILE_SHARE_RAW_AND_EDITED, isFileShareLink, isFileSharePlatform } from '../../shared/file-share-video.util';
 
+import { confirmedAwaitingStartLabel } from '../../shared/invite-status-labels.util';
 type PostType = 'reel' | 'video' | 'photo' | 'short' | 'story' | 'thread';
 
 @Component({
@@ -516,7 +517,7 @@ export class CampaignSubmissionComponent implements OnInit, OnDestroy {
   get inviteStatusLabel(): string {
     const map: Record<string, string> = {
       accepted:          'Working',
-      payment_confirmed: 'Confirmed — Start Work',
+      payment_confirmed: confirmedAwaitingStartLabel('creator'),
       working:           'Working',
       submitted:         'Submitted',
       completed:         'Post Approved',

@@ -14,6 +14,7 @@ import { CampaignEligibilityPanelComponent } from './campaign-eligibility-panel/
 import { CampaignCorrectionsPanelComponent } from './campaign-corrections-panel/campaign-corrections-panel.component';
 import { ACCEPTED_NOT_DISPUTED, ACCEPTED_OR_LATER, PAID_NOT_DISPUTED } from '../../../shared/invite-status';
 
+import { confirmedAwaitingStartLabel } from '../../../shared/invite-status-labels.util';
 interface CampaignShareMessages {
   openCampaignMessage: string;
   inviteOnlyMessage: string;
@@ -880,13 +881,17 @@ export class CampaignReviewComponent implements OnInit {
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
-          if (payload.type === 'accepted' || payload.type === 'submitted' || payload.type === 'startWork') {
-            const messageByType: Record<'accepted' | 'submitted' | 'startWork', string> = {
+          if (payload.type === 'accepted' || payload.type === 'submitted' || payload.type === 'startWork' || payload.type === 'paymentReceived') {
+            const messageByType: Record<'accepted' | 'submitted' | 'startWork' | 'paymentReceived', string> = {
               accepted: data?.inviteAcceptedMessage,
               submitted: data?.postSubmittedMessage,
               startWork: data?.startWorkMessage,
+              paymentReceived: data?.paymentReceivedMessage,
             };
             this.selectedInviteHostMessageText = messageByType[payload.type] || '';
+          } else if (payload.type === 'inviteOnly' && data?.inviteReceivedMessage) {
+            // Same text as the automatic campaign_invite_received WhatsApp.
+            this.selectedInviteHostMessageText = data.inviteReceivedMessage;
           }
           this.selectedInviteHostMessageOwnerPhone = data?.ownerPhone || '';
           this.selectedInviteHostMessageRecipientPhone = data?.recipientPhone || '';
@@ -1388,7 +1393,7 @@ export class CampaignReviewComponent implements OnInit {
       invited: 'Invited',
       counter_sent: 'Pending',
       accepted: 'Accepted',
-      payment_confirmed: 'Confirmed — Start Work',
+      payment_confirmed: confirmedAwaitingStartLabel('admin'),
       working: 'Working',
       submitted: 'Under Review',
       completed: 'Completed',

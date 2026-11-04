@@ -13,6 +13,7 @@ import { AppPaginatorComponent } from '../../../../shared/components/app-paginat
 import { validateImageFile, compressImageFile, isOversizedAfterCompression, OVERSIZE_MESSAGE } from '../../../../shared/utils/image-upload.util';
 import { FINISHED } from '../../../../shared/invite-status';
 
+import { confirmedAwaitingStartLabel } from '../../../../shared/invite-status-labels.util';
 @Component({
   selector: 'app-campaign-transactions-panel',
   standalone: true,
@@ -602,8 +603,8 @@ export class CampaignTransactionsPanelComponent implements OnInit, OnDestroy {
     const status = String(tx.inviteSnapshot?.status || '').toLowerCase();
     if (!status) return 'N/A';
     const labels: Record<string, string> = {
-      accepted: 'Working',
-      payment_confirmed: 'Working',
+      accepted: 'Accepted',
+      payment_confirmed: confirmedAwaitingStartLabel('admin'),
       working: 'Working',
       submitted: 'Under Review',
       completed: 'Post Approved',

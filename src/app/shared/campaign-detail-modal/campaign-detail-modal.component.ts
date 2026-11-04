@@ -25,7 +25,8 @@ import {
   campaignSenderRole,
 } from '../campaign-sender.util';
 
-export type HostShareMessageType = 'accepted' | 'submitted' | 'startWork' | 'inviteOnly' | 'postingReminder';
+import { confirmedAwaitingStartLabel } from '../invite-status-labels.util';
+export type HostShareMessageType = 'accepted' | 'submitted' | 'paymentReceived' | 'startWork' | 'inviteOnly' | 'postingReminder';
 
 export interface CampaignAcceptPayload {
   inviteId: string;
@@ -118,7 +119,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Input() hostShareMessageType: HostShareMessageType | null = null;
   @Input() hostShareMessageText = '';
   @Input() hostShareMessageLoading = false;
-  /** Recipient phone for the wa.me Send button — host's for accepted/submitted, creator's for startWork/inviteOnly/postingReminder. */
+  /** Recipient phone for the wa.me Send button — host's for accepted/submitted/paymentReceived, creator's for startWork/inviteOnly/postingReminder. */
   @Input() hostShareMessageOwnerPhone = '';
   @Input() hostShareMessageRecipientPhone = '';
 
@@ -127,8 +128,9 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   private static readonly HOST_SHARE_MESSAGE_TYPE_LABELS: Record<HostShareMessageType, string> = {
     accepted: 'Invite Accepted Message',
     submitted: 'Post Submitted Message',
+    paymentReceived: 'Payment Received Message',
     startWork: 'Start Work Message',
-    inviteOnly: 'Invite Only Message',
+    inviteOnly: 'Invite Message',
     postingReminder: 'Upcoming Posting Reminder',
   };
 
@@ -230,6 +232,11 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   isHostSubmittedMessageAvailable(item: any): boolean {
     return SUBMITTED_OR_LATER.includes(this.adminInviteStatusKey(item?.status));
+  }
+
+  /** To the host once their payment is confirmed, until the post is submitted. */
+  isHostPaymentReceivedMessageAvailable(item: any): boolean {
+    return this.isHostStartWorkMessageAvailable(item);
   }
 
   /** Relevant from payment confirmation up to the point the creator has started/posted — hidden once submitted, since starting work is moot by then. */
@@ -1681,7 +1688,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       pending: 'Pending',
       invited: 'Invited',
       accepted: 'Accepted',
-      payment_confirmed: 'Confirmed — Start Work',
+      payment_confirmed: confirmedAwaitingStartLabel('admin'),
       working: 'Working',
       submitted: 'Submitted',
       completed: 'Completed',

@@ -602,6 +602,14 @@
                   <button
                     type="button"
                     class="cdm-copy-payout-btn"
+                    *ngIf="isHostPaymentReceivedMessageAvailable(item)"
+                    (click)="openHostShareMessage(item, 'paymentReceived', $event)">
+                    <i class="bi bi-whatsapp"></i>
+                    Payment received
+                  </button>
+                  <button
+                    type="button"
+                    class="cdm-copy-payout-btn"
                     *ngIf="isHostStartWorkMessageAvailable(item)"
                     (click)="openHostShareMessage(item, 'startWork', $event)">
                     <i class="bi bi-card-text"></i>
