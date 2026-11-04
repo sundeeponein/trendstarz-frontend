@@ -39,7 +39,8 @@
   <script>
     (function () {
       var path = (window.location && window.location.pathname) || '/';
-      var internalPrefixes = ['/admin', '/brand-dashboard', '/influencer-dashboard', '/photographer-dashboard'];
+      // Only admin pages stay out of GA; dashboards count as active use (analytics.service).
+      var internalPrefixes = ['/admin'];
       var publicProfilePrefixes = ['/influencer/', '/photographer/', '/brand/'];
       var infoRoutePrefixes = ['/how-it-works', '/features'];
       var isInternal = internalPrefixes.some(function (prefix) {
@@ -118,16 +119,6 @@
         }, { once: true });
       }
     })();
-  </script>
-
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QB2WN99QYL"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-QB2WN99QYL');
   </script>
 
 

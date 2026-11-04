@@ -352,16 +352,45 @@ export class AnalyticsService implements OnDestroy {
     const path = this.normalizePath(rawUrl);
     this.updateGlobalAnalyticsDisableFlag(path);
     if (!this.shouldTrackPath(path)) return;
-    if (!this.shouldTrackPublicPageView(path)) return;
 
+    // GA counts every non-admin page, so logged-in creators and hosts working
+    // in their dashboards show as active users. utm_* (e.g. WhatsApp community
+    // links) rides on the first page view only, so GA credits the visit's source.
     const eventData = {
       page_path: path,
-      page_location: this.getAbsoluteUrl(path),
+      page_location: this.getAbsoluteUrl(path) + this.takeLandingUtm(),
       page_title: pageTitle || (typeof document !== 'undefined' ? document.title : undefined),
     };
 
-    this.logEvent('page_view', { pagePath: path });
+    // Our own events log keeps public pages only (unchanged volume).
+    if (this.shouldTrackPublicPageView(path)) this.logEvent('page_view', { pagePath: path });
     this.sendToGA4('page_view', eventData);
+  }
+
+  /** utm_* from the URL the visitor landed on, read once at startup. */
+  private landingUtm = AnalyticsService.readLandingUtm();
+
+  /** "?utm_source=…" the first time, "" after — later pages keep the same session source. */
+  private takeLandingUtm(): string {
+    const utm = this.landingUtm;
+    this.landingUtm = '';
+    return utm;
+  }
+
+  /** Only utm_* survive: other query values (reset tokens, invite ids) never go to GA. */
+  static readLandingUtm(search = typeof window !== 'undefined' ? window.location.search : ''): string {
+    let params = new URLSearchParams(search || '');
+    // Signed out, the login guard moves the link into ?returnUrl=/campaigns?open=…&utm_…
+    const returnUrl = params.get('returnUrl') || '';
+    if (![...params.keys()].some((k) => k.startsWith('utm_')) && returnUrl.includes('?')) {
+      params = new URLSearchParams(returnUrl.slice(returnUrl.indexOf('?')));
+    }
+    const kept = new URLSearchParams();
+    params.forEach((value, key) => {
+      if (/^utm_(source|medium|campaign|content|term)$/.test(key) && value) kept.set(key, value.slice(0, 100));
+    });
+    const text = kept.toString();
+    return text ? `?${text}` : '';
   }
 
   /**
