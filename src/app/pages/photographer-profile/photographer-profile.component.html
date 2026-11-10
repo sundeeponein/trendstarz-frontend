@@ -272,6 +272,7 @@
             <div class="field-block mt-3">
               <label>Content &amp; Starting Rates</label>
               <p class="section-subtitle mb-2">Check the services you offer and set your rate.</p>
+              <app-pending-prices-note [refreshKey]="pendingPricesRefresh"></app-pending-prices-note>
               <div class="pricing-rows">
                 <div class="pricing-row" *ngFor="let p of visiblePricingOptions">
                   <label class="pricing-check-label">

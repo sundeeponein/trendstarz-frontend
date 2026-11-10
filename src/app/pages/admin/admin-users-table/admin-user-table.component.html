@@ -73,6 +73,9 @@
       <option value="profile_updated">Updated since approval — needs review</option>
       <option value="social_changed">Social media changed — re-review</option>
       <option value="link_reported">Link not working — reported{{ linkReportCountLabel }}</option>
+      <option value="price_pending">Price doubled — needs approval</option>
+      <option value="price_changed_7d">Price changed — last 7 days</option>
+      <option value="price_changed_30d">Price changed — last 30 days</option>
       <option value="callback_requested">Callback Requested</option>
       <option value="waiting_approval">{{ actionListLabel('waiting_approval', 'One step: waiting only for approval') }}</option>
       <option value="mobile_only">{{ actionListLabel('mobile_only', 'One step: only mobile not verified') }}</option>
@@ -218,6 +221,11 @@
             <div class="mt-1" *ngIf="user.creatorUpdatesPending || user.socialReviewChanged" [title]="creatorUpdateTitle(user)">
               <span class="ts-status-badge ts-status-pending">
                 <i class="bi bi-pencil-square"></i> {{ user.socialReviewChanged || hasSocialCreatorUpdate(user) ? 'Social changed — re-review' : 'Updated — needs review' }}
+              </span>
+            </div>
+            <div class="mt-1" *ngIf="user.pricePendingCount > 0" title="A price doubled or more — open the user to approve or reject. Brands see the current price until then.">
+              <span class="ts-status-badge ts-status-pending">
+                <i class="bi bi-currency-rupee"></i> Price doubled — approve
               </span>
             </div>
             <div class="mt-1" *ngIf="user.linkReportOpen" title="Hosts reported a social link that doesn't open — open the user to confirm or dismiss">
@@ -927,6 +935,9 @@
                           title="Set before the ₹{{ minimumRate }} minimum; the creator must raise it next time they change it"
                           >below ₹{{ minimumRate }}</span>
                         <small class="rate-confirmed" *ngIf="ct?.priceConfirmedAt">set {{ ct.priceConfirmedAt | date: 'd MMM y' }}</small>
+                        <small class="rate-change" *ngIf="latestPriceChange(ct?.name, sm?.socialAccountId) as pc">
+                          {{ pc.oldPrice === null ? 'new' : '₹' + (pc.oldPrice | number:'1.0-0') }} → ₹{{ pc.newPrice | number:'1.0-0' }} on {{ pc.createdAt | date: 'd MMM y' }}
+                        </small>
                       </span>
                       <strong>₹{{ ct.price | number:'1.0-0' }}</strong>
                     </ng-container>
@@ -938,9 +949,41 @@
               <div class="rate-platform" *ngIf="getUserServiceRates(selectedUser).length">
                 <div class="rate-platform-name">Service Rates</div>
                 <div class="rate-row" *ngFor="let item of getUserServiceRates(selectedUser)">
-                  <span>{{ item.name }}</span>
+                  <span>
+                    {{ item.name }}
+                    <small class="rate-change" *ngIf="latestPriceChange(item.name) as pc">
+                      {{ pc.oldPrice === null ? 'new' : '₹' + (pc.oldPrice | number:'1.0-0') }} → ₹{{ pc.newPrice | number:'1.0-0' }} on {{ pc.createdAt | date: 'd MMM y' }}
+                    </small>
+                  </span>
                   <strong>₹{{ item.price | number:'1.0-0' }}</strong>
                 </div>
+              </div>
+
+              <!-- Price changes: history + prices that doubled (wait for approval; brands see the current price) -->
+              <div class="rate-platform price-changes" *ngIf="selectedUserPriceChanges.length">
+                <div class="rate-platform-name">Price changes</div>
+                <div class="price-change-error" *ngIf="priceChangeError">{{ priceChangeError }}</div>
+                <div class="price-change price-change--pending" *ngFor="let c of pendingPriceChanges">
+                  <span>
+                    <strong>{{ priceChangeRateLabel(c) }}</strong>:
+                    ₹{{ c.oldPrice | number:'1.0-0' }} → ₹{{ c.newPrice | number:'1.0-0' }}
+                    <small>doubled or more · asked {{ c.createdAt | date: 'd MMM y' }} · brands see ₹{{ c.oldPrice | number:'1.0-0' }}</small>
+                  </span>
+                  <span class="price-change__actions">
+                    <button type="button" class="mini-btn mini-btn--primary" (click)="reviewPriceChange(c, 'approve')" [disabled]="priceChangeBusyId === c._id">Approve</button>
+                    <button type="button" class="mini-btn mini-btn--danger" (click)="reviewPriceChange(c, 'reject')" [disabled]="priceChangeBusyId === c._id">Reject</button>
+                  </span>
+                </div>
+                <details class="price-change-history">
+                  <summary>History ({{ selectedUserPriceChanges.length }})</summary>
+                  <div class="price-change" *ngFor="let c of selectedUserPriceChanges">
+                    <span>
+                      {{ priceChangeRateLabel(c) }}:
+                      {{ c.oldPrice === null ? 'new' : '₹' + (c.oldPrice | number:'1.0-0') }} → ₹{{ c.newPrice | number:'1.0-0' }}
+                      <small>{{ c.createdAt | date: 'd MMM y, h:mm a' }} · {{ priceChangeStatusLabel(c.status) }}<ng-container *ngIf="c.adminNote"> · “{{ c.adminNote }}”</ng-container></small>
+                    </span>
+                  </div>
+                </details>
               </div>
 
               <!-- Social media edit modal (popup) -->

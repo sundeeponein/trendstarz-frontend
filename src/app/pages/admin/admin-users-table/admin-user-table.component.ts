@@ -1644,6 +1644,15 @@ export class AdminUserTableComponent implements OnInit {
     if (filters.contactVerification === 'link_reported' && !user.linkReportOpen) {
       return false;
     }
+    if (filters.contactVerification === 'price_pending' && !(Number(user.pricePendingCount) > 0)) {
+      return false;
+    }
+    if (filters.contactVerification === 'price_changed_7d' && !this.priceChangedWithin(user, 7)) {
+      return false;
+    }
+    if (filters.contactVerification === 'price_changed_30d' && !this.priceChangedWithin(user, 30)) {
+      return false;
+    }
     if (
       filters.contactVerification === 'social_changed' &&
       !user.socialReviewChanged &&
@@ -2367,6 +2376,7 @@ export class AdminUserTableComponent implements OnInit {
     this.loadSelectedProfileVerification();
     this.loadSelectedUserCollabScore(user?._id);
     this.loadSelectedUserActions(user?._id);
+    this.loadSelectedUserPriceChanges(user?._id);
     this.smEditModalOpen = false;
     this.smEditingIdx = null;
     this.smEditError = null;
@@ -2382,6 +2392,118 @@ export class AdminUserTableComponent implements OnInit {
       },
       error: () => (this.selectedUserActions = []),
     });
+  }
+
+  // ── Price changes (2026-11-10): history + approval of prices that doubled ──
+  selectedUserPriceChanges: any[] = [];
+  priceChangeBusyId = '';
+  priceChangeError = '';
+
+  private loadSelectedUserPriceChanges(userId: string): void {
+    this.selectedUserPriceChanges = [];
+    this.priceChangeError = '';
+    if (!userId || this.inferUserType(this.selectedUser) === 'brand') return;
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/price-changes/user/${userId}`).subscribe({
+      next: (res) => {
+        const rows = res?.data ?? res;
+        if (String(this.selectedUser?._id) === String(userId)) {
+          this.selectedUserPriceChanges = Array.isArray(rows) ? rows : [];
+          this.cd.detectChanges();
+        }
+      },
+      error: () => (this.selectedUserPriceChanges = []),
+    });
+  }
+
+  get pendingPriceChanges(): any[] {
+    return this.selectedUserPriceChanges.filter((c) => c?.status === 'pending');
+  }
+
+  /** Latest recorded change of one rate (social: per account; service rates: socialAccountId ''). */
+  latestPriceChange(rateName: unknown, socialAccountId: unknown = ''): any | null {
+    const key = String(rateName ?? '').trim().toLowerCase();
+    const account = String(socialAccountId ?? '');
+    return (
+      this.selectedUserPriceChanges.find(
+        (c) =>
+          c?.status !== 'pending' &&
+          c?.status !== 'replaced' &&
+          c?.status !== 'rejected' &&
+          String(c?.rateKey || '') === key &&
+          String(c?.socialAccountId || '') === account,
+      ) || null
+    );
+  }
+
+  priceChangeStatusLabel(status: string): string {
+    switch (status) {
+      case 'pending': return 'Waiting for approval';
+      case 'approved': return 'Approved';
+      case 'rejected': return 'Rejected';
+      case 'replaced': return 'Replaced by a later change';
+      default: return 'Applied';
+    }
+  }
+
+  priceChangeRateLabel(c: any): string {
+    return [c?.platform, c?.rateName].filter(Boolean).join(' · ') || 'Rate';
+  }
+
+  reviewPriceChange(change: any, decision: 'approve' | 'reject'): void {
+    if (!change?._id || this.priceChangeBusyId) return;
+    let note = '';
+    if (decision === 'reject') {
+      const answer = window.prompt('Reason for the creator (optional):', '');
+      if (answer === null) return;
+      note = answer;
+    }
+    this.priceChangeBusyId = String(change._id);
+    this.priceChangeError = '';
+    this.http
+      .post<any>(`${environment.apiBaseUrl}/admin/price-changes/${change._id}/${decision}`, decision === 'reject' ? { note } : {})
+      .subscribe({
+        next: () => {
+          this.priceChangeBusyId = '';
+          if (decision === 'approve') this.applyApprovedPrice(change);
+          this.adjustPricePendingCount(-1);
+          this.loadSelectedUserPriceChanges(this.selectedUser?._id);
+        },
+        error: (err) => {
+          this.priceChangeBusyId = '';
+          this.priceChangeError = err?.error?.message || 'Could not update this price change.';
+          this.loadSelectedUserPriceChanges(this.selectedUser?._id);
+          this.cd.detectChanges();
+        },
+      });
+  }
+
+  /** Shows the approved price in the open panel without reloading the list. */
+  private applyApprovedPrice(change: any): void {
+    const key = String(change?.rateName || '').trim().toLowerCase();
+    const sameName = (row: any) => String(row?.name || '').trim().toLowerCase() === key;
+    const user = this.selectedUser;
+    if (!user) return;
+    if (change.source === 'pricing' && Array.isArray(user.pricing)) {
+      user.pricing = user.pricing.map((r: any) => (sameName(r) ? { ...r, price: change.newPrice } : r));
+    } else if (Array.isArray(user.socialMedia)) {
+      user.socialMedia = user.socialMedia.map((sm: any) =>
+        String(sm?.socialAccountId || '') !== String(change.socialAccountId || '') || !Array.isArray(sm?.contentTypes)
+          ? sm
+          : { ...sm, contentTypes: sm.contentTypes.map((r: any) => (sameName(r) ? { ...r, price: change.newPrice, priceConfirmedAt: new Date().toISOString() } : r)) },
+      );
+    }
+  }
+
+  private adjustPricePendingCount(delta: number): void {
+    const id = String(this.selectedUser?._id || '');
+    for (const u of [this.selectedUser, ...this.influencers, ...this.photographers]) {
+      if (u && String(u._id) === id) u.pricePendingCount = Math.max(0, Number(u.pricePendingCount || 0) + delta);
+    }
+  }
+
+  private priceChangedWithin(user: any, days: number): boolean {
+    const t = user?.lastPriceChangeAt ? new Date(user.lastPriceChangeAt).getTime() : NaN;
+    return Number.isFinite(t) && Date.now() - t <= days * 24 * 3600 * 1000;
   }
 
   /** "set_premium" → "Set premium", plus the useful details (Premium on/off, duration, reason). */

@@ -1,3 +1,4 @@
+import { PendingPricesNoteComponent } from '../../shared/pending-prices-note.component';
 import { CollaborationRecordComponent } from '../../shared/collaboration-record/collaboration-record.component';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { tierOptionsWithCurrent } from '../../shared/tiers.constants';
@@ -41,11 +42,13 @@ import { upiIdValidator } from '../../shared/upi.util';
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CollaborationRecordComponent, RateReviewNoteComponent, YoutubeCheckNoteComponent, CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
+  imports: [CollaborationRecordComponent, RateReviewNoteComponent, PendingPricesNoteComponent, YoutubeCheckNoteComponent, CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
 export class PhotographerProfileComponent implements OnInit {
+  /** Bumped after a save so the "price waiting for approval" note reloads. */
+  pendingPricesRefresh = 0;
   /** The saved social accounts as loaded (for the "review your rates" prompt). */
   savedSocialMedia: any[] = [];
   confirmingRates = false;
@@ -1325,6 +1328,7 @@ export class PhotographerProfileComponent implements OnInit {
     this.http.patch(`${this.apiUrl}/users/photographers/me/profile`, payload, { headers }).subscribe({
       next: (res: any) => {
         this.saving = false;
+        this.pendingPricesRefresh++;
         this.saved = true;
         this.submitted = false;
         this.isEditMode = false;

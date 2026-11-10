@@ -1,3 +1,4 @@
+import { PendingPricesNoteComponent } from '../../shared/pending-prices-note.component';
 import { CollaborationRecordComponent } from '../../shared/collaboration-record/collaboration-record.component';
 import { environment } from '../../../environments/environment';
 import { CollaborationScoreApiService } from '../../services/collaboration-score-api.service';
@@ -43,7 +44,7 @@ import { upiIdValidator } from '../../shared/upi.util';
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CollaborationRecordComponent, CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, SocialPlatformFieldComponent],
+  imports: [CollaborationRecordComponent, CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, SocialPlatformFieldComponent, PendingPricesNoteComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -520,6 +521,8 @@ export class InfluencerProfileComponent implements OnInit {
   readonly currentDate = new Date();
   showPayment = false;
   selectedDuration: '1m' | '3m' | '1y' | '' = '';
+  /** Bumped after a save so the "price waiting for approval" note reloads. */
+  pendingPricesRefresh = 0;
   paymentSuccess = false;
   paymentError = '';
   myPayments: any[] = [];
@@ -1569,6 +1572,7 @@ export class InfluencerProfileComponent implements OnInit {
     this.configService.updateInfluencerProfile(payload).subscribe({
       next: (res: any) => {
         this.saving = false;
+        this.pendingPricesRefresh++;
         this.registrationSuccess = true;
         const payoutSummary = payload.payout?.upiId
           ? ` Payout saved: ${payload.payout.upiId}`

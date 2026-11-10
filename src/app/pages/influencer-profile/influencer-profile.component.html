@@ -471,6 +471,7 @@
               </div>
             </div>
 
+            <app-pending-prices-note [refreshKey]="pendingPricesRefresh"></app-pending-prices-note>
             <div *ngIf="selectedPlatforms().length > 0" class="platform-tabs-wrap">
               <div class="platform-tab-strip">
                 <button type="button" *ngFor="let platform of selectedPlatforms()" class="platform-tab"

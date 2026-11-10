@@ -1179,3 +1179,15 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+// Price changes (2026-11-10)
+.rate-change { display: block; color: #92400e; font-size: 0.75rem; }
+.price-changes .price-change {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 6px 0; border-top: 1px solid #eef0f4; font-size: 0.85rem;
+  small { display: block; color: #6b7280; }
+}
+.price-change--pending { background: #fff7ed; padding: 8px !important; border-radius: 6px; }
+.price-change__actions { display: flex; gap: 6px; flex-shrink: 0; }
+.price-change-error { color: #b91c1c; font-size: 0.85rem; margin: 4px 0; }
+.price-change-history summary { cursor: pointer; font-size: 0.85rem; color: #4b5563; margin-top: 6px; }
