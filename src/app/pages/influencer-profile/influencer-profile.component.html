@@ -195,9 +195,8 @@
               <small *ngIf="phoneVerified && !phoneEditRequested" class="text-muted d-block mt-1">
                 Mobile number verified.
               </small>
-              <small *ngIf="phoneVerified && phoneEditRequested" class="text-warning d-block mt-1">
-                Changing your verified number will require re-verification before it's trusted again.
-              </small>
+              <small *ngIf="phoneVerified && phoneEditRequested" class="text-warning d-block mt-1">Your new number will be used after our team verifies it (up to 24 hours). Until then we'll keep using your current verified number, so your invites continue as normal.</small>
+              <app-pending-mobile-note [pending]="pendingPhone" [current]="registrationForm.get('phoneNumber')?.value" (cancelled)="pendingPhone = ''"></app-pending-mobile-note>
               <small *ngIf="!phoneVerified" class="text-muted d-block mt-1">
                 <ng-container *ngIf="otpVerificationEnabled; else influencerProfileManualMobileVerify">
                   Verify your mobile number with OTP. Admin can also verify manually if needed.

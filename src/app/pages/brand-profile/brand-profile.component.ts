@@ -1,3 +1,4 @@
+import { PendingMobileNoteComponent } from '../../shared/pending-mobile-note.component';
 import { CollaborationRecordComponent } from '../../shared/collaboration-record/collaboration-record.component';
 
 import { environment } from '../../../environments/environment';
@@ -37,7 +38,7 @@ import { paymentAmountRupees } from '../../shared/payment-amount.util';
 @Component({
   selector: 'app-brand-registration',
   standalone: true,
-  imports: [CollaborationRecordComponent, CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
+  imports: [PendingMobileNoteComponent, CollaborationRecordComponent, CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './brand-profile.component.html',
   styleUrls: ['./brand-profile.component.scss']
 })
@@ -144,6 +145,8 @@ export class BrandProfileComponent implements OnInit {
   // Phone/email verification status and error
   phoneVerified: boolean = false;
   phoneEditRequested: boolean = false;
+  /** A new mobile number waiting for admin verification (the current one stays in use). */
+  pendingPhone = '';
   verificationCallNumber = '';
 
   emailVerified: boolean = false;
@@ -603,6 +606,7 @@ export class BrandProfileComponent implements OnInit {
 
           this.emailVerified = !!profile?.isEmailVerified;
           this.phoneVerified = !!profile?.isMobileVerified;
+          this.pendingPhone = String(profile?.pendingPhoneNumber || '');
           this.commissionAccessTags = this.extractCommissionAccessTags(profile?.adminTags);
           this.firstRegisteredAt = profile?.firstRegisteredAt || profile?.createdAt || null;
           this.lastLoginAt = profile?.lastLoginAt || null;
@@ -1282,7 +1286,13 @@ export class BrandProfileComponent implements OnInit {
         } else {
           this.emailEditRequested = false;
         }
-        if (phoneChanged) {
+        if (phoneChanged && this.phoneVerified) {
+          // A verified number stays in use; the new one waits for admin verification.
+          this.pendingPhone = currentPhone;
+          this.registrationForm.get('phoneNumber')?.setValue(previousPhone, { emitEvent: false });
+          if (this.originalFormValue) (this.originalFormValue as any).phoneNumber = previousPhone;
+          this.phoneEditRequested = false;
+        } else if (phoneChanged) {
           this.phoneVerified = false;
           this.phoneEditRequested = true;
         } else {

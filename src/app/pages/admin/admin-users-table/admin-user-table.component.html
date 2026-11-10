@@ -64,6 +64,7 @@
       <option value="">Verification: All</option>
       <option value="email_pending">Email pending</option>
       <option value="mobile_pending">Mobile pending</option>
+      <option value="mobile_change_pending">Mobile change pending (new number to verify)</option>
       <option value="email_or_mobile_pending">Email or mobile pending</option>
       <option value="both_pending">Both pending</option>
       <option value="both_verified">Both verified</option>
@@ -222,6 +223,9 @@
               <span class="ts-status-badge ts-status-pending">
                 <i class="bi bi-pencil-square"></i> {{ user.socialReviewChanged || hasSocialCreatorUpdate(user) ? 'Social changed — re-review' : 'Updated — needs review' }}
               </span>
+            </div>
+            <div class="mt-1" *ngIf="user.pendingPhoneNumber" title="New mobile number waiting for verification — the current verified number stays in use">
+              <span class="ts-status-badge ts-status-pending"><i class="bi bi-phone"></i> Mobile change — verify</span>
             </div>
             <div class="mt-1" *ngIf="user.pricePendingCount > 0" title="A price doubled or more — open the user to approve or reject. Brands see the current price until then.">
               <span class="ts-status-badge ts-status-pending">
@@ -513,6 +517,20 @@
             ></app-verification-field>
             <div class="user-sub mt-1" *ngIf="getDisplayPhoneNumber(selectedUser) !== '-'">
               {{ getMobileVerificationSource(selectedUser) }}
+            </div>
+            <!-- New number waiting for verification; the current verified number stays in use meanwhile -->
+            <div class="pending-mobile-admin" *ngIf="selectedUser.pendingPhoneNumber">
+              <div>
+                <i class="bi bi-hourglass-split"></i>
+                Mobile change requested: <strong>{{ selectedUser.pendingPhoneNumber }}</strong>
+                <small>(current {{ selectedUser.phoneNumber }} stays in use · asked {{ selectedUser.pendingPhoneRequestedAt | date: 'd MMM, h:mm a' }})</small>
+              </div>
+              <div class="pending-mobile-admin__actions">
+                <a class="mini-btn" [href]="'tel:' + selectedUser.pendingPhoneNumber">Call new number</a>
+                <button type="button" class="mini-btn mini-btn--primary" [disabled]="pendingMobileBusy" (click)="decidePendingMobile('approve')">Verified — use new number</button>
+                <button type="button" class="mini-btn mini-btn--danger" [disabled]="pendingMobileBusy" (click)="decidePendingMobile('reject')">Reject</button>
+              </div>
+              <small class="text-danger" *ngIf="pendingMobileError">{{ pendingMobileError }}</small>
             </div>
             <div class="user-sub mt-1" *ngIf="selectedUser.previousVerifiedMobile" title="This account changed mobile number after the previous one was verified — useful signal to check for account takeover or typos.">
               Previous verified mobile: {{ selectedUser.previousVerifiedMobile }}

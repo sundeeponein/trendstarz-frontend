@@ -22,6 +22,7 @@ export class ShippingAddressModalComponent {
   /** The creator's registered name and mobile — what the host sees with the address. */
   registeredName = '';
   registeredMobile = '';
+  registeredMobileVerified = false;
   contactLoading = false;
 
   get contactReady(): boolean {
@@ -41,6 +42,7 @@ export class ShippingAddressModalComponent {
         const p = res?.user ?? res?.data ?? res ?? {};
         this.registeredName = String(p?.name || '').trim();
         this.registeredMobile = String(p?.phoneNumber || '').trim();
+        this.registeredMobileVerified = p?.isMobileVerified === true;
         this.contactLoading = false;
         this.cd.markForCheck();
       },

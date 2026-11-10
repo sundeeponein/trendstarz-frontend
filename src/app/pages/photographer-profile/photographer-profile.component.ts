@@ -1,3 +1,4 @@
+import { PendingMobileNoteComponent } from '../../shared/pending-mobile-note.component';
 import { PendingPricesNoteComponent } from '../../shared/pending-prices-note.component';
 import { CollaborationRecordComponent } from '../../shared/collaboration-record/collaboration-record.component';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
@@ -42,7 +43,7 @@ import { upiIdValidator } from '../../shared/upi.util';
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [CollaborationRecordComponent, RateReviewNoteComponent, PendingPricesNoteComponent, YoutubeCheckNoteComponent, CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
+  imports: [PendingMobileNoteComponent, CollaborationRecordComponent, RateReviewNoteComponent, PendingPricesNoteComponent, YoutubeCheckNoteComponent, CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })
@@ -118,6 +119,8 @@ export class PhotographerProfileComponent implements OnInit {
   private originalPlatformForms: any = null;
   phoneVerified = false;
   phoneEditRequested = false;
+  /** A new mobile number waiting for admin verification (the current one stays in use). */
+  pendingPhone = '';
   emailVerified = false;
   communityProfileUser: any | null = null;
   emailEditRequested = false;
@@ -707,6 +710,7 @@ export class PhotographerProfileComponent implements OnInit {
         this.firstRegisteredAt = profile?.firstRegisteredAt || profile?.createdAt || null;
         this.lastLoginAt = profile?.lastLoginAt || null;
         this.phoneVerified = !!(profile?.phoneVerified ?? profile?.isMobileVerified ?? sessionUser?.phoneVerified ?? sessionUser?.isMobileVerified);
+        this.pendingPhone = String(profile?.pendingPhoneNumber || '');
         this.emailVerified = !!(profile?.isEmailVerified ?? sessionUser?.isEmailVerified);
         this.communityProfileUser = {
           ...profile,
@@ -1354,7 +1358,13 @@ export class PhotographerProfileComponent implements OnInit {
         } else {
           this.emailEditRequested = false;
         }
-        if (phoneChanged) {
+        if (phoneChanged && this.phoneVerified) {
+          // A verified number stays in use; the new one waits for admin verification.
+          this.pendingPhone = currentPhone;
+          this.form.get('phoneNumber')?.setValue(previousPhone, { emitEvent: false });
+          if (this.originalFormValue) (this.originalFormValue as any).phoneNumber = previousPhone;
+          this.phoneEditRequested = false;
+        } else if (phoneChanged) {
           this.phoneVerified = false;
           this.phoneEditRequested = true;
         } else {

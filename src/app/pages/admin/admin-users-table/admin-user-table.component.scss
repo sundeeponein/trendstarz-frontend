@@ -1191,3 +1191,11 @@
 .price-change__actions { display: flex; gap: 6px; flex-shrink: 0; }
 .price-change-error { color: #b91c1c; font-size: 0.85rem; margin: 4px 0; }
 .price-change-history summary { cursor: pointer; font-size: 0.85rem; color: #4b5563; margin-top: 6px; }
+
+// Mobile change waiting for verification
+.pending-mobile-admin {
+  margin: 6px 0; padding: 8px 10px; border-radius: 8px; background: #fffbeb; border: 1px solid #fde68a;
+  font-size: 0.85rem; color: #92400e;
+  small { color: #a16207; }
+}
+.pending-mobile-admin__actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }

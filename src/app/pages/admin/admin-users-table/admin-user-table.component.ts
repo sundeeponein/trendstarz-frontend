@@ -1644,6 +1644,9 @@ export class AdminUserTableComponent implements OnInit {
     if (filters.contactVerification === 'link_reported' && !user.linkReportOpen) {
       return false;
     }
+    if (filters.contactVerification === 'mobile_change_pending' && !user.pendingPhoneNumber) {
+      return false;
+    }
     if (filters.contactVerification === 'price_pending' && !(Number(user.pricePendingCount) > 0)) {
       return false;
     }
@@ -2392,6 +2395,45 @@ export class AdminUserTableComponent implements OnInit {
       },
       error: () => (this.selectedUserActions = []),
     });
+  }
+
+  // ── Mobile change waiting for verification (2026-11-10) ──
+  pendingMobileBusy = false;
+  pendingMobileError = '';
+
+  decidePendingMobile(decision: 'approve' | 'reject'): void {
+    const user = this.selectedUser;
+    if (!user?._id || this.pendingMobileBusy) return;
+    const type = this.inferUserType(user);
+    const msg = decision === 'approve'
+      ? `Confirm you verified ${user.pendingPhoneNumber}? It replaces ${user.phoneNumber} everywhere, including open campaigns.`
+      : `Reject ${user.pendingPhoneNumber}? The account keeps ${user.phoneNumber}.`;
+    if (!window.confirm(msg)) return;
+    this.pendingMobileBusy = true;
+    this.pendingMobileError = '';
+    this.http
+      .post<any>(`${environment.apiBaseUrl}/admin/users/${type}/${user._id}/pending-mobile/${decision}`, {})
+      .subscribe({
+        next: (res) => {
+          const body = res?.data ?? res;
+          const patch: any = { pendingPhoneNumber: '', pendingPhoneRequestedAt: null };
+          if (decision === 'approve') {
+            patch.previousVerifiedMobile = user.phoneNumber;
+            patch.phoneNumber = body?.phoneNumber || user.pendingPhoneNumber;
+            patch.isMobileVerified = true;
+          }
+          for (const u of [this.selectedUser, ...this.influencers, ...this.brands, ...this.photographers]) {
+            if (u && String(u._id) === String(user._id)) Object.assign(u, patch);
+          }
+          this.pendingMobileBusy = false;
+          this.cd.detectChanges();
+        },
+        error: (err) => {
+          this.pendingMobileBusy = false;
+          this.pendingMobileError = err?.error?.message || 'Could not update the mobile number.';
+          this.cd.detectChanges();
+        },
+      });
   }
 
   // ── Price changes (2026-11-10): history + approval of prices that doubled ──

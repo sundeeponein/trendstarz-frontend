@@ -1,3 +1,4 @@
+import { PendingMobileNoteComponent } from '../../shared/pending-mobile-note.component';
 import { PendingPricesNoteComponent } from '../../shared/pending-prices-note.component';
 import { CollaborationRecordComponent } from '../../shared/collaboration-record/collaboration-record.component';
 import { environment } from '../../../environments/environment';
@@ -44,7 +45,7 @@ import { upiIdValidator } from '../../shared/upi.util';
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [CollaborationRecordComponent, CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, SocialPlatformFieldComponent, PendingPricesNoteComponent],
+  imports: [PendingMobileNoteComponent, CollaborationRecordComponent, CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, SocialPlatformFieldComponent, PendingPricesNoteComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })
@@ -365,6 +366,8 @@ export class InfluencerProfileComponent implements OnInit {
   // Phone/email verification status and error
   phoneVerified: boolean = false;
   phoneEditRequested: boolean = false;
+  /** A new mobile number waiting for admin verification (the current one stays in use). */
+  pendingPhone = '';
   verificationCallNumber = '';
   otpVerificationEnabled = false;
 
@@ -748,6 +751,7 @@ export class InfluencerProfileComponent implements OnInit {
           }
           this.emailVerified = !!profile.isEmailVerified;
           this.phoneVerified = !!profile.isMobileVerified;
+          this.pendingPhone = String(profile?.pendingPhoneNumber || '');
           this.communityProfileUser = {
             ...profile,
             isEmailVerified: this.emailVerified,
@@ -1621,7 +1625,13 @@ export class InfluencerProfileComponent implements OnInit {
         } else {
           this.emailEditRequested = false;
         }
-        if (phoneChanged) {
+        if (phoneChanged && this.phoneVerified) {
+          // A verified number stays in use; the new one waits for admin verification.
+          this.pendingPhone = currentPhone;
+          this.registrationForm.get('phoneNumber')?.setValue(previousPhone, { emitEvent: false });
+          if (this.originalFormValue) (this.originalFormValue as any).phoneNumber = previousPhone;
+          this.phoneEditRequested = false;
+        } else if (phoneChanged) {
           this.phoneVerified = false;
           this.phoneEditRequested = true;
         } else {
@@ -1658,6 +1668,7 @@ export class InfluencerProfileComponent implements OnInit {
             }
             this.emailVerified = !!profile.isEmailVerified;
             this.phoneVerified = !!profile.isMobileVerified;
+            this.pendingPhone = String(profile?.pendingPhoneNumber || '');
             this.commissionAccessTags = this.extractCommissionAccessTags(profile.adminTags);
             this.firstRegisteredAt = profile.firstRegisteredAt || profile.createdAt || null;
             this.lastLoginAt = profile.lastLoginAt || null;

@@ -41,8 +41,9 @@
         <div *ngIf="contactLoading" class="sam-contact__muted">Loading…</div>
         <ng-container *ngIf="!contactLoading">
           <div class="sam-contact__row"><span>Name</span><strong>{{ registeredName || '—' }}</strong></div>
-          <div class="sam-contact__row"><span>Mobile</span><strong>{{ registeredMobile || '—' }}</strong></div>
-          <small class="sam-contact__muted" *ngIf="contactReady">The host will see this name and mobile with your address. To change them, update your profile.</small>
+          <div class="sam-contact__row"><span>Mobile</span><strong>{{ registeredMobile || '—' }}</strong>
+            <span class="sam-contact__ok" *ngIf="registeredMobile && registeredMobileVerified"><i class="bi bi-check-circle-fill"></i> Verified</span></div>
+          <small class="sam-contact__muted" *ngIf="contactReady">The host will see this name and mobile with your address.</small>
           <small class="err" *ngIf="!contactReady">Add your name and mobile number in your profile before accepting.</small>
         </ng-container>
       </div>
