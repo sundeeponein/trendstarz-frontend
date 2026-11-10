@@ -1477,3 +1477,11 @@ $dk-orange:    #e06030;
   display: inline-block; margin: 2px 4px 0 0; padding: 1px 8px; border-radius: 999px;
   background: #fff; border: 1px solid #fcd34d; font-size: 0.78rem; font-weight: 600;
 }
+
+// Saved payout details as labelled rows
+.cdm-payout-row {
+  display: flex; gap: 8px; align-items: baseline; padding: 1px 0;
+  span { min-width: 60px; color: #64748b; }
+  strong { word-break: break-all; }
+}
+.cdm-payout-row__need { color: #b45309; font-size: 0.75rem; }

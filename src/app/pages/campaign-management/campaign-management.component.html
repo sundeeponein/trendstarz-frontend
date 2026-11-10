@@ -1922,6 +1922,7 @@
     [visible]="invitePreviewManual && !!invitePreview"
     [initialPostDate]="selectedInvitePostDates[invitePreview._id]"
     [initialContentTypeKey]="selectedInviteContentType[invitePreview._id]"
+    [initialPayout]="defaultPayout"
     [qualifyingPlatform]="invitePreviewQualifyingPlatform"
     [qualifyingTier]="invitePreviewQualifyingTier"
     [busy]="actioningInviteIds.has(invitePreview._id)"

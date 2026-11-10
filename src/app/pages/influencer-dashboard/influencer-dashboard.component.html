@@ -576,6 +576,7 @@
   [busy]="responding === selectedInvite._id"
   [initialPostDate]="selectedPostDates[selectedInvite._id]"
   [initialContentTypeKey]="selectedContentTypes[selectedInvite._id]"
+  [initialPayout]="defaultPayout"
   (close)="closeDetail()"
   (accept)="onModalAccept($event)"
   (decline)="onModalDecline($event)"

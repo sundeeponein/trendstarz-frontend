@@ -99,12 +99,21 @@
             {{ payoutEditing ? 'Done' : (payoutSummaryText ? 'Edit' : 'Add') }}
           </button>
         </div>
+        <!-- Saved details shown as labelled rows so the creator can check them; Edit to change -->
         <div class="cdm-payout-summary" *ngIf="!payoutEditing">
-          <span *ngIf="payoutSummaryText">{{ payoutSummaryText }}</span>
+          <ng-container *ngIf="payoutSummaryText">
+            <div class="cdm-payout-row"><span>UPI ID</span><strong>{{ payoutUpiId || '—' }}</strong>
+              <em class="cdm-payout-row__need" *ngIf="invitePaysMoney && !payoutUpiId">needed for this paid campaign</em></div>
+            <div class="cdm-payout-row"><span>Mobile</span><strong>{{ payoutMobile || '—' }}</strong></div>
+            <div class="cdm-payout-row"><span>Name</span><strong>{{ payoutName || '—' }}</strong></div>
+          </ng-container>
           <span class="cdm-payout-missing" *ngIf="!payoutSummaryText">{{ invitePaysMoney ? 'Add your UPI ID before accepting' : 'Add UPI / mobile before accepting' }}</span>
         </div>
-        <p class="cdm-payout-check" *ngIf="invitePaysMoney && payoutUpiId && !payoutEditing">
-          Please check this UPI ID is yours and correct — a payout sent to a wrong UPI ID can't be pulled back.
+        <p class="cdm-payout-check" *ngIf="payoutSummaryText && !payoutEditing">
+          <ng-container *ngIf="invitePaysMoney && payoutUpiId; else payoutCheckGeneral">
+            Please check this UPI ID is yours and correct — a payout sent to a wrong UPI ID can't be pulled back. Tap Edit to change it.
+          </ng-container>
+          <ng-template #payoutCheckGeneral>Please check these details are correct. Tap Edit to change them.</ng-template>
         </p>
         <div class="cdm-payout-form" *ngIf="payoutEditing">
           <input type="text" class="cdm-payout-input"
