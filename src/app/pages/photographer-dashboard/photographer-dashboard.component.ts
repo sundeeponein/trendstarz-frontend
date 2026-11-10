@@ -450,7 +450,9 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
         this.brandCampaigns = all
           // Only campaigns looking for photo/videographers — influencer-only ones can't be joined.
           .filter((c: any) => String(c?.status || '').toLowerCase() === 'active'
-            && String(c?.inviteRecipientRole || 'influencer').toLowerCase() === 'photographer')
+            && String(c?.inviteRecipientRole || 'influencer').toLowerCase() === 'photographer'
+            // Brand-owned only — influencers' campaigns for photographers aren't "Brand Campaigns".
+            && String(c?.ownerType || 'brand').toLowerCase() === 'brand')
           .sort((a: any, b: any) => {
             const at = new Date(a?.updatedAt || a?.createdAt || 0).getTime();
             const bt = new Date(b?.updatedAt || b?.createdAt || 0).getTime();

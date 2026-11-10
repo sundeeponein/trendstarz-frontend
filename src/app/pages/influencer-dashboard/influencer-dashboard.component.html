@@ -142,7 +142,7 @@
           </div>
         </div>
         <button type="button" class="role-tile__cta" (click)="openCampaignManagement('collaborations')">
-          Manage campaign requests <i class="bi bi-arrow-right"></i>
+          Manage photographer campaigns <i class="bi bi-arrow-right"></i>
         </button>
       </div>
     </div>
@@ -249,7 +249,7 @@
   <div id="collab-requests" *ngIf="!loading" class="section-card mb-4">
     <div class="section-title d-flex align-items-center mb-3">
       <span class="dot dot--purple me-2"></span>
-      Photo/Videographer Campaign Requests
+      Photographer Campaigns
       <span class="source-badge source-badge--collab ms-2">From photo/videographers</span>
       <span class="section-count ms-2">{{ collaborationRequests.length }}</span>
     </div>
@@ -290,7 +290,7 @@
 
     <div class="txn-see-all" *ngIf="collaborationRequests.length">
       <a routerLink="/campaigns" [queryParams]="{ tab: 'collaborations' }" class="txn-see-all__link">
-        <i class="bi bi-arrow-right-circle"></i> Manage all campaign requests
+        <i class="bi bi-arrow-right-circle"></i> Manage all photographer campaigns
       </a>
     </div>
   </div>

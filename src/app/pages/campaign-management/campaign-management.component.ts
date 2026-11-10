@@ -400,12 +400,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   get pageTitle(): string {
     if (this.isInfluencerView) {
-      return this.isInfluencerCollaborationsView ? 'Creator Campaigns' : 'Campaign Requests';
+      return this.isInfluencerCollaborationsView ? 'Photographer Campaigns' : 'Brand Campaigns';
     }
     if (this.isPhotographerView) {
       return this.isPhotographerCampaignRequestsView
-        ? 'Campaign Requests'
-        : 'Creator Campaigns';
+        ? 'Brand Campaigns'
+        : 'Influencer Campaigns';
     }
     return 'Campaign Requests';
   }
@@ -413,13 +413,13 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
   get pageSubtitle(): string {
     if (this.isInfluencerView) {
       return this.isInfluencerCollaborationsView
-        ? 'Browse active campaign requests from photographers and videographers.'
+        ? 'Campaigns with photographers and videographers — ones they send you and ones you send them.'
         : 'Browse active campaign requests from brands.';
     }
     if (this.isPhotographerView) {
       return this.isPhotographerCampaignRequestsView
-        ? 'View and respond to campaign requests sent by brands.'
-        : 'Create and manage campaigns you send to influencers.';
+        ? 'Campaign requests sent to you by brands.'
+        : 'Campaigns with influencers — ones they send you and ones you send them.';
     }
     return 'Create campaign requests for influencers or creative requirements for photographers.';
   }
@@ -1918,11 +1918,21 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return this.photographerBrandInvites.filter((invite: any) => this.isInviteMissed(invite));
   }
 
+  /**
+   * Split by who sent it (the server tags each invite with sender.role):
+   * Brand Campaigns = from brands; Influencer Campaigns → Invited (Received) = from
+   * influencers. Before 2026-11-10 the brand tab showed both and the received
+   * list was always empty (it checked a campaign field photographers aren't sent).
+   */
+  private isFromInfluencer(invite: any): boolean {
+    return String(invite?.sender?.role || '').toLowerCase() === 'influencer';
+  }
+
   get photographerInboxInvites(): any[] {
     if (this.isPhotographerCollaborationsView) {
-      return this.photographerBrandInvites.filter((invite: any) => this.isCollabInvite(invite));
+      return this.photographerBrandInvites.filter((invite: any) => this.isFromInfluencer(invite));
     }
-    return this.photographerBrandInvites;
+    return this.photographerBrandInvites.filter((invite: any) => !this.isFromInfluencer(invite));
   }
 
   get photographerInboxInvitesPending(): any[] {
