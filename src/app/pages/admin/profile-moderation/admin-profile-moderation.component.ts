@@ -245,7 +245,6 @@ import { copyTextToClipboard } from '../../../shared/referral-link.util';
               <div class="discovery-card__actions">
                 <button type="button" class="mini-btn" (click)="grantPremium('1m')" [disabled]="premiumBusy()">Grant 1M Premium</button>
                 <button type="button" class="mini-btn" (click)="grantPremium('3m')" [disabled]="premiumBusy()">Grant 3M Premium</button>
-                <button type="button" class="mini-btn" (click)="grantPremium('1y')" [disabled]="premiumBusy()">Grant 1Y Premium</button>
               </div>
               <div class="discovery-card__actions" *ngIf="premiumMessage()">
                 <span class="status-caption">{{ premiumMessage() }}</span>
@@ -1227,7 +1226,7 @@ export class AdminProfileModerationComponent implements OnInit {
     this.modUpdateVisibility(visibility);
   }
 
-  grantPremium(duration: '1m' | '3m' | '1y'): void {
+  grantPremium(duration: '1m' | '3m'): void {
     const row = this.selectedRow();
     if (!row || this.premiumBusy()) return;
     this.premiumBusy.set(true);

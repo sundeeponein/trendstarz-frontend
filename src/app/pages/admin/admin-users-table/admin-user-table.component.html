@@ -1155,7 +1155,6 @@
       <div class="modal-body">
         <label><input type="radio" name="premiumDurationGroup" [value]="'1m'" [(ngModel)]="premiumDuration"> 1 Month</label><br>
         <label><input type="radio" name="premiumDurationGroup" [value]="'3m'" [(ngModel)]="premiumDuration"> 3 Months</label><br>
-        <label><input type="radio" name="premiumDurationGroup" [value]="'1y'" [(ngModel)]="premiumDuration"> 1 Year</label><br>
         <div class="modal-actions">
           <button (click)="confirmPremium()" [disabled]="!premiumDuration">Confirm</button>
           <button (click)="closePremiumModal()">Cancel</button>
