@@ -1459,3 +1459,11 @@ $dk-orange:    #e06030;
   font-weight: 600;
   &:hover { background: #f3f4f6; }
 }
+
+// Product shipping on admin creator rows (2026-11-10)
+.cdm-shipping {
+  margin-top: 4px; padding: 6px 8px; border-radius: 6px; background: #f8fafc;
+  font-size: 0.8rem; color: #374151; line-height: 1.4;
+}
+.cdm-shipping__option { color: #92400e; }
+.cdm-shipping__status { color: #6b7280; }

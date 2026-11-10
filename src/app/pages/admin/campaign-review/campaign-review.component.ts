@@ -708,6 +708,9 @@ export class CampaignReviewComponent implements OnInit {
           selectedPlatform: String(invite?.selectedPlatform || counter?.selectedPlatform || '').trim() || null,
           selectedContentType: String(invite?.selectedContentType || counter?.selectedContentType || '').trim() || null,
           selectedPostDate: invite?.selectedPostDate || null,
+          // Product campaigns: where it ships, the creator's answer (size etc.), shipping status.
+          shippingAddress: invite?.shippingAddress || null,
+          productFulfillment: invite?.productFulfillment || null,
           acceptedAt: invite?.acceptedAt || null,
           paymentConfirmedAt: invite?.paymentConfirmedAt || null,
           updatedAt: invite?.updatedAt || invite?.createdAt || null,

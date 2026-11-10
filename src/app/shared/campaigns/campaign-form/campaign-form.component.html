@@ -538,6 +538,23 @@
           <p class="field-sublabel" *ngIf="f['productShippingRequired'].value === true">
             <i class="bi bi-truck"></i> Shipping address will be collected from the {{ isInvitingPhotographers ? 'creator' : 'influencer' }} after they accept your invite — you do not need to enter it here.
           </p>
+          <div class="product-option" *ngIf="f['productShippingRequired'].value === true">
+            <label class="field-label mt-2">Anything the creator must tell you before shipping? <small>(optional)</small></label>
+            <input type="text" formControlName="productOptionQuestion" class="field-input" maxlength="60"
+              placeholder="e.g. Shirt size (Men), Kurti size (Women), Shoe size (UK), Fragrance" />
+            <p class="field-sublabel">Leave empty if nothing is needed (e.g. electronics). The creator answers this with their address when they accept.</p>
+            <ng-container *ngIf="(f['productOptionQuestion'].value || '').trim()">
+              <label class="field-label mt-2">Options <small>(optional, separate with commas)</small></label>
+              <input type="text" formControlName="productOptionChoicesText" class="field-input" maxlength="400"
+                placeholder="e.g. S, M, L, XL, XXL  or  UK 6, UK 7, UK 8" />
+              <p class="field-sublabel">
+                <ng-container *ngIf="productOptionChoicesPreview.length; else freeAnswer">
+                  The creator picks one: {{ productOptionChoicesPreview.join(' · ') }}
+                </ng-container>
+                <ng-template #freeAnswer>No options — the creator types their answer.</ng-template>
+              </p>
+            </ng-container>
+          </div>
           <p class="field-sublabel" *ngIf="f['productShippingRequired'].value === false">
             <i class="bi bi-geo-alt"></i> No shipping — product will be handed over in person or no physical product is involved.
           </p>

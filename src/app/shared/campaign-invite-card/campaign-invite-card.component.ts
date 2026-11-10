@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
@@ -381,6 +382,54 @@ export class CampaignInviteCardComponent {
     if (hours <= 0) return `${minutes}m`;
     if (minutes === 0) return `${hours}h`;
     return `${hours}h ${minutes}m`;
+  }
+
+  // ── Product question (size etc.): the creator's answer, changeable until shipped ──
+  private readonly http = inject(HttpClient);
+  private readonly cdRef = inject(ChangeDetectorRef);
+  optionEditing = false;
+  optionSaving = false;
+  optionDraft = '';
+  optionError = '';
+
+  get optionQuestion(): string { return String(this.invite?.shippingAddress?.optionQuestion || ''); }
+  get optionAnswer(): string { return String(this.invite?.shippingAddress?.optionAnswer || ''); }
+  get optionChoices(): string[] {
+    const list = this.invite?.campaignId?.productOptionChoices;
+    return Array.isArray(list) ? list : [];
+  }
+  get canChangeOption(): boolean {
+    const pf = this.productFulfillment || {};
+    return !pf.shippedAt && !pf.deliveredAt && !['shipped', 'delivered', 'returned'].includes(String(pf.status || ''));
+  }
+
+  startOptionEdit(): void {
+    this.optionDraft = this.optionAnswer;
+    this.optionError = '';
+    this.optionEditing = true;
+  }
+
+  saveOption(): void {
+    const answer = this.optionDraft.trim();
+    if (!answer || !this.invite?._id) return;
+    this.optionSaving = true;
+    this.optionError = '';
+    this.http
+      .patch<any>(`${environment.apiBaseUrl}/campaign-invites/${this.invite._id}/product-option`, { answer })
+      .subscribe({
+        next: (res) => {
+          const body = res?.data ?? res;
+          this.invite.shippingAddress = { ...(this.invite.shippingAddress || {}), optionAnswer: body?.optionAnswer || answer };
+          this.optionSaving = false;
+          this.optionEditing = false;
+          this.cdRef.markForCheck();
+        },
+        error: (err) => {
+          this.optionSaving = false;
+          this.optionError = err?.error?.message || 'Could not save. Try again.';
+          this.cdRef.markForCheck();
+        },
+      });
   }
 
   // ── Brand-side fulfillment visibility (read-only on influencer card) ──

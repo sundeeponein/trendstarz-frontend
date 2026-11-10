@@ -2236,6 +2236,8 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       campaignTitle: campaign?.title || campaign?.name || 'Product campaign',
       productLabel: campaign?.productDescription
         || (campaign?.productValue ? `Product value ₹${campaign.productValue}` : undefined),
+      optionQuestion: campaign?.productOptionQuestion || '',
+      optionChoices: Array.isArray(campaign?.productOptionChoices) ? campaign.productOptionChoices : [],
     });
   }
 

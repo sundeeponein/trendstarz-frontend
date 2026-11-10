@@ -780,6 +780,8 @@ export class InfluencerDashboardComponent implements OnInit, OnDestroy {
         campaignTitle: campaign?.title || campaign?.name || 'Product campaign',
         productLabel: campaign?.productDescription
           || (campaign?.productValue ? `Product value ₹${campaign.productValue}` : undefined),
+        optionQuestion: campaign?.productOptionQuestion || '',
+        optionChoices: Array.isArray(campaign?.productOptionChoices) ? campaign.productOptionChoices : [],
       }).then((address) => {
         if (!address) {
           this.toast.error('Shipping address is required to accept this product campaign.');

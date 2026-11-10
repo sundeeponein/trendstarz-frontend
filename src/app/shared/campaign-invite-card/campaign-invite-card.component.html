@@ -173,6 +173,27 @@
     </div>
   </div>
 
+  <!-- The creator's answer to the host's product question (size etc.); changeable until shipped -->
+  <div class="cic-status-bar cic-option" *ngIf="optionQuestion" (click)="$event.stopPropagation()">
+    <div class="cic-status-item">
+      <i class="bi bi-rulers"></i>
+      <span *ngIf="!optionEditing">
+        {{ optionQuestion }}: <strong>{{ optionAnswer || '—' }}</strong>
+        <button type="button" class="cic-option__change" *ngIf="canChangeOption" (click)="startOptionEdit()">Change</button>
+      </span>
+      <span *ngIf="optionEditing" class="cic-option__edit">
+        {{ optionQuestion }}:
+        <select *ngIf="optionChoices.length; else optionFree" [(ngModel)]="optionDraft">
+          <option *ngFor="let c of optionChoices" [value]="c">{{ c }}</option>
+        </select>
+        <ng-template #optionFree><input type="text" [(ngModel)]="optionDraft" maxlength="60" /></ng-template>
+        <button type="button" class="cic-option__change" [disabled]="optionSaving || !optionDraft.trim()" (click)="saveOption()">Save</button>
+        <button type="button" class="cic-option__change" [disabled]="optionSaving" (click)="optionEditing = false">Cancel</button>
+      </span>
+    </div>
+    <small class="cic-option__error" *ngIf="optionError">{{ optionError }}</small>
+  </div>
+
   <!-- ── CAMPAIGN BRIEF HIGHLIGHTS ─────────────────────────── -->
   <!-- <div class="cic-brief" *ngIf="briefPreview">
     <button class="cic-brief-toggle" type="button" (click)="briefExpanded = !briefExpanded">

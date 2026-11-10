@@ -20,21 +20,31 @@
     </div>
 
     <form class="sam-body" [formGroup]="form" (ngSubmit)="submit()">
-      <div class="sam-row">
-        <label class="sam-field">
-          <span>Contact name <span class="req">*</span></span>
-          <input type="text" formControlName="contactName" autocomplete="name" placeholder="Full name" />
-          <small class="err" *ngIf="form.controls.contactName.touched && form.controls.contactName.invalid">
-            Please enter a contact name.
-          </small>
-        </label>
-        <label class="sam-field">
-          <span>Contact mobile <span class="req">*</span></span>
-          <input type="tel" formControlName="contactMobile" autocomplete="tel" placeholder="10-digit mobile" inputmode="tel" />
-          <small class="err" *ngIf="form.controls.contactMobile.touched && form.controls.contactMobile.invalid">
-            Enter a valid 10–13 digit mobile number.
-          </small>
-        </label>
+      <!-- The host's product question (size etc.), only when they asked one -->
+      <label class="sam-field sam-option" *ngIf="optionQuestion">
+        <span>{{ optionQuestion }} <span class="req">*</span></span>
+        <select *ngIf="optionChoices.length; else optionText" formControlName="optionAnswer">
+          <option value="" disabled>Choose…</option>
+          <option *ngFor="let c of optionChoices" [value]="c">{{ c }}</option>
+        </select>
+        <ng-template #optionText>
+          <input type="text" formControlName="optionAnswer" maxlength="60" placeholder="Your answer" />
+        </ng-template>
+        <small class="err" *ngIf="form.controls.optionAnswer.touched && form.controls.optionAnswer.invalid">
+          Please answer: {{ optionQuestion }}.
+        </small>
+      </label>
+
+      <!-- Registered name + mobile (read-only): the host sees these with the address -->
+      <div class="sam-contact">
+        <div class="sam-contact__title"><i class="bi bi-person-check"></i> Contact (from your registration)</div>
+        <div *ngIf="contactLoading" class="sam-contact__muted">Loading…</div>
+        <ng-container *ngIf="!contactLoading">
+          <div class="sam-contact__row"><span>Name</span><strong>{{ registeredName || '—' }}</strong></div>
+          <div class="sam-contact__row"><span>Mobile</span><strong>{{ registeredMobile || '—' }}</strong></div>
+          <small class="sam-contact__muted" *ngIf="contactReady">The host will see this name and mobile with your address. To change them, update your profile.</small>
+          <small class="err" *ngIf="!contactReady">Add your name and mobile number in your profile before accepting.</small>
+        </ng-container>
       </div>
 
       <label class="sam-field">
@@ -77,7 +87,7 @@
 
       <div class="sam-actions">
         <button type="button" class="btn btn-outline" (click)="cancel()">Cancel</button>
-        <button type="submit" class="btn btn-primary" [disabled]="form.invalid">
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid || !contactReady">
           <i class="bi bi-check2-circle"></i> Save &amp; accept
         </button>
       </div>

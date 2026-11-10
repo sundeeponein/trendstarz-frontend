@@ -756,14 +756,27 @@ export class PhotographerDashboardComponent implements OnInit, OnDestroy {
     };
 
     const invite = this.brandInvites.find(i => i._id === inviteId) || this.selectedInvite;
-    const campaignType = invite?.campaignId?.campaignType || invite?.campaignType || '';
-    const needsShipping = status === 'accepted' && campaignType === 'product_gifting';
+    const campaign = invite?.campaignId && typeof invite.campaignId === 'object' ? invite.campaignId : {};
+    // Same rule as the server: a product campaign that ships needs the address.
+    // (Was 'product_gifting', a type that doesn't exist — the popup never opened.)
+    const needsShipping = status === 'accepted'
+      && campaign?.campaignType === 'product'
+      && campaign?.productShippingRequired === true;
 
     if (needsShipping) {
       this.shippingModal.prompt({
-        campaignTitle: invite?.campaignId?.title || invite?.title || '',
+        campaignTitle: campaign?.title || invite?.title || '',
+        optionQuestion: campaign?.productOptionQuestion || '',
+        optionChoices: Array.isArray(campaign?.productOptionChoices) ? campaign.productOptionChoices : [],
       }).then(
-        (addr: ShippingAddress | null) => finish(addr ?? undefined),
+        (addr: ShippingAddress | null) => {
+          if (!addr) {
+            this.responding = null;
+            this.toast.error('Shipping address is required to accept this product campaign.');
+            return;
+          }
+          finish(addr);
+        },
         () => { this.responding = null; },
       );
     } else {

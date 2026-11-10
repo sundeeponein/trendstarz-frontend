@@ -2037,6 +2037,7 @@
       <ng-container *ngIf="invitePanelCampaign?.campaignType === 'product'">
         <div class="fulfill-address" *ngIf="fulfillInvite.shippingAddress as a">
           <div class="fulfill-address__title"><i class="bi bi-house-door"></i> Ship to</div>
+          <div class="fulfill-option" *ngIf="a.optionQuestion">{{ a.optionQuestion }}: <strong>{{ a.optionAnswer || '—' }}</strong></div>
           <div><strong>{{ a.contactName }}</strong><span *ngIf="a.contactMobile"> · {{ a.contactMobile }}</span></div>
           <div>{{ a.line1 }}<span *ngIf="a.line2">, {{ a.line2 }}</span></div>
           <div *ngIf="a.landmark">Landmark: {{ a.landmark }}</div>

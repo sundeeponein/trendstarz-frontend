@@ -496,6 +496,25 @@
                     <div class="cdm-creator-card__content-type" *ngIf="adminInviteAcceptedDeliverableText(item)">
                       Accepted deliverable: <strong>{{ adminInviteAcceptedDeliverableText(item) }}</strong>
                     </div>
+                    <!-- Product shipping (admin): creator's answer (size etc.), ship-to, status -->
+                    <div class="cdm-shipping" *ngIf="adminReview && (item.shippingAddress || item.productFulfillment?.shippedAt || item.productFulfillment?.deliveredAt)">
+                      <div class="cdm-shipping__option" *ngIf="item.shippingAddress?.optionQuestion">
+                        {{ item.shippingAddress.optionQuestion }}: <strong>{{ item.shippingAddress.optionAnswer || '—' }}</strong>
+                      </div>
+                      <div *ngIf="item.shippingAddress as a">
+                        <i class="bi bi-house-door"></i>
+                        {{ a.contactName }}<ng-container *ngIf="a.contactMobile"> · {{ a.contactMobile }}</ng-container>
+                        · {{ a.line1 }}<ng-container *ngIf="a.line2">, {{ a.line2 }}</ng-container>,
+                        {{ a.city }}<ng-container *ngIf="a.state">, {{ a.state }}</ng-container> {{ a.pincode }}
+                      </div>
+                      <div class="cdm-shipping__status">
+                        <i class="bi bi-truck"></i>
+                        {{ item.productFulfillment?.status === 'delivered' ? 'Delivered' : item.productFulfillment?.status === 'shipped' ? 'Shipped' : item.productFulfillment?.status === 'returned' ? 'Returned' : 'Not shipped yet' }}
+                        <ng-container *ngIf="item.productFulfillment?.shippedAt"> · shipped {{ item.productFulfillment.shippedAt | date:'d MMM y' }}</ng-container>
+                        <ng-container *ngIf="item.productFulfillment?.courier"> · {{ item.productFulfillment.courier }}</ng-container>
+                        <ng-container *ngIf="item.productFulfillment?.trackingId"> · {{ item.productFulfillment.trackingId }}</ng-container>
+                      </div>
+                    </div>
                     <!-- Negotiation trail -->
                     <div class="cdm-creator-card__negotiation" *ngIf="adminInviteOfferTrailText(item)">
                       {{ adminInviteOfferTrailText(item) }}

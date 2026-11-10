@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 
 export interface ShippingAddress {
+  /** Ignored by the server — the registered profile name/mobile are used. */
   contactName: string;
   contactMobile: string;
   line1: string;
@@ -9,6 +10,8 @@ export interface ShippingAddress {
   state: string;
   pincode: string;
   landmark?: string;
+  /** Answer to the host's product question (size etc.), when one is asked. */
+  optionAnswer?: string;
 }
 
 export interface ShippingAddressPromptOptions {
@@ -16,6 +19,10 @@ export interface ShippingAddressPromptOptions {
   campaignTitle?: string;
   /** Optional value of the product, shown for context. */
   productLabel?: string;
+  /** The host's product question, e.g. "Shirt size (Men)". Empty = not asked. */
+  optionQuestion?: string;
+  /** Fixed choices for the question; empty = the creator types an answer. */
+  optionChoices?: string[];
   /** Prefilled values when reopening or editing. */
   prefill?: Partial<ShippingAddress>;
 }

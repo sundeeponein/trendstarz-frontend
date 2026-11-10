@@ -34,6 +34,20 @@ import { FILE_SHARE_ASPECT_RATIOS, FILE_SHARE_FORMATS, isFileSharePlatform } fro
 
 
 
+/** "S, m , M,, XL" → ["S", "m", "XL"]: same cleaning as the server (product-option.util). */
+function splitProductOptionChoices(text: unknown): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const part of String(text ?? '').split(',')) {
+    const c = part.replace(/[<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 30).trim();
+    if (!c || seen.has(c.toLowerCase())) continue;
+    seen.add(c.toLowerCase());
+    out.push(c);
+    if (out.length >= 15) break;
+  }
+  return out;
+}
+
 @Component({
   selector: 'app-campaign-form',
   standalone: true,
@@ -507,6 +521,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
               productPaymentMode: newCampaign.productPaymentMode || 'product_only',
               productPaymentAmount: (function(paise: number){ return paise > 0 ? Math.floor(paise / 100) : null; })(Number(newCampaign.productPaymentAmount || 0)),
               productShippingRequired: !!newCampaign.productShippingRequired,
+              productOptionQuestion: newCampaign.productOptionQuestion || '',
+              productOptionChoicesText: (newCampaign.productOptionChoices || []).join(', '),
               inviteBenefits: newCampaign.inviteBenefits || '',
               promotionUrlType: newCampaign.promotionUrlType || '',
               promotionUrl: newCampaign.promotionUrl || '',
@@ -615,6 +631,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       productPaymentMode: [(this.campaign as any)?.productPaymentMode || 'product_only'],
       productPaymentAmount: [this.getInitialProductPaymentAmount()],
       productShippingRequired: [!!(this.campaign as any)?.productShippingRequired],
+      productOptionQuestion: [(this.campaign as any)?.productOptionQuestion || ''],
+      productOptionChoicesText: [((this.campaign as any)?.productOptionChoices || []).join(', ')],
       inviteBenefits: [(this.campaign as any)?.inviteBenefits || ''],
       promotionUrlType: [(this.campaign as any)?.promotionUrlType || ''],
       promotionUrl: [(this.campaign as any)?.promotionUrl || ''],
@@ -1180,6 +1198,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       'title', 'campaignType', 'pricePerInfluencer',
       'budgetMin', 'budgetMax',
       'productPaymentMode', 'productPaymentAmount', 'productShippingRequired',
+      'productOptionQuestion', 'productOptionChoicesText',
       // Who it's for — community posts quote these (server: assertTargetingLocked).
       'campaignMode', 'targetState', 'targetDistrict', 'minInfluencerTier',
     ];
@@ -2129,6 +2148,10 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
+  get productOptionChoicesPreview(): string[] {
+    return splitProductOptionChoices(this.form?.get('productOptionChoicesText')?.value);
+  }
+
   private sanitizeCampaignTypeFields(payload: any): any {
     const t = String(payload?.campaignType || '');
     // Preserve shoot-location fields for photographer-led collabs, and for brand→photographer invites
@@ -2161,6 +2184,20 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       payload.venueState = undefined;
       payload.venueGoogleMapUrl = undefined;
       payload.inviteBenefits = undefined;
+    }
+    // Product question (size etc.): sent as a clean list; never sent once approval
+    // locks it (the server keeps the stored one).
+    const optionQuestion = String(payload.productOptionQuestion || '').replace(/\s+/g, ' ').trim();
+    const optionChoices = splitProductOptionChoices(payload.productOptionChoicesText);
+    delete payload.productOptionChoicesText;
+    if (this.isApprovalLocked) {
+      delete payload.productOptionQuestion;
+    } else if (t === 'product' && payload.productShippingRequired === true && optionQuestion) {
+      payload.productOptionQuestion = optionQuestion;
+      payload.productOptionChoices = optionChoices;
+    } else {
+      payload.productOptionQuestion = '';
+      payload.productOptionChoices = [];
     }
     if (t !== 'product') {
       payload.productValue = undefined;
