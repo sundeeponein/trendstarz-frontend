@@ -249,7 +249,7 @@
                 <i class="bi bi-cash-coin"></i> Plus: <strong>{{ productPaymentAmountText }}</strong>
               </div>
               <div class="mt-1">
-                <i class="bi bi-truck"></i> {{ productShipsToCreator ? 'Host ships the product to the creator' : 'No shipping (handed over in person / no physical product)' }}
+                <i class="bi bi-truck"></i> {{ productShipsToCreator ? 'Host ships the product' : 'No shipping (handed over in person / no physical product)' }}
               </div>
               <!-- What the creator must answer when accepting (size etc.), and the allowed options -->
               <div class="cdm-product-option mt-2" *ngIf="productShipsToCreator && productOptionQuestion">
