@@ -1079,6 +1079,12 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
     return '';
   }
+  get productShipsToCreator(): boolean { return this.campaign?.productShippingRequired === true; }
+  get productOptionQuestion(): string { return String(this.campaign?.productOptionQuestion || '').trim(); }
+  get productOptionChoices(): string[] {
+    const list = this.campaign?.productOptionChoices;
+    return Array.isArray(list) ? list.map((c: any) => String(c || '').trim()).filter(Boolean) : [];
+  }
   get productPaymentMode(): string { return String(this.campaign?.productPaymentMode || 'product_only'); }
   get productPaymentAmountText(): string {
     const paise = Number(this.campaign?.productPaymentAmount || 0);

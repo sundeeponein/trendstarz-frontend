@@ -1467,3 +1467,13 @@ $dk-orange:    #e06030;
 }
 .cdm-shipping__option { color: #92400e; }
 .cdm-shipping__status { color: #6b7280; }
+
+// Product question (size etc.) the creator answers when accepting
+.cdm-product-option {
+  padding: 6px 8px; border-radius: 6px; background: #fffbeb; color: #92400e; font-size: 0.85rem;
+}
+.cdm-product-option__choices { margin-top: 4px; color: #78350f; }
+.cdm-product-option__chip {
+  display: inline-block; margin: 2px 4px 0 0; padding: 1px 8px; border-radius: 999px;
+  background: #fff; border: 1px solid #fcd34d; font-size: 0.78rem; font-weight: 600;
+}
