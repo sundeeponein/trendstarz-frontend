@@ -676,12 +676,16 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     this.loadCampaignTypeConfigs();
     this.loadCampaignAccessModeConfigs();
     // Coerce non-premium brands back to paid_collab if a premium-only type is somehow selected
-    if (!this.hasPremium && this.isPremiumOnlyType(String(this.f['campaignType']?.value || ''))) {
+    if (
+      !this.hasPremium &&
+      this.isPremiumOnlyType(String(this.f['campaignType']?.value || '')) &&
+      !this.isStoredCampaignType(String(this.f['campaignType']?.value || ''))
+    ) {
       this.ensureCampaignTypeSelection();
     }
     this.form.get('campaignType')?.valueChanges.subscribe((type: string) => {
       const t = String(type || '');
-      if (!this.hasPremium && this.isPremiumOnlyType(t)) {
+      if (!this.hasPremium && this.isPremiumOnlyType(t) && !this.isStoredCampaignType(t)) {
         // Block selection at the form level (UI also disables the option, but be defensive)
         this.ensureCampaignTypeSelection();
         return;
@@ -1442,6 +1446,12 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     };
   }
 
+  /** The type this (already saved) campaign has — never auto-switched on edit. */
+  isStoredCampaignType(type: string): boolean {
+    const saved = this.campaign as any;
+    return !!saved?._id && !!type && String(saved?.campaignType || '') === String(type);
+  }
+
   private ensureCampaignTypeSelection(): void {
     const selected = String(this.f['campaignType']?.value || '').trim();
     const options = this.getCampaignTypeOptions();
@@ -1452,6 +1462,10 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
 
     const selectedOption = options.find((opt) => opt.value === selected);
     if (selectedOption && isSelectable(selectedOption)) return;
+    // An existing campaign keeps its saved type. Premium status arrives after the
+    // form starts (and may have lapsed); switching here turned saved Product
+    // campaigns into Paid collab on edit. The server only re-checks a changed type.
+    if (this.isStoredCampaignType(selected)) return;
 
     const fallback = options.find((opt) => isSelectable(opt)) || options[0];
     if (!fallback) return;

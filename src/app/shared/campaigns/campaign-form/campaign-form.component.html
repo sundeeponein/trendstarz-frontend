@@ -112,8 +112,8 @@
         <div class="field-group">
           <label class="field-label">{{ campaignTypeFieldLabel }} <span class="required">*</span> <i class="bi bi-info-circle" title="What is each campaign type?" (click)="flowHelp.openCollaborationTypeGuide(f['campaignType']?.value)"></i> </label>
           <select formControlName="campaignType" class="field-input">
-            <option *ngFor="let opt of getCampaignTypeOptions()" [value]="opt.value" [disabled]="opt.enabled === false || (!hasPremium && !!opt.premiumOnly)">
-              {{ opt.label }}{{ (!hasPremium && !!opt.premiumOnly) ? ' 🔒 Premium' : '' }}{{ (opt.enabled === false) ? ' (Unavailable)' : '' }}
+            <option *ngFor="let opt of getCampaignTypeOptions()" [value]="opt.value" [disabled]="!isStoredCampaignType(opt.value) && (opt.enabled === false || (!hasPremium && !!opt.premiumOnly))">
+              {{ opt.label }}{{ (!hasPremium && !!opt.premiumOnly && !isStoredCampaignType(opt.value)) ? ' 🔒 Premium' : '' }}{{ (opt.enabled === false) ? ' (Unavailable)' : '' }}
             </option>
           </select>
           <div class="cf-upgrade" *ngIf="!hasPremium">
