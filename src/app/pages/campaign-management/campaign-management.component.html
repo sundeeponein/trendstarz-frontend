@@ -2077,16 +2077,16 @@
         </div>
 
         <ng-container *ngIf="!fulfillDelivered">
-          <label class="fulfill-label">Courier <span class="text-danger">*</span>
+          <label class="fulfill-label"><span>Courier <span class="text-danger">*</span></span>
             <input type="text" class="fulfill-input" maxlength="80" [(ngModel)]="fulfillForm.courier" placeholder="e.g. BlueDart, DTDC"/>
           </label>
-          <label class="fulfill-label">Tracking ID <span class="text-danger">*</span>
+          <label class="fulfill-label"><span>Tracking ID <span class="text-danger">*</span></span>
             <input type="text" class="fulfill-input" maxlength="80" [(ngModel)]="fulfillForm.trackingId" placeholder="AWB / consignment no."/>
           </label>
           <label class="fulfill-label">Tracking URL (optional)
             <input type="url" class="fulfill-input" [(ngModel)]="fulfillForm.trackingUrl" placeholder="https://…"/>
           </label>
-          <label class="fulfill-label">Shipped on <span class="text-danger">*</span>
+          <label class="fulfill-label"><span>Shipped on <span class="text-danger">*</span></span>
             <input type="date" class="fulfill-input" [(ngModel)]="fulfillForm.shippedAt" [max]="todayDateInput"/>
           </label>
           <p class="fulfill-muted">The creator confirms delivery. If they haven't {{ hostMarkDeliveredAfterDays }} days after shipping, you can mark it delivered here.</p>

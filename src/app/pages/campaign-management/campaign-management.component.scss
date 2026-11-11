@@ -3443,3 +3443,5 @@
 .fulfill-request { margin: 6px 0; padding: 6px 10px; border-radius: 8px; background: #fffbeb; color: #92400e; font-size: 0.82rem; }
 .fulfill-link { background: none; border: none; padding: 0; margin: 4px 0 8px; color: #2563eb; font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
 .fulfill-request-form { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; .fulfill-input { flex: 1; } }
+.fulfill-link { align-self: flex-start; text-align: left; }
+.fulfill-muted { margin: 0; }
