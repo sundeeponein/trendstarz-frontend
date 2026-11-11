@@ -434,6 +434,7 @@ export class AdminManagementComponent implements OnInit {
     paidCollabTermsV2EffectiveAt: '' as string,
     minCampaignStartDays: 3,
     maxCampaignDurationDays: 15,
+    postAfterDeliveryDays: 7,
     earlyAccessAssignmentMode: 'manual',
     // Commission percentages for badge types (applicable when badge is assigned)
     earlyAccessCommissionPercent: 0,
@@ -845,6 +846,7 @@ export class AdminManagementComponent implements OnInit {
           this.settings.paidCollabTermsV2EffectiveAt = this.toLocalInput(data?.paidCollabTermsV2EffectiveAt);
           this.settings.minCampaignStartDays = typeof data?.minCampaignStartDays === 'number' ? data.minCampaignStartDays : 3;
           this.settings.maxCampaignDurationDays = typeof data?.maxCampaignDurationDays === 'number' ? data.maxCampaignDurationDays : 15;
+          this.settings.postAfterDeliveryDays = typeof data?.postAfterDeliveryDays === 'number' ? data.postAfterDeliveryDays : 7;
           this.settings.earlyAccessAssignmentMode = data?.earlyAccessAssignmentMode === 'auto' ? 'auto' : 'manual';
           this.earlyAccessLastRunAt = data?.earlyAccessLastRunAt || null;
           this.earlyAccessLastRunStatus = String(data?.earlyAccessLastRunStatus || '');

@@ -3436,3 +3436,10 @@
 
 // Product question answer (size etc.) in the Ship to box
 .fulfill-option { margin: 2px 0 4px; padding: 4px 8px; border-radius: 6px; background: #fffbeb; color: #92400e; }
+
+// Shipping popup (2026-11-10): address request, read-only status
+.fulfill-muted { display: block; color: #6b7280; font-size: 0.8rem; margin: 2px 0 6px; }
+.fulfill-status { margin: 8px 0; padding: 8px 10px; border-radius: 8px; background: #f1f5f9; font-size: 0.85rem; color: #334155; }
+.fulfill-request { margin: 6px 0; padding: 6px 10px; border-radius: 8px; background: #fffbeb; color: #92400e; font-size: 0.82rem; }
+.fulfill-link { background: none; border: none; padding: 0; margin: 4px 0 8px; color: #2563eb; font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
+.fulfill-request-form { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; .fulfill-input { flex: 1; } }

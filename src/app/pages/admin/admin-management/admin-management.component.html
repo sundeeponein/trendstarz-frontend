@@ -827,8 +827,15 @@
                 <input type="number" class="form-control" min="1" max="365" step="1" [(ngModel)]="settings.maxCampaignDurationDays" />
               </div>
             </div>
+            <div class="row g-2 mb-2">
+              <div class="col-12 col-md-6">
+                <label class="form-label" style="font-size:0.9rem;">Product / location: days to post after delivery or check-in</label>
+                <input type="number" class="form-control" min="1" max="30" step="1" [(ngModel)]="settings.postAfterDeliveryDays" />
+                <small class="text-light-emphasis">Never past the maximum campaign duration from the campaign start.</small>
+              </div>
+            </div>
             <small class="text-light-emphasis d-block">
-              Standard values: 3 days minimum start, 15 days maximum duration. Changes apply to new campaigns immediately after saving — no redeploy needed.
+              Standard values: 3 days minimum start, 15 days maximum duration, 7 days to post after delivery. Changes apply to new campaigns immediately after saving — no redeploy needed.
             </small>
           </div>
 

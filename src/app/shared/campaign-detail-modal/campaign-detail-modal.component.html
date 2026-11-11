@@ -140,8 +140,8 @@
       <div class="cdm-howpaid" *ngIf="isPending && !adminReview && (isProduct || isInviteLocation)">
         <div class="cdm-howpaid__title"><i class="bi bi-info-circle"></i> {{ invitePaysMoney ? 'Please note' : 'How it works' }}</div>
         <ol class="cdm-howpaid__steps" *ngIf="!invitePaysMoney">
-          <li *ngIf="isProduct">The host sends you the product. Your posting window starts when it's delivered.</li>
-          <li *ngIf="isInviteLocation">Visit the location on your chosen date. The host checks you in.</li>
+          <li *ngIf="isProduct">The host ships the product. When it arrives, tap <strong>I received the product</strong> — you then have {{ postAfterDeliveryDays }} days to post (never past the campaign's 15-day limit).</li>
+          <li *ngIf="isInviteLocation">Visit the location on your chosen date. Once the host checks you in, you have {{ postAfterDeliveryDays }} days to post.</li>
           <li>Create your reel, short or post as per the campaign description and guidelines, and submit the post link in TrendStarZ (Invites → <strong>Submit your post</strong>).</li>
           <li>The host has {{ hoursLabel(workflowHours.approval + workflowHours.autoComplete) }} to check it. After that the campaign is completed.</li>
           <li>If you don't post, the campaign closes as a no-show and still uses one of your monthly invite slots.</li>
@@ -534,7 +534,10 @@
                         <ng-container *ngIf="item.productFulfillment?.shippedAt"> · shipped {{ item.productFulfillment.shippedAt | date:'d MMM y' }}</ng-container>
                         <ng-container *ngIf="item.productFulfillment?.courier"> · {{ item.productFulfillment.courier }}</ng-container>
                         <ng-container *ngIf="item.productFulfillment?.trackingId"> · {{ item.productFulfillment.trackingId }}</ng-container>
+                        <ng-container *ngIf="item.productFulfillment?.deliveredAt"> · delivered {{ item.productFulfillment.deliveredAt | date:'d MMM y' }} ({{ item.productFulfillment.deliveredConfirmedBy === 'host' ? 'marked by host' : 'confirmed by creator' }})</ng-container>
                       </div>
+                      <div class="cdm-shipping__status" *ngIf="item.productFulfillment?.receivedNote">Creator's note: “{{ item.productFulfillment.receivedNote }}”</div>
+                      <div class="cdm-shipping__option" *ngIf="item.addressUpdateRequest?.requestedAt">Host asked for an address fix: “{{ item.addressUpdateRequest.reason }}”</div>
                     </div>
                     <!-- Negotiation trail -->
                     <div class="cdm-creator-card__negotiation" *ngIf="adminInviteOfferTrailText(item)">
@@ -827,6 +830,9 @@
           <input *ngIf="showDateInput" type="date" class="cdm-date-input"
                  [(ngModel)]="postDate" (ngModelChange)="toastError = ''"
                  [min]="minPostDate" [max]="maxPostDate" [title]="dateInputTitle" />
+          <span class="cdm-date-hint" *ngIf="showDateInput && (isProduct || isInviteLocation)">
+            {{ isProduct ? 'Planned date — your post is due ' + postAfterDeliveryDays + ' days after the product arrives' : 'Visit date — post within ' + postAfterDeliveryDays + ' days of check-in' }}
+          </span>
         </div>
         <div class="cdm-footer-right">
           <button class="cdm-foot-btn cdm-foot-btn--ghost" (click)="onDecline()" [disabled]="busy">Decline</button>

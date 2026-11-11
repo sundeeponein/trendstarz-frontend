@@ -3616,9 +3616,75 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
    * campaign (title "Manage", Note only, no address/courier/tracking).
    */
   fulfillCampaign: any = null;
+  readonly hostMarkDeliveredAfterDays = 5;
+  addressRequestOpen = false;
+  addressRequestReason = '';
+  addressRequestSending = false;
+
+  get fulfillShipped(): boolean {
+    const pf = this.fulfillInvite?.productFulfillment || {};
+    return !!(pf.shippedAt || pf.deliveredAt || pf.status === 'shipped' || pf.status === 'delivered');
+  }
+
+  get fulfillDelivered(): boolean {
+    const pf = this.fulfillInvite?.productFulfillment || {};
+    return !!(pf.deliveredAt || pf.status === 'delivered');
+  }
+
+  /** The creator hasn't confirmed receipt within 5 days of shipping. */
+  get canHostMarkDelivered(): boolean {
+    const shippedAt = this.fulfillInvite?.productFulfillment?.shippedAt;
+    if (!shippedAt || this.fulfillDelivered) return false;
+    return Date.now() >= new Date(shippedAt).getTime() + this.hostMarkDeliveredAfterDays * 24 * 3600 * 1000;
+  }
+
+  sendAddressRequest(): void {
+    const reason = this.addressRequestReason.trim();
+    if (!reason || !this.fulfillInvite?._id) return;
+    this.addressRequestSending = true;
+    this.config.requestInviteAddressUpdate(this.fulfillInvite._id, reason).subscribe({
+      next: (res: any) => {
+        const body = res?.data ?? res;
+        this.fulfillInvite.addressUpdateRequest = body?.addressUpdateRequest || { reason, requestedAt: new Date().toISOString() };
+        this.addressRequestSending = false;
+        this.addressRequestOpen = false;
+        this.addressRequestReason = '';
+        this.toast.success('Sent — the creator will be asked to update their address.');
+        this.cd.detectChanges();
+      },
+      error: (err: any) => {
+        this.addressRequestSending = false;
+        this.toast.error(err?.error?.message || 'Could not send the request.');
+        this.cd.detectChanges();
+      },
+    });
+  }
+
+  hostMarkDelivered(): void {
+    if (!this.fulfillInvite?._id || this.savingFulfillment) return;
+    if (!window.confirm('Mark this product as delivered? The creator\'s posting window starts now. Only do this if the courier shows it delivered.')) return;
+    this.savingFulfillment = true;
+    this.config.updateInviteProductFulfillment(this.fulfillInvite._id, { status: 'delivered' }).subscribe({
+      next: (res: any) => {
+        const data = res?.data ?? res;
+        this.fulfillInvite.productFulfillment = data?.productFulfillment;
+        if (data?.selectedPostDate) this.fulfillInvite.selectedPostDate = data.selectedPostDate;
+        this.savingFulfillment = false;
+        this.toast.success('Marked as delivered — the creator has been told.');
+        this.cd.detectChanges();
+      },
+      error: (err: any) => {
+        this.savingFulfillment = false;
+        this.toast.error(err?.error?.message || 'Failed to save.');
+        this.cd.detectChanges();
+      },
+    });
+  }
 
   openFulfillment(inv: any, campaign?: any): void {
     this.fulfillInvite = inv;
+    this.addressRequestOpen = false;
+    this.addressRequestReason = '';
     this.fulfillCampaign =
       campaign ||
       this.invitePanelCampaign ||
@@ -3691,13 +3757,11 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     if (t === 'product') {
       this.config
         .updateInviteProductFulfillment(inviteId, {
-          courier: this.fulfillForm.courier,
-          trackingId: this.fulfillForm.trackingId,
-          trackingUrl: this.fulfillForm.trackingUrl,
-          shippedAt: this.fulfillForm.shippedAt || undefined,
-          deliveredAt: this.fulfillForm.deliveredAt || undefined,
-          status: this.fulfillForm.status as any,
-          note: this.fulfillForm.note,
+          courier: String(this.fulfillForm.courier || '').trim(),
+          trackingId: String(this.fulfillForm.trackingId || '').trim(),
+          trackingUrl: String(this.fulfillForm.trackingUrl || '').trim(),
+          // "Mark as shipped": today unless the host picked the date.
+          shippedAt: this.fulfillForm.shippedAt || this.todayDateInput,
         })
         .subscribe({ next: onSuccess, error: onError });
     } else if (t === 'invite_location') {

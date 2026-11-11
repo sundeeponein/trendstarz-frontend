@@ -23,6 +23,8 @@ export interface ShippingAddressPromptOptions {
   optionQuestion?: string;
   /** Fixed choices for the question; empty = the creator types an answer. */
   optionChoices?: string[];
+  /** Submit button text (default "Save & accept"). */
+  submitLabel?: string;
   /** Prefilled values when reopening or editing. */
   prefill?: Partial<ShippingAddress>;
 }

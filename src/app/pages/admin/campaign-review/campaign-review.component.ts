@@ -711,6 +711,7 @@ export class CampaignReviewComponent implements OnInit {
           // Product campaigns: where it ships, the creator's answer (size etc.), shipping status.
           shippingAddress: invite?.shippingAddress || null,
           productFulfillment: invite?.productFulfillment || null,
+          addressUpdateRequest: invite?.addressUpdateRequest || null,
           acceptedAt: invite?.acceptedAt || null,
           paymentConfirmedAt: invite?.paymentConfirmedAt || null,
           updatedAt: invite?.updatedAt || invite?.createdAt || null,

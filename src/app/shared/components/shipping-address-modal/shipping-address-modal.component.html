@@ -89,7 +89,7 @@
       <div class="sam-actions">
         <button type="button" class="btn btn-outline" (click)="cancel()">Cancel</button>
         <button type="submit" class="btn btn-primary" [disabled]="form.invalid || !contactReady">
-          <i class="bi bi-check2-circle"></i> Save &amp; accept
+          <i class="bi bi-check2-circle"></i> {{ modal.options.submitLabel || 'Save & accept' }}
         </button>
       </div>
     </form>

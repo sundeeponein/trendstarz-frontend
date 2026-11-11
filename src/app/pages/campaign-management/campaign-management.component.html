@@ -2047,31 +2047,53 @@
         <p class="fulfill-address fulfill-address--missing" *ngIf="!fulfillInvite.shippingAddress">
           No shipping address on file — ask the creator for it (WhatsApp/phone) before sending.
         </p>
-        <label class="fulfill-label">Courier
-          <input type="text" class="fulfill-input" [(ngModel)]="fulfillForm.courier" placeholder="e.g. BlueDart, DTDC"/>
-        </label>
-        <label class="fulfill-label">Tracking ID
-          <input type="text" class="fulfill-input" [(ngModel)]="fulfillForm.trackingId" placeholder="AWB / consignment no."/>
-        </label>
-        <label class="fulfill-label">Tracking URL (optional)
-          <input type="url" class="fulfill-input" [(ngModel)]="fulfillForm.trackingUrl" placeholder="https://…"/>
-        </label>
-        <div class="fulfill-row">
-          <label class="fulfill-label">Shipped on
+        <small class="fulfill-muted" *ngIf="fulfillInvite.shippingAddress?.updatedAt">Address updated by the creator {{ fulfillInvite.shippingAddress.updatedAt | date:'d MMM, h:mm a' }}</small>
+
+        <!-- Before shipping: the host can ask the creator to fix the address -->
+        <ng-container *ngIf="fulfillInvite.shippingAddress && !fulfillShipped">
+          <div class="fulfill-request" *ngIf="fulfillInvite.addressUpdateRequest?.requestedAt">
+            <i class="bi bi-hourglass-split"></i> You asked the creator to update the address: “{{ fulfillInvite.addressUpdateRequest.reason }}” ({{ fulfillInvite.addressUpdateRequest.requestedAt | date:'d MMM' }})
+          </div>
+          <button type="button" class="fulfill-link" *ngIf="!addressRequestOpen" (click)="addressRequestOpen = true">
+            <i class="bi bi-pencil-square"></i> Something missing? Ask the creator to update the address
+          </button>
+          <div class="fulfill-request-form" *ngIf="addressRequestOpen">
+            <input type="text" class="fulfill-input" maxlength="200" [(ngModel)]="addressRequestReason" placeholder="e.g. Flat / house number missing"/>
+            <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="!addressRequestReason.trim() || addressRequestSending" (click)="sendAddressRequest()">Send</button>
+            <button type="button" class="btn btn-sm btn-link" (click)="addressRequestOpen = false">Cancel</button>
+          </div>
+        </ng-container>
+
+        <!-- Read-only status: Not shipped → Shipped → Delivered (confirmed by the creator) -->
+        <div class="fulfill-status">
+          <ng-container *ngIf="!fulfillShipped">Status: <strong>Not shipped yet</strong></ng-container>
+          <ng-container *ngIf="fulfillShipped && !fulfillDelivered">Status: <strong>Shipped {{ fulfillInvite.productFulfillment?.shippedAt | date:'d MMM' }}</strong> · waiting for the creator to confirm receipt</ng-container>
+          <ng-container *ngIf="fulfillDelivered">
+            Status: <strong>Delivered {{ fulfillInvite.productFulfillment?.deliveredAt | date:'d MMM' }}</strong>
+            ({{ fulfillInvite.productFulfillment?.deliveredConfirmedBy === 'host' ? 'marked by you' : 'confirmed by the creator' }})
+            <div *ngIf="fulfillInvite.productFulfillment?.receivedNote" class="fulfill-muted">Creator's note: “{{ fulfillInvite.productFulfillment.receivedNote }}”</div>
+            <div *ngIf="fulfillInvite.selectedPostDate" class="fulfill-muted">Post due by {{ fulfillInvite.selectedPostDate | date:'d MMM y':'UTC' }}</div>
+          </ng-container>
+        </div>
+
+        <ng-container *ngIf="!fulfillDelivered">
+          <label class="fulfill-label">Courier <span class="text-danger">*</span>
+            <input type="text" class="fulfill-input" maxlength="80" [(ngModel)]="fulfillForm.courier" placeholder="e.g. BlueDart, DTDC"/>
+          </label>
+          <label class="fulfill-label">Tracking ID <span class="text-danger">*</span>
+            <input type="text" class="fulfill-input" maxlength="80" [(ngModel)]="fulfillForm.trackingId" placeholder="AWB / consignment no."/>
+          </label>
+          <label class="fulfill-label">Tracking URL (optional)
+            <input type="url" class="fulfill-input" [(ngModel)]="fulfillForm.trackingUrl" placeholder="https://…"/>
+          </label>
+          <label class="fulfill-label">Shipped on <span class="text-danger">*</span>
             <input type="date" class="fulfill-input" [(ngModel)]="fulfillForm.shippedAt" [max]="todayDateInput"/>
           </label>
-          <label class="fulfill-label">Delivered on
-            <input type="date" class="fulfill-input" [(ngModel)]="fulfillForm.deliveredAt" [max]="todayDateInput"/>
-          </label>
-        </div>
-        <label class="fulfill-label">Status
-          <select class="fulfill-input" [(ngModel)]="fulfillForm.status">
-            <option value="pending">Pending</option>
-            <option value="shipped">Shipped</option>
-            <option value="delivered">Delivered</option>
-            <option value="returned">Returned</option>
-          </select>
-        </label>
+          <p class="fulfill-muted">The creator confirms delivery. If they haven't {{ hostMarkDeliveredAfterDays }} days after shipping, you can mark it delivered here.</p>
+          <button type="button" class="btn btn-sm btn-outline-success" *ngIf="canHostMarkDelivered" [disabled]="savingFulfillment" (click)="hostMarkDelivered()">
+            <i class="bi bi-box-seam"></i> Mark as delivered (creator hasn't confirmed)
+          </button>
+        </ng-container>
       </ng-container>
 
       <!-- Location check-in -->
@@ -2092,7 +2114,7 @@
         </label>
       </ng-container>
 
-      <label class="fulfill-label">Note (optional)
+      <label class="fulfill-label" *ngIf="fulfillCampaign?.campaignType !== 'product'">Note (optional)
         <textarea class="fulfill-input" rows="2" [(ngModel)]="fulfillForm.note"></textarea>
       </label>
     </div>
@@ -2101,10 +2123,11 @@
       <button class="btn btn-outline-secondary" type="button" (click)="closeFulfillment()">Cancel</button>
       <button class="btn btn-primary"
               type="button"
+              *ngIf="!(fulfillCampaign?.campaignType === 'product' && fulfillDelivered)"
               [disabled]="savingFulfillment"
               (click)="saveFulfillment()">
         <span *ngIf="savingFulfillment" class="btn-spinner"></span>
-        {{ savingFulfillment ? 'Saving…' : 'Save' }}
+        {{ savingFulfillment ? 'Saving…' : (fulfillCampaign?.campaignType === 'product' ? (fulfillShipped ? 'Save' : 'Mark as shipped') : 'Save') }}
       </button>
     </div>
   </div><!-- /.modal-content -->

@@ -1,3 +1,5 @@
+import { ShippingAddressModalService } from '../components/shipping-address-modal/shipping-address-modal.service';
+import { ConfigService } from '../config.service';
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
@@ -382,6 +384,103 @@ export class CampaignInviteCardComponent {
     if (hours <= 0) return `${minutes}m`;
     if (minutes === 0) return `${hours}h`;
     return `${hours}h ${minutes}m`;
+  }
+
+  // ── Product shipping, creator side (2026-11-10) ──
+  private readonly shippingModal = inject(ShippingAddressModalService);
+  private readonly configService = inject(ConfigService);
+  shipBusy = false;
+  shipError = '';
+  receivedFormOpen = false;
+  receivedDate = '';
+  receivedNote = '';
+  postAfterDeliveryDays = 7;
+
+  get isShippedProduct(): boolean {
+    return this.campaign?.campaignType === 'product' && this.campaign?.productShippingRequired === true;
+  }
+  get productShipped(): boolean {
+    const pf = this.productFulfillment || {};
+    return !!(pf.shippedAt || pf.deliveredAt || pf.status === 'shipped' || pf.status === 'delivered');
+  }
+  get productDelivered(): boolean {
+    const pf = this.productFulfillment || {};
+    return !!(pf.deliveredAt || pf.status === 'delivered');
+  }
+  get isActiveWork(): boolean {
+    return ['accepted', 'payment_confirmed', 'working'].includes(String(this.invite?.status || '').toLowerCase());
+  }
+  private ymd(d: Date): string {
+    const ist = new Date(d.getTime() + 330 * 60000);
+    return ist.toISOString().slice(0, 10);
+  }
+  get todayInput(): string { return this.ymd(new Date()); }
+  get shippedInput(): string {
+    const at = this.productFulfillment?.shippedAt;
+    return at ? this.ymd(new Date(at)) : '';
+  }
+
+  openReceived(): void {
+    this.receivedDate = this.todayInput;
+    this.receivedNote = '';
+    this.shipError = '';
+    this.receivedFormOpen = true;
+    this.configService.getAppSettings().subscribe((s: any) => {
+      if (Number(s?.postAfterDeliveryDays) > 0) this.postAfterDeliveryDays = Number(s.postAfterDeliveryDays);
+      this.cdRef.markForCheck();
+    });
+  }
+
+  confirmReceived(): void {
+    if (!this.invite?._id || !this.receivedDate) return;
+    this.shipBusy = true;
+    this.shipError = '';
+    this.configService
+      .confirmInviteProductReceived(this.invite._id, { receivedAt: this.receivedDate, note: this.receivedNote.trim() })
+      .subscribe({
+        next: (res: any) => {
+          const body = res?.data ?? res;
+          this.invite.productFulfillment = body?.productFulfillment || this.invite.productFulfillment;
+          if (body?.selectedPostDate) this.invite.selectedPostDate = body.selectedPostDate;
+          this.shipBusy = false;
+          this.receivedFormOpen = false;
+          this.cdRef.markForCheck();
+        },
+        error: (err: any) => {
+          this.shipBusy = false;
+          this.shipError = err?.error?.message || 'Could not save. Try again.';
+          this.cdRef.markForCheck();
+        },
+      });
+  }
+
+  async updateAddress(): Promise<void> {
+    if (!this.invite?._id) return;
+    const a = this.invite.shippingAddress || {};
+    const address = await this.shippingModal.prompt({
+      campaignTitle: this.campaign?.title || 'Product campaign',
+      optionQuestion: this.campaign?.productOptionQuestion || a.optionQuestion || '',
+      optionChoices: Array.isArray(this.campaign?.productOptionChoices) ? this.campaign.productOptionChoices : [],
+      submitLabel: 'Save address',
+      prefill: { ...a },
+    });
+    if (!address) return;
+    this.shipBusy = true;
+    this.shipError = '';
+    this.configService.updateInviteShippingAddress(this.invite._id, address).subscribe({
+      next: (res: any) => {
+        const body = res?.data ?? res;
+        this.invite.shippingAddress = body?.shippingAddress || this.invite.shippingAddress;
+        this.invite.addressUpdateRequest = undefined;
+        this.shipBusy = false;
+        this.cdRef.markForCheck();
+      },
+      error: (err: any) => {
+        this.shipBusy = false;
+        this.shipError = err?.error?.message || 'Could not save the address.';
+        this.cdRef.markForCheck();
+      },
+    });
   }
 
   // ── Product question (size etc.): the creator's answer, changeable until shipped ──

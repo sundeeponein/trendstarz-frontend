@@ -367,6 +367,8 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   /** Review/payout timings (admin settings), for "How you get paid". */
   workflowHours = { approval: 24, autoComplete: 48, release: 24 };
+  /** Days to post after the product arrives / the visit is checked in (admin setting). */
+  postAfterDeliveryDays = 7;
   private workflowHoursLoaded = false;
   private loadWorkflowHours(): void {
     if (this.workflowHoursLoaded || this.adminReview || !this.visible) return;
@@ -377,6 +379,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
         autoComplete: Number(s?.submissionAutoCompleteGraceHours ?? 0),
         release: Number(s?.payoutReleaseWaitHours ?? 24),
       };
+      if (Number((s as any)?.postAfterDeliveryDays) > 0) this.postAfterDeliveryDays = Number((s as any).postAfterDeliveryDays);
       this.cdr.detectChanges();
     });
   }

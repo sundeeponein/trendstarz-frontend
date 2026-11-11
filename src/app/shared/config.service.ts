@@ -361,6 +361,7 @@ export class ConfigService {
     disputeResponseWaitHours?: number;
     minCampaignStartDays?: number;
     maxCampaignDurationDays?: number;
+    postAfterDeliveryDays?: number;
     otpVerificationEnabled?: boolean;
     paymentGatewayMode: 'manual' | 'razorpay_fallback' | 'razorpay_only';
     razorpayConfigured: boolean;
@@ -396,6 +397,7 @@ export class ConfigService {
           payoutReleaseWaitHours: typeof data?.payoutReleaseWaitHours === 'number' ? data.payoutReleaseWaitHours : 24,
           minCampaignStartDays: typeof data?.minCampaignStartDays === 'number' ? data.minCampaignStartDays : 3,
           maxCampaignDurationDays: typeof data?.maxCampaignDurationDays === 'number' ? data.maxCampaignDurationDays : 15,
+          postAfterDeliveryDays: typeof data?.postAfterDeliveryDays === 'number' ? data.postAfterDeliveryDays : 7,
           otpVerificationEnabled: !!data?.otpVerificationEnabled,
           paymentGatewayMode: ['manual', 'razorpay_fallback', 'razorpay_only'].includes(data?.paymentGatewayMode)
             ? data.paymentGatewayMode
@@ -418,6 +420,7 @@ export class ConfigService {
         payoutReleaseWaitHours: 24,
         minCampaignStartDays: 3,
         maxCampaignDurationDays: 15,
+        postAfterDeliveryDays: 7,
         otpVerificationEnabled: false,
         paymentGatewayMode: 'manual' as const,
         razorpayConfigured: false,
@@ -1495,6 +1498,21 @@ export class ConfigService {
 
   // ── Slice D: fulfillment ─────────────────────────────────────
   /** Brand updates product-shipping fulfillment for a `product` campaign invite. */
+  /** Host: ask the creator to fix their shipping address before shipping. */
+  requestInviteAddressUpdate(inviteId: string, reason: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/address-request`, { reason });
+  }
+
+  /** Creator: change their shipping address / product answer until it ships. */
+  updateInviteShippingAddress(inviteId: string, address: any): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/shipping-address`, address);
+  }
+
+  /** Creator: "I received the product". */
+  confirmInviteProductReceived(inviteId: string, body: { receivedAt?: string; note?: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/product-received`, body);
+  }
+
   updateInviteProductFulfillment(
     inviteId: string,
     body: {

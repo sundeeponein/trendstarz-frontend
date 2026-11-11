@@ -173,6 +173,41 @@
     </div>
   </div>
 
+  <!-- Product shipping, creator side (2026-11-10): fix address before shipping, confirm receipt after -->
+  <div class="cic-ship" *ngIf="isShippedProduct && invite?.shippingAddress" (click)="$event.stopPropagation()">
+    <div class="cic-ship__request" *ngIf="invite?.addressUpdateRequest?.requestedAt && !productShipped">
+      <i class="bi bi-exclamation-circle"></i>
+      The host asked you to update your address: <strong>{{ invite.addressUpdateRequest.reason }}</strong>
+    </div>
+    <button type="button" class="cic-option__change" *ngIf="!productShipped && isActiveWork" [disabled]="shipBusy" (click)="updateAddress()">
+      <i class="bi bi-geo-alt"></i> Update address
+    </button>
+
+    <ng-container *ngIf="productShipped && !productDelivered && isActiveWork">
+      <button type="button" class="cic-ship__received" *ngIf="!receivedFormOpen" (click)="openReceived()">
+        <i class="bi bi-box-seam"></i> I received the product
+      </button>
+      <div class="cic-ship__form" *ngIf="receivedFormOpen">
+        <label>Received on <input type="date" [(ngModel)]="receivedDate" [max]="todayInput" [min]="shippedInput" /></label>
+        <label>Note (optional)
+          <input type="text" maxlength="300" [(ngModel)]="receivedNote" placeholder="e.g. Got size M, box slightly damaged" />
+        </label>
+        <small>After this you have {{ postAfterDeliveryDays }} days to post (never past the campaign's 15-day limit).</small>
+        <div class="cic-ship__actions">
+          <button type="button" class="cic-option__change" [disabled]="shipBusy || !receivedDate" (click)="confirmReceived()">Confirm received</button>
+          <button type="button" class="cic-option__change" [disabled]="shipBusy" (click)="receivedFormOpen = false">Cancel</button>
+        </div>
+      </div>
+    </ng-container>
+
+    <div class="cic-ship__done" *ngIf="productDelivered">
+      <i class="bi bi-check-circle"></i>
+      Received {{ invite?.productFulfillment?.deliveredAt | date:'d MMM' }}<ng-container *ngIf="invite?.productFulfillment?.deliveredConfirmedBy === 'host'"> (marked by the host)</ng-container>
+      <ng-container *ngIf="invite?.selectedPostDate"> · post by <strong>{{ invite.selectedPostDate | date:'d MMM':'UTC' }}</strong></ng-container>
+    </div>
+    <small class="cic-option__error" *ngIf="shipError">{{ shipError }}</small>
+  </div>
+
   <!-- The creator's answer to the host's product question (size etc.); changeable until shipped -->
   <div class="cic-status-bar cic-option" *ngIf="optionQuestion" (click)="$event.stopPropagation()">
     <div class="cic-status-item">
