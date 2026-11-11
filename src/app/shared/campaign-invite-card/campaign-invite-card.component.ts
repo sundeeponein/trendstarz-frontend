@@ -538,8 +538,14 @@ export class CampaignInviteCardComponent {
     return Array.isArray(this.invite?.tierChangedSinceInvite) ? this.invite.tierChangedSinceInvite : [];
   }
 
+  /** Product only (barter): no cash to counter — the server refuses it too. */
+  get isProductOnlyCampaign(): boolean {
+    return String(this.campaign?.campaignType || "") === "product"
+      && String(this.campaign?.productPaymentMode || "") !== "product_plus_payment";
+  }
+
   get canSendCounterOffer(): boolean {
-    return this.isActionable && !this.hasUsedCounterOffer;
+    return this.isActionable && !this.hasUsedCounterOffer && !this.isProductOnlyCampaign;
   }
 
   get isPhotographerCollabFlow(): boolean {

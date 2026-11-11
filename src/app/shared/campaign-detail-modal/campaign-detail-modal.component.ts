@@ -1495,8 +1495,14 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return status === 'sent' || status === 'brand_sent' || status === 'accepted' || status === 'declined';
   }
 
+  /** Product only (barter): no cash to counter — the server refuses it too. */
+  get isProductOnlyCampaign(): boolean {
+    return String(this.campaign?.campaignType || "") === "product"
+      && String(this.campaign?.productPaymentMode || "") !== "product_plus_payment";
+  }
+
   get canSendCounterOffer(): boolean {
-    return this.isPending && !this.hasUsedCounterOffer;
+    return this.isPending && !this.hasUsedCounterOffer && !this.isProductOnlyCampaign;
   }
 
   get isPhotographerCollabFlow(): boolean {
