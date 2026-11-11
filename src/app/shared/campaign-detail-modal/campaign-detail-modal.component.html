@@ -522,10 +522,11 @@
                         {{ item.shippingAddress.optionQuestion }}: <strong>{{ item.shippingAddress.optionAnswer || '—' }}</strong>
                       </div>
                       <div *ngIf="item.shippingAddress as a">
+                        <!-- Name is the registered one (already the row heading) — mobile + address only -->
                         <i class="bi bi-house-door"></i>
-                        {{ a.contactName }}<ng-container *ngIf="a.contactMobile"> · {{ a.contactMobile }}</ng-container>
-                        · {{ a.line1 }}<ng-container *ngIf="a.line2">, {{ a.line2 }}</ng-container>,
+                        <ng-container *ngIf="a.contactMobile">{{ a.contactMobile }} · </ng-container>{{ a.line1 }}<ng-container *ngIf="a.line2">, {{ a.line2 }}</ng-container>,
                         {{ a.city }}<ng-container *ngIf="a.state">, {{ a.state }}</ng-container> {{ a.pincode }}
+                        <ng-container *ngIf="a.landmark"> (near {{ a.landmark }})</ng-container>
                       </div>
                       <div class="cdm-shipping__status">
                         <i class="bi bi-truck"></i>

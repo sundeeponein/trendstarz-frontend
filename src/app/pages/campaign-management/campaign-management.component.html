@@ -1049,7 +1049,7 @@
                       <button class="btn-action btn-fulfill"
                               type="button"
                               *ngIf="canManageFulfillment(inv, c)"
-                              (click)="openFulfillment(inv)"
+                              (click)="openFulfillment(inv, c)"
                               [title]="getFulfillmentLabel(c)">
                         <i class="bi bi-truck" *ngIf="c.campaignType === 'product'"></i>
                         {{ getFulfillmentLabel(c) }}
@@ -1680,7 +1680,7 @@
                 <button class="btn-action btn-fulfill"
                         type="button"
                         *ngIf="canManageFulfillment(inv, invitePanelCampaign)"
-                        (click)="openFulfillment(inv)"
+                        (click)="openFulfillment(inv, invitePanelCampaign)"
                         [title]="getFulfillmentLabel(invitePanelCampaign)">
                   <i class="bi bi-truck" *ngIf="invitePanelCampaign?.campaignType === 'product'"></i>
                   {{ getFulfillmentLabel(invitePanelCampaign) }}
@@ -2022,8 +2022,8 @@
   <div class="modal-content ts-modal fulfill-modal" style="overflow:hidden">
     <div class="fulfill-header">
       <h4>
-        <i class="bi" [ngClass]="invitePanelCampaign?.campaignType === 'product' ? 'bi-truck' : 'bi-geo-alt-fill'"></i>
-        {{ getFulfillmentLabel(invitePanelCampaign) }}
+        <i class="bi" [ngClass]="fulfillCampaign?.campaignType === 'product' ? 'bi-truck' : 'bi-geo-alt-fill'"></i>
+        {{ getFulfillmentLabel(fulfillCampaign) }}
       </h4>
       <button class="drawer-close" (click)="closeFulfillment()" type="button"><i class="bi bi-x-lg"></i></button>
     </div>
@@ -2035,7 +2035,7 @@
       </p>
 
       <!-- Product fulfillment -->
-      <ng-container *ngIf="invitePanelCampaign?.campaignType === 'product'">
+      <ng-container *ngIf="fulfillCampaign?.campaignType === 'product'">
         <div class="fulfill-address" *ngIf="fulfillInvite.shippingAddress as a">
           <div class="fulfill-address__title"><i class="bi bi-house-door"></i> Ship to</div>
           <div class="fulfill-option" *ngIf="a.optionQuestion">{{ a.optionQuestion }}: <strong>{{ a.optionAnswer || '—' }}</strong></div>
@@ -2075,7 +2075,7 @@
       </ng-container>
 
       <!-- Location check-in -->
-      <ng-container *ngIf="invitePanelCampaign?.campaignType === 'invite_location'">
+      <ng-container *ngIf="fulfillCampaign?.campaignType === 'invite_location'">
         <label class="fulfill-label">Scheduled visit
           <input type="datetime-local" class="fulfill-input" [(ngModel)]="fulfillForm.scheduledAt"/>
         </label>

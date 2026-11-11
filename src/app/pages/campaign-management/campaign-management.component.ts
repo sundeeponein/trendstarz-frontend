@@ -3609,9 +3609,21 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     return new Date(d.getTime() - off).toISOString().slice(0, 16);
   }
 
-  openFulfillment(inv: any): void {
+  /**
+   * The campaign the fulfillment popup is for. Passed by whichever list opened it
+   * — it used to read invitePanelCampaign, which is only set by the invite side
+   * panel, so from the campaign page the popup didn't know it was a product
+   * campaign (title "Manage", Note only, no address/courier/tracking).
+   */
+  fulfillCampaign: any = null;
+
+  openFulfillment(inv: any, campaign?: any): void {
     this.fulfillInvite = inv;
-    const t = this.invitePanelCampaign?.campaignType;
+    this.fulfillCampaign =
+      campaign ||
+      this.invitePanelCampaign ||
+      (inv?.campaignId && typeof inv.campaignId === 'object' ? inv.campaignId : null);
+    const t = this.fulfillCampaign?.campaignType;
     if (t === 'product') {
       const pf = inv.productFulfillment || {};
       this.fulfillForm = {
@@ -3648,7 +3660,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
 
   saveFulfillment(): void {
     if (!this.fulfillInvite?._id || this.savingFulfillment) return;
-    const t = this.invitePanelCampaign?.campaignType;
+    const t = this.fulfillCampaign?.campaignType;
     // No-show / Cancelled close the invite on the server — confirm first.
     if (t === 'invite_location' && this.fulfillForm.status !== this.fulfillInvite?.locationVisit?.status) {
       if (this.fulfillForm.status === 'no_show'
@@ -3662,7 +3674,7 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
     }
     this.savingFulfillment = true;
     const inviteId = this.fulfillInvite._id;
-    const campaignId = String(this.invitePanelCampaign?._id || '');
+    const campaignId = String(this.fulfillCampaign?._id || '');
     const onSuccess = (data: any) => {
       if (t === 'product') this.fulfillInvite.productFulfillment = data?.productFulfillment;
       if (t === 'invite_location') this.fulfillInvite.locationVisit = data?.locationVisit;
