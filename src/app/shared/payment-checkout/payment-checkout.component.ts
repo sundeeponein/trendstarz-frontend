@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 /**
  * Reusable manual-UPI payment checkout block.
  * Used by:
- *   - /campaign-pay/:campaignId   (Campaign Payment, incl. Pay-to-Join)
+ *   - /campaign-pay/:campaignId   (Campaign Payment)
  *   - /upgrade-premium             (Premium plan upgrade)
  *
  * TODO (post-MVP): Once a Razorpay merchant account is approved, replace

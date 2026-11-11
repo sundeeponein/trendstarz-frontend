@@ -1,26 +1,23 @@
 <section class="faqs-page py-5">
   <div class="container py-4">
     <div class="faqs-hero text-center mb-4">
-      <p class="eyebrow mb-2">Support</p>
+      <p class="eyebrow mb-2">Got questions?</p>
       <h1 class="page-title mb-3">Frequently Asked Questions</h1>
       <p class="page-subtitle mb-0">
-        Search answers about accounts, campaigns, collaborations, and what comes next on TrendStarz.
+        Everything you need to know about working with creators and hiring through TrendStarz.
       </p>
     </div>
 
     <div class="search-wrap mb-4">
-      <label for="faqSearch" class="form-label fw-semibold mb-2">Search FAQs</label>
-      <div class="input-group input-group-lg">
-        <span class="input-group-text">
-          <i class="bi bi-search"></i>
-        </span>
+      <div class="faq-search-box">
+        <i class="bi bi-search" aria-hidden="true"></i>
         <input
           id="faqSearch"
           type="search"
-          class="form-control faq-search"
+          class="faq-search"
           [ngModel]="searchTerm()"
           (ngModelChange)="onSearchChange($event)"
-          placeholder="Search by question, answer, or label"
+          placeholder="Search questions, e.g. payments, verification"
           aria-label="Search FAQs" />
       </div>
       <div class="search-meta mt-2">
@@ -30,7 +27,7 @@
 
     <ng-container *ngIf="filteredFaqs().length > 0; else noResults">
       <app-faq-accordion
-        [heading]="'Frequently Asked Questions'"
+        [heading]="''"
         [items]="filteredFaqs()"
         [schemaItems]="allFaqs"
         [showSchema]="true"

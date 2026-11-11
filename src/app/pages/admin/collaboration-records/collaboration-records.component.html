@@ -1,0 +1,98 @@
+<div class="crs-page">
+  <div class="crs-header">
+    <div>
+      <h2>Campaign records</h2>
+      <p class="crs-muted">What happened to each person's invites — who doesn't post, who posts late, who is reliable. Not shown publicly.</p>
+    </div>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="load()" [disabled]="loading">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+
+  <div class="crs-tabs" role="tablist">
+    <button type="button" [class.active]="side === 'creator'" (click)="setSide('creator')">Creators (invites received)</button>
+    <button type="button" [class.active]="side === 'host'" (click)="setSide('host')">Hosts (invites sent)</button>
+  </div>
+
+  <div class="crs-filters">
+    <input type="search" [(ngModel)]="search" placeholder="Search name or username" />
+    <select [(ngModel)]="role">
+      <option value="">All roles</option>
+      <option value="influencer">Influencers</option>
+      <option value="photographer">Photographers</option>
+      <option value="brand" *ngIf="side === 'host'">Brands</option>
+    </select>
+    <select [(ngModel)]="preset">
+      <option value="all">Everyone</option>
+      <option value="noShows">Didn't post (not excused) ≥ 1</option>
+      <option value="lowCompletion">Completion below 70%</option>
+      <option value="late">Posted late ≥ 1</option>
+      <option value="reliable">Reliable (2+ completed, never late or missed)</option>
+    </select>
+    <label class="crs-check"><input type="checkbox" [(ngModel)]="hideRemoved" /> Hide removed accounts</label>
+  </div>
+
+  <p class="crs-muted" *ngIf="loading">Loading…</p>
+  <p class="crs-error" *ngIf="error">{{ error }}</p>
+
+  <ng-container *ngIf="!loading && !error">
+    <div class="crs-summary">
+      <span><strong>{{ totals.people }}</strong> {{ side === 'creator' ? 'creators' : 'hosts' }}</span>
+      <span><strong>{{ totals.invites }}</strong> invites</span>
+      <span class="bad"><strong>{{ totals.didNotPost }}</strong> didn't post</span>
+      <span class="warn"><strong>{{ totals.late }}</strong> late</span>
+    </div>
+
+    <div class="crs-table-wrap">
+      <table class="crs-table">
+        <thead>
+          <tr>
+            <th (click)="sortBy('name')" class="sortable">Name</th>
+            <th>Role</th>
+            <th (click)="sortBy('total')" class="sortable num">Invites</th>
+            <th class="num" *ngIf="side === 'host'">Campaigns</th>
+            <th (click)="sortBy('acceptanceRate')" class="sortable num">Accepted %</th>
+            <th (click)="sortBy('completionRate')" class="sortable num">Completed %</th>
+            <th class="num">On time</th>
+            <th (click)="sortBy('completedLate')" class="sortable num">Late</th>
+            <th (click)="sortBy('didNotPost')" class="sortable num">Didn't post</th>
+            <th class="num">In progress</th>
+            <th class="num">Declined</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of visibleRows">
+            <td>
+              <div class="crs-name">{{ r.name }}<span class="crs-removed" *ngIf="r.removed"> · removed</span></div>
+              <div class="crs-muted small" *ngIf="r.username">&#64;{{ r.username }}</div>
+            </td>
+            <td class="text-capitalize">{{ r.role || '—' }}</td>
+            <td class="num">{{ r.total }}</td>
+            <td class="num" *ngIf="side === 'host'">{{ r.campaigns ?? '—' }}</td>
+            <td class="num" [ngClass]="rateClass(r.acceptanceRate)">{{ rate(r.acceptanceRate) }}</td>
+            <td class="num" [ngClass]="rateClass(r.completionRate)">{{ rate(r.completionRate) }}</td>
+            <td class="num">{{ r.completedOnTime }}</td>
+            <td class="num" [class.warn]="r.completedLate > 0">{{ r.completedLate }}</td>
+            <td class="num" [class.bad]="r.didNotPost > 0">
+              {{ r.didNotPost }}<span class="crs-muted small" *ngIf="r.didNotPostExcused"> ({{ r.didNotPostExcused }} excused)</span>
+            </td>
+            <td class="num">{{ r.inProgress }}</td>
+            <td class="num">{{ r.declined }}</td>
+            <td>
+              <a
+                *ngIf="r.role && !r.removed"
+                class="btn btn-sm btn-outline-primary"
+                [routerLink]="['/admin/admin-user-table']"
+                [queryParams]="{ tab: r.role, open: r.userId }"
+              >Open</a>
+            </td>
+          </tr>
+          <tr *ngIf="!visibleRows.length">
+            <td [attr.colspan]="side === 'host' ? 12 : 11" class="crs-muted">Nobody matches these filters.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+</div>

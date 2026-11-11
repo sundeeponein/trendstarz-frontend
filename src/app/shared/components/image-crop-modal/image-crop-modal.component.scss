@@ -1,0 +1,50 @@
+.crop-hint {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+}
+
+.modal-content {
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-body {
+  overflow-y: auto;
+}
+
+.cropper-wrap {
+  position: relative;
+  height: min(60vh, 500px);
+  background: #111;
+  border-radius: 8px;
+  overflow: hidden;
+
+  // The library's own :host rule sets display:flex so its inner wrapper div
+  // stretches to fill the host's height (needed for max-height:100% on the
+  // image to mean anything). Only constrain width/height here — overriding
+  // display breaks that stretch and lets tall images overflow uncontained.
+  ::ng-deep image-cropper {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.crop-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.crop-error {
+  font-size: 0.85rem;
+  color: #b42318;
+  background: #fef3f2;
+  border: 1px solid #fda29b;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}

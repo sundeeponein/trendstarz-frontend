@@ -1,0 +1,135 @@
+.crp {
+  margin-bottom: 18px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+}
+
+.crp-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.crp-count {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #4f46e5;
+  color: #fff;
+  font-size: 0.75rem;
+}
+
+.crp-hint {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+.crp-error {
+  color: #b91c1c;
+  margin-bottom: 6px;
+}
+
+.crp-ok {
+  color: #15803d;
+  margin-bottom: 6px;
+}
+
+.crp-card {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+
+.crp-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.crp-tag {
+  font-size: 0.75rem;
+  color: #c2410c;
+  font-family: monospace;
+}
+
+.crp-type {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.75rem;
+
+  &--pause {
+    background: #fef3c7;
+    color: #92400e;
+  }
+}
+
+.crp-meta {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.crp-reason {
+  margin: 8px 0;
+  padding: 6px 10px;
+  border-left: 3px solid #a5b4fc;
+  background: #f8fafc;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}
+
+.crp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 260px;
+  }
+
+  small {
+    color: #64748b;
+  }
+}
+
+.crp-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+:host-context([data-theme='dark']) {
+  .crp {
+    background: rgba(79, 70, 229, 0.08);
+    border-color: rgba(129, 140, 248, 0.3);
+  }
+  .crp-card,
+  .crp-reason {
+    background: rgba(148, 163, 184, 0.06);
+    border-color: rgba(148, 163, 184, 0.2);
+  }
+  .crp-hint,
+  .crp-meta {
+    color: inherit;
+    opacity: 0.8;
+  }
+}

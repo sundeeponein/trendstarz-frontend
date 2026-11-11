@@ -218,6 +218,7 @@
 
 // Platform details
 .platform-details-card {
+  --platform-color: #f55b0a;
   border: 1px solid #e0e5ef;
   border-radius: 12px;
   background: #fafbfd;
@@ -302,10 +303,11 @@
   gap: 0.65rem;
   padding: 0.4rem 0;
 
-  input[type="checkbox"] {
+  input[type="checkbox"],
+  input[type="radio"] {
     width: 18px;
     height: 18px;
-    accent-color: #f55b0a;
+    accent-color: var(--platform-color, #f55b0a);
     cursor: pointer;
   }
 
@@ -320,6 +322,11 @@
     padding: 0.3rem 0.5rem;
     font-size: 0.88rem;
     border-radius: 8px;
+
+    &:focus {
+      border-color: var(--platform-color, #f55b0a);
+      box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--platform-color, #f55b0a) 18%, transparent);
+    }
   }
 }
 
@@ -420,4 +427,21 @@
   background: #f9fbff;
   font-weight: 600;
   color: #2a374d;
+}
+
+
+@media (max-width:786px) {
+  .platform-card {
+    width: 60px;
+    min-height: 60px;
+
+    .platform-icon { font-size: 1.3rem; }
+    .platform-name {display: none;}
+  }
+  
+  .platform-tab-strip {
+    span {
+      display: none;
+    }
+  }
 }

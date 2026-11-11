@@ -1,6 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ConfigService } from '../config.service';
+import { timeout } from 'rxjs/operators';
 
 @Component({
   selector: 'app-review-list',
@@ -31,7 +32,12 @@ import { ConfigService } from '../config.service';
         <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
       </div>
 
-      <div class="reviews-empty" *ngIf="!loading && !locked && reviews.length === 0">
+      <div class="reviews-error" *ngIf="!loading && !locked && !!error">
+        <span>{{ error }}</span>
+        <button type="button" class="reviews-retry-btn" (click)="retry()">Retry</button>
+      </div>
+
+      <div class="reviews-empty" *ngIf="!loading && !locked && !error && reviews.length === 0">
         No reviews yet.
       </div>
 
@@ -52,7 +58,7 @@ import { ConfigService } from '../config.service';
   `,
   styleUrl: './review-list.component.scss'
 })
-export class ReviewListComponent implements OnInit {
+export class ReviewListComponent implements OnInit, OnChanges {
   @Input() targetId!: string;
   /** If true, shows locked message instead of fetching */
   @Input() canRead = false;
@@ -76,27 +82,57 @@ export class ReviewListComponent implements OnInit {
   constructor(private config: ConfigService) {}
 
   ngOnInit() {
+    this.tryLoad();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['targetId'] || changes['canRead']) {
+      this.tryLoad();
+    }
+  }
+
+  private tryLoad(): void {
+    this.reviews = [];
+    this.error = '';
+    this.loading = false;
+    this.locked = false;
+
     if (!this.canRead) {
       this.locked = true;
       return;
     }
-    this.load();
+
+    const id = String(this.targetId || '').trim();
+    if (!id) {
+      this.error = 'Reviews are unavailable for this profile.';
+      return;
+    }
+
+    this.load(id);
   }
 
-  load() {
+  private load(targetId: string): void {
     this.loading = true;
-    this.config.getReviewsForTarget(this.targetId).subscribe({
+    this.config.getReviewsForTarget(targetId).pipe(timeout(10000)).subscribe({
       next: (res: any) => {
         this.reviews = res.reviews || [];
+        this.error = '';
         this.loading = false;
       },
       error: (err: any) => {
         if (err?.status === 403) {
           this.locked = true;
+          this.error = '';
+        } else {
+          this.error = 'Unable to load reviews right now. Please try again.';
         }
         this.loading = false;
       }
     });
+  }
+
+  retry(): void {
+    this.tryLoad();
   }
 
   getStarsArray(rating: number): number[] {

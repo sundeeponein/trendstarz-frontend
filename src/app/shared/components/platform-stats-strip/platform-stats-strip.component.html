@@ -1,0 +1,9 @@
+<section class="platform-stats-strip mx-auto" aria-label="Platform milestones" style="width:75%;">
+  <div class="platform-stats-strip__item" *ngFor="let item of items">
+    <span class="platform-stats-strip__icon"><i class="bi" [ngClass]="item.icon"></i></span>
+    <div class="platform-stats-strip__text">
+      <strong class="platform-stats-strip__value">{{ item.value }}</strong>
+      <span class="platform-stats-strip__label">{{ item.label }}</span>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,630 @@
+// Reusable admin UI: page header, section cards, data tables, stat tiles,
+// badges/pills, key-value stats and notes. Use from an admin page's styles:
+//
+//   @use '../../../shared/styles/admin-ui';
+//
+// Every class is prefixed `adm-`. Component styles stay encapsulated, so
+// pulling this in adds the rules to that page's (lazy) bundle only.
+
+@use 'sass:map';
+
+$adm-ink: #111827;
+$adm-text: #1f2937;
+$adm-muted: #6b7280;
+$adm-faint: #9ca3af;
+$adm-line: #e5e7eb;
+$adm-line-soft: #f1f3f6;
+$adm-surface: #ffffff;
+$adm-page: #f7f8fa;
+$adm-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+$adm-accents: (
+  'orange': #e8612d,
+  'green': #16a34a,
+  'blue': #2563eb,
+  'red': #dc2626,
+  'amber': #b45309,
+  'purple': #7c3aed,
+  'muted': $adm-faint,
+);
+
+// ── Page ────────────────────────────────────────────────────────────────────
+
+.adm-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  color: $adm-text;
+}
+
+.adm-page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.adm-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: $adm-muted;
+  text-decoration: none;
+
+  &:hover {
+    color: map.get($adm-accents, 'orange');
+  }
+}
+
+.adm-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 6px 0 4px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: $adm-ink;
+}
+
+.adm-subtitle {
+  margin: 0;
+  max-width: 760px;
+  font-size: 0.82rem;
+  color: $adm-muted;
+
+  strong {
+    color: $adm-text;
+  }
+}
+
+.adm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid $adm-line;
+  border-radius: 8px;
+  background: $adm-surface;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: $adm-ink;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    border-color: #cbd2dc;
+    background: $adm-page;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+
+  .spin {
+    animation: adm-spin 0.9s linear infinite;
+  }
+}
+
+@keyframes adm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.adm-state {
+  padding: 14px 16px;
+  border: 1px solid $adm-line;
+  border-radius: 10px;
+  background: $adm-surface;
+  font-size: 0.88rem;
+  color: $adm-muted;
+
+  &--error {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+}
+
+// ── Section cards ───────────────────────────────────────────────────────────
+
+.adm-card {
+  margin-bottom: 18px;
+  border: 1px solid $adm-line;
+  border-radius: 12px;
+  background: $adm-surface;
+  overflow: hidden;
+}
+
+.adm-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 16px 10px;
+}
+
+.adm-card-body {
+  padding: 0 16px 14px;
+}
+
+.adm-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $adm-ink;
+
+  small {
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: $adm-faint;
+  }
+}
+
+// The coloured dot before a section title: <span class="adm-dot adm-dot--orange"></span>
+.adm-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: $adm-faint;
+}
+
+.adm-section-sub {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: $adm-muted;
+}
+
+// ── Data table ──────────────────────────────────────────────────────────────
+
+.adm-table-wrap {
+  overflow-x: auto;
+}
+
+.adm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+
+  th {
+    padding: 10px 16px;
+    border-top: 1px solid $adm-line;
+    border-bottom: 1px solid $adm-line;
+    background: $adm-page;
+    font-family: $adm-mono;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-align: left;
+    text-transform: uppercase;
+    color: $adm-muted;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 9px 16px;
+    border-bottom: 1px solid $adm-line-soft;
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover td {
+    background: #fafbfc;
+  }
+
+  // Numbers: right-aligned, tabular.
+  .num {
+    font-family: $adm-mono;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  th.num {
+    text-align: right;
+  }
+
+  // A zero / empty value, de-emphasised.
+  .is-zero {
+    color: $adm-faint;
+  }
+
+  // Compact two-column list (label · value), no header band.
+  &--list {
+    td {
+      padding: 6px 0;
+      border-bottom: none;
+    }
+
+    td.num {
+      font-weight: 700;
+    }
+
+    tbody tr:hover td {
+      background: none;
+    }
+  }
+}
+
+// Row highlights (whole row): <tr class="adm-row--warn">
+.adm-row--warn td {
+  background: #fff7ed;
+  color: map.get($adm-accents, 'amber');
+}
+
+.adm-row--danger td {
+  background: #fef2f2;
+  color: map.get($adm-accents, 'red');
+}
+
+.adm-row--ok td {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+// ── Colour helpers (text) ───────────────────────────────────────────────────
+
+@each $name, $color in $adm-accents {
+  .adm-text--#{$name} {
+    color: $color;
+  }
+
+  .adm-dot--#{$name} {
+    background: $color;
+  }
+}
+
+.adm-mono {
+  font-family: $adm-mono;
+}
+
+// ── Badges, pills, chips ────────────────────────────────────────────────────
+
+// Small tag: <span class="adm-badge adm-badge--warn">small sample</span>
+.adm-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border: 1px solid $adm-line;
+  border-radius: 4px;
+  background: $adm-page;
+  font-family: $adm-mono;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: $adm-muted;
+  white-space: nowrap;
+
+  &--warn {
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: map.get($adm-accents, 'amber');
+  }
+
+  &--ok {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #15803d;
+  }
+
+  &--danger {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: map.get($adm-accents, 'red');
+  }
+
+  &--info {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: map.get($adm-accents, 'blue');
+  }
+}
+
+// Rounded status pill: <span class="adm-pill adm-pill--ok">active</span>
+.adm-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #4b5563;
+  white-space: nowrap;
+
+  &--ok {
+    background: #dcfce7;
+    color: #15803d;
+  }
+
+  &--off {
+    background: #f3f4f6;
+    color: $adm-muted;
+  }
+
+  &--danger {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+}
+
+// Labelled number chip in a card header: <span class="adm-chip">Total <b>184</b></span>
+.adm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.adm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid $adm-line;
+  border-radius: 6px;
+  background: $adm-surface;
+  font-size: 0.74rem;
+  color: $adm-muted;
+
+  b {
+    font-family: $adm-mono;
+    color: $adm-ink;
+  }
+
+  &--ok b {
+    color: #15803d;
+  }
+
+  &--accent {
+    border-color: #fed7aa;
+    background: #fff7ed;
+    color: #c2410c;
+
+    b {
+      color: #c2410c;
+    }
+  }
+}
+
+.adm-code {
+  padding: 1px 6px;
+  border: 1px solid $adm-line;
+  border-radius: 4px;
+  background: $adm-page;
+  font-family: $adm-mono;
+  font-size: 0.72rem;
+  color: $adm-ink;
+}
+
+// ── Stat tiles (top of page) ────────────────────────────────────────────────
+
+.adm-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.adm-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid $adm-line;
+  border-radius: 12px;
+  background: $adm-surface;
+}
+
+.adm-stat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.adm-stat-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: $adm-muted;
+}
+
+.adm-stat-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1;
+  color: $adm-ink;
+
+  small {
+    font-size: 0.76rem;
+    font-weight: 500;
+    color: $adm-muted;
+  }
+}
+
+// Progress bar under a stat: <div class="adm-bar"><span [style.width.%]="…" class="adm-bar-fill adm-bar-fill--green"></span></div>
+.adm-bar {
+  height: 4px;
+  margin-top: auto;
+  border-radius: 999px;
+  background: #eef0f3;
+  overflow: hidden;
+}
+
+.adm-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: map.get($adm-accents, 'orange');
+
+  @each $name, $color in $adm-accents {
+    &--#{$name} {
+      background: $color;
+    }
+  }
+}
+
+// ── Key/value stats in a row ────────────────────────────────────────────────
+
+.adm-kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 18px;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  span {
+    font-size: 0.74rem;
+    color: $adm-muted;
+  }
+
+  strong {
+    font-family: $adm-mono;
+    font-size: 1.05rem;
+    color: $adm-ink;
+  }
+}
+
+// Boxed metric: <div class="adm-metric"><span>Category</span><strong>53.7%</strong></div>
+.adm-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.adm-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid $adm-line;
+  border-radius: 8px;
+
+  span {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: $adm-muted;
+  }
+
+  strong {
+    font-family: $adm-mono;
+    font-size: 1.15rem;
+    color: $adm-ink;
+  }
+}
+
+// Inline "label: value" facts in one line.
+.adm-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 0.78rem;
+  color: $adm-muted;
+
+  b {
+    font-family: $adm-mono;
+    color: $adm-ink;
+  }
+}
+
+// ── Notes ───────────────────────────────────────────────────────────────────
+
+.adm-note {
+  margin: 0;
+  padding: 10px 16px 14px;
+  font-size: 0.75rem;
+  color: $adm-muted;
+
+  strong {
+    color: $adm-text;
+  }
+}
+
+// Boxed note inside a column.
+.adm-callout {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 1px solid $adm-line;
+  border-radius: 6px;
+  background: $adm-page;
+  font-size: 0.72rem;
+  color: $adm-muted;
+
+  &--warn {
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: map.get($adm-accents, 'amber');
+    text-align: center;
+  }
+}
+
+// ── Multi-column panels (e.g. "Influencer data") ────────────────────────────
+
+.adm-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px 24px;
+}
+
+.adm-column-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid $adm-line;
+
+  h4 {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: $adm-ink;
+  }
+
+  span {
+    font-family: $adm-mono;
+    font-size: 0.62rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: $adm-faint;
+  }
+}
+
+@media (max-width: 640px) {
+  .adm-page-head {
+    flex-direction: column;
+  }
+
+  .adm-table th,
+  .adm-table td {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}

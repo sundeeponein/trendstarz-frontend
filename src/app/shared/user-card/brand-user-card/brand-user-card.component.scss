@@ -17,7 +17,7 @@
     padding: 0.2rem 0.48rem;
     border-radius: 999px;
     background: #ffefe6;
-    color: #e96a29;
+    color: #c2410c;
     font-weight: 700;
   }
 
@@ -25,7 +25,7 @@
     position: absolute;
     bottom: 0.6rem;
     left: 0.6rem;
-    background: #ff6b35;
+    background: #c2410c;
     color: #fff;
     font-size: 0.65rem;
     font-weight: 800;
@@ -46,4 +46,16 @@
     padding: 0.18rem 0.5rem;
     border-radius: 0.35rem;
   }
+}
+.card-ready-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ecfdf3;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  font-size: 0.74rem;
+  font-weight: 700;
 }
