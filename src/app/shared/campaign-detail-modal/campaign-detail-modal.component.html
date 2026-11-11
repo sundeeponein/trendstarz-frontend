@@ -139,16 +139,24 @@
       <!-- How it works (user, pending, barter / location) -->
       <div class="cdm-howpaid" *ngIf="isPending && !adminReview && (isProduct || isInviteLocation)">
         <div class="cdm-howpaid__title"><i class="bi bi-info-circle"></i> {{ invitePaysMoney ? 'Please note' : 'How it works' }}</div>
-        <ol class="cdm-howpaid__steps" *ngIf="!invitePaysMoney">
-          <li *ngIf="isProduct">The host ships the product. When it arrives, tap <strong>I received the product</strong> — you then have {{ postAfterDeliveryDays }} days to post (never past the campaign's 15-day limit).</li>
-          <li *ngIf="isInviteLocation">Visit the location on your chosen date. Once the host checks you in, you have {{ postAfterDeliveryDays }} days to post.</li>
-          <li>Create your reel, short or post as per the campaign description and guidelines, and submit the post link in TrendStarZ (Invites → <strong>Submit your post</strong>).</li>
-          <li>The host has {{ hoursLabel(workflowHours.approval + workflowHours.autoComplete) }} to check it. After that the campaign is completed.</li>
-          <li>If you don't post, the campaign closes as a no-show and still uses one of your monthly invite slots.</li>
+        <!-- Location visit = the visit only (2026-11-11) -->
+        <ol class="cdm-howpaid__steps" *ngIf="!invitePaysMoney && isInviteLocation">
+          <li>Visit the location on the date you pick.</li>
+          <li>The host checks you in — that completes the campaign.</li>
+          <li>If you don't visit, the host can mark it a no-show, which uses one of your monthly invite slots.</li>
         </ol>
-        <p class="cdm-howpaid__note">
+        <ol class="cdm-howpaid__steps" *ngIf="!invitePaysMoney && isProduct">
+          <li>The host ships the product. When it arrives, tap <strong>I received the product</strong>.</li>
+          <li>Post on the date you pick — if the product arrives after that date, you get up to {{ postAfterDeliveryDays }} days from delivery.</li>
+          <li>Submit the post link in TrendStarZ (Invites → <strong>Submit your post</strong>). The host has {{ hoursLabel(workflowHours.approval + workflowHours.autoComplete) }} to check it. After that the campaign is completed.</li>
+          <li>If you don't post, the campaign closes as a no-show and still uses one of your monthly invite slots (not if the product arrived late).</li>
+        </ol>
+        <p class="cdm-howpaid__note" *ngIf="isInviteLocation">
+          Posting about your visit is up to you — TrendStarZ doesn't track it. The visit itself is between you and the host; TrendStarZ isn't responsible for it.
+        </p>
+        <p class="cdm-howpaid__note" *ngIf="!isInviteLocation">
           TrendStarZ connects you with the host and tracks your post link.
-          {{ isProduct ? 'The product (its quality and delivery)' : 'The visit' }} and what you post are between you and the host — TrendStarZ isn't responsible for them.
+          The product (its quality and delivery) and what you post are between you and the host — TrendStarZ isn't responsible for them.
         </p>
       </div>
 
@@ -514,7 +522,7 @@
                       </ng-container>
                       <ng-container *ngIf="adminInviteWorkingFromDate(item) && item.selectedPostDate"> &bull; </ng-container>
                       <ng-container *ngIf="item.selectedPostDate">
-                        Post date: {{ item.selectedPostDate | date:'MMM d, yyyy' }}
+                        {{ isInviteLocation ? 'Visit date' : 'Post date' }}: {{ item.selectedPostDate | date:'MMM d, yyyy' }}
                       </ng-container>
                     </div>
                     <!-- Accepted content type -->
@@ -862,7 +870,7 @@
             <ng-container *ngIf="isProduct && productTimelineDates as tl; else planHint">
               Pick your post date (from {{ tl.earliestPost | date:'d MMM':'UTC' }} — the product needs time to reach you). If it arrives after your date, you get up to {{ postAfterDeliveryDays }} days from delivery.
             </ng-container>
-            <ng-template #planHint>{{ isProduct ? 'Your post date — if the product arrives after it, you get up to ' + postAfterDeliveryDays + ' days from delivery' : 'Visit date — post within ' + postAfterDeliveryDays + ' days of check-in' }}</ng-template>
+            <ng-template #planHint>{{ isProduct ? 'Your post date — if the product arrives after it, you get up to ' + postAfterDeliveryDays + ' days from delivery' : 'Your visit date — the day you\'ll visit the location' }}</ng-template>
           </span>
         </div>
         <div class="cdm-footer-right">

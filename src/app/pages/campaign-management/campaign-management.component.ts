@@ -3444,9 +3444,14 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
       next: (data: any) => {
         const locationVisit = data?.locationVisit || { ...(inv.locationVisit || {}), status: 'checked_in', checkedInAt: new Date().toISOString() };
         this.syncInviteLocationVisitState(String(inv._id), locationVisit, campaign);
+        // Location visits: the check-in completes the campaign (server sets it).
+        if (data?.status === 'completed') {
+          inv.status = 'completed';
+          inv.completedAt = new Date().toISOString();
+        }
         this.actioningInviteIds.delete(inv._id);
         this.closeVisitConfirmModal();
-        this.toast.success('Participant marked as visited.');
+        this.toast.success('Marked as visited — campaign complete.');
         this.cd.detectChanges();
       },
       error: (err: any) => {

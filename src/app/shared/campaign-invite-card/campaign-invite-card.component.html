@@ -74,7 +74,7 @@
       <!-- Submit Post (product campaigns that ship: only once the product is received —
            receipt itself is confirmed with "I received the product" below) -->
       <button class="cic-btn cic-btn--primary"
-              *ngIf="showSubmitCTA && !showViewSubmission && !(isShippedProduct && !productDelivered)"
+              *ngIf="showSubmitCTA && !showViewSubmission && !isInviteLocation && !(isShippedProduct && !productDelivered)"
               type="button"
               (click)="submitPost.emit(); $event.stopPropagation()">
         <i class="bi bi-send-fill"></i>
@@ -171,6 +171,16 @@
         <ng-container *ngIf="productFulfillment?.trackingId"> · {{ productFulfillment.trackingId }}</ng-container>
         <a *ngIf="productFulfillment?.trackingUrl" [href]="productFulfillment.trackingUrl" target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()" class="ms-2">Track</a>
       </span>
+    </div>
+  </div>
+
+  <!-- Location visit = the visit only: visit date, then "visited" once the host checks in -->
+  <div class="cic-ship" *ngIf="isInviteLocation && invite?.selectedPostDate && (isActiveWork || invite?.status === 'completed')">
+    <div class="cic-ship__date" *ngIf="isActiveWork">
+      <i class="bi bi-geo-alt"></i> Your visit date: <strong>{{ invite.selectedPostDate | date:'d MMM':'UTC' }}</strong> — the host checks you in and the campaign is complete.
+    </div>
+    <div class="cic-ship__done" *ngIf="invite?.status === 'completed' && invite?.locationVisit?.checkedInAt">
+      <i class="bi bi-check-circle"></i> Visited {{ invite.locationVisit.checkedInAt | date:'d MMM' }} — campaign complete
     </div>
   </div>
 

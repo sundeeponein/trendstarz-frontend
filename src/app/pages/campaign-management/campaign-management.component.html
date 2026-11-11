@@ -853,7 +853,7 @@
                       </ng-container>
                       <ng-container *ngIf="(getInviteWorkingFromDate(inv) || getInviteAcceptedDate(inv)) && inv.selectedPostDate"> &bull; </ng-container>
                       <ng-container *ngIf="inv.selectedPostDate">
-                        Post date: {{ inv.selectedPostDate | date:'MMM d, yyyy' }}
+                        {{ c.campaignType === 'invite_location' ? 'Visit date' : 'Post date' }}: {{ inv.selectedPostDate | date:'MMM d, yyyy' }}
                       </ng-container>
                     </small>
                     <small class="expand-post-date expand-post-date--visited" *ngIf="hasVisitedStatus(inv, c)">
@@ -1975,7 +1975,7 @@
       confirmLoadingLabel="Saving..."
       (closed)="closeVisitConfirmModal()"
       (confirmed)="confirmParticipantVisited()">
-    <p class="invite-action-modal__help">Confirm that this participant has arrived at the campaign location?</p>
+    <p class="invite-action-modal__help">Confirm that this participant visited the location? This completes their campaign — there is no post to wait for.</p>
   </app-confirm-action-modal>
 
   <!-- ─── Revised Counter Modal (brand sends revised amount) ─── -->

@@ -277,6 +277,8 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   /** Relevant between acceptance and the post going up — hidden once submitted, since the reminder no longer applies. */
   isPostingReminderMessageAvailable(item: any): boolean {
+    // Location visits have no post (2026-11-11).
+    if (this.isInviteLocation) return false;
     const status = this.adminInviteStatusKey(item?.status);
     return ACCEPTED_NOT_DISPUTED.includes(status)
       && !SUBMITTED_OR_LATER.includes(status);
