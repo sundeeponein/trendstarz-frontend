@@ -1486,3 +1486,9 @@ $dk-orange:    #e06030;
 }
 .cdm-payout-row__need { color: #b45309; font-size: 0.75rem; }
 .cdm-date-hint { display: block; font-size: 0.72rem; color: #6b7280; margin-top: 2px; max-width: 260px; }
+
+.cdm-shipping__badges { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0; }
+.cdm-ship-badge { padding: 0 8px; border-radius: 999px; background: #dcfce7; color: #166534; font-size: 0.72rem; font-weight: 600; }
+.cdm-ship-badge--warn { background: #fee2e2; color: #991b1b; }
+.cdm-shipping__report { margin-top: 4px; padding: 6px 8px; border-radius: 6px; background: #fff7ed; color: #9a3412; }
+.cdm-shipping__report-actions { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }

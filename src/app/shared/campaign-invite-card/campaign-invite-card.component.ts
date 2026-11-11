@@ -1,3 +1,4 @@
+import { hasProductTimeline, releaseAvailableAt, ymd } from '../product-timeline.util';
 import { ShippingAddressModalService } from '../components/shipping-address-modal/shipping-address-modal.service';
 import { ConfigService } from '../config.service';
 import { ChangeDetectorRef, Component, EventEmitter, Input, Output, inject } from '@angular/core';
@@ -418,6 +419,66 @@ export class CampaignInviteCardComponent {
   get shippedInput(): string {
     const at = this.productFulfillment?.shippedAt;
     return at ? this.ymd(new Date(at)) : '';
+  }
+
+  get shipByDate(): string | null {
+    return hasProductTimeline(this.campaign) ? this.campaign.shipByDate : null;
+  }
+  get shipByPassed(): boolean {
+    const at = this.campaign?.shipByDate;
+    return hasProductTimeline(this.campaign) && !!at && Date.now() > new Date(at).getTime();
+  }
+  get leaveAvailableFrom(): Date | null {
+    return hasProductTimeline(this.campaign) ? releaseAvailableAt(this.campaign.shipByDate) : null;
+  }
+  get canLeaveNotShipped(): boolean {
+    const from = this.leaveAvailableFrom;
+    return !!from && !this.productShipped && Date.now() >= from.getTime();
+  }
+  get notReceivedReportOpen(): boolean {
+    const r = this.invite?.reportedIssue;
+    return r?.category === 'product_not_received' && !!r?.reportedAt && !r?.resolvedAt;
+  }
+
+  leaveNotShipped(): void {
+    if (!this.invite?._id) return;
+    if (!window.confirm("Leave this campaign without penalty? Only do this if nothing has arrived — the host hasn't shipped it. Your monthly slot is freed.")) return;
+    this.shipBusy = true;
+    this.shipError = '';
+    this.configService.leaveInviteNotShipped(this.invite._id).subscribe({
+      next: () => {
+        this.invite.status = 'withdrawn';
+        this.invite.deliveryOutcome = 'host_not_shipped';
+        this.shipBusy = false;
+        this.cdRef.markForCheck();
+      },
+      error: (err: any) => {
+        this.shipBusy = false;
+        this.shipError = err?.error?.message || 'Could not leave the campaign.';
+        this.cdRef.markForCheck();
+      },
+    });
+  }
+
+  reportNotReceived(): void {
+    if (!this.invite?._id) return;
+    const note = window.prompt('The host marked the product delivered. Tell us what happened (optional):', '');
+    if (note === null) return;
+    this.shipBusy = true;
+    this.shipError = '';
+    this.configService.reportInviteProductNotReceived(this.invite._id, note).subscribe({
+      next: (res: any) => {
+        const body = res?.data ?? res;
+        this.invite.reportedIssue = body?.reportedIssue || { category: 'product_not_received', reportedAt: new Date().toISOString() };
+        this.shipBusy = false;
+        this.cdRef.markForCheck();
+      },
+      error: (err: any) => {
+        this.shipBusy = false;
+        this.shipError = err?.error?.message || 'Could not send the report.';
+        this.cdRef.markForCheck();
+      },
+    });
   }
 
   openReceived(): void {
@@ -903,7 +964,10 @@ export class CampaignInviteCardComponent {
     if (start && end) return `${fmt(start)} — ${fmt(end)}`;
     return fmt(start || end!);
   }
-  get minPostDate(): string { return (this.timelineRange.start || '').substring(0, 10); }
+  get minPostDate(): string {
+    if (hasProductTimeline(this.campaign) && this.campaign?.earliestPostDate) return ymd(this.campaign.earliestPostDate);
+    return (this.timelineRange.start || '').substring(0, 10);
+  }
   get maxPostDate(): string { return (this.timelineRange.end || '').substring(0, 10); }
 
   get platformText(): string {

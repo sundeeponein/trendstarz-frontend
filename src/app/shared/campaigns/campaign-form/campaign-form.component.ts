@@ -1,3 +1,4 @@
+import { ProductTimelineNumbers, previewProductTimeline, productTimelineNumbers } from '../../product-timeline.util';
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, OnDestroy, SimpleChanges, ChangeDetectorRef, inject } from '@angular/core';
 import { SessionService } from '../../../core/session.service';
 import { CommonModule } from '@angular/common';
@@ -579,6 +580,7 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     this.config.getAppSettings().subscribe((settings) => {
       this.minStartDays = settings.minCampaignStartDays ?? 3;
       this.maxDurationDays = settings.maxCampaignDurationDays ?? 15;
+      this.productTimelineNumbers = productTimelineNumbers(settings);
       this.form?.updateValueAndValidity();
       this.cd.detectChanges();
     });
@@ -2160,6 +2162,27 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       next: (data: any[]) => { this.targetDistricts = Array.isArray(data) ? data : []; this.cd.detectChanges(); },
       error: () => { this.targetDistricts = []; this.cd.detectChanges(); }
     });
+  }
+
+  /** Admin numbers for the product timeline (defaults until settings load). */
+  productTimelineNumbers: ProductTimelineNumbers = productTimelineNumbers(null);
+
+  /**
+   * Product campaigns that ship: accept-by / ship-by / earliest post date for the
+   * chosen start — the same dates the server stores (product-timeline.util).
+   * Shown only when the campaign gets the timeline (new campaigns and drafts).
+   */
+  get productTimelinePreview(): { acceptBy: Date; shipBy: Date; earliestPost: Date; minDays: number; tooShort: boolean } | null {
+    if (this.f['campaignType']?.value !== 'product' || this.f['productShippingRequired']?.value !== true) return null;
+    const saved: any = this.campaign;
+    if (saved?._id && !saved?.productTimeline && !['draft', 'pending_review', 'needs_changes'].includes(String(saved?.status || 'draft'))) {
+      return null;
+    }
+    const start = this.f['timelineStart']?.value;
+    if (!start) return null;
+    const p = previewProductTimeline(start, this.productTimelineNumbers);
+    const end = this.f['timelineEnd']?.value;
+    return { ...p, tooShort: !!end && end < p.earliestPost.toISOString().slice(0, 10) };
   }
 
   get productOptionChoicesPreview(): string[] {

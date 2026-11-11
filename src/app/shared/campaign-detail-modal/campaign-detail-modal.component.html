@@ -260,6 +260,11 @@
               <div class="mt-1">
                 <i class="bi bi-truck"></i> {{ productShipsToCreator ? 'Host ships the product' : 'No shipping (handed over in person / no physical product)' }}
               </div>
+              <div class="mt-1" *ngIf="productTimelineDates as tl">
+                <i class="bi bi-calendar-week"></i> Accept by <strong>{{ tl.acceptBy | date:'d MMM':'UTC' }}</strong>
+                · Ship by <strong>{{ tl.shipBy | date:'d MMM':'UTC' }}</strong>
+                · Posts from <strong>{{ tl.earliestPost | date:'d MMM':'UTC' }}</strong>
+              </div>
               <!-- What the creator must answer when accepting (size etc.), and the allowed options -->
               <div class="cdm-product-option mt-2" *ngIf="productShipsToCreator && productOptionQuestion">
                 <div><i class="bi bi-rulers"></i> Creator must tell the host: <strong>{{ productOptionQuestion }}</strong></div>
@@ -517,7 +522,7 @@
                       Accepted deliverable: <strong>{{ adminInviteAcceptedDeliverableText(item) }}</strong>
                     </div>
                     <!-- Product shipping (admin): creator's answer (size etc.), ship-to, status -->
-                    <div class="cdm-shipping" *ngIf="adminReview && (item.shippingAddress || item.productFulfillment?.shippedAt || item.productFulfillment?.deliveredAt)">
+                    <div class="cdm-shipping" *ngIf="adminReview && (item.shippingAddress || item.productFulfillment?.shippedAt || item.productFulfillment?.deliveredAt || item.deliveryOutcome || item.shippingDelayedAt)">
                       <div class="cdm-shipping__option" *ngIf="item.shippingAddress?.optionQuestion">
                         {{ item.shippingAddress.optionQuestion }}: <strong>{{ item.shippingAddress.optionAnswer || '—' }}</strong>
                       </div>
@@ -535,6 +540,21 @@
                         <ng-container *ngIf="item.productFulfillment?.courier"> · {{ item.productFulfillment.courier }}</ng-container>
                         <ng-container *ngIf="item.productFulfillment?.trackingId"> · {{ item.productFulfillment.trackingId }}</ng-container>
                         <ng-container *ngIf="item.productFulfillment?.deliveredAt"> · delivered {{ item.productFulfillment.deliveredAt | date:'d MMM y' }} ({{ item.productFulfillment.deliveredConfirmedBy === 'host' ? 'marked by host' : 'confirmed by creator' }})</ng-container>
+                      </div>
+                      <div class="cdm-shipping__badges">
+                        <span class="cdm-ship-badge cdm-ship-badge--warn" *ngIf="isShippingDelayedRow(item)">Shipping delayed</span>
+                        <span class="cdm-ship-badge" *ngIf="deliveryOutcomeLabel(item)" [class.cdm-ship-badge--warn]="item.deliveryOutcome !== 'on_time'">{{ deliveryOutcomeLabel(item) }}</span>
+                        <span class="cdm-ship-badge" *ngIf="item.productFulfillment?.shippedLate">Shipped after ship-by</span>
+                      </div>
+                      <div class="cdm-shipping__status" *ngIf="item.postDateAdjusted?.to">
+                        Post date moved {{ item.postDateAdjusted.from | date:'d MMM':'UTC' }} → {{ item.postDateAdjusted.to | date:'d MMM':'UTC' }} ({{ item.postDateAdjusted.reason === 'late_delivery' ? 'arrived late' : 'delivery confirmed by admin' }})
+                      </div>
+                      <div class="cdm-shipping__report" *ngIf="isNotReceivedReportOpen(item)">
+                        <div><i class="bi bi-flag"></i> Creator reported <strong>not received</strong> — no-show paused.</div>
+                        <div class="cdm-shipping__report-actions">
+                          <button type="button" class="cdm-copy-payout-btn" [disabled]="productReceiptBusy === item.inviteId" (click)="resolveProductReceipt(item, 'received')">It was delivered</button>
+                          <button type="button" class="cdm-copy-payout-btn" [disabled]="productReceiptBusy === item.inviteId" (click)="resolveProductReceipt(item, 'not_received')">Not received — close, no penalty</button>
+                        </div>
                       </div>
                       <div class="cdm-shipping__status" *ngIf="item.productFulfillment?.receivedNote">Creator's note: “{{ item.productFulfillment.receivedNote }}”</div>
                       <div class="cdm-shipping__option" *ngIf="item.addressUpdateRequest?.requestedAt">Host asked for an address fix: “{{ item.addressUpdateRequest.reason }}”</div>
@@ -657,6 +677,14 @@
                     (click)="openHostShareMessage(item, 'startWork', $event)">
                     <i class="bi bi-card-text"></i>
                     Start work
+                  </button>
+                  <button
+                    type="button"
+                    class="cdm-copy-payout-btn"
+                    *ngIf="isProductShippedMessageAvailable(item)"
+                    (click)="openHostShareMessage(item, 'productShipped', $event)">
+                    <i class="bi bi-whatsapp"></i>
+                    Shipped
                   </button>
                   <button
                     type="button"
@@ -831,7 +859,10 @@
                  [(ngModel)]="postDate" (ngModelChange)="toastError = ''"
                  [min]="minPostDate" [max]="maxPostDate" [title]="dateInputTitle" />
           <span class="cdm-date-hint" *ngIf="showDateInput && (isProduct || isInviteLocation)">
-            {{ isProduct ? 'Planned date — your post is due ' + postAfterDeliveryDays + ' days after the product arrives' : 'Visit date — post within ' + postAfterDeliveryDays + ' days of check-in' }}
+            <ng-container *ngIf="isProduct && productTimelineDates as tl; else planHint">
+              Pick your post date (from {{ tl.earliestPost | date:'d MMM':'UTC' }} — the product needs time to reach you). If it arrives after your date, you get up to {{ postAfterDeliveryDays }} days from delivery.
+            </ng-container>
+            <ng-template #planHint>{{ isProduct ? 'Your post date — if the product arrives after it, you get up to ' + postAfterDeliveryDays + ' days from delivery' : 'Visit date — post within ' + postAfterDeliveryDays + ' days of check-in' }}</ng-template>
           </span>
         </div>
         <div class="cdm-footer-right">
@@ -857,12 +888,6 @@
                   type="button"
                   (click)="onViewSubmission()">
             <i class="bi bi-eye-fill"></i> View Submission
-          </button>
-          <button class="cdm-foot-btn cdm-foot-btn--outline"
-                  *ngIf="showConfirmReceipt"
-                  type="button"
-                  (click)="onConfirmReceipt()">
-            <i class="bi bi-check2-circle"></i> Confirm Receipt
           </button>
           <button class="cdm-foot-btn cdm-foot-btn--ghost" (click)="onClose()">Close</button>
         </div>

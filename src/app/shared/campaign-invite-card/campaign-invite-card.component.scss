@@ -435,3 +435,7 @@ $text:    #111827;
 }
 .cic-ship__actions { display: flex; gap: 6px; }
 .cic-ship__done { color: #15803d; }
+
+.cic-ship__date { color: #334155; }
+.cic-ship__delayed { padding: 6px 10px; border-radius: 8px; background: #fef2f2; color: #991b1b; small { display: block; color: #7f1d1d; } }
+.cic-ship__adjusted { font-size: 0.78rem; color: #92400e; }

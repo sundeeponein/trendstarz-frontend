@@ -3445,3 +3445,10 @@
 .fulfill-request-form { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; .fulfill-input { flex: 1; } }
 .fulfill-link { align-self: flex-start; text-align: left; }
 .fulfill-muted { margin: 0; }
+
+.host-product-timeline {
+  margin: 8px 0; padding: 8px 12px; border-radius: 8px; background: #f0f9ff; border: 1px solid #bae6fd;
+  font-size: 0.85rem; color: #0c4a6e;
+  small { display: block; color: #475569; margin-top: 2px; }
+}
+.fulfill-overdue { background: #fef2f2 !important; color: #991b1b !important; }

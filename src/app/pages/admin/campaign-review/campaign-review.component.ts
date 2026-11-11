@@ -712,6 +712,11 @@ export class CampaignReviewComponent implements OnInit {
           shippingAddress: invite?.shippingAddress || null,
           productFulfillment: invite?.productFulfillment || null,
           addressUpdateRequest: invite?.addressUpdateRequest || null,
+          // Product timeline tracking (admin): outcome, delay flag, moved post date, open report.
+          deliveryOutcome: invite?.deliveryOutcome || null,
+          shippingDelayedAt: invite?.shippingDelayedAt || null,
+          postDateAdjusted: invite?.postDateAdjusted || null,
+          reportedIssue: invite?.reportedIssue || null,
           acceptedAt: invite?.acceptedAt || null,
           paymentConfirmedAt: invite?.paymentConfirmedAt || null,
           updatedAt: invite?.updatedAt || invite?.createdAt || null,
@@ -887,12 +892,14 @@ export class CampaignReviewComponent implements OnInit {
       .subscribe({
         next: (res) => {
           const data = res?.data ?? res;
-          if (payload.type === 'accepted' || payload.type === 'submitted' || payload.type === 'startWork' || payload.type === 'paymentReceived') {
-            const messageByType: Record<'accepted' | 'submitted' | 'startWork' | 'paymentReceived', string> = {
+          if (payload.type === 'accepted' || payload.type === 'submitted' || payload.type === 'startWork' || payload.type === 'paymentReceived' || payload.type === 'productShipped') {
+            const messageByType: Record<'accepted' | 'submitted' | 'startWork' | 'paymentReceived' | 'productShipped', string> = {
               accepted: data?.inviteAcceptedMessage,
               submitted: data?.postSubmittedMessage,
               startWork: data?.startWorkMessage,
               paymentReceived: data?.paymentReceivedMessage,
+              // Same text as the automatic campaign_product_shipped WhatsApp.
+              productShipped: data?.productShippedMessage,
             };
             this.selectedInviteHostMessageText = messageByType[payload.type] || '';
           } else if (payload.type === 'inviteOnly' && data?.inviteReceivedMessage) {

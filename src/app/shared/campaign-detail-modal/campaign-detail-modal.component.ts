@@ -1,3 +1,4 @@
+import { DELIVERY_OUTCOME_LABELS, hasProductTimeline, ymd } from '../product-timeline.util';
 import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { SessionService } from '../../core/session.service';
 import { ConfigService } from '../config.service';
@@ -26,7 +27,7 @@ import {
 } from '../campaign-sender.util';
 
 import { confirmedAwaitingStartLabel } from '../invite-status-labels.util';
-export type HostShareMessageType = 'accepted' | 'submitted' | 'paymentReceived' | 'startWork' | 'inviteOnly' | 'postingReminder';
+export type HostShareMessageType = 'accepted' | 'submitted' | 'paymentReceived' | 'startWork' | 'productShipped' | 'inviteOnly' | 'postingReminder';
 
 export interface CampaignAcceptPayload {
   inviteId: string;
@@ -110,7 +111,6 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Output() cancelParticipation = new EventEmitter<string>();
   @Output() validationError = new EventEmitter<string>();
   @Output() viewSubmission = new EventEmitter<void>();
-  @Output() confirmReceipt = new EventEmitter<void>();
 
   /** Per-invite "ready to share" host message (invite accepted / post submitted / start work / invite only / posting reminder) — parent owns the fetch, see campaign-review.component.ts. */
   @Output() requestHostShareMessage = new EventEmitter<{ item: any; type: HostShareMessageType }>();
@@ -123,13 +123,14 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Input() hostShareMessageOwnerPhone = '';
   @Input() hostShareMessageRecipientPhone = '';
 
-  private static readonly CREATOR_FACING_MESSAGE_TYPES: HostShareMessageType[] = ['startWork', 'inviteOnly', 'postingReminder'];
+  private static readonly CREATOR_FACING_MESSAGE_TYPES: HostShareMessageType[] = ['startWork', 'productShipped', 'inviteOnly', 'postingReminder'];
 
   private static readonly HOST_SHARE_MESSAGE_TYPE_LABELS: Record<HostShareMessageType, string> = {
     accepted: 'Invite Accepted Message',
     submitted: 'Post Submitted Message',
     paymentReceived: 'Payment Received Message',
     startWork: 'Start Work Message',
+    productShipped: 'Product Shipped Message',
     inviteOnly: 'Invite Message',
     postingReminder: 'Upcoming Posting Reminder',
   };
@@ -244,6 +245,12 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     const status = this.adminInviteStatusKey(item?.status);
     return PAID_OR_LATER.includes(status)
       && !SUBMITTED_OR_LATER.includes(status);
+  }
+
+  /** The host saved courier + tracking + shipped date and the product isn't delivered yet. */
+  isProductShippedMessageAvailable(item: any): boolean {
+    const pf = item?.productFulfillment || {};
+    return !!pf.shippedAt && !pf.deliveredAt;
   }
 
   /** Mirrors campaign-invite-card.component.ts's acceptanceDeadline getter — same campaign-level field, no per-invite override. */
@@ -867,10 +874,6 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return ['submitted', 'completed', 'approved'].includes(this.statusKey);
   }
 
-  get showConfirmReceipt(): boolean {
-    return this.isProduct && this.statusKey === 'working';
-  }
-
   get showPayoutPendingInfo(): boolean {
     return this.statusKey === 'approved' || this.statusKey === 'completed';
   }
@@ -1082,6 +1085,50 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     if (paise > 0) return `₹${Math.floor(paise / 100).toLocaleString('en-IN')}`;
     return '';
   }
+  /** Ship-by passed with nothing shipped (admin chip + badge). */
+  isShippingDelayedRow(row: any): boolean {
+    const pf = row?.productFulfillment || {};
+    return !!row?.shippingDelayedAt && !pf.shippedAt && !pf.deliveredAt && !row?.deliveryOutcome;
+  }
+
+  deliveryOutcomeLabel(row: any): string {
+    return DELIVERY_OUTCOME_LABELS[String(row?.deliveryOutcome || '')] || '';
+  }
+
+  isNotReceivedReportOpen(row: any): boolean {
+    const r = row?.reportedIssue;
+    return r?.category === 'product_not_received' && !!r?.reportedAt && !r?.resolvedAt;
+  }
+
+  productReceiptBusy = '';
+  resolveProductReceipt(row: any, decision: 'received' | 'not_received'): void {
+    if (!row?.inviteId || this.productReceiptBusy) return;
+    const msg = decision === 'received'
+      ? 'Confirm the product WAS delivered? The creator gets a fresh posting window from today.'
+      : 'Uphold the report — the product was NOT received? The invite closes with no penalty for the creator.';
+    if (!window.confirm(msg)) return;
+    this.productReceiptBusy = row.inviteId;
+    this.config.adminResolveProductReceipt(row.inviteId, decision).subscribe({
+      next: (res: any) => {
+        const body = res?.data ?? res;
+        row.reportedIssue = { ...(row.reportedIssue || {}), resolvedAt: new Date().toISOString() };
+        if (decision === 'not_received') {
+          row.status = 'withdrawn';
+          row.deliveryOutcome = 'not_received';
+        } else if (body?.selectedPostDate) {
+          row.selectedPostDate = body.selectedPostDate;
+        }
+        this.productReceiptBusy = '';
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        this.productReceiptBusy = '';
+        window.alert(err?.error?.message || 'Could not save the decision.');
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   get productShipsToCreator(): boolean { return this.campaign?.productShippingRequired === true; }
   get productOptionQuestion(): string { return String(this.campaign?.productOptionQuestion || '').trim(); }
   get productOptionChoices(): string[] {
@@ -1241,7 +1288,26 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     if (!d) return '';
     return String(new Date(d).getFullYear());
   }
-  get minPostDate(): string { return (this.timelineRange.start || '').substring(0, 10); }
+  get minPostDate(): string {
+    // Product timeline: the product needs time to arrive before the post date.
+    if (hasProductTimeline(this.campaign) && this.campaign?.earliestPostDate) {
+      return ymd(this.campaign.earliestPostDate);
+    }
+    return (this.timelineRange.start || '').substring(0, 10);
+  }
+
+  /** Product timeline dates for this campaign (null for other campaigns). */
+  // Raw stored dates (shown with the UTC date pipe): accept-by / ship-by are 23:59 IST
+  // (18:29 UTC, same date) and the earliest post date is midnight UTC of its date.
+  // Formatting a "YYYY-MM-DD" string instead read as local midnight and showed a day early.
+  get productTimelineDates(): { acceptBy: string; shipBy: string; earliestPost: string } | null {
+    if (!hasProductTimeline(this.campaign)) return null;
+    return {
+      acceptBy: this.campaign.acceptanceDeadline,
+      shipBy: this.campaign.shipByDate,
+      earliestPost: this.campaign.earliestPostDate,
+    };
+  }
   get maxPostDate(): string { return (this.timelineRange.end || '').substring(0, 10); }
 
   get slots(): number {
@@ -1636,6 +1702,9 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   get filteredAdminInviteProgress(): any[] {
     if (this.adminInviteStatusFilter === 'all') return this.adminInviteProgress;
+    if (this.adminInviteStatusFilter === 'shipping_delayed') {
+      return this.adminInviteProgress.filter((row) => this.isShippingDelayedRow(row));
+    }
     if (this.adminInviteStatusFilter === 'actionable') {
       const actionable = new Set(ACCEPTED_THROUGH_SUBMITTED);
       return this.adminInviteProgress.filter((row) => actionable.has(this.adminInviteStatusKey(row?.status)));
@@ -1684,6 +1753,8 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
       options.push({ key: 'actionable', label: 'Actionable', count: actionableCount });
     }
     options.push(...this.adminInviteProgressSummary);
+    const delayed = this.adminInviteProgress.filter((row) => this.isShippingDelayedRow(row)).length;
+    if (delayed > 0) options.push({ key: 'shipping_delayed', label: 'Shipping delayed', count: delayed });
     return options;
   }
 
@@ -2010,7 +2081,6 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
 
   onViewSubmission() { this.viewSubmission.emit(); }
-  onConfirmReceipt() { this.confirmReceipt.emit(); }
 
   adminInviteOfferTrailText(item: any): string {
     return buildAdminOfferTrailText({

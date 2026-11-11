@@ -435,6 +435,9 @@ export class AdminManagementComponent implements OnInit {
     minCampaignStartDays: 3,
     maxCampaignDurationDays: 15,
     postAfterDeliveryDays: 7,
+    productAcceptanceDays: 2,
+    productShipByDays: 2,
+    productShippingDays: 5,
     earlyAccessAssignmentMode: 'manual',
     // Commission percentages for badge types (applicable when badge is assigned)
     earlyAccessCommissionPercent: 0,
@@ -847,6 +850,9 @@ export class AdminManagementComponent implements OnInit {
           this.settings.minCampaignStartDays = typeof data?.minCampaignStartDays === 'number' ? data.minCampaignStartDays : 3;
           this.settings.maxCampaignDurationDays = typeof data?.maxCampaignDurationDays === 'number' ? data.maxCampaignDurationDays : 15;
           this.settings.postAfterDeliveryDays = typeof data?.postAfterDeliveryDays === 'number' ? data.postAfterDeliveryDays : 7;
+          this.settings.productAcceptanceDays = typeof data?.productAcceptanceDays === 'number' ? data.productAcceptanceDays : 2;
+          this.settings.productShipByDays = typeof data?.productShipByDays === 'number' ? data.productShipByDays : 2;
+          this.settings.productShippingDays = typeof data?.productShippingDays === 'number' ? data.productShippingDays : 5;
           this.settings.earlyAccessAssignmentMode = data?.earlyAccessAssignmentMode === 'auto' ? 'auto' : 'manual';
           this.earlyAccessLastRunAt = data?.earlyAccessLastRunAt || null;
           this.earlyAccessLastRunStatus = String(data?.earlyAccessLastRunStatus || '');

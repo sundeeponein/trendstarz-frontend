@@ -834,6 +834,21 @@
                 <small class="text-light-emphasis">Never past the maximum campaign duration from the campaign start.</small>
               </div>
             </div>
+            <div class="row g-2 mb-2">
+              <div class="col-12 col-md-4">
+                <label class="form-label" style="font-size:0.9rem;">Product: days to accept after start</label>
+                <input type="number" class="form-control" min="1" max="14" step="1" [(ngModel)]="settings.productAcceptanceDays" />
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label" style="font-size:0.9rem;">Product: days to ship after accept-by</label>
+                <input type="number" class="form-control" min="1" max="14" step="1" [(ngModel)]="settings.productShipByDays" />
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label" style="font-size:0.9rem;">Product: shipping days (earliest post date = accept-by + this)</label>
+                <input type="number" class="form-control" min="1" max="14" step="1" [(ngModel)]="settings.productShippingDays" />
+              </div>
+              <small class="text-light-emphasis d-block">Applies to product campaigns that ship, created from now on (existing campaigns keep their dates). Creators can leave without penalty 3 days after the ship-by date if nothing was shipped.</small>
+            </div>
             <small class="text-light-emphasis d-block">
               Standard values: 3 days minimum start, 15 days maximum duration, 7 days to post after delivery. Changes apply to new campaigns immediately after saving — no redeploy needed.
             </small>

@@ -1,3 +1,4 @@
+import { hasProductTimeline } from '../../shared/product-timeline.util';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -3616,6 +3617,12 @@ export class CampaignManagementComponent implements OnInit, OnDestroy {
    * campaign (title "Manage", Note only, no address/courier/tracking).
    */
   fulfillCampaign: any = null;
+  readonly hasProductTimeline = hasProductTimeline;
+
+  isPast(value: unknown): boolean {
+    const t = value ? new Date(value as any).getTime() : NaN;
+    return Number.isFinite(t) && Date.now() > t;
+  }
   readonly hostMarkDeliveredAfterDays = 5;
   addressRequestOpen = false;
   addressRequestReason = '';

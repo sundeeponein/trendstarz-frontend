@@ -362,6 +362,9 @@ export class ConfigService {
     minCampaignStartDays?: number;
     maxCampaignDurationDays?: number;
     postAfterDeliveryDays?: number;
+    productAcceptanceDays?: number;
+    productShipByDays?: number;
+    productShippingDays?: number;
     otpVerificationEnabled?: boolean;
     paymentGatewayMode: 'manual' | 'razorpay_fallback' | 'razorpay_only';
     razorpayConfigured: boolean;
@@ -398,6 +401,9 @@ export class ConfigService {
           minCampaignStartDays: typeof data?.minCampaignStartDays === 'number' ? data.minCampaignStartDays : 3,
           maxCampaignDurationDays: typeof data?.maxCampaignDurationDays === 'number' ? data.maxCampaignDurationDays : 15,
           postAfterDeliveryDays: typeof data?.postAfterDeliveryDays === 'number' ? data.postAfterDeliveryDays : 7,
+          productAcceptanceDays: typeof data?.productAcceptanceDays === 'number' ? data.productAcceptanceDays : 2,
+          productShipByDays: typeof data?.productShipByDays === 'number' ? data.productShipByDays : 2,
+          productShippingDays: typeof data?.productShippingDays === 'number' ? data.productShippingDays : 5,
           otpVerificationEnabled: !!data?.otpVerificationEnabled,
           paymentGatewayMode: ['manual', 'razorpay_fallback', 'razorpay_only'].includes(data?.paymentGatewayMode)
             ? data.paymentGatewayMode
@@ -421,6 +427,9 @@ export class ConfigService {
         minCampaignStartDays: 3,
         maxCampaignDurationDays: 15,
         postAfterDeliveryDays: 7,
+        productAcceptanceDays: 2,
+        productShipByDays: 2,
+        productShippingDays: 5,
         otpVerificationEnabled: false,
         paymentGatewayMode: 'manual' as const,
         razorpayConfigured: false,
@@ -1506,6 +1515,21 @@ export class ConfigService {
   /** Creator: change their shipping address / product answer until it ships. */
   updateInviteShippingAddress(inviteId: string, address: any): Observable<any> {
     return this.http.patch(`${this.apiUrl}/campaign-invites/${inviteId}/shipping-address`, address);
+  }
+
+  /** Creator: leave without penalty — the host didn't ship in time. */
+  leaveInviteNotShipped(inviteId: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/leave-not-shipped`, {});
+  }
+
+  /** Creator: the host marked it delivered but nothing arrived. */
+  reportInviteProductNotReceived(inviteId: string, note: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/product-not-received`, { note });
+  }
+
+  /** Admin: settle a "product not received" report. */
+  adminResolveProductReceipt(inviteId: string, decision: 'received' | 'not_received', note?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/campaign-invites/${inviteId}/admin/product-receipt`, { decision, note });
   }
 
   /** Creator: "I received the product". */

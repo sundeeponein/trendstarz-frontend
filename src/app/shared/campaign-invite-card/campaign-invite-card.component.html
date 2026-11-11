@@ -71,13 +71,14 @@
         <i class="bi bi-eye-fill"></i> View Submission
       </button>
 
-      <!-- Submit Post / Confirm Receipt -->
+      <!-- Submit Post (product campaigns that ship: only once the product is received —
+           receipt itself is confirmed with "I received the product" below) -->
       <button class="cic-btn cic-btn--primary"
-              *ngIf="showSubmitCTA && !showViewSubmission"
+              *ngIf="showSubmitCTA && !showViewSubmission && !(isShippedProduct && !productDelivered)"
               type="button"
               (click)="submitPost.emit(); $event.stopPropagation()">
         <i class="bi bi-send-fill"></i>
-        {{ isProduct ? 'Confirm Receipt' : 'Submit Post' }}
+        Submit Post
       </button>
 
       <!-- Review & Accept (pending) — opens detail modal -->
@@ -200,11 +201,33 @@
       </div>
     </ng-container>
 
+    <!-- Post date: stays as chosen unless the product arrived after it -->
+    <div class="cic-ship__date" *ngIf="isActiveWork && invite?.selectedPostDate && !productDelivered">
+      <i class="bi bi-calendar-event"></i> Your post date: <strong>{{ invite.selectedPostDate | date:'d MMM':'UTC' }}</strong>
+    </div>
+    <div class="cic-ship__delayed" *ngIf="isActiveWork && !productShipped && (invite?.shippingDelayedAt || shipByPassed)">
+      <i class="bi bi-hourglass-split"></i>
+      The host hasn't shipped yet<ng-container *ngIf="shipByDate"> (ship-by {{ shipByDate | date:'d MMM' }})</ng-container> — you won't be penalised for the delay.
+      <button type="button" class="cic-option__change" *ngIf="canLeaveNotShipped" [disabled]="shipBusy" (click)="leaveNotShipped()">Leave without penalty</button>
+      <small *ngIf="!canLeaveNotShipped && leaveAvailableFrom">You can leave without penalty from {{ leaveAvailableFrom | date:'d MMM' }} if it still hasn't shipped.</small>
+    </div>
+
     <div class="cic-ship__done" *ngIf="productDelivered">
       <i class="bi bi-check-circle"></i>
       Received {{ invite?.productFulfillment?.deliveredAt | date:'d MMM' }}<ng-container *ngIf="invite?.productFulfillment?.deliveredConfirmedBy === 'host'"> (marked by the host)</ng-container>
-      <ng-container *ngIf="invite?.selectedPostDate"> · post by <strong>{{ invite.selectedPostDate | date:'d MMM':'UTC' }}</strong></ng-container>
+      <ng-container *ngIf="invite?.selectedPostDate"> · {{ invite?.postDateAdjusted?.to ? 'post by' : 'your post date' }} <strong>{{ invite.selectedPostDate | date:'d MMM':'UTC' }}</strong></ng-container>
+      <div class="cic-ship__adjusted" *ngIf="invite?.postDateAdjusted?.to">
+        Moved from {{ invite.postDateAdjusted.from | date:'d MMM':'UTC' }} because the product arrived late.
+      </div>
     </div>
+    <ng-container *ngIf="productDelivered && isActiveWork && invite?.productFulfillment?.deliveredConfirmedBy === 'host'">
+      <div class="cic-ship__request" *ngIf="notReceivedReportOpen">
+        <i class="bi bi-flag"></i> You reported that the product hasn't arrived — TrendStarZ is checking. No penalty while this is open.
+      </div>
+      <button type="button" class="cic-option__change" *ngIf="!notReceivedReportOpen" [disabled]="shipBusy" (click)="reportNotReceived()">
+        <i class="bi bi-flag"></i> Not received? Report it
+      </button>
+    </ng-container>
     <small class="cic-option__error" *ngIf="shipError">{{ shipError }}</small>
   </div>
 

@@ -540,6 +540,19 @@
           <p class="field-sublabel" *ngIf="f['productShippingRequired'].value === true">
             <i class="bi bi-truck"></i> Shipping address will be collected from the {{ isInvitingPhotographers ? 'creator' : 'influencer' }} after they accept your invite — you do not need to enter it here.
           </p>
+          <!-- Product timeline preview (accept → ship → post) -->
+          <div class="cf-product-timeline" *ngIf="productTimelinePreview as tl">
+            <div class="cf-product-timeline__title"><i class="bi bi-calendar-week"></i> Shipping timeline</div>
+            <ol>
+              <li>Creators accept until <strong>{{ tl.acceptBy | date:'d MMM':'UTC' }}</strong></li>
+              <li>You ship to everyone by <strong>{{ tl.shipBy | date:'d MMM':'UTC' }}</strong> (add courier + tracking in TrendStarZ)</li>
+              <li>Creators pick a post date from <strong>{{ tl.earliestPost | date:'d MMM':'UTC' }}</strong> to the end date</li>
+            </ol>
+            <p class="cf-product-timeline__warn" *ngIf="tl.tooShort">
+              <i class="bi bi-exclamation-triangle"></i> This campaign is too short for shipping — it needs at least {{ tl.minDays }} days. Move the end date to {{ tl.earliestPost | date:'d MMM':'UTC' }} or later.
+            </p>
+            <small>If you don't ship by the ship-by date, creators are told they won't be penalised, and from 3 days after it they can leave without penalty.</small>
+          </div>
           <div class="product-option" *ngIf="f['productShippingRequired'].value === true">
             <label class="field-label mt-2">Anything the creator must tell you before shipping? <small>(optional)</small></label>
             <input type="text" formControlName="productOptionQuestion" class="field-input" maxlength="60"

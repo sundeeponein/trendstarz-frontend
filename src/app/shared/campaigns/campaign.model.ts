@@ -37,6 +37,10 @@ export interface Campaign {
   maxInfluencers?: number;
   minInfluencers?: number;
   acceptanceDeadline?: string;
+  /** Product campaigns that ship (2026-11-11): server-computed timeline. */
+  productTimeline?: boolean;
+  shipByDate?: string;
+  earliestPostDate?: string;
   estimatedBudget?: number; // paise
   applicants?: number;
   startDate?: string;

@@ -788,6 +788,15 @@
               </div>
             </div>
 
+            <!-- Product timeline (accept → ship → post) for product campaigns that ship -->
+            <div class="host-product-timeline" *ngIf="hasProductTimeline(c)">
+              <i class="bi bi-calendar-week"></i>
+              Accepting until <strong>{{ c.acceptanceDeadline | date:'d MMM' }}</strong>
+              · Ship by <strong [class.text-danger]="isPast(c.shipByDate)">{{ c.shipByDate | date:'d MMM' }}</strong>
+              · Posts from <strong>{{ c.earliestPostDate | date:'d MMM':'UTC' }}</strong>
+              <small>Ship to everyone who accepted once acceptance closes, and add the courier + tracking ID for each.</small>
+            </div>
+
             <!-- Invited recipients list -->
             <div class="completed-worked-note" *ngIf="c.status === 'completed'">
               <i class="bi bi-stars"></i>
@@ -2064,6 +2073,10 @@
           </div>
         </ng-container>
 
+        <div class="fulfill-request" *ngIf="!fulfillShipped && fulfillCampaign?.shipByDate" [class.fulfill-overdue]="isPast(fulfillCampaign.shipByDate)">
+          <i class="bi bi-calendar-check"></i> Ship by <strong>{{ fulfillCampaign.shipByDate | date:'d MMM' }}</strong>
+          <ng-container *ngIf="isPast(fulfillCampaign.shipByDate)"> — overdue. If you already shipped, add the courier and tracking ID now.</ng-container>
+        </div>
         <!-- Read-only status: Not shipped → Shipped → Delivered (confirmed by the creator) -->
         <div class="fulfill-status">
           <ng-container *ngIf="!fulfillShipped">Status: <strong>Not shipped yet</strong></ng-container>

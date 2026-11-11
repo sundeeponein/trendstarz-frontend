@@ -2550,3 +2550,13 @@ $cf-navy: #151729;
   i { color: $accent; margin-top: 2px; }
   small { display: block; margin-top: 2px; color: $text-muted; font-size: 12px; }
 }
+
+// Product shipping timeline preview (2026-11-11)
+.cf-product-timeline {
+  margin: 10px 0; padding: 10px 12px; border-radius: 8px; background: #f0f9ff; border: 1px solid #bae6fd;
+  font-size: 0.85rem; color: #0c4a6e;
+  ol { margin: 6px 0; padding-left: 18px; }
+  small { color: #475569; }
+}
+.cf-product-timeline__title { font-weight: 600; }
+.cf-product-timeline__warn { margin: 6px 0; color: #b91c1c; }
