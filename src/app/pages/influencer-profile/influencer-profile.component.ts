@@ -155,7 +155,7 @@ export class InfluencerProfileComponent implements OnInit {
   ) {}
 
   /** Owner's own TrendScore pricing suggestion — shown as hints next to content rates. */
-  priceSuggestion: { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null } | null = null;
+  priceSuggestion: { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null; byPlatform?: Record<string, { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null }> } | null = null;
 
   private loadPriceSuggestion(): void {
     const userId = this.session.getUser()?.id;

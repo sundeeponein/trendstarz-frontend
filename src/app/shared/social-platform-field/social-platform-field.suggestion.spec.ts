@@ -18,6 +18,19 @@ describe('SocialPlatformFieldComponent — TrendScore price hints', () => {
     expect(component.suggestedPriceFor('Carousel Post')).toBeNull();
   });
 
+  it('uses this platform\'s own tier suggestion when the server sends byPlatform', () => {
+    component.priceSuggestion = {
+      reelPrice: 1500, storyPrice: 600, videoPrice: 2700,
+      byPlatform: { youtube: { reelPrice: 100, storyPrice: 50, videoPrice: 180 } },
+    };
+    component.platform = { name: 'YouTube' } as any;
+    expect(component.suggestedPriceFor('Video')).toBe(180);
+    expect(component.suggestedPriceFor('Shorts')).toBe(100);
+    // A platform with no tier gets no hint (never the biggest account's numbers).
+    component.platform = { name: 'Facebook' } as any;
+    expect(component.suggestedPriceFor('Reel')).toBeNull();
+  });
+
   it('shows nothing without a TrendScore suggestion', () => {
     component.priceSuggestion = null;
     expect(component.suggestedPriceFor('Reel')).toBeNull();

@@ -54,7 +54,8 @@ export class SocialPlatformFieldComponent implements OnInit {
   @Input() supportsOAuth = false;
   @Input() showRemove = true;
   /** The creator's own TrendScore pricing suggestion (rupees) — shown as a hint to the owner only. */
-  @Input() priceSuggestion: { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null } | null = null;
+  /** byPlatform (2026-11-15): one suggestion per platform from that account's tier; used when present. */
+  @Input() priceSuggestion: { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null; byPlatform?: Record<string, { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null }> } | null = null;
 
   /** Any manual field mutation — parent should call its own refreshStepCompletion(). */
   @Output() changed = new EventEmitter<void>();
@@ -199,7 +200,12 @@ export class SocialPlatformFieldComponent implements OnInit {
 
   /** Maps a content type name to the matching TrendScore suggestion (Story / Reel & Shorts / Video). */
   suggestedPriceFor(contentTypeName: string): number | null {
-    const sug = this.priceSuggestion;
+    const all = this.priceSuggestion;
+    if (!all) return null;
+    // Per-platform (this account's own tier) when the server sends it; no tier → no hint.
+    const sug = all.byPlatform
+      ? all.byPlatform[String(this.platform?.name || '').trim().toLowerCase()]
+      : all;
     if (!sug) return null;
     const name = String(contentTypeName || '').toLowerCase();
     const value = name.includes('story')
