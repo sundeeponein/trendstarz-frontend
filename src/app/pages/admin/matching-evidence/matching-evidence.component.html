@@ -325,7 +325,7 @@
           <p class="adm-section-sub">
             Across {{ o.campaigns }} campaigns and {{ o.ranked | number }} ranked creators: which
             ranking rule first tells two eligible creators apart. <em>"Creator ID"</em> means the
-            three signals were tied and the stable tie-break decided — not marketplace evidence.
+            four signals were tied and the stable tie-break decided — not marketplace evidence.
           </p>
         </div>
       </div>
@@ -342,6 +342,10 @@
           <div class="adm-metric">
             <span>Activity</span>
             <strong class="adm-text--blue">{{ pct(o.decidedPairsPct['activity']) }}</strong>
+          </div>
+          <div class="adm-metric">
+            <span>Verified tier</span>
+            <strong class="adm-text--blue">{{ pct(o.decidedPairsPct['verifiedTier']) }}</strong>
           </div>
           <div class="adm-metric">
             <span>Creator ID tie-break</span>

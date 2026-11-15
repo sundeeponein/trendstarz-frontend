@@ -37,6 +37,16 @@
       >
         {{ reasonLabels[r] }} <span>{{ data.counts[r] }}</span>
       </button>
+      <button
+        type="button"
+        class="tr-chip tr-chip--not-found"
+        [class.tr-chip--active]="notFoundOnly"
+        [attr.aria-pressed]="notFoundOnly"
+        title="Channel can't be found (2+ checks in a row) — ask the creator to fix the link"
+        (click)="toggleNotFound()"
+      >
+        <i class="bi bi-link-45deg"></i> Channel not found <span>{{ data.notFoundCount ?? 0 }}</span>
+      </button>
     </div>
 
     <form class="tr-filters" (ngSubmit)="applyFilters()">

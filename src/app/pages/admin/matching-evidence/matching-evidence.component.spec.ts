@@ -125,7 +125,7 @@ const report = (): EvidenceQualityReport => ({
         distinctSignalCombinations: 25,
         creatorsInTieGroupsPct: 96.5,
         largestTieGroup: 26,
-        decidedPairsPct: { platformContent: 28.5, category: 53, activity: 10.2, creatorId: 8.3 },
+        decidedPairsPct: { platformContent: 28.5, category: 53, activity: 10.2, verifiedTier: 0, creatorId: 8.3 },
         topNCutoffInTie: { top5: false, top10: false, top25: true },
       },
       {
@@ -137,7 +137,7 @@ const report = (): EvidenceQualityReport => ({
         distinctSignalCombinations: 13,
         creatorsInTieGroupsPct: 98.6,
         largestTieGroup: 28,
-        decidedPairsPct: { platformContent: 0, category: 71.1, activity: 15.7, creatorId: 13.1 },
+        decidedPairsPct: { platformContent: 0, category: 71.1, activity: 15.7, verifiedTier: 0, creatorId: 13.1 },
         topNCutoffInTie: { top5: true, top10: true, top25: true },
       },
     ],
@@ -145,7 +145,7 @@ const report = (): EvidenceQualityReport => ({
       campaigns: 17,
       ranked: 2186,
       creatorsInTieGroupsPct: 96.2,
-      decidedPairsPct: { platformContent: 19.2, category: 53.6, activity: 14.9, creatorId: 12.3 },
+      decidedPairsPct: { platformContent: 19.2, category: 53.6, activity: 14.9, verifiedTier: 0, creatorId: 12.3 },
       topNCutoffInTie: {
         top5: { inTie: 14, measurable: 17 },
         top10: { inTie: 13, measurable: 17 },

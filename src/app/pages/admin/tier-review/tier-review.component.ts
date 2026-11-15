@@ -66,6 +66,8 @@ export interface TierReviewItem {
 export interface TierReviewPage {
   asOf: string;
   counts: Record<TierReviewReason, number>;
+  /** Accounts whose channel can't be found (2+ lookups in a row). */
+  notFoundCount?: number;
   total: number;
   platforms: Record<string, number>;
   filtered: number;
@@ -111,6 +113,8 @@ export class TierReviewComponent implements OnInit {
   error = '';
 
   reason: TierReviewReason | '' = '';
+  /** Show only accounts whose channel can't be found — the creator should fix the link. */
+  notFoundOnly = false;
   platform = '';
   q = '';
   page = 1;
@@ -154,6 +158,7 @@ export class TierReviewComponent implements OnInit {
     if (this.reason) params.set('reason', this.reason);
     if (this.platform) params.set('platform', this.platform);
     if (this.q.trim()) params.set('q', this.q.trim());
+    if (this.notFoundOnly) params.set('notFound', '1');
     this.http.get<any>(`${this.base}/admin/tier-review?${params.toString()}`).subscribe({
       next: (res) => {
         this.data = (res?.data ?? res) || null;
@@ -171,6 +176,12 @@ export class TierReviewComponent implements OnInit {
 
   setReason(r: TierReviewReason | ''): void {
     this.reason = r;
+    this.page = 1;
+    this.load();
+  }
+
+  toggleNotFound(): void {
+    this.notFoundOnly = !this.notFoundOnly;
     this.page = 1;
     this.load();
   }
