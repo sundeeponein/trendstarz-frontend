@@ -2,7 +2,7 @@ import { PendingMobileNoteComponent } from '../../shared/pending-mobile-note.com
 import { PendingPricesNoteComponent } from '../../shared/pending-prices-note.component';
 import { CollaborationRecordComponent } from '../../shared/collaboration-record/collaboration-record.component';
 import { environment } from '../../../environments/environment';
-import { CollaborationScoreApiService } from '../../services/collaboration-score-api.service';
+import { CollaborationScoreApiService, RateRangeTable } from '../../services/collaboration-score-api.service';
 import { Component, OnInit, ChangeDetectorRef, NgZone, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, AsyncValidatorFn, AbstractControl } from '@angular/forms';
 import { ConfigService, ProfileVisibility } from '../../shared/config.service';
@@ -155,14 +155,13 @@ export class InfluencerProfileComponent implements OnInit {
   ) {}
 
   /** Owner's own TrendScore pricing suggestion — shown as hints next to content rates. */
-  priceSuggestion: { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null; byPlatform?: Record<string, { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null }> } | null = null;
+  /** Usual rate range per tier for the "Usual range for your tier" hint (2026-11-15). */
+  rateRanges: RateRangeTable | null = null;
 
-  private loadPriceSuggestion(): void {
-    const userId = this.session.getUser()?.id;
-    if (!userId) return;
-    this.scoreApi.getAudit(String(userId)).subscribe({
-      next: (audit: any) => { this.priceSuggestion = audit?.pricingSuggestion || null; this.cd.detectChanges(); },
-      error: () => { this.priceSuggestion = null; },
+  private loadRateRanges(): void {
+    this.scoreApi.getRateRanges().subscribe({
+      next: (res) => { this.rateRanges = res?.tiers || null; this.cd.detectChanges(); },
+      error: () => { this.rateRanges = null; },
     });
   }
 
@@ -621,7 +620,7 @@ export class InfluencerProfileComponent implements OnInit {
       this.youtubeChecks = checks;
       this.cd.detectChanges();
     });
-    this.loadPriceSuggestion();
+    this.loadRateRanges();
     this.loadProfileVerificationDashboard();
     this.loadPremiumMonthlyPrice();
     this.configService.getSupportContact().subscribe(s => {

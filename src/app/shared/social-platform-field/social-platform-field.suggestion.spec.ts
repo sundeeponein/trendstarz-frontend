@@ -1,49 +1,52 @@
 import { TestBed } from '@angular/core/testing';
 import { SocialPlatformFieldComponent } from './social-platform-field.component';
 
-describe('SocialPlatformFieldComponent — TrendScore price hints', () => {
+describe('SocialPlatformFieldComponent — usual rate range hint (2026-11-15)', () => {
   let component: SocialPlatformFieldComponent;
+  const table = {
+    Starter: { reel: { min: 50, max: 150 }, video: { min: 90, max: 270 }, story: { min: 50, max: 60 } },
+    Macro: { reel: { min: 10000, max: 40000 }, video: { min: 18000, max: 72000 }, story: { min: 4000, max: 16000 } },
+    'Mega / Celebrity': { reel: { min: 40000, max: null }, video: { min: 72000, max: null }, story: { min: 16000, max: null } },
+  };
 
   beforeEach(() => {
     TestBed.configureTestingModule({ imports: [SocialPlatformFieldComponent] });
     component = TestBed.createComponent(SocialPlatformFieldComponent).componentInstance;
-    component.priceSuggestion = { reelPrice: 900, storyPrice: 200, videoPrice: 2500 };
+    component.rateRanges = table as any;
+    component.form = { tier: 'Starter', contentTypes: { Reel: { selected: true, price: 50 } } } as any;
   });
 
-  it('maps content types to the matching suggestion', () => {
-    expect(component.suggestedPriceFor('Instagram Story')).toBe(200);
-    expect(component.suggestedPriceFor('Reel')).toBe(900);
-    expect(component.suggestedPriceFor('Shorts / Vertical Reel (30-60s)')).toBe(900);
-    expect(component.suggestedPriceFor('YouTube Dedicated Video')).toBe(2500);
-    expect(component.suggestedPriceFor('Carousel Post')).toBeNull();
+  it('maps content types to the range of the selected tier', () => {
+    expect(component.rateRangeFor('Instagram Story')).toEqual({ min: 50, max: 60 });
+    expect(component.rateRangeFor('Reel')).toEqual({ min: 50, max: 150 });
+    expect(component.rateRangeFor('Shorts')).toEqual({ min: 50, max: 150 });
+    expect(component.rateRangeFor('YouTube Dedicated Video')).toEqual({ min: 90, max: 270 });
+    expect(component.rateRangeFor('Carousel Post')).toBeNull();
   });
 
-  it('uses this platform\'s own tier suggestion when the server sends byPlatform', () => {
-    component.priceSuggestion = {
-      reelPrice: 1500, storyPrice: 600, videoPrice: 2700,
-      byPlatform: { youtube: { reelPrice: 100, storyPrice: 50, videoPrice: 180 } },
-    };
-    component.platform = { name: 'YouTube' } as any;
-    expect(component.suggestedPriceFor('Video')).toBe(180);
-    expect(component.suggestedPriceFor('Shorts')).toBe(100);
-    // A platform with no tier gets no hint (never the biggest account's numbers).
-    component.platform = { name: 'Facebook' } as any;
-    expect(component.suggestedPriceFor('Reel')).toBeNull();
+  it('follows the dropdown straight away (before saving), whatever the label suffix', () => {
+    component.form.tier = 'Macro (100,001-1,000,000)';
+    expect(component.rateRangeFor('Reel')).toEqual({ min: 10000, max: 40000 });
+    expect(component.rangeText(component.rateRangeFor('Reel')!)).toBe('₹10,000–₹40,000');
+    component.form.tier = 'Mega / Celebrity';
+    expect(component.rangeText(component.rateRangeFor('Reel')!)).toBe('₹40,000+');
   });
 
-  it('shows nothing without a TrendScore suggestion', () => {
-    component.priceSuggestion = null;
-    expect(component.suggestedPriceFor('Reel')).toBeNull();
+  it('a checked YouTube channel uses the checked tier, not the one typed', () => {
+    component.form.tier = 'Macro';
+    component.youtubeCheck = { tier: 'Starter', subscribers: 27, status: 'please_update' } as any;
+    expect(component.rateRangeFor('Video')).toEqual({ min: 90, max: 270 });
+    expect(component.rangeFromCheckedTier).toBeTrue();
+    // A channel we couldn't match to them doesn't decide anything.
+    component.youtubeCheck = { tier: 'Starter', subscribers: 27, status: 'check_handle' } as any;
+    expect(component.rateRangeFor('Video')).toEqual({ min: 18000, max: 72000 });
   });
 
-  it('"Use" fills the price and never runs when read-only', () => {
-    component.form = { contentTypes: { Reel: { selected: true, price: null } } } as any;
-    component.useSuggestedPrice('Reel');
-    expect(component.form.contentTypes['Reel'].price).toBe(900);
-
-    component.form.contentTypes['Reel'].price = 100;
-    component.readonly = true;
-    component.useSuggestedPrice('Reel');
-    expect(component.form.contentTypes['Reel'].price).toBe(100);
+  it('notes a price above the range; no note within it; nothing without a table', () => {
+    expect(component.isAboveRange('Reel')).toBeFalse();
+    component.form.contentTypes['Reel'].price = 200;
+    expect(component.isAboveRange('Reel')).toBeTrue();
+    component.rateRanges = null;
+    expect(component.rateRangeFor('Reel')).toBeNull();
   });
 });

@@ -222,11 +222,25 @@ export interface CollaborationScoreTodaySummary {
   platformBreakdown: CollaborationScoreTodayPlatformCount[];
 }
 
+export interface RateRange {
+  min: number;
+  max: number | null;
+}
+/** Tier name ("Starter" … "Mega / Celebrity") → Reel/Shorts, Video and Story ranges. */
+export type RateRangeTable = Record<string, { reel: RateRange; video: RateRange; story: RateRange }>;
+
 @Injectable({ providedIn: "root" })
 export class CollaborationScoreApiService {
   private readonly apiUrl = environment.apiBaseUrl || "/api";
 
   constructor(private readonly http: HttpClient) {}
+
+  /** Usual rate range per tier (keyed by tier name) for the profile rate hint — 2026-11-15. */
+  getRateRanges(): Observable<{ tiers: RateRangeTable }> {
+    return this.http
+      .get<{ tiers: RateRangeTable }>(`${this.apiUrl}/audit/rate-ranges`)
+      .pipe(map((res) => unwrap<{ tiers: RateRangeTable }>(res)));
+  }
 
   getAudit(userId: string): Observable<CollaborationAudit> {
     return this.http

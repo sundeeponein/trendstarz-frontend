@@ -1,7 +1,7 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, Inject, Input, NgZone, OnInit, Output, PLATFORM_ID, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CollaborationScoreApiService, SocialConnectionDetail } from '../../services/collaboration-score-api.service';
+import { CollaborationScoreApiService, RateRange, RateRangeTable, SocialConnectionDetail } from '../../services/collaboration-score-api.service';
 import { TierInfoService } from '../components/tier-info-modal/tier-info.service';
 import { ToastService } from '../toast/toast.service';
 import { buildSocialProfileUrl, normalizeSocialHandle, socialHandleExample, validateSocialHandle } from '../social-handle.util';
@@ -25,6 +25,11 @@ export interface SocialPlatformFieldForm {
  * `platformForms[platform._id]` — mutated in place via ngModel, so parent
  * components keep working with zero changes to their own state shape.
  */
+/** "Starter (1–100)" / "Mega / Celebrity" → "starter" / "mega / celebrity" for matching tier names. */
+function tierKey(raw: unknown): string {
+  return String(raw ?? '').trim().replace(/\s*\([^)]*\)\s*$/, '').toLowerCase();
+}
+
 @Component({
   selector: 'app-social-platform-field',
   standalone: true,
@@ -53,9 +58,11 @@ export class SocialPlatformFieldComponent implements OnInit {
   /** True for instagram/facebook (Meta OAuth is live); false for youtube/linkedin (no Connect button). */
   @Input() supportsOAuth = false;
   @Input() showRemove = true;
-  /** The creator's own TrendScore pricing suggestion (rupees) — shown as a hint to the owner only. */
-  /** byPlatform (2026-11-15): one suggestion per platform from that account's tier; used when present. */
-  @Input() priceSuggestion: { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null; byPlatform?: Record<string, { reelPrice?: number | null; storyPrice?: number | null; videoPrice?: number | null }> } | null = null;
+  /**
+   * Usual rate range per tier (server table, keyed by tier name) — shown to the
+   * owner as "Usual range for your tier" (2026-11-15). Guidance only.
+   */
+  @Input() rateRanges: RateRangeTable | null = null;
 
   /** Any manual field mutation — parent should call its own refreshStepCompletion(). */
   @Output() changed = new EventEmitter<void>();
@@ -198,30 +205,52 @@ export class SocialPlatformFieldComponent implements OnInit {
     this.changed.emit();
   }
 
-  /** Maps a content type name to the matching TrendScore suggestion (Story / Reel & Shorts / Video). */
-  suggestedPriceFor(contentTypeName: string): number | null {
-    const all = this.priceSuggestion;
-    if (!all) return null;
-    // Per-platform (this account's own tier) when the server sends it; no tier → no hint.
-    const sug = all.byPlatform
-      ? all.byPlatform[String(this.platform?.name || '').trim().toLowerCase()]
-      : all;
-    if (!sug) return null;
-    const name = String(contentTypeName || '').toLowerCase();
-    const value = name.includes('story')
-      ? sug.storyPrice
-      : (name.includes('reel') || name.includes('short'))
-        ? sug.reelPrice
-        : name.includes('video')
-          ? sug.videoPrice
-          : null;
-    return value != null && value > 0 ? value : null;
+  /**
+   * The tier the range follows: the tier TrendStarZ checked for a YouTube
+   * channel (so a 27-subscriber channel marked "Macro" isn't told celebrity
+   * rates), otherwise the tier currently selected in the dropdown — it updates
+   * as soon as the dropdown changes, before saving.
+   */
+  get rangeTierName(): string {
+    const check = this.youtubeCheck;
+    if (check?.tier && check.subscribers != null && (check.status === 'matches' || check.status === 'please_update')) {
+      return check.tier;
+    }
+    return String(this.form?.tier || '');
   }
 
-  useSuggestedPrice(contentTypeName: string): void {
-    const value = this.suggestedPriceFor(contentTypeName);
-    if (value == null || this.readonly) return;
-    this.form.contentTypes[contentTypeName].price = value;
-    this.onFieldChange();
+  /** True when the range follows the checked YouTube tier rather than the selected one. */
+  get rangeFromCheckedTier(): boolean {
+    const selected = tierKey(this.form?.tier);
+    return !!selected && tierKey(this.rangeTierName) !== selected;
   }
+
+  /** Usual range for a content type (Story / Reel & Shorts / Video), or null. */
+  rateRangeFor(contentTypeName: string): RateRange | null {
+    const table = this.rateRanges;
+    const wanted = tierKey(this.rangeTierName);
+    if (!table || !wanted) return null;
+    const ranges = Object.entries(table).find(([name]) => tierKey(name) === wanted)?.[1];
+    if (!ranges) return null;
+    const name = String(contentTypeName || '').toLowerCase();
+    return name.includes('story')
+      ? ranges.story
+      : (name.includes('reel') || name.includes('short'))
+        ? ranges.reel
+        : name.includes('video')
+          ? ranges.video
+          : null;
+  }
+
+  isAboveRange(contentTypeName: string): boolean {
+    const range = this.rateRangeFor(contentTypeName);
+    const price = Number(this.form?.contentTypes?.[contentTypeName]?.price);
+    return !!range && range.max !== null && Number.isFinite(price) && price > range.max;
+  }
+
+  rangeText(range: RateRange): string {
+    const f = (n: number) => '₹' + n.toLocaleString('en-IN');
+    return range.max === null ? `${f(range.min)}+` : `${f(range.min)}–${f(range.max)}`;
+  }
+
 }

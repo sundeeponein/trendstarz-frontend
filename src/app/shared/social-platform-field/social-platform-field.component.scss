@@ -63,15 +63,10 @@
   i { color: #f59e0b; }
 }
 
-.price-suggestion__use {
-  padding: 1px 9px;
-  border-radius: 999px;
-  border: 1px solid #fed7c3;
-  background: #fff7f2;
-  color: #ea580c;
-  font-size: 0.72rem;
-  font-weight: 700;
-  cursor: pointer;
+// A price above the usual range for the tier (a note only; saving still works).
+.price-suggestion__above {
+  color: #b45309;
+  font-weight: 600;
 }
 
 // 3D-1d: shown under a rate below the ₹50 minimum.
