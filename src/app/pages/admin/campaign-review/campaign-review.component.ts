@@ -23,6 +23,8 @@ interface CampaignShareMessages {
   ownerPhone: string;
   communities?: CampaignCommunity[];
   communityState?: string;
+  // Per-invite WhatsApp send limits (backend INVITE_WHATSAPP_SEND_LIMITS).
+  whatsappSendLimits?: Partial<Record<InviteMessageLogType, number>>;
 }
 
 @Component({

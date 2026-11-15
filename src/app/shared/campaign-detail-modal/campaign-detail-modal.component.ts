@@ -88,7 +88,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   @Input() adminCanRequestChanges = true;
   @Input() adminCanReject = true;
   /** Server-rendered "Ready to Share" message text — see campaign-alert-message.component.ts for why this isn't computed client-side. */
-  @Input() adminShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string; ownerApprovedMessage?: string | null; ownerPhone?: string; communities?: CampaignCommunity[]; communityState?: string } | null = null;
+  @Input() adminShareMessages: { openCampaignMessage: string; inviteOnlyMessage: string; postingReminderMessage: string; ownerApprovedMessage?: string | null; ownerPhone?: string; communities?: CampaignCommunity[]; communityState?: string; whatsappSendLimits?: Partial<Record<InviteMessageLogType, number>> } | null = null;
   @Input() adminShareMessagesLoading = false;
   @Input() set initialPostDate(v: string | undefined) {
     if (v) this.postDate = v;
@@ -325,20 +325,15 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   }
 
   /**
-   * How many times each per-invite message may be sent in total (automatic + admin), 2026-11-15:
-   * Submitted up to 2 (re-send if the host hasn't seen it), Posting Reminder up to 5 (before /
-   * on the post date, at most one a day), everything else once.
+   * How many times a per-invite message may be sent in total (automatic + admin). The numbers
+   * come from the server (share-messages `whatsappSendLimits`, set in the backend's
+   * INVITE_WHATSAPP_SEND_LIMITS — the one copy, 2026-11-15). Until they load, a sent message
+   * counts as at its limit, so nothing can be sent twice by mistake.
    */
-  private static readonly WHATSAPP_SEND_LIMITS: Record<InviteMessageLogType, number> = {
-    accepted: 1,
-    submitted: 2,
-    paymentReceived: 1,
-    startWork: 1,
-    productShipped: 1,
-    inviteOnly: 1,
-    postingReminder: 5,
-    payment: 1,
-  };
+  whatsAppSendLimit(type: InviteMessageLogType): number {
+    const limit = Number(this.adminShareMessages?.whatsappSendLimits?.[type]);
+    return Number.isFinite(limit) && limit > 0 ? limit : 1;
+  }
 
   private static istDay(d: Date): string {
     return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
@@ -354,7 +349,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   isWhatsAppSentLocked(item: any, type: InviteMessageLogType): boolean {
     const entry = this.whatsAppSentEntry(item, type);
     if (!entry) return false;
-    if (Number(entry.count) >= (CampaignDetailModalComponent.WHATSAPP_SEND_LIMITS[type] ?? 1)) return true;
+    if (Number(entry.count) >= this.whatsAppSendLimit(type)) return true;
     if (type === 'postingReminder') {
       const last = new Date(entry.lastSentAt);
       return !Number.isNaN(last.getTime())
@@ -377,7 +372,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
   whatsAppSentTitle(item: any, type: InviteMessageLogType): string | null {
     const entry = this.whatsAppSentEntry(item, type);
     if (!entry) return null;
-    const limit = CampaignDetailModalComponent.WHATSAPP_SEND_LIMITS[type] ?? 1;
+    const limit = this.whatsAppSendLimit(type);
     const note = this.whatsAppSentNote(item, type);
     if (Number(entry.count) >= limit) {
       return limit > 1 ? `${note} — sent the maximum ${limit} times` : `${note} — already sent, can't send again`;
