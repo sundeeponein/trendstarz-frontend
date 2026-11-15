@@ -110,15 +110,28 @@ export class InfluencerProfileComponent implements OnInit {
       .filter((tag: string) => !!tag && allowed.has(tag.toLowerCase()));
   }
 
-  onInfluencerCategoryChange(values: string[]): void {
-    this.registrationForm.get('influencerCategory')?.setValue(values[0] || '');
-    this.registrationForm.get('influencerCategory')?.markAsTouched();
-  }
-
   setChipValues(field: 'languages' | 'categories' | 'creatorTypes', values: string[]): void {
     if (!this.isEditMode) return;
     this.registrationForm.get(field)?.setValue(values);
     this.registrationForm.get(field)?.markAsTouched();
+    // Removing a category also drops it as the main category (the server checks the same).
+    if (field === 'categories') {
+      const main = String(this.registrationForm.get('influencerCategory')?.value || '');
+      if (main && !this.mainCategoryOptions.some((n) => n.toLowerCase() === main.toLowerCase())) {
+        this.registrationForm.get('influencerCategory')?.setValue('');
+      }
+    }
+  }
+
+  /** Names of the selected categories — the choices for "Main category". */
+  get mainCategoryOptions(): string[] {
+    const selected: unknown[] = this.registrationForm?.get('categories')?.value || [];
+    return selected
+      .map((id) => {
+        const hit = (this.categoriesList || []).find((c: any) => c?._id === id || c?.name === id);
+        return String(hit?.name || id || '').trim();
+      })
+      .filter((n) => !!n);
   }
 
   openProfilePhotoGuidelines(): void {
@@ -1481,9 +1494,8 @@ export class InfluencerProfileComponent implements OnInit {
       .map((name: string) => String(name || '').trim())
       .filter((name: string) => !!name)
       .slice(0, this.maxCreatorTypes);
-    const influencerCategoryName = raw.influencerCategory
-      ? (this.creatorTypeOptions.find((x: any) => x.name === raw.influencerCategory)?.name || raw.influencerCategory)
-      : '';
+    // Main category: one of the selected category names (the server re-checks it).
+    const influencerCategoryName = String(raw.influencerCategory || '').trim();
     // Build social media from platformForms
     const socialMedia = this.selectedPlatforms().map(platform => {
       const pf = this.platformForms[platform._id];

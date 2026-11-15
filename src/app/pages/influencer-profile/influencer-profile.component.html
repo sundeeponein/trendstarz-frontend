@@ -358,6 +358,21 @@
               <div *ngIf="(step2Attempted || registrationForm.get('categories')?.touched) && registrationForm.get('categories')?.invalid" class="text-danger mt-1">Please select at least one category.</div>
             </div>
 
+            <!-- Main category (2026-11-15): one of the selected categories; campaigns in it show you first. -->
+            <div class="field-block" *ngIf="mainCategoryOptions.length > 1 || registrationForm.get('influencerCategory')?.value">
+              <label>Main category <span class="text-muted">(Optional)</span></label>
+              <ng-container *ngIf="isEditMode; else mainCategoryView">
+                <select formControlName="influencerCategory" class="form-control">
+                  <option value="">No main category</option>
+                  <option *ngFor="let name of mainCategoryOptions" [value]="name">{{ name }}</option>
+                </select>
+                <small class="text-muted mt-1">The category you create most for. It helps us match you to campaigns in that category.</small>
+              </ng-container>
+              <ng-template #mainCategoryView>
+                <div>{{ registrationForm.get('influencerCategory')?.value || 'Not set' }}</div>
+              </ng-template>
+            </div>
+
             <!-- VIEW MODE: Creator Type shown like Languages/Categories -->
             <div class="field-block" *ngIf="!isEditMode && registrationForm.get('professionalStatus')?.value">
               <app-chip-selection-group

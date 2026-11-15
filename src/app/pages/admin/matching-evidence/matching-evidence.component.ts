@@ -73,7 +73,7 @@ interface CampaignResolution {
   creatorsInTieGroupsPct: number | null;
   largestTieGroup: number;
   /** verifiedTier: Stage 3E-1 (2026-11-15) — absent in older reports. */
-  decidedPairsPct: Record<'platformContent' | 'category' | 'activity' | 'verifiedTier' | 'creatorId', number | null>;
+  decidedPairsPct: Record<'platformContent' | 'category' | 'mainCategory' | 'activity' | 'verifiedTier' | 'creatorId', number | null>;
   topNCutoffInTie: Record<string, boolean | null>;
 }
 export interface EvidenceQualityReport {
