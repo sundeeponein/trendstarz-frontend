@@ -654,62 +654,25 @@
                     <i class="bi bi-card-text"></i>
                     Payment
                   </button>
-                  <button
-                    type="button"
-                    class="cdm-copy-payout-btn"
-                    *ngIf="isHostAcceptedMessageAvailable(item)"
-                    (click)="openHostShareMessage(item, 'accepted', $event)">
-                    <i class="bi bi-card-text"></i>
-                    Accepted
-                  </button>
-                  <button
-                    type="button"
-                    class="cdm-copy-payout-btn"
-                    *ngIf="isHostSubmittedMessageAvailable(item)"
-                    (click)="openHostShareMessage(item, 'submitted', $event)">
-                    <i class="bi bi-card-text"></i>
-                    Submitted
-                  </button>
-                  <button
-                    type="button"
-                    class="cdm-copy-payout-btn"
-                    *ngIf="isHostPaymentReceivedMessageAvailable(item)"
-                    (click)="openHostShareMessage(item, 'paymentReceived', $event)">
-                    <i class="bi bi-whatsapp"></i>
-                    Payment received
-                  </button>
-                  <button
-                    type="button"
-                    class="cdm-copy-payout-btn"
-                    *ngIf="isHostStartWorkMessageAvailable(item)"
-                    (click)="openHostShareMessage(item, 'startWork', $event)">
-                    <i class="bi bi-card-text"></i>
-                    Start work
-                  </button>
-                  <button
-                    type="button"
-                    class="cdm-copy-payout-btn"
-                    *ngIf="isProductShippedMessageAvailable(item)"
-                    (click)="openHostShareMessage(item, 'productShipped', $event)">
-                    <i class="bi bi-whatsapp"></i>
-                    Shipped
-                  </button>
-                  <button
-                    type="button"
-                    class="cdm-copy-payout-btn"
-                    *ngIf="isInviteOnlyMessageAvailable(item)"
-                    (click)="openHostShareMessage(item, 'inviteOnly', $event)">
-                    <i class="bi bi-whatsapp"></i>
-                    Invite
-                  </button>
-                  <button
-                    type="button"
-                    class="cdm-copy-payout-btn"
-                    *ngIf="isPostingReminderMessageAvailable(item)"
-                    (click)="openHostShareMessage(item, 'postingReminder', $event)">
-                    <i class="bi bi-whatsapp"></i>
-                    Posting Reminder
-                  </button>
+                  <!-- Per-invite WhatsApp messages. Once sent (automatically or by an admin) the
+                       button shows Sent + when, and is disabled so it isn't sent twice (2026-11-13). -->
+                  <ng-container *ngFor="let msg of adminInviteMessageButtons; trackBy: trackAdminInviteMessage">
+                    <ng-container *ngIf="isAdminInviteMessageAvailable(item, msg.type)">
+                      <button
+                        type="button"
+                        class="cdm-copy-payout-btn"
+                        [class.cdm-copy-payout-btn--sent]="!!whatsAppSentEntry(item, msg.type)"
+                        [disabled]="isWhatsAppSentLocked(item, msg.type)"
+                        [attr.title]="whatsAppSentTitle(item, msg.type)"
+                        (click)="openHostShareMessage(item, msg.type, $event)">
+                        <i class="bi" [ngClass]="whatsAppSentEntry(item, msg.type) ? 'bi-check2-circle' : msg.icon"></i>
+                        {{ msg.label }}
+                      </button>
+                      <div class="cdm-sent-note" *ngIf="whatsAppSentEntry(item, msg.type)">
+                        {{ whatsAppSentNote(item, msg.type) }}
+                      </div>
+                    </ng-container>
+                  </ng-container>
                   <span class="cdm-payout-pending-badge" *ngIf="item.payoutStatus && item.payoutStatus !== 'paid'">
                     {{ adminInvitePayoutStatusLabel(item) }}
                   </span>
@@ -959,7 +922,8 @@
           rel="noopener"
           [class.disabled]="hostShareMessageLoading || !hostShareMessageWhatsAppLink"
           [attr.href]="hostShareMessageWhatsAppLink || null"
-          [attr.aria-disabled]="hostShareMessageLoading || !hostShareMessageWhatsAppLink">
+          [attr.aria-disabled]="hostShareMessageLoading || !hostShareMessageWhatsAppLink"
+          (click)="onHostShareMessageSend()">
           <i class="bi bi-whatsapp"></i>
           Send via WhatsApp
         </a>

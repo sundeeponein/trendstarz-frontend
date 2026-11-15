@@ -286,7 +286,78 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   openHostShareMessage(item: any, type: HostShareMessageType, ev?: Event): void {
     ev?.stopPropagation();
+    if (this.isWhatsAppSentLocked(item, type)) return;
     this.requestHostShareMessage.emit({ item, type });
+  }
+
+  /** The per-invite message buttons, in display order. */
+  readonly adminInviteMessageButtons: ReadonlyArray<{ type: HostShareMessageType; label: string; icon: string }> = [
+    { type: 'accepted', label: 'Accepted', icon: 'bi-card-text' },
+    { type: 'submitted', label: 'Submitted', icon: 'bi-card-text' },
+    { type: 'paymentReceived', label: 'Payment received', icon: 'bi-whatsapp' },
+    { type: 'startWork', label: 'Start work', icon: 'bi-card-text' },
+    { type: 'productShipped', label: 'Shipped', icon: 'bi-whatsapp' },
+    { type: 'inviteOnly', label: 'Invite', icon: 'bi-whatsapp' },
+    { type: 'postingReminder', label: 'Posting Reminder', icon: 'bi-whatsapp' },
+  ];
+
+  trackAdminInviteMessage = (_: number, msg: { type: HostShareMessageType }) => msg.type;
+
+  isAdminInviteMessageAvailable(item: any, type: HostShareMessageType): boolean {
+    switch (type) {
+      case 'accepted': return this.isHostAcceptedMessageAvailable(item);
+      case 'submitted': return this.isHostSubmittedMessageAvailable(item);
+      case 'paymentReceived': return this.isHostPaymentReceivedMessageAvailable(item);
+      case 'startWork': return this.isHostStartWorkMessageAvailable(item);
+      case 'productShipped': return this.isProductShippedMessageAvailable(item);
+      case 'inviteOnly': return this.isInviteOnlyMessageAvailable(item);
+      case 'postingReminder': return this.isPostingReminderMessageAvailable(item);
+      default: return false;
+    }
+  }
+
+  /** Posting reminders can rightly go more than once (48h and 24h before the post) — locked only for a day after each send. */
+  private static readonly POSTING_REMINDER_LOCK_MS = 24 * 60 * 60 * 1000;
+
+  /** The invite's send record for this message (automatic or admin), or null if never sent. */
+  whatsAppSentEntry(item: any, type: HostShareMessageType): { count: number; lastSentAt: string; lastVia?: string } | null {
+    const entry = item?.whatsappLog?.[type];
+    return entry && Number(entry.count) > 0 && entry.lastSentAt ? entry : null;
+  }
+
+  /** One-time messages lock once sent; the posting reminder locks for 24h after its last send. */
+  isWhatsAppSentLocked(item: any, type: HostShareMessageType): boolean {
+    const entry = this.whatsAppSentEntry(item, type);
+    if (!entry) return false;
+    if (type !== 'postingReminder') return true;
+    const last = new Date(entry.lastSentAt).getTime();
+    return Number.isFinite(last) && Date.now() - last < CampaignDetailModalComponent.POSTING_REMINDER_LOCK_MS;
+  }
+
+  whatsAppSentNote(item: any, type: HostShareMessageType): string {
+    const entry = this.whatsAppSentEntry(item, type);
+    if (!entry) return '';
+    const when = new Date(entry.lastSentAt).toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+    });
+    const count = Number(entry.count) > 1 ? `${entry.count}× · last ` : '';
+    const via = entry.lastVia === 'auto' ? ' (auto)' : entry.lastVia === 'manual' ? ' (admin)' : '';
+    return `Sent ${count}${when}${via}`;
+  }
+
+  whatsAppSentTitle(item: any, type: HostShareMessageType): string | null {
+    if (!this.whatsAppSentEntry(item, type)) return null;
+    return this.isWhatsAppSentLocked(item, type)
+      ? `${this.whatsAppSentNote(item, type)} — already sent, can't send again`
+      : `${this.whatsAppSentNote(item, type)} — can be sent again`;
+  }
+
+  /** "Send via WhatsApp" in the message popup: record the manual send so the button locks. */
+  @Output() hostShareMessageSent = new EventEmitter<{ item: any; type: HostShareMessageType }>();
+
+  onHostShareMessageSend(): void {
+    if (!this.hostShareMessageItem || !this.hostShareMessageType || !this.hostShareMessageWhatsAppLink) return;
+    this.hostShareMessageSent.emit({ item: this.hostShareMessageItem, type: this.hostShareMessageType });
   }
 
   hostMessageCopied = false;

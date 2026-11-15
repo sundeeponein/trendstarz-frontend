@@ -821,6 +821,28 @@ $dk-orange:    #e06030;
     background: rgba(96,165,250,0.12);
     color: #93c5fd;
   }
+
+  // Already sent (automatic or admin) — 2026-11-13.
+  &.cdm-copy-payout-btn--sent {
+    border-color: rgba(21,128,61,0.3);
+    background: rgba(21,128,61,0.08);
+    color: #15803d;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
+    &:hover { background: rgba(21,128,61,0.08); }
+  }
+}
+
+.cdm-sent-note {
+  font-size: 0.68rem;
+  color: #6b7280;
+  margin-top: 1px;
+  white-space: nowrap;
+
+  .cdm-panel--dark & { color: #9ca3af; }
 }
 
 .cdm-payout-pending-badge {

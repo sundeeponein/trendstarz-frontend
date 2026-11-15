@@ -711,6 +711,8 @@ export class CampaignReviewComponent implements OnInit {
           // Product campaigns: where it ships, the creator's answer (size etc.), shipping status.
           shippingAddress: invite?.shippingAddress || null,
           productFulfillment: invite?.productFulfillment || null,
+          // WhatsApp messages already sent for this invite (automatic + admin) — locks the message buttons.
+          whatsappLog: invite?.whatsappLog || null,
           addressUpdateRequest: invite?.addressUpdateRequest || null,
           // Product timeline tracking (admin): outcome, delay flag, moved post date, open report.
           deliveryOutcome: invite?.deliveryOutcome || null,
@@ -949,6 +951,43 @@ export class CampaignReviewComponent implements OnInit {
     this.selectedInviteHostMessageOwnerPhone = '';
     this.selectedInviteHostMessageRecipientPhone = '';
     this.selectedInviteHostMessageLoading = false;
+  }
+
+  /**
+   * The admin tapped "Send via WhatsApp" (wa.me opens in a new tab): record the send on
+   * the invite so that row's button shows "Sent" and is disabled, then close the popup.
+   */
+  onHostShareMessageSent(payload: { item: any; type: HostShareMessageType }): void {
+    const inviteId = String(payload.item?.inviteId || '').trim();
+    const item = payload.item;
+    this.onDismissHostShareMessage();
+    if (!inviteId) return;
+    // Show it as sent straight away; the server's copy replaces this when it answers.
+    const prev = item?.whatsappLog?.[payload.type];
+    item.whatsappLog = {
+      ...(item.whatsappLog || {}),
+      [payload.type]: { count: Number(prev?.count || 0) + 1, lastSentAt: new Date().toISOString(), lastVia: 'manual' },
+    };
+    this.cdr.detectChanges();
+    this.http
+      .post<any>(
+        `${environment.apiBaseUrl}/admin/campaigns/invites/${encodeURIComponent(inviteId)}/whatsapp-sent`,
+        { type: payload.type },
+      )
+      .subscribe({
+        next: (res) => {
+          const data = res?.data ?? res;
+          if (data?.whatsappLog) item.whatsappLog = data.whatsappLog;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          // Not recorded — put the button back so the admin isn't misled.
+          item.whatsappLog = { ...(item.whatsappLog || {}), [payload.type]: prev };
+          if (!prev) delete item.whatsappLog[payload.type];
+          this.toast.error('Could not record the WhatsApp send. Please try again.');
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   private unwrapParticipantProfile(role: 'influencer' | 'photographer', response: any): any | null {
