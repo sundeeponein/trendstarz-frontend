@@ -185,6 +185,22 @@ describe('MatchingEvidenceComponent (admin, read-only)', () => {
   });
   afterEach(() => http.verify());
 
+  const reactivationPreview = (over: Record<string, any> = {}) => ({
+    dormantAfterDays: 90,
+    dormant: 172,
+    alreadySent: 0,
+    notYetSent: 172,
+    subject: 'Brands are inviting creators on Trendstarz: is your profile up to date?',
+    sendLimit: 250,
+    progress: null,
+    ...over,
+  });
+  /** The reactivation card's own GET (3E) — answered separately from the evidence report. */
+  const flushReactivation = (data: any = reactivationPreview()) =>
+    http
+      .expectOne((q) => q.url.endsWith('/admin/matching/reactivation-email') && q.method === 'GET')
+      .flush({ success: true, data });
+
   const flush = (r: any = report(), s: any = schedule()) => {
     fixture.detectChanges();
     http
@@ -195,11 +211,13 @@ describe('MatchingEvidenceComponent (admin, read-only)', () => {
     );
     if (s instanceof Error) sched.flush({ message: s.message }, { status: 500, statusText: 'err' });
     else sched.flush({ success: true, data: s });
+    flushReactivation();
     fixture.detectChanges();
   };
 
-  it('only reads (two GETs), and shows population and the as-of time', () => {
+  it('the evidence itself only reads (two GETs), and shows population and the as-of time', () => {
     fixture.detectChanges();
+    flushReactivation();
     const reqs = [
       http.expectOne((q) => q.url.endsWith('/admin/matching/evidence-quality')),
       http.expectOne((q) => q.url.endsWith('/admin/social-observation/youtube-schedule')),
@@ -211,6 +229,32 @@ describe('MatchingEvidenceComponent (admin, read-only)', () => {
     // Labels are styled uppercase.
     expect(text()).toContain('APPROVED INFLUENCERS Total 267 198 of 267 creators');
     expect(text()).toContain('As of Oct 6, 2026, 6:00 AM UTC');
+  });
+
+  it('reactivation card: counts, test send, and Send only after confirming (3E)', () => {
+    flush();
+    expect(text().toLowerCase()).toContain('not yet emailed 172');
+    expect(text().toLowerCase()).toContain('send to 172 creators');
+
+    const comp = fixture.componentInstance;
+    comp.reactivationTestTo = 'me@example.com';
+    comp.sendReactivationTest();
+    const test = http.expectOne((q) => q.url.endsWith('/admin/matching/reactivation-email/test'));
+    expect(test.request.body).toEqual({ to: 'me@example.com' });
+    test.flush({ success: true });
+
+    spyOn(window, 'confirm').and.returnValue(false);
+    comp.sendReactivation();
+    http.expectNone((q) => q.url.endsWith('/admin/matching/reactivation-email/send'));
+
+    (window.confirm as jasmine.Spy).and.returnValue(true);
+    comp.sendReactivation();
+    const send = http.expectOne((q) => q.url.endsWith('/admin/matching/reactivation-email/send'));
+    expect(send.request.body).toEqual({ limit: 250 });
+    send.flush({ success: true, started: true, limit: 250 });
+    flushReactivation(reactivationPreview({ alreadySent: 172, notYetSent: 0, progress: { startedAt: 'x', finishedAt: 'y', sent: 172, failed: 0, skippedBlocked: 0, skippedActive: 0, stoppedReason: '' } }));
+    fixture.detectChanges();
+    expect(text().toLowerCase()).toContain('last send: 172 sent');
   });
 
   it('per-platform table in a fixed platform order, with small samples flagged', () => {
@@ -270,6 +314,7 @@ describe('MatchingEvidenceComponent (admin, read-only)', () => {
 
   it('shows the backend error message (and drops the schedule request)', () => {
     fixture.detectChanges();
+    flushReactivation();
     const sched = http.expectOne((q) =>
       q.url.endsWith('/admin/social-observation/youtube-schedule'),
     );

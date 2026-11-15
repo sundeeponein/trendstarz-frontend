@@ -1,6 +1,7 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ChangeDetectorRef, Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -128,6 +129,25 @@ export interface YoutubeScheduleStatus {
   }>;
 }
 
+/** GET admin/matching/reactivation-email. */
+export interface ReactivationPreview {
+  dormantAfterDays: number;
+  dormant: number;
+  alreadySent: number;
+  notYetSent: number;
+  subject: string;
+  sendLimit: number;
+  progress: {
+    startedAt: string;
+    finishedAt: string | null;
+    sent: number;
+    failed: number;
+    skippedBlocked: number;
+    skippedActive: number;
+    stoppedReason: string;
+  } | null;
+}
+
 const PLATFORM_LABELS: Record<string, string> = {
   instagram: 'Instagram',
   youtube: 'YouTube',
@@ -162,7 +182,7 @@ export const ACTIVITY_ROWS: Array<{ key: string; label: string }> = [
 @Component({
   selector: 'app-matching-evidence',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './matching-evidence.component.html',
   styleUrls: ['./matching-evidence.component.scss'],
 })
@@ -184,7 +204,83 @@ export class MatchingEvidenceComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.isBrowser) this.load();
+    if (this.isBrowser) {
+      this.load();
+      this.loadReactivation();
+    }
+  }
+
+  // ── Reactivation email (3E, 2026-11-15) — the only part of this page that sends anything ──
+
+  reactivation: ReactivationPreview | null = null;
+  reactivationError = '';
+  reactivationTestTo = '';
+  reactivationBusy = false;
+  reactivationNote = '';
+  private reactivationPoll: any = null;
+
+  loadReactivation(): void {
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/matching/reactivation-email`).subscribe({
+      next: (res) => {
+        this.reactivation = (res?.data ?? res) || null;
+        this.reactivationError = '';
+        const p = this.reactivation?.progress;
+        clearTimeout(this.reactivationPoll);
+        // Keep the progress line moving while a send runs.
+        if (p && !p.finishedAt) this.reactivationPoll = setTimeout(() => this.loadReactivation(), 3000);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.reactivationError = err?.error?.message || 'Could not load the reactivation email.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  sendReactivationTest(): void {
+    const to = this.reactivationTestTo.trim();
+    if (!to || this.reactivationBusy) return;
+    this.reactivationBusy = true;
+    this.reactivationNote = '';
+    this.http.post<any>(`${environment.apiBaseUrl}/admin/matching/reactivation-email/test`, { to }).subscribe({
+      next: () => {
+        this.reactivationBusy = false;
+        this.reactivationNote = `Test sent to ${to}.`;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.reactivationBusy = false;
+        this.reactivationNote = err?.error?.message || 'Could not send the test.';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  sendReactivation(): void {
+    const r = this.reactivation;
+    if (!r || this.reactivationBusy || !r.notYetSent) return;
+    const count = Math.min(r.notYetSent, r.sendLimit);
+    if (!confirm(`Send the reactivation email to ${count} creator${count === 1 ? '' : 's'}? Each creator gets it only once.`)) return;
+    this.reactivationBusy = true;
+    this.reactivationNote = '';
+    this.http
+      .post<any>(`${environment.apiBaseUrl}/admin/matching/reactivation-email/send`, { limit: r.sendLimit })
+      .subscribe({
+        next: () => {
+          this.reactivationBusy = false;
+          this.loadReactivation();
+        },
+        error: (err) => {
+          this.reactivationBusy = false;
+          this.reactivationNote = err?.error?.message || 'Could not start sending.';
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  get reactivationRunning(): boolean {
+    const p = this.reactivation?.progress;
+    return !!p && !p.finishedAt;
   }
 
   load(): void {

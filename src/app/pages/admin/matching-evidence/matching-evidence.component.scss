@@ -30,3 +30,19 @@
   font-size: 0.78rem;
   color: #92400e;
 }
+
+// Reactivation email card (3E).
+.me-reactivation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+
+  input {
+    flex: 1 1 220px;
+    min-width: 0;
+    border: 1px solid #d7deea;
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+  }
+}

@@ -17,10 +17,10 @@ import { PlansService } from '../../shared/plans.service';
         <h1>Offer emails</h1>
         <ng-container [ngSwitch]="state">
           <ng-container *ngSwitchCase="'ask'">
-            <p>Stop receiving Premium offer emails from Trendstarz? You'll still get emails about your account, invites and payments.</p>
-            <button type="button" class="unsub-btn" [disabled]="busy" (click)="confirm()">{{ busy ? 'Saving…' : 'Stop offer emails' }}</button>
+            <p>Stop receiving Premium offer and profile reminder emails from Trendstarz? You'll still get emails about your account, invites and payments.</p>
+            <button type="button" class="unsub-btn" [disabled]="busy" (click)="confirm()">{{ busy ? 'Saving…' : 'Stop these emails' }}</button>
           </ng-container>
-          <p *ngSwitchCase="'done'">Done. You won't receive Premium offer emails any more.</p>
+          <p *ngSwitchCase="'done'">Done. You won't receive Premium offer or profile reminder emails any more.</p>
           <p *ngSwitchCase="'invalid'">This link is not valid. Please use the link from the latest email.</p>
         </ng-container>
         <a routerLink="/" class="unsub-home">Go to Trendstarz</a>

@@ -5,7 +5,7 @@
         ><i class="bi bi-arrow-left"></i> Back to dashboard</a
       >
       <h2 class="adm-title">
-        Matching Evidence <span class="adm-badge">READ-ONLY</span>
+        Matching Evidence <span class="adm-badge">READ-ONLY EVIDENCE</span>
       </h2>
       <p class="adm-subtitle">
         How much trustworthy creator evidence exists for matching, per platform. This page never
@@ -389,4 +389,60 @@
       </div>
     </section>
   </ng-container>
+
+  <!-- ══ Reactivation email (3E) — the only action on this page: it sends email ══ -->
+  <section class="adm-card" data-section="reactivation">
+    <div class="adm-card-head">
+      <div>
+        <h3 class="adm-section-title"><span class="adm-dot adm-dot--orange"></span> Reactivation email <span class="adm-badge">SENDS EMAIL</span></h3>
+        <p class="adm-section-sub">
+          One email to approved creators not seen in over {{ reactivation?.dormantAfterDays ?? 90 }} days, asking them to
+          log in and check their rates and availability. Each creator gets it once. Creators who used "Stop these emails"
+          and addresses Brevo has blocked are skipped.
+        </p>
+      </div>
+    </div>
+    <div class="adm-card-body">
+      <div *ngIf="reactivationError" class="adm-state adm-state--error">{{ reactivationError }}</div>
+      <ng-container *ngIf="reactivation as r">
+        <div class="adm-metrics">
+          <div class="adm-metric"><span>Dormant creators</span><strong>{{ r.dormant }}</strong></div>
+          <div class="adm-metric"><span>Already emailed</span><strong>{{ r.alreadySent }}</strong></div>
+          <div class="adm-metric"><span>Not yet emailed</span><strong class="adm-text--orange">{{ r.notYetSent }}</strong></div>
+        </div>
+        <div class="adm-facts me-facts">
+          <span>Subject: <b>{{ r.subject }}</b></span>
+          <span>Per press: up to <b>{{ r.sendLimit }}</b> (Brevo free plan allows 300 a day)</span>
+        </div>
+        <div class="adm-facts me-facts" *ngIf="r.progress as p">
+          <span>{{ p.finishedAt ? 'Last send' : 'Sending…' }}: <b>{{ p.sent }}</b> sent</span>
+          <span *ngIf="p.failed">Failed: <b>{{ p.failed }}</b></span>
+          <span *ngIf="p.skippedBlocked">Blocked by Brevo: <b>{{ p.skippedBlocked }}</b></span>
+          <span *ngIf="p.skippedActive">Logged in meanwhile: <b>{{ p.skippedActive }}</b></span>
+          <span *ngIf="p.stoppedReason" class="adm-text--orange">{{ p.stoppedReason }}</span>
+        </div>
+        <form class="me-reactivation-actions" (ngSubmit)="sendReactivationTest()">
+          <input
+            type="email"
+            name="reactivationTestTo"
+            placeholder="Your email for a test copy"
+            [(ngModel)]="reactivationTestTo"
+            [disabled]="reactivationBusy"
+          />
+          <button type="submit" class="adm-btn" [disabled]="reactivationBusy || !reactivationTestTo.trim()">
+            <i class="bi bi-envelope"></i> Send test
+          </button>
+          <button
+            type="button"
+            class="adm-btn"
+            [disabled]="reactivationBusy || reactivationRunning || !r.notYetSent"
+            (click)="sendReactivation()"
+          >
+            <i class="bi bi-send"></i> Send to {{ r.notYetSent < r.sendLimit ? r.notYetSent : r.sendLimit }} creators
+          </button>
+        </form>
+        <p *ngIf="reactivationNote" class="adm-section-sub">{{ reactivationNote }}</p>
+      </ng-container>
+    </div>
+  </section>
 </div>
