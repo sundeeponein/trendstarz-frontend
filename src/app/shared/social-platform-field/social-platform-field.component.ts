@@ -63,6 +63,14 @@ export class SocialPlatformFieldComponent implements OnInit {
    * owner as "Usual range for your tier" (2026-11-15). Guidance only.
    */
   @Input() rateRanges: RateRangeTable | null = null;
+  /**
+   * The tier the server checks new prices against for this account (verified,
+   * else checked YouTube, else Starter) — a raise or new rate above its range
+   * waits for admin approval (2026-11-15).
+   */
+  @Input() approvalTier = 'Starter';
+  /** Saved (brand-visible) prices by rate name — what brands keep seeing while a new price waits. */
+  @Input() savedRates: Record<string, number> = {};
 
   /** Any manual field mutation — parent should call its own refreshStepCompletion(). */
   @Output() changed = new EventEmitter<void>();
@@ -226,9 +234,9 @@ export class SocialPlatformFieldComponent implements OnInit {
   }
 
   /** Usual range for a content type (Story / Reel & Shorts / Video), or null. */
-  rateRangeFor(contentTypeName: string): RateRange | null {
+  rateRangeFor(contentTypeName: string, tierName: string = this.rangeTierName): RateRange | null {
     const table = this.rateRanges;
-    const wanted = tierKey(this.rangeTierName);
+    const wanted = tierKey(tierName);
     if (!table || !wanted) return null;
     const ranges = Object.entries(table).find(([name]) => tierKey(name) === wanted)?.[1];
     if (!ranges) return null;
@@ -242,10 +250,37 @@ export class SocialPlatformFieldComponent implements OnInit {
           : null;
   }
 
-  isAboveRange(contentTypeName: string): boolean {
-    const range = this.rateRangeFor(contentTypeName);
+  /** Range of the approval tier (what the server checks), or null when this rate has none. */
+  approvalRangeFor(contentTypeName: string): RateRange | null {
+    return this.rateRangeFor(contentTypeName, this.approvalTier || 'Starter');
+  }
+
+  /**
+   * Same rule as the server: a raise (or a new rate) above the approval tier's
+   * range waits for approval. Untouched prices and cuts never do.
+   */
+  needsApproval(contentTypeName: string): boolean {
+    const range = this.approvalRangeFor(contentTypeName);
     const price = Number(this.form?.contentTypes?.[contentTypeName]?.price);
-    return !!range && range.max !== null && Number.isFinite(price) && price > range.max;
+    if (!range || range.max === null || !Number.isFinite(price) || price <= range.max) return false;
+    const saved = this.savedRates?.[contentTypeName];
+    return saved === undefined || price > saved;
+  }
+
+  /** "Brands will see it after TrendStarZ approves it; until then they see ₹50." */
+  approvalNote(contentTypeName: string): string {
+    const range = this.approvalRangeFor(contentTypeName);
+    if (!range) return '';
+    const saved = this.savedRates?.[contentTypeName];
+    const until = saved === undefined
+      ? 'until then this rate stays hidden'
+      : `until then they see ₹${saved.toLocaleString('en-IN')}`;
+    return `Above the usual range for ${this.approvalTier || 'Starter'} (${this.rangeText(range)}). Brands will see it after TrendStarZ approves it; ${until}.`;
+  }
+
+  /** The approval tier differs from the one shown (e.g. a Macro tier not verified yet). */
+  get approvalTierDiffers(): boolean {
+    return tierKey(this.approvalTier || 'Starter') !== tierKey(this.rangeTierName);
   }
 
   rangeText(range: RateRange): string {

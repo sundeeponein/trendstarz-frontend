@@ -157,6 +157,27 @@ export class InfluencerProfileComponent implements OnInit {
   /** Owner's own TrendScore pricing suggestion — shown as hints next to content rates. */
   /** Usual rate range per tier for the "Usual range for your tier" hint (2026-11-15). */
   rateRanges: RateRangeTable | null = null;
+  /** socialAccountId → tier new prices are checked against (verified, else checked YouTube, else Starter). */
+  rateApprovalTiers: Record<string, string> = {};
+
+  private savedEntryFor(platform: any): any {
+    return (this.savedSocialMedia || []).find((sm: any) => sm?.platform === platform?.name) || null;
+  }
+
+  /** The approval tier for this platform's account; a not-yet-saved account is Starter (as on the server). */
+  approvalTierFor(platform: any): string {
+    const id = String(this.savedEntryFor(platform)?.socialAccountId || '');
+    return (id && this.rateApprovalTiers[id]) || 'Starter';
+  }
+
+  /** Saved (brand-visible) prices for this platform, by rate name. */
+  savedRatesFor(platform: any): Record<string, number> {
+    const out: Record<string, number> = {};
+    for (const ct of this.savedSocialMedia.length ? (this.savedEntryFor(platform)?.contentTypes || []) : []) {
+      if (ct?.name && ct?.enabled !== false && Number(ct?.price) > 0) out[ct.name] = Number(ct.price);
+    }
+    return out;
+  }
 
   private loadRateRanges(): void {
     this.scoreApi.getRateRanges().subscribe({
@@ -847,6 +868,7 @@ export class InfluencerProfileComponent implements OnInit {
           // Patch socialMedia into platformForms
           this.platformForms = {};
           this.savedSocialMedia = profile.socialMedia || [];
+          this.rateApprovalTiers = profile.rateApprovalTiers || {};
           (profile.socialMedia || []).forEach((sm: any) => {
             const platformObj = this.socialMediaList.find(s => s.name === sm.platform);
             if (platformObj) {
@@ -1747,6 +1769,8 @@ export class InfluencerProfileComponent implements OnInit {
               // Patch socialMedia into platformForms
               this.platformForms = {};
               this.savedSocialMedia = profile.socialMedia || [];
+              this.rateApprovalTiers = profile.rateApprovalTiers || {};
+          this.rateApprovalTiers = profile.rateApprovalTiers || {};
               (profile.socialMedia || []).forEach((sm: any) => {
                 const platformObj = (this.socialMediaList || []).find((s: any) => s.name === sm.platform);
                 if (platformObj) {

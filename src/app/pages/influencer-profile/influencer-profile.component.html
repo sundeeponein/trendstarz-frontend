@@ -518,6 +518,8 @@
                     [allowConnect]="true"
                     [supportsOAuth]="isOAuthCapable(platform)"
                     [rateRanges]="rateRanges"
+                    [approvalTier]="approvalTierFor(platform)"
+                    [savedRates]="savedRatesFor(platform)"
                     (changed)="refreshStepCompletion()"
                     (remove)="removePlatformCard(platform)"
                   ></app-social-platform-field>

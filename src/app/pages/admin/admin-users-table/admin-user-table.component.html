@@ -984,8 +984,8 @@
                 <div class="price-change price-change--pending" *ngFor="let c of pendingPriceChanges">
                   <span>
                     <strong>{{ priceChangeRateLabel(c) }}</strong>:
-                    ₹{{ c.oldPrice | number:'1.0-0' }} → ₹{{ c.newPrice | number:'1.0-0' }}
-                    <small>doubled or more · asked {{ c.createdAt | date: 'd MMM y' }} · brands see ₹{{ c.oldPrice | number:'1.0-0' }}</small>
+                    {{ c.oldPrice === null ? 'new' : '₹' + (c.oldPrice | number:'1.0-0') }} → ₹{{ c.newPrice | number:'1.0-0' }}
+                    <small>above the usual range for their tier, or doubled · asked {{ c.createdAt | date: 'd MMM y' }} · {{ c.oldPrice === null ? 'hidden from brands until approved' : 'brands see ₹' + (c.oldPrice | number:'1.0-0') }}</small>
                   </span>
                   <span class="price-change__actions">
                     <button type="button" class="mini-btn mini-btn--primary" (click)="reviewPriceChange(c, 'approve')" [disabled]="priceChangeBusyId === c._id">Approve</button>

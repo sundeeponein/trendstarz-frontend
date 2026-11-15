@@ -65,6 +65,10 @@
 
 // A price above the usual range for the tier (a note only; saving still works).
 .price-suggestion__above {
+  display: block;
+  flex-basis: 100%;
+  margin: 2px 0 0 24px;
+  font-size: 0.75rem;
   color: #b45309;
   font-weight: 600;
 }

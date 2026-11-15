@@ -42,10 +42,30 @@ describe('SocialPlatformFieldComponent — usual rate range hint (2026-11-15)', 
     expect(component.rateRangeFor('Video')).toEqual({ min: 18000, max: 72000 });
   });
 
-  it('notes a price above the range; no note within it; nothing without a table', () => {
-    expect(component.isAboveRange('Reel')).toBeFalse();
-    component.form.contentTypes['Reel'].price = 200;
-    expect(component.isAboveRange('Reel')).toBeTrue();
+  it('warns only when a changed price would wait for approval, using the approval tier', () => {
+    component.form.tier = 'Macro'; // picked, not verified
+    component.approvalTier = 'Starter';
+    component.savedRates = { Reel: 50 };
+    component.form.contentTypes['Reel'].price = 150;
+    expect(component.needsApproval('Reel')).toBeFalse(); // top of Starter range
+    expect(component.approvalTierDiffers).toBeTrue();
+    component.form.contentTypes['Reel'].price = 10000;
+    expect(component.needsApproval('Reel')).toBeTrue();
+    expect(component.approvalNote('Reel')).toBe(
+      'Above the usual range for Starter (₹50–₹150). Brands will see it after TrendStarZ approves it; until then they see ₹50.',
+    );
+    // A new rate (nothing saved) stays hidden meanwhile.
+    component.savedRates = {};
+    expect(component.approvalNote('Reel')).toContain('until then this rate stays hidden');
+  });
+
+  it('untouched or lowered prices above the range never need approval', () => {
+    component.approvalTier = 'Starter';
+    component.savedRates = { Reel: 500 };
+    component.form.contentTypes['Reel'].price = 500;
+    expect(component.needsApproval('Reel')).toBeFalse();
+    component.form.contentTypes['Reel'].price = 400;
+    expect(component.needsApproval('Reel')).toBeFalse();
     component.rateRanges = null;
     expect(component.rateRangeFor('Reel')).toBeNull();
   });

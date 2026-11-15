@@ -6,7 +6,8 @@ import { environment } from '../../environments/environment';
 
 /**
  * "Waiting for approval: Instagram · Reel ₹500 → ₹2,000 (brands see ₹500)."
- * Prices that double or more are checked by an admin first (2026-11-10).
+ * Checked by an admin first: prices that double (2026-11-10), and raises or new
+ * rates above the usual range for the account's tier (2026-11-15).
  * Change `refreshKey` (e.g. after a save) to load again.
  */
 @Component({
@@ -16,11 +17,14 @@ import { environment } from '../../environments/environment';
   template: `
     <div class="pending-prices" *ngIf="pending.length">
       <i class="bi bi-hourglass-split"></i>
-      <strong>New price waiting for approval</strong> — prices that double or more are checked by our team first.
-      Brands see your current price until then.
+      <strong>New price waiting for approval</strong> — prices above the usual range for your tier, or that double,
+      are checked by our team first. Until then brands see your current price, and a new rate stays hidden.
       <ul>
         <li *ngFor="let p of pending">
-          {{ label(p) }}: ₹{{ p.oldPrice | number: '1.0-0' }} → <strong>₹{{ p.newPrice | number: '1.0-0' }}</strong>
+          {{ label(p) }}:
+          <ng-container *ngIf="p.oldPrice !== null && p.oldPrice !== undefined; else newRate">₹{{ p.oldPrice | number: '1.0-0' }} → </ng-container>
+          <ng-template #newRate>new rate </ng-template>
+          <strong>₹{{ p.newPrice | number: '1.0-0' }}</strong>
           <small>(asked {{ p.createdAt | date: 'd MMM y' }})</small>
         </li>
       </ul>
