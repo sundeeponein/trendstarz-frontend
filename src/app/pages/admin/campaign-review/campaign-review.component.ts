@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { catchError, map, of, forkJoin, Observable } from 'rxjs';
-import { CampaignDetailModalComponent, HostShareMessageType } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
+import { CampaignDetailModalComponent, HostShareMessageType, InviteMessageLogType } from '../../../shared/campaign-detail-modal/campaign-detail-modal.component';
 import { CampaignAlertMessageComponent, CampaignCommunity } from '../../../shared/campaign-alert-message/campaign-alert-message.component';
 import { AppPaginatorComponent } from '../../../shared/components/app-paginator/app-paginator.component';
 import { environment } from '../../../../environments/environment';
@@ -957,7 +957,7 @@ export class CampaignReviewComponent implements OnInit {
    * The admin tapped "Send via WhatsApp" (wa.me opens in a new tab): record the send on
    * the invite so that row's button shows "Sent" and is disabled, then close the popup.
    */
-  onHostShareMessageSent(payload: { item: any; type: HostShareMessageType }): void {
+  onHostShareMessageSent(payload: { item: any; type: InviteMessageLogType }): void {
     const inviteId = String(payload.item?.inviteId || '').trim();
     const item = payload.item;
     this.onDismissHostShareMessage();

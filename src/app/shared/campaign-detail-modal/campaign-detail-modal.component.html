@@ -646,14 +646,21 @@
                   <span class="cdm-payout-paid-badge" *ngIf="item.payoutStatus === 'paid'">
                     <i class="bi bi-check-circle-fill"></i> Payout: {{ adminInvitePayoutDateText(item) }}
                   </span>
-                  <button
-                    type="button"
-                    class="cdm-copy-payout-btn"
-                    *ngIf="item.payoutStatus === 'paid'"
-                    (click)="openPaymentReleaseMessage(item, $event)">
-                    <i class="bi bi-card-text"></i>
-                    Payment
-                  </button>
+                  <ng-container *ngIf="item.payoutStatus === 'paid'">
+                    <button
+                      type="button"
+                      class="cdm-copy-payout-btn"
+                      [class.cdm-copy-payout-btn--sent]="!!whatsAppSentEntry(item, 'payment')"
+                      [disabled]="isWhatsAppSentLocked(item, 'payment')"
+                      [attr.title]="whatsAppSentTitle(item, 'payment')"
+                      (click)="openPaymentReleaseMessage(item, $event)">
+                      <i class="bi" [ngClass]="whatsAppSentEntry(item, 'payment') ? 'bi-check2-circle' : 'bi-card-text'"></i>
+                      Payment
+                    </button>
+                    <div class="cdm-sent-note" *ngIf="whatsAppSentEntry(item, 'payment')">
+                      {{ whatsAppSentNote(item, 'payment') }}
+                    </div>
+                  </ng-container>
                   <!-- Per-invite WhatsApp messages. Once sent (automatically or by an admin) the
                        button shows Sent + when, and is disabled so it isn't sent twice (2026-11-13). -->
                   <ng-container *ngFor="let msg of adminInviteMessageButtons; trackBy: trackAdminInviteMessage">
@@ -890,7 +897,8 @@
           rel="noopener"
           [class.disabled]="payoutMessageRecipientPhoneLoading || !payoutMessageWhatsAppLink"
           [attr.href]="payoutMessageWhatsAppLink || null"
-          [attr.aria-disabled]="payoutMessageRecipientPhoneLoading || !payoutMessageWhatsAppLink">
+          [attr.aria-disabled]="payoutMessageRecipientPhoneLoading || !payoutMessageWhatsAppLink"
+          (click)="onPaymentReleaseMessageSend()">
           <i class="bi bi-whatsapp"></i>
           Send via WhatsApp
         </a>

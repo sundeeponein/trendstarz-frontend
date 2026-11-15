@@ -28,6 +28,8 @@ import {
 
 import { confirmedAwaitingStartLabel } from '../invite-status-labels.util';
 export type HostShareMessageType = 'accepted' | 'submitted' | 'paymentReceived' | 'startWork' | 'productShipped' | 'inviteOnly' | 'postingReminder';
+/** Every per-invite WhatsApp message whose sends are recorded (invite.whatsappLog) — the share messages plus the payout 'payment' message. */
+export type InviteMessageLogType = HostShareMessageType | 'payment';
 
 export interface CampaignAcceptPayload {
   inviteId: string;
@@ -208,6 +210,7 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
 
   openPaymentReleaseMessage(item: any, ev?: Event): void {
     ev?.stopPropagation();
+    if (this.isWhatsAppSentLocked(item, 'payment')) return;
     this.payoutMessagePreviewItem = item || null;
     if (item) this.requestPayoutMessagePhone.emit({ item });
     this.cdr.detectChanges();
@@ -316,25 +319,46 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     }
   }
 
-  /** Posting reminders can rightly go more than once (48h and 24h before the post) — locked only for a day after each send. */
-  private static readonly POSTING_REMINDER_LOCK_MS = 24 * 60 * 60 * 1000;
+  /**
+   * How many times each per-invite message may be sent in total (automatic + admin), 2026-11-15:
+   * Submitted up to 2 (re-send if the host hasn't seen it), Posting Reminder up to 5 (before /
+   * on the post date, at most one a day), everything else once.
+   */
+  private static readonly WHATSAPP_SEND_LIMITS: Record<InviteMessageLogType, number> = {
+    accepted: 1,
+    submitted: 2,
+    paymentReceived: 1,
+    startWork: 1,
+    productShipped: 1,
+    inviteOnly: 1,
+    postingReminder: 5,
+    payment: 1,
+  };
+
+  private static istDay(d: Date): string {
+    return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  }
 
   /** The invite's send record for this message (automatic or admin), or null if never sent. */
-  whatsAppSentEntry(item: any, type: HostShareMessageType): { count: number; lastSentAt: string; lastVia?: string } | null {
+  whatsAppSentEntry(item: any, type: InviteMessageLogType): { count: number; lastSentAt: string; lastVia?: string } | null {
     const entry = item?.whatsappLog?.[type];
     return entry && Number(entry.count) > 0 && entry.lastSentAt ? entry : null;
   }
 
-  /** One-time messages lock once sent; the posting reminder locks for 24h after its last send. */
-  isWhatsAppSentLocked(item: any, type: HostShareMessageType): boolean {
+  /** Locked once the message reached its send limit; the posting reminder is also locked for the rest of the (IST) day it was sent. */
+  isWhatsAppSentLocked(item: any, type: InviteMessageLogType): boolean {
     const entry = this.whatsAppSentEntry(item, type);
     if (!entry) return false;
-    if (type !== 'postingReminder') return true;
-    const last = new Date(entry.lastSentAt).getTime();
-    return Number.isFinite(last) && Date.now() - last < CampaignDetailModalComponent.POSTING_REMINDER_LOCK_MS;
+    if (Number(entry.count) >= (CampaignDetailModalComponent.WHATSAPP_SEND_LIMITS[type] ?? 1)) return true;
+    if (type === 'postingReminder') {
+      const last = new Date(entry.lastSentAt);
+      return !Number.isNaN(last.getTime())
+        && CampaignDetailModalComponent.istDay(last) === CampaignDetailModalComponent.istDay(new Date());
+    }
+    return false;
   }
 
-  whatsAppSentNote(item: any, type: HostShareMessageType): string {
+  whatsAppSentNote(item: any, type: InviteMessageLogType): string {
     const entry = this.whatsAppSentEntry(item, type);
     if (!entry) return '';
     const when = new Date(entry.lastSentAt).toLocaleString('en-IN', {
@@ -345,19 +369,34 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return `Sent ${count}${when}${via}`;
   }
 
-  whatsAppSentTitle(item: any, type: HostShareMessageType): string | null {
-    if (!this.whatsAppSentEntry(item, type)) return null;
+  whatsAppSentTitle(item: any, type: InviteMessageLogType): string | null {
+    const entry = this.whatsAppSentEntry(item, type);
+    if (!entry) return null;
+    const limit = CampaignDetailModalComponent.WHATSAPP_SEND_LIMITS[type] ?? 1;
+    const note = this.whatsAppSentNote(item, type);
+    if (Number(entry.count) >= limit) {
+      return limit > 1 ? `${note} — sent the maximum ${limit} times` : `${note} — already sent, can't send again`;
+    }
+    const left = limit - Number(entry.count);
     return this.isWhatsAppSentLocked(item, type)
-      ? `${this.whatsAppSentNote(item, type)} — already sent, can't send again`
-      : `${this.whatsAppSentNote(item, type)} — can be sent again`;
+      ? `${note} — already sent today; ${left} more allowed from tomorrow`
+      : `${note} — can be sent ${left} more time${left === 1 ? '' : 's'}`;
   }
 
-  /** "Send via WhatsApp" in the message popup: record the manual send so the button locks. */
-  @Output() hostShareMessageSent = new EventEmitter<{ item: any; type: HostShareMessageType }>();
+  /** "Send via WhatsApp" in a message popup: record the manual send so the button locks. */
+  @Output() hostShareMessageSent = new EventEmitter<{ item: any; type: InviteMessageLogType }>();
 
   onHostShareMessageSend(): void {
     if (!this.hostShareMessageItem || !this.hostShareMessageType || !this.hostShareMessageWhatsAppLink) return;
     this.hostShareMessageSent.emit({ item: this.hostShareMessageItem, type: this.hostShareMessageType });
+  }
+
+  /** "Send via WhatsApp" in the payout Payment popup. */
+  onPaymentReleaseMessageSend(): void {
+    const item = this.payoutMessagePreviewItem;
+    if (!item || !this.payoutMessageWhatsAppLink) return;
+    this.hostShareMessageSent.emit({ item, type: 'payment' });
+    this.closePaymentReleaseMessage();
   }
 
   hostMessageCopied = false;
