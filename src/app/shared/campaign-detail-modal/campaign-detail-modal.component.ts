@@ -278,13 +278,18 @@ export class CampaignDetailModalComponent implements OnChanges, AfterViewChecked
     return !responded;
   }
 
-  /** Relevant between acceptance and the post going up — hidden once submitted, since the reminder no longer applies. */
+  /** Relevant between acceptance and the post going up — hidden once submitted, and after the post date (India day) has passed (2026-11-15). */
   isPostingReminderMessageAvailable(item: any): boolean {
     // Location visits have no post (2026-11-11).
     if (this.isInviteLocation) return false;
     const status = this.adminInviteStatusKey(item?.status);
-    return ACCEPTED_NOT_DISPUTED.includes(status)
-      && !SUBMITTED_OR_LATER.includes(status);
+    if (!ACCEPTED_NOT_DISPUTED.includes(status) || SUBMITTED_OR_LATER.includes(status)) return false;
+    const post = item?.selectedPostDate ? new Date(item.selectedPostDate) : null;
+    if (post && !Number.isNaN(post.getTime())) {
+      // 'en-CA' gives YYYY-MM-DD, so plain string comparison orders the days.
+      return CampaignDetailModalComponent.istDay(new Date()) <= CampaignDetailModalComponent.istDay(post);
+    }
+    return true;
   }
 
   openHostShareMessage(item: any, type: HostShareMessageType, ev?: Event): void {

@@ -980,11 +980,17 @@ export class CampaignReviewComponent implements OnInit {
           if (data?.whatsappLog) item.whatsappLog = data.whatsappLog;
           this.cdr.detectChanges();
         },
-        error: () => {
-          // Not recorded — put the button back so the admin isn't misled.
-          item.whatsappLog = { ...(item.whatsappLog || {}), [payload.type]: prev };
-          if (!prev) delete item.whatsappLog[payload.type];
-          this.toast.error('Could not record the WhatsApp send. Please try again.');
+        error: (err) => {
+          if (err?.status === 400 && err?.error?.message) {
+            // Refused: already at its limit (e.g. another admin/tab sent it first) or past the
+            // post date. Keep the button locked and say why.
+            this.toast.error(String(err.error.message));
+          } else {
+            // Not recorded — put the button back so the admin isn't misled.
+            item.whatsappLog = { ...(item.whatsappLog || {}), [payload.type]: prev };
+            if (!prev) delete item.whatsappLog[payload.type];
+            this.toast.error('Could not record the WhatsApp send. Please try again.');
+          }
           this.cdr.detectChanges();
         },
       });
