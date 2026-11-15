@@ -19,6 +19,7 @@ import { environment } from '../../environments/environment';
       <i class="bi bi-hourglass-split"></i>
       <strong>New price waiting for approval</strong> — prices above the usual range for your tier, or that double,
       are checked by our team first. Until then brands see your current price, and a new rate stays hidden.
+      Meanwhile you can counter-offer on any paid invite with your new price.
       <ul>
         <li *ngFor="let p of pending">
           {{ label(p) }}:

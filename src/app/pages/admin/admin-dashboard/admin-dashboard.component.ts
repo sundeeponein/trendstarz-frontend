@@ -35,6 +35,7 @@ interface ModerationItem {
   primaryClass: string;
   secondaryAction?: string;
   routerLink: string;
+  queryParams?: Record<string, string>;
 }
 
 interface ActivityBar {
@@ -160,6 +161,7 @@ export class AdminDashboardComponent implements OnInit {
       this.fetchPhotographers();
       this.fetchCampaigns();
       this.fetchOpenDisputes();
+      this.fetchPendingPrices();
       this.fetchVerificationFunnel();
       this.fetchPaymentsSummary();
     }
@@ -419,6 +421,25 @@ export class AdminDashboardComponent implements OnInit {
       });
     }
 
+    const pp = this.pendingPrices;
+    if (pp && pp.total > 0) {
+      const overDay = pp.oldestHours !== null && pp.oldestHours >= 24;
+      const waited = pp.oldestHours === null
+        ? 'Now'
+        : overDay ? `${Math.floor(pp.oldestHours / 24)}d waiting` : `${pp.oldestHours}h waiting`;
+      items.push({
+        tag: overDay ? 'OVER 24 HOURS' : 'PRICE APPROVAL',
+        tagClass: overDay ? 'tag-urgent' : 'tag-support',
+        timeAgo: waited,
+        title: `${pp.total} Price${pp.total > 1 ? 's' : ''} Waiting for Approval`,
+        subtitle: `Influencers: ${pp.influencer} • Photographers: ${pp.photographer} • Hosts see the older price until you decide`,
+        primaryAction: 'Review',
+        primaryClass: 'btn-review',
+        routerLink: '/admin/admin-user-table',
+        queryParams: { tab: pp.influencer > 0 || !pp.photographer ? 'influencer' : 'photographer', verification: 'price_pending' },
+      });
+    }
+
     if (this.latestDispute) {
       const d = this.latestDispute;
       const infName = d.influencerId?.name || d.influencerId?.username || 'Influencer';
@@ -478,6 +499,19 @@ export class AdminDashboardComponent implements OnInit {
         },
         error: () => { this.cd.detectChanges(); }
       });
+  }
+
+  /** Creator prices waiting for approval (2026-11-15): hosts see the older price until decided. */
+  pendingPrices: { total: number; influencer: number; photographer: number; oldestHours: number | null } | null = null;
+
+  fetchPendingPrices() {
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/price-changes/pending-summary`, this.getAuthHeaders()).subscribe({
+      next: (res) => {
+        this.pendingPrices = (res?.data ?? res) || null;
+        this.buildModerationQueue();
+      },
+      error: () => { this.cd.detectChanges(); },
+    });
   }
 
   fetchOpenDisputes() {

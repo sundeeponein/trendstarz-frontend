@@ -268,7 +268,7 @@
             <p class="adm-mod-title">{{ item.title }}</p>
             <p class="adm-mod-sub">{{ item.subtitle }}</p>
             <div class="adm-mod-btns">
-              <a [routerLink]="item.routerLink" class="adm-mod-btn" [ngClass]="item.primaryClass">
+              <a [routerLink]="item.routerLink" [queryParams]="item.queryParams || null" class="adm-mod-btn" [ngClass]="item.primaryClass">
                 {{ item.primaryAction }}
               </a>
               <button *ngIf="item.secondaryAction" class="adm-mod-btn adm-mod-btn--dismiss">

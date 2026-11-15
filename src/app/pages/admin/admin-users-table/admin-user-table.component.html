@@ -74,7 +74,7 @@
       <option value="profile_updated">Updated since approval — needs review</option>
       <option value="social_changed">Social media changed — re-review</option>
       <option value="link_reported">Link not working — reported{{ linkReportCountLabel }}</option>
-      <option value="price_pending">Price doubled — needs approval</option>
+      <option value="price_pending">Price waiting for approval</option>
       <option value="price_changed_7d">Price changed — last 7 days</option>
       <option value="price_changed_30d">Price changed — last 30 days</option>
       <option value="callback_requested">Callback Requested</option>
@@ -227,9 +227,9 @@
             <div class="mt-1" *ngIf="user.pendingPhoneNumber" title="New mobile number waiting for verification — the current verified number stays in use">
               <span class="ts-status-badge ts-status-pending"><i class="bi bi-phone"></i> Mobile change — verify</span>
             </div>
-            <div class="mt-1" *ngIf="user.pricePendingCount > 0" title="A price doubled or more — open the user to approve or reject. Brands see the current price until then.">
+            <div class="mt-1" *ngIf="user.pricePendingCount > 0" title="A price is above the usual range for their tier, or doubled — open the user to approve or reject. Brands see the current price until then.">
               <span class="ts-status-badge ts-status-pending">
-                <i class="bi bi-currency-rupee"></i> Price doubled — approve
+                <i class="bi bi-currency-rupee"></i> Price waiting — approve
               </span>
             </div>
             <div class="mt-1" *ngIf="user.linkReportOpen" title="Hosts reported a social link that doesn't open — open the user to confirm or dismiss">
