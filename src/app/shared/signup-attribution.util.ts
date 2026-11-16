@@ -39,6 +39,60 @@ function sourceFromReferrer(referrer: string): string | undefined {
   return undefined;
 }
 
+// ── First visit (2026-11-16) ──
+// Most signups came through as "direct": the tag was on the link someone first
+// opened (home page, a campaign), but signup reads only the registration page's
+// own URL, and WhatsApp / Instagram in-app browsers send no referrer. The first
+// tagged visit is remembered for 60 days and used when signup has nothing better.
+
+const FIRST_TOUCH_KEY = 'tsz_first_touch';
+const FIRST_TOUCH_DAYS = 60;
+
+interface FirstTouch extends SignupAttribution {
+  at: number;
+}
+
+/** Call once at startup with the landing URL's query string. Keeps the first tagged visit only. */
+export function rememberFirstTouch(search: string, win?: Window & typeof globalThis): void {
+  try {
+    if (!win?.localStorage) return;
+    let params = new URLSearchParams(search || '');
+    const returnUrl = params.get('returnUrl') || '';
+    if (!params.get('utm_source') && !params.get('source') && !params.get('ref') && returnUrl.includes('?')) {
+      params = new URLSearchParams(returnUrl.slice(returnUrl.indexOf('?')));
+    }
+    const clip = (v: string | null) => (v || '').trim().slice(0, 80);
+    const source = clip(params.get('utm_source') || params.get('source') || params.get('ref')).toLowerCase() ||
+      sourceFromReferrer(win.document?.referrer || '') || '';
+    if (!source) return;
+    if (readFirstTouch(win)) return;
+    const touch: FirstTouch = {
+      source,
+      audience: clip(params.get('utm_medium') || params.get('audience')) || undefined,
+      campaign: clip(params.get('utm_campaign')) || undefined,
+      content: clip(params.get('utm_content')) || undefined,
+      referrerPath: win.location?.pathname || undefined,
+      at: Date.now(),
+    };
+    win.localStorage.setItem(FIRST_TOUCH_KEY, JSON.stringify(touch));
+  } catch {
+    // storage blocked: nothing to remember
+  }
+}
+
+/** The remembered first tagged visit, if still within 60 days. */
+export function readFirstTouch(win?: Window & typeof globalThis): FirstTouch | null {
+  try {
+    const raw = win?.localStorage?.getItem(FIRST_TOUCH_KEY);
+    if (!raw) return null;
+    const touch = JSON.parse(raw) as FirstTouch;
+    if (!touch?.source || !Number.isFinite(touch.at) || Date.now() - touch.at > FIRST_TOUCH_DAYS * 864e5) return null;
+    return touch;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Reads signup attribution from URL query params (explicit) and falls back to
  * document.referrer detection. Call inside ngOnInit after ActivatedRoute is ready.
@@ -67,17 +121,19 @@ export function captureSignupAttribution(
   const referrerSource = sourceFromReferrer(referrer);
   const currentPath = win?.location?.pathname || '';
 
-  const source = qSource || referrerSource || 'direct';
-  const audience = qAudience || undefined;
-  const campaign = qCampaign || undefined;
-  const content = qContent || undefined;
+  // Nothing on this page: use the first tagged visit (e.g. a WhatsApp link to the home page).
+  const first = !qSource && !referrerSource ? readFirstTouch(win) : null;
+  const source = qSource || referrerSource || first?.source || 'direct';
+  const audience = qAudience || (first ? first.audience : undefined) || undefined;
+  const campaign = qCampaign || (first ? first.campaign : undefined) || undefined;
+  const content = qContent || (first ? first.content : undefined) || undefined;
 
   return {
     source,
     audience,
     campaign,
     content,
-    referrerPath: currentPath || undefined,
+    referrerPath: (first?.referrerPath || currentPath) || undefined,
     referrerUrl: referrer || undefined,
   };
 }

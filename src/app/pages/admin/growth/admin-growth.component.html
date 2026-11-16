@@ -1,0 +1,168 @@
+<div class="growth container-fluid">
+  <header class="g-head">
+    <h1>Growth</h1>
+    <p>The five numbers from the growth plan, brands waiting for a shortlist, and invites nobody answered. The same numbers are emailed to you every Monday at 9 AM.</p>
+  </header>
+
+  <!-- Scorecard -->
+  <section class="g-section">
+    <h2>This week</h2>
+    <p class="g-error" *ngIf="cardError">{{ cardError }}</p>
+    <div class="g-tiles" *ngIf="card">
+      <div class="g-tile">
+        <b>{{ card.outsideBrands.total }}</b>
+        <span>Outside brands with a live campaign</span>
+        <small>{{ card.outsideBrands.newThisWeek }} new this week · goal 14</small>
+      </div>
+      <div class="g-tile">
+        <b>{{ card.invitesSent.last7 }}</b>
+        <span>Invites sent, last 7 days</span>
+        <small>week before: {{ card.invitesSent.previous7 }} · goal 25</small>
+      </div>
+      <div class="g-tile">
+        <b>{{ card.acceptRate.percent === null ? '—' : card.acceptRate.percent + '%' }}</b>
+        <span>Invites accepted</span>
+        <small>{{ card.acceptRate.accepted }} of {{ card.acceptRate.sent }} sent 3–33 days ago · goal 50%</small>
+      </div>
+      <div class="g-tile">
+        <b>{{ card.workFinished30d }}</b>
+        <span>Creator work finished, last 30 days</span>
+        <small>goal 10</small>
+      </div>
+      <div class="g-tile">
+        <b>{{ card.activeCreators30d }}</b>
+        <span>Creators active, last 30 days</span>
+        <small>goal 60</small>
+      </div>
+    </div>
+    <p class="g-note" *ngIf="card">Our own accounts (tagged "Founder-owned" or "Internal/Test") are left out.</p>
+  </section>
+
+  <!-- Shortlist requests -->
+  <section class="g-section">
+    <div class="g-row">
+      <h2>Shortlist requests <span class="g-badge" *ngIf="card?.newShortlistRequests">{{ card.newShortlistRequests }} new</span></h2>
+      <div class="g-filter">
+        <label for="g-req-filter" class="visually-hidden">Show</label>
+        <select id="g-req-filter" class="form-select form-select-sm" [(ngModel)]="requestFilter" (ngModelChange)="loadRequests()">
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="converted">Converted</option>
+          <option value="closed">Closed</option>
+          <option value="">All</option>
+        </select>
+      </div>
+    </div>
+    <p class="g-help">Brands that filled in <a routerLink="/creator-shortlist" target="_blank">the shortlist form</a>. We promise 5 creators on WhatsApp within 24 hours. Mark each one Contacted once sent, and Converted when they post a campaign.</p>
+    <p class="g-error" *ngIf="requestsError">{{ requestsError }}</p>
+    <p class="g-empty" *ngIf="!requests.length && !requestsError">Nothing here.</p>
+    <div class="g-table" *ngIf="requests.length">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr><th>When</th><th>Business</th><th>WhatsApp</th><th>Where</th><th>Niche · budget</th><th>From</th><th>Status</th><th>Note</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of requests" [class.g-late]="r.status === 'new'">
+            <td class="g-nowrap">{{ r.createdAt | date: 'd MMM, h:mm a' }}</td>
+            <td><strong>{{ r.businessName }}</strong><br /><small>{{ r.name }}</small><small *ngIf="r.note" class="d-block g-quote">"{{ r.note }}"</small></td>
+            <td class="g-nowrap">
+              <a class="btn btn-sm btn-success" [href]="requestWhatsApp(r)" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> +91 {{ r.phone }}</a>
+            </td>
+            <td>{{ r.city }}<span *ngIf="r.city && r.state">, </span>{{ r.state }}</td>
+            <td>{{ r.category }}<br /><small>{{ budgets[r.budget] || r.budget }}</small></td>
+            <td><small>{{ r.attribution?.source || '—' }}<span *ngIf="r.attribution?.campaign"> · {{ r.attribution.campaign }}</span></small></td>
+            <td>
+              <label class="visually-hidden" [for]="'g-st-' + r._id">Status</label>
+              <select class="form-select form-select-sm" [id]="'g-st-' + r._id" [ngModel]="r.status" (ngModelChange)="saveRequest(r, { status: $event })" [disabled]="savingId === r._id">
+                <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+              </select>
+            </td>
+            <td>
+              <label class="visually-hidden" [for]="'g-note-' + r._id">Note</label>
+              <input class="form-control form-control-sm" [id]="'g-note-' + r._id" [ngModel]="r.adminNote" #note (blur)="note.value !== (r.adminNote || '') && saveRequest(r, { adminNote: note.value })" maxlength="500" placeholder="e.g. sent 5, follow up Fri" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Unanswered invites -->
+  <section class="g-section">
+    <h2>Invites waiting 24h+ for a reply <span class="g-badge" *ngIf="unanswered.length">{{ unanswered.length }}</span></h2>
+    <p class="g-help">Pending invites on live campaigns. The creator got an automatic reminder after 24 hours, and the host is told after 48 hours. A WhatsApp from you usually works best.</p>
+    <p class="g-error" *ngIf="unansweredError">{{ unansweredError }}</p>
+    <p class="g-empty" *ngIf="!unanswered.length && !unansweredError">No invites waiting. Good.</p>
+    <div class="g-table" *ngIf="unanswered.length">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr><th>Creator</th><th>Campaign</th><th>Waiting</th><th>Opened?</th><th>Last active</th><th>Reminders</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of unanswered">
+            <td><strong>{{ u.creatorName || 'Creator' }}</strong><br /><small>{{ u.creatorPublicId }}</small></td>
+            <td><span *ngIf="u.campaignNumber">CMP-{{ u.campaignNumber }} · </span>{{ u.campaignTitle }}<br /><small>{{ u.hostName }}</small></td>
+            <td class="g-nowrap">{{ waited(u.hoursWaiting) }}</td>
+            <td>{{ u.openedAt ? (u.openedAt | date: 'd MMM') : 'Not yet' }}</td>
+            <td>{{ u.lastActiveAt ? (u.lastActiveAt | date: 'd MMM') : 'Never' }}</td>
+            <td><small>{{ u.creatorReminded ? 'Creator reminded' : 'Not yet' }}<br />{{ u.hostTold ? 'Host told' : '' }}</small></td>
+            <td class="g-nowrap">
+              <a *ngIf="u.creatorPhone" class="btn btn-sm btn-success" [href]="inviteWhatsApp(u)" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> Remind</a>
+              <button type="button" class="btn btn-sm btn-outline-secondary ms-1" (click)="copy(u.inviteLink, u.inviteId)">{{ copied === u.inviteId ? 'Copied' : 'Copy link' }}</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Outreach link maker -->
+  <section class="g-section">
+    <h2>Make a tagged link</h2>
+    <p class="g-help">Use a tagged link everywhere you share TrendStarZ, so we can see which outreach brings signups. Use one campaign name per post, group or poster.</p>
+    <div class="g-link-form">
+      <div>
+        <label class="form-label" for="g-link-page">Page</label>
+        <select id="g-link-page" class="form-select form-select-sm" [(ngModel)]="link.page">
+          <option *ngFor="let p of pages" [value]="p.path">{{ p.label }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label" for="g-link-source">Where you'll share it</label>
+        <select id="g-link-source" class="form-select form-select-sm" [(ngModel)]="link.source">
+          <option *ngFor="let s of sources" [value]="s.key">{{ s.label }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label" for="g-link-medium">Kind <small class="text-muted">(optional)</small></label>
+        <input id="g-link-medium" class="form-control form-control-sm" [(ngModel)]="link.medium" placeholder="community, dm, bio, post" maxlength="40" />
+      </div>
+      <div>
+        <label class="form-label" for="g-link-campaign">Campaign name</label>
+        <input id="g-link-campaign" class="form-control form-control-sm" [(ngModel)]="link.campaign" placeholder="e.g. warangal-boutiques-nov" maxlength="60" />
+      </div>
+    </div>
+    <div class="g-link-out">
+      <code>{{ outreachLink }}</code>
+      <button type="button" class="btn btn-sm btn-primary" (click)="copy(outreachLink, 'link')">{{ copied === 'link' ? 'Copied' : 'Copy' }}</button>
+    </div>
+  </section>
+
+  <!-- Signups by source -->
+  <section class="g-section" *ngIf="card">
+    <h2>Signups in the last 30 days, by source</h2>
+    <p class="g-empty" *ngIf="!card.signupsBySource.rows.length">No signups in the last 30 days.</p>
+    <div class="g-table" *ngIf="card.signupsBySource.rows.length">
+      <table class="table table-sm g-narrow">
+        <thead><tr><th>Source</th><th class="text-end">Creators</th><th class="text-end">Brands</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let s of card.signupsBySource.rows">
+            <td>{{ s.source === 'direct' || s.source === 'unknown' ? s.source + ' (no tag)' : s.source }}</td>
+            <td class="text-end">{{ s.creators }}</td>
+            <td class="text-end">{{ s.brands }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

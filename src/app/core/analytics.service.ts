@@ -1,4 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
+import { rememberFirstTouch } from '../shared/signup-attribution.util';
 import { HttpClient } from '@angular/common/http';
 import { SessionService } from './session.service';
 import { environment } from '../../environments/environment';
@@ -72,6 +73,8 @@ export class AnalyticsService implements OnDestroy {
   ];
 
   constructor(private session: SessionService, private http: HttpClient) {
+    // Remember where this visitor first came from, for signup attribution (2026-11-16).
+    if (typeof window !== 'undefined') rememberFirstTouch(window.location.search, window);
     this.initializeLifecycle();
   }
 

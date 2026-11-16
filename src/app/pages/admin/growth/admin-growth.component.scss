@@ -1,0 +1,38 @@
+.growth { padding-block: 20px 48px; display: grid; gap: 28px; max-width: 1200px; }
+.g-head h1 { font-size: 1.6rem; font-weight: 800; margin: 0 0 4px; }
+.g-head p { color: #64748b; margin: 0; max-width: 70ch; }
+.g-section { display: grid; gap: 10px; }
+.g-section h2 { font-size: 1.15rem; font-weight: 700; margin: 0; display: flex; gap: 8px; align-items: center; }
+.g-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
+.g-filter { min-width: 140px; }
+.g-help { color: #64748b; font-size: 0.9rem; margin: 0; max-width: 80ch; }
+.g-note { color: #94a3b8; font-size: 0.8rem; margin: 0; }
+.g-error { color: #b91c1c; margin: 0; }
+.g-empty { color: #64748b; margin: 0; font-style: italic; }
+.g-badge { background: #c2410c; color: #fff; border-radius: 999px; font-size: 0.75rem; padding: 2px 9px; font-weight: 700; }
+
+.g-tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1000px) { .g-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.g-tile { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; display: grid; gap: 2px; }
+.g-tile b { font-size: 1.8rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.g-tile span { font-size: 0.88rem; color: #1e293b; }
+.g-tile small { font-size: 0.78rem; color: #64748b; }
+
+.g-table { overflow-x: auto; }
+.g-table table { min-width: 760px; }
+.g-table table.g-narrow { min-width: 0; max-width: 480px; }
+.g-nowrap { white-space: nowrap; }
+.g-quote { color: #64748b; font-style: italic; }
+tr.g-late td:first-child { box-shadow: inset 3px 0 0 #c2410c; }
+
+.g-link-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .g-link-form { grid-template-columns: minmax(0, 1fr); } }
+.g-link-out { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 10px 12px; }
+.g-link-out code { flex: 1 1 300px; min-width: 0; word-break: break-all; color: #0f172a; font-size: 0.85rem; }
+
+:host-context([data-theme='dark']) {
+  .g-tile { background: #111827; border-color: #1f2937; }
+  .g-tile span { color: #e2e8f0; }
+  .g-link-out { background: #0f172a; border-color: #334155; }
+  .g-link-out code { color: #e2e8f0; }
+}

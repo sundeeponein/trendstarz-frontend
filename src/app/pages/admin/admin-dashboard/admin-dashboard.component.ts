@@ -162,6 +162,7 @@ export class AdminDashboardComponent implements OnInit {
       this.fetchCampaigns();
       this.fetchOpenDisputes();
       this.fetchPendingPrices();
+      this.fetchGrowthSummary();
       this.fetchVerificationFunnel();
       this.fetchPaymentsSummary();
     }
@@ -440,6 +441,33 @@ export class AdminDashboardComponent implements OnInit {
       });
     }
 
+    // Growth plan (2026-11-16): brands waiting for a shortlist, invites nobody answered.
+    const g = this.growthSummary;
+    if (g && g.newShortlistRequests > 0) {
+      items.push({
+        tag: 'BRAND LEAD',
+        tagClass: 'tag-urgent',
+        timeAgo: 'Reply within 24h',
+        title: `${g.newShortlistRequests} Brand${g.newShortlistRequests > 1 ? 's' : ''} Waiting for a Creator Shortlist`,
+        subtitle: 'They asked on the shortlist form • WhatsApp them 5 matching creators',
+        primaryAction: 'Open',
+        primaryClass: 'btn-review',
+        routerLink: '/admin/growth',
+      });
+    }
+    if (g && g.unansweredInvites > 0) {
+      items.push({
+        tag: 'NO REPLY',
+        tagClass: 'tag-support',
+        timeAgo: '24h+',
+        title: `${g.unansweredInvites} Invite${g.unansweredInvites > 1 ? 's' : ''} Waiting for a Creator's Reply`,
+        subtitle: 'Pending for 24 hours or more on live campaigns • WhatsApp the creator',
+        primaryAction: 'Open',
+        primaryClass: 'btn-review',
+        routerLink: '/admin/growth',
+      });
+    }
+
     if (this.latestDispute) {
       const d = this.latestDispute;
       const infName = d.influencerId?.name || d.influencerId?.username || 'Influencer';
@@ -508,6 +536,18 @@ export class AdminDashboardComponent implements OnInit {
     this.http.get<any>(`${environment.apiBaseUrl}/admin/price-changes/pending-summary`, this.getAuthHeaders()).subscribe({
       next: (res) => {
         this.pendingPrices = (res?.data ?? res) || null;
+        this.buildModerationQueue();
+      },
+      error: () => { this.cd.detectChanges(); },
+    });
+  }
+
+  growthSummary: { newShortlistRequests: number; unansweredInvites: number } | null = null;
+
+  fetchGrowthSummary() {
+    this.http.get<any>(`${environment.apiBaseUrl}/admin/growth/summary`, this.getAuthHeaders()).subscribe({
+      next: (res) => {
+        this.growthSummary = (res?.data ?? res) || null;
         this.buildModerationQueue();
       },
       error: () => { this.cd.detectChanges(); },

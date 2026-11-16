@@ -12,6 +12,7 @@ export const routes: Routes = [
 			{ path: '', loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent) },
 			{ path: 'welcome', loadComponent: () => import('./pages/welcome/welcome.component').then(m => m.WelcomeComponent) },
 			{ path: 'search', canActivate: [nonAdminSearchGuard], loadComponent: () => import('./pages/search/search.component').then(m => m.SearchComponent) },
+			{ path: 'creator-shortlist', loadComponent: () => import('./pages/creator-shortlist/creator-shortlist.component').then(m => m.CreatorShortlistComponent) },
 			{ path: 'faqs', loadComponent: () => import('./pages/faqs/faqs.component').then(m => m.FaqsComponent) },
 			{ path: 'why-trendstarz', loadComponent: () => import('./pages/why-trendstarz/why-trendstarz.component').then(m => m.WhyTrendstarzComponent) },
 			{ path: 'trendstarz-score', loadComponent: () => import('./pages/trendstarz-score/trendstarz-score.component').then(m => m.TrendstarzScoreComponent) },
@@ -83,6 +84,7 @@ export const routes: Routes = [
 			// Intentionally not linked from admin-layout's nav — reachable only via the "View Collaboration Details" button in the user table's popup.
 			{ path: 'collaboration-score/:userId', loadComponent: () => import('./pages/admin/collaboration-score-detail/collaboration-score-detail.component').then(m => m.CollaborationScoreDetailComponent) },
 			// Intentionally not linked from admin-layout's nav — reachable only via direct URL or the dashboard widget's link.
+			{ path: 'growth', loadComponent: () => import('./pages/admin/growth/admin-growth.component').then(m => m.AdminGrowthComponent) },
 			{ path: 'data-health', loadComponent: () => import('./pages/admin/data-health/data-health.component').then(m => m.DataHealthComponent) },
 			{ path: 'verification-funnel', loadComponent: () => import('./pages/admin/verification-funnel/verification-funnel.component').then(m => m.VerificationFunnelPageComponent) },
 			{ path: 'logout', loadComponent: () => import('./pages/auth/logout.component').then(m => m.LogoutComponent) },
