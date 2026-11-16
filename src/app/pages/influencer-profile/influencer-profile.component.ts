@@ -1,5 +1,6 @@
 import { PendingMobileNoteComponent } from '../../shared/pending-mobile-note.component';
 import { PendingPricesNoteComponent } from '../../shared/pending-prices-note.component';
+import { ReportedLinksBannerComponent } from '../../shared/reported-links-banner.component';
 import { CollaborationRecordComponent } from '../../shared/collaboration-record/collaboration-record.component';
 import { environment } from '../../../environments/environment';
 import { CollaborationScoreApiService, RateRangeTable } from '../../services/collaboration-score-api.service';
@@ -45,7 +46,7 @@ import { upiIdValidator } from '../../shared/upi.util';
 @Component({
   selector: 'app-influencer-registration',
   standalone: true,
-  imports: [PendingMobileNoteComponent, CollaborationRecordComponent, CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, SocialPlatformFieldComponent, PendingPricesNoteComponent],
+  imports: [PendingMobileNoteComponent, CollaborationRecordComponent, CommonModule, ReactiveFormsModule, FormsModule, NgSelectModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent, SocialPlatformFieldComponent, PendingPricesNoteComponent, ReportedLinksBannerComponent],
   templateUrl: './influencer-profile.component.html',
   styleUrls: ['./influencer-profile.component.scss']
 })

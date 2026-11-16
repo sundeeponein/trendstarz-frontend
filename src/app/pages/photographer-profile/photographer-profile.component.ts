@@ -1,5 +1,6 @@
 import { PendingMobileNoteComponent } from '../../shared/pending-mobile-note.component';
 import { PendingPricesNoteComponent } from '../../shared/pending-prices-note.component';
+import { ReportedLinksBannerComponent } from '../../shared/reported-links-banner.component';
 import { CollaborationRecordComponent } from '../../shared/collaboration-record/collaboration-record.component';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { tierOptionsWithCurrent } from '../../shared/tiers.constants';
@@ -43,7 +44,7 @@ import { upiIdValidator } from '../../shared/upi.util';
 @Component({
   selector: 'app-photographer-profile',
   standalone: true,
-  imports: [PendingMobileNoteComponent, CollaborationRecordComponent, RateReviewNoteComponent, PendingPricesNoteComponent, YoutubeCheckNoteComponent, CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
+  imports: [PendingMobileNoteComponent, CollaborationRecordComponent, RateReviewNoteComponent, PendingPricesNoteComponent, ReportedLinksBannerComponent, YoutubeCheckNoteComponent, CommonModule, ReactiveFormsModule, FormsModule, RouterModule, ResetPasswordModalComponent, CollaborationAvailabilityFormComponent, ChipSelectionGroupComponent, ProfileReviewSummaryComponent, ConfirmDialogComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, MobileBottomActionsComponent, ImageCropModalComponent, ProfileVisibilitySelectorComponent],
   templateUrl: './photographer-profile.component.html',
   styleUrls: ['./photographer-profile.component.scss'],
 })

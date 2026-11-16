@@ -1334,6 +1334,11 @@ export class ConfigService {
       .pipe(map((res) => res?.data || {}));
   }
 
+  /** The creator's own links that hosts reported as not opening (2026-11-16). */
+  getMyReportedLinks(): Observable<{ accounts: any[] }> {
+    return this.http.get<any>(`${this.apiUrl}/creator/social-links/reported`).pipe(map((res) => res?.data || res || { accounts: [] }));
+  }
+
   /** The creator's 90-day "are these still your accounts?" check. */
   getSocialConfirmStatus(): Observable<{ due: boolean; accounts: any[] }> {
     return this.http.get<any>(`${this.apiUrl}/creator/social-confirm`).pipe(map((res) => res?.data || res || { due: false, accounts: [] }));

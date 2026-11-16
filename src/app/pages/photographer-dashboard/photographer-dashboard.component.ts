@@ -3,6 +3,7 @@ import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-
 import { LatePostSubmitComponent } from '../../shared/late-post-submit/late-post-submit.component';
 import { ClosureQuestionComponent } from '../../shared/closure-question/closure-question.component';
 import { SocialConfirmBannerComponent } from '../../shared/social-confirm-banner/social-confirm-banner.component';
+import { ReportedLinksBannerComponent } from '../../shared/reported-links-banner.component';
 import { PayoutUpiBannerComponent, PayoutDetails } from '../../shared/payout-upi-banner/payout-upi-banner.component';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -35,7 +36,7 @@ import { AdminSocialNoticeComponent } from '../../shared/admin-social-notice/adm
 @Component({
   selector: 'app-photographer-dashboard',
   standalone: true,
-  imports: [AdminSocialNoticeComponent, SocialConfirmBannerComponent, PayoutUpiBannerComponent, PaidCollabNoticeComponent, LatePostSubmitComponent, ClosureQuestionComponent, CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreSummaryWidgetComponent],
+  imports: [AdminSocialNoticeComponent, SocialConfirmBannerComponent, ReportedLinksBannerComponent, PayoutUpiBannerComponent, PaidCollabNoticeComponent, LatePostSubmitComponent, ClosureQuestionComponent, CommonModule, RouterModule, CampaignDetailModalComponent, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, CollaborationScoreSummaryWidgetComponent],
   templateUrl: './photographer-dashboard.component.html',
   styleUrls: ['./photographer-dashboard.component.scss'],
 })

@@ -3,6 +3,7 @@ import { PaidCollabNoticeComponent } from '../../shared/paid-collab-notice/paid-
 import { LatePostSubmitComponent } from '../../shared/late-post-submit/late-post-submit.component';
 import { ClosureQuestionComponent } from '../../shared/closure-question/closure-question.component';
 import { SocialConfirmBannerComponent } from '../../shared/social-confirm-banner/social-confirm-banner.component';
+import { ReportedLinksBannerComponent } from '../../shared/reported-links-banner.component';
 import { PayoutUpiBannerComponent, PayoutDetails } from '../../shared/payout-upi-banner/payout-upi-banner.component';
 import { ActivatedRoute, Router, NavigationEnd, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -45,7 +46,7 @@ import { fileShareChoices, isFileSharePlatform } from '../../shared/file-share-v
   templateUrl: './influencer-dashboard.component.html',
   styleUrls: ['./influencer-dashboard.component.scss'],
   standalone: true,
-  imports: [AdminSocialNoticeComponent, SocialConfirmBannerComponent, PayoutUpiBannerComponent, PaidCollabNoticeComponent, LatePostSubmitComponent, ClosureQuestionComponent, CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, PromoLinkCardComponent, CollaborationScoreSummaryWidgetComponent]
+  imports: [AdminSocialNoticeComponent, SocialConfirmBannerComponent, ReportedLinksBannerComponent, PayoutUpiBannerComponent, PaidCollabNoticeComponent, LatePostSubmitComponent, ClosureQuestionComponent, CommonModule, DecimalPipe, SlicePipe, FormsModule, CampaignDetailModalComponent, RouterModule, ShippingAddressModalComponent, UsageSummaryComponent, ProfileReviewSummaryComponent, WhatsappCommunityCardComponent, RegistrationNoticeComponent, FounderOfferModalComponent, PromoLinkCardComponent, CollaborationScoreSummaryWidgetComponent]
 })
 export class InfluencerDashboardComponent implements OnInit, OnDestroy {
   dashboard: any;
