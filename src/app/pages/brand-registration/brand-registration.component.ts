@@ -5,8 +5,8 @@ import { FormBuilder, FormGroup, Validators, AsyncValidatorFn, AbstractControl, 
 import { ConfigService } from '../../shared/config.service';
 import { FirebaseAuthService } from '../../shared/firebase-auth.service';
 import { passwordStrengthValidator, getPasswordChecks } from '../../shared/password-strength';
-import { map, first } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
+import { map, first, catchError } from 'rxjs/operators';
+import { firstValueFrom, forkJoin, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -140,6 +140,10 @@ export class BrandRegistrationComponent implements OnInit {
   uploadedBrandLogo: { url: string; public_id: string } | null = null;
   signupAttribution: { source?: string; audience?: string; campaign?: string; content?: string; referrerPath?: string; referrerUrl?: string } = {};
   trackingLinkCode = '';
+  /** "<requestId>.<code>" from a creator-shortlist WhatsApp link (2026-11-16): prefills the form; the signup marks that request converted. */
+  shortlistRef = '';
+  shortlistPrefilled = false;
+  private pendingDistrictName = '';
   premiumMonthlyPrice = 999;
   premiumOriginalMonthlyPrice: number | null = null;
   premiumOfferChip = '';
@@ -176,6 +180,7 @@ export class BrandRegistrationComponent implements OnInit {
       typeof window !== 'undefined' ? window : undefined,
     );
     this.trackingLinkCode = this.route.snapshot.queryParamMap.get('tlc') || '';
+    this.shortlistRef = this.route.snapshot.queryParamMap.get('shortlist') || '';
 
     this.registrationForm = this.fb.group({
       brandName: ['', Validators.required],
@@ -297,17 +302,62 @@ export class BrandRegistrationComponent implements OnInit {
         const stateName = selectedState?.name || (typeof stateId === 'string' ? stateId : '');
         const selectedStateId = selectedState?._id || selectedState?.id || (typeof stateId === 'string' ? stateId : '');
         this.configService.getDistricts(stateName, selectedStateId).subscribe({
-          next: data => { this.districts = Array.isArray(data) ? data : []; this.cd.detectChanges(); },
+          next: data => {
+            this.districts = Array.isArray(data) ? data : [];
+            // Prefilled from a shortlist link: pick the city they gave us, if it's a district.
+            if (this.pendingDistrictName) {
+              const want = this.pendingDistrictName.toLowerCase();
+              const match = this.districts.find((d: any) => String(d?.name || '').trim().toLowerCase() === want);
+              if (match) this.registrationForm.get('location.district')?.setValue(match._id);
+              this.pendingDistrictName = '';
+            }
+            this.cd.detectChanges();
+          },
           error: () => { this.districts = []; this.cd.detectChanges(); }
         });
       }
     });
+
+    if (this.shortlistRef) this.applyShortlistPrefill();
 
     this.registrationForm.get('paymentOption')?.valueChanges.subscribe(() => {
       this.refreshStepCompletion();
     });
 
     this.refreshStepCompletion();
+  }
+
+  /** Fill in what the brand already told us on the shortlist form. Never overwrites what they typed. */
+  private applyShortlistPrefill(): void {
+    forkJoin({
+      p: this.configService.getShortlistPrefill(this.shortlistRef),
+      states: this.configService.getStates().pipe(catchError(() => of([]))),
+      categories: this.configService.getCategories('brand').pipe(catchError(() => of([]))),
+    }).subscribe(({ p, states, categories }) => {
+      if (!p) {
+        this.shortlistRef = '';
+        return;
+      }
+      const f = this.registrationForm;
+      const setIfEmpty = (path: string, value: any) => {
+        const c = f.get(path);
+        if (c && value && !c.value) c.setValue(value);
+      };
+      setIfEmpty('brandName', p.businessName);
+      setIfEmpty('contactPersonName', p.name);
+      setIfEmpty('phoneNumber', p.phone);
+      const state = (states || []).find((s: any) => String(s?.name || '').trim().toLowerCase() === String(p.state || '').trim().toLowerCase());
+      if (state && !f.get('location.state')?.value) {
+        if (!this.states?.length) this.states = states;
+        this.pendingDistrictName = String(p.city || '').trim();
+        f.get('location.state')?.setValue(state._id);
+      }
+      const cat = (categories || []).find((c: any) => String(c?.name || '').trim().toLowerCase() === String(p.category || '').trim().toLowerCase());
+      if (cat && !(f.get('categories')?.value || []).length) f.get('categories')?.setValue([cat._id]);
+      this.shortlistPrefilled = true;
+      this.refreshStepCompletion();
+      this.cd.detectChanges();
+    });
   }
 
   private loadPremiumMonthlyPrice(): void {
@@ -1003,6 +1053,7 @@ export class BrandRegistrationComponent implements OnInit {
     };
     payload.signupAttribution = this.signupAttribution;
     payload.trackingLinkCode = this.trackingLinkCode;
+    if (this.shortlistRef) payload.shortlistRef = this.shortlistRef;
     delete payload.googleMapAddress;
 
     payload.acceptedTerms = this.acceptedTerms === true;

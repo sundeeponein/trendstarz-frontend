@@ -619,6 +619,14 @@ export class ConfigService {
     );
   }
 
+  /** Public: the brand's details from their shortlist signup link (null when expired/used). */
+  getShortlistPrefill(ref: string): Observable<{ name: string; businessName: string; phone: string; state: string; city: string; category: string } | null> {
+    return this.http.get<any>(`${this.apiUrl}/shortlist-requests/prefill?ref=${encodeURIComponent(ref)}`).pipe(
+      map((res) => this.extractData<any>(res) || res || null),
+      catchError(() => of(null)),
+    );
+  }
+
   /** Public: "Get a creator shortlist" form (2026-11-16). */
   sendShortlistRequest(body: Record<string, any>): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/shortlist-requests`, body);

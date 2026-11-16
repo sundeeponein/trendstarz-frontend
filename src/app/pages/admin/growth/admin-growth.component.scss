@@ -30,7 +30,23 @@ tr.g-late td:first-child { box-shadow: inset 3px 0 0 #c2410c; }
 .g-link-out { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 10px 12px; }
 .g-link-out code { flex: 1 1 300px; min-width: 0; word-break: break-all; color: #0f172a; font-size: 0.85rem; }
 
+.g-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+.g-build-row > td { background: #f8fafc; }
+.g-build { display: grid; gap: 8px; padding: 6px 2px; }
+.g-cands { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+.g-cand { display: flex; gap: 10px; align-items: flex-start; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; cursor: pointer; font-size: 0.85rem; }
+.g-cand.on { border-color: #c2410c; box-shadow: inset 0 0 0 1px #c2410c; }
+.g-cand input { margin-top: 4px; }
+.g-cand-body { display: grid; gap: 2px; min-width: 0; }
+.g-cand-line { color: #334155; overflow-wrap: anywhere; }
+.g-reasons { color: #64748b; font-size: 0.78rem; }
+.g-other { color: #b45309; }
+.g-msg { font-family: inherit; white-space: pre-wrap; }
+
 :host-context([data-theme='dark']) {
+  .g-build-row > td { background: #0f172a; }
+  .g-cand { background: #111827; border-color: #1f2937; }
+  .g-cand-line { color: #cbd5e1; }
   .g-tile { background: #111827; border-color: #1f2937; }
   .g-tile span { color: #e2e8f0; }
   .g-link-out { background: #0f172a; border-color: #334155; }

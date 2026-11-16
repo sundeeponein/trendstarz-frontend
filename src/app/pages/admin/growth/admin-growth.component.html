@@ -62,11 +62,20 @@
           <tr><th>When</th><th>Business</th><th>WhatsApp</th><th>Where</th><th>Niche · budget</th><th>From</th><th>Status</th><th>Note</th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of requests" [class.g-late]="r.status === 'new'">
+          <ng-container *ngFor="let r of requests">
+          <tr [class.g-late]="r.status === 'new'">
             <td class="g-nowrap">{{ r.createdAt | date: 'd MMM, h:mm a' }}</td>
             <td><strong>{{ r.businessName }}</strong><br /><small>{{ r.name }}</small><small *ngIf="r.note" class="d-block g-quote">"{{ r.note }}"</small></td>
             <td class="g-nowrap">
               <a class="btn btn-sm btn-success" [href]="requestWhatsApp(r)" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> +91 {{ r.phone }}</a>
+              <div class="g-actions">
+                <button type="button" class="btn btn-sm btn-primary" (click)="buildShortlist(r)" [attr.aria-expanded]="building?.id === r._id">
+                  <i class="bi bi-list-check"></i> {{ building?.id === r._id ? 'Close' : 'Build shortlist' }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="sendSignupLink(r)" [disabled]="signupBusyId === r._id || !!r.brandId" [title]="r.brandId ? 'Already signed up' : 'WhatsApp them a signup link with their details filled in'">
+                  {{ r.brandId ? 'Signed up' : copied === 'signup-' + r._id ? 'Copied' : 'Signup link' }}
+                </button>
+              </div>
             </td>
             <td>{{ r.city }}<span *ngIf="r.city && r.state">, </span>{{ r.state }}</td>
             <td>{{ r.category }}<br /><small>{{ budgets[r.budget] || r.budget }}</small></td>
@@ -82,6 +91,52 @@
               <input class="form-control form-control-sm" [id]="'g-note-' + r._id" [ngModel]="r.adminNote" #note (blur)="note.value !== (r.adminNote || '') && saveRequest(r, { adminNote: note.value })" maxlength="500" placeholder="e.g. sent 5, follow up Fri" />
             </td>
           </tr>
+          <tr *ngIf="building?.id === r._id" class="g-build-row">
+            <td colspan="8">
+              <div class="g-build">
+                <p class="g-empty" *ngIf="building!.loading">Finding creators…</p>
+                <p class="g-error" *ngIf="building!.error">{{ building!.error }}</p>
+                <ng-container *ngIf="!building!.loading && !building!.error">
+                  <p class="g-help">
+                    {{ building!.inNiche }} {{ r.category }} creator{{ building!.inNiche === 1 ? '' : 's' }} in {{ r.state }} whose profile anyone can open.
+                    Best matches first: main niche, same city, recently active, tier verified, rate within budget. The top 5 are ticked.
+                    <span *ngIf="building!.inNiche < 5"> Fewer than 5 in this niche, so other niches in {{ r.state }} follow.</span>
+                  </p>
+                  <p class="g-empty" *ngIf="!building!.candidates.length">No creators in {{ r.state }} yet. Tell the brand honestly, or suggest a nearby state.</p>
+                  <div class="g-cands">
+                    <label class="g-cand" *ngFor="let c of building!.candidates" [class.on]="building!.selected.has(c.id)" [for]="'g-c-' + c.id">
+                      <input type="checkbox" [id]="'g-c-' + c.id" [checked]="building!.selected.has(c.id)" (change)="toggleCandidate(r, c)" />
+                      <span class="g-cand-body">
+                        <strong>{{ c.name }}</strong> <small>{{ c.publicId }}<span *ngIf="c.city"> · {{ c.city }}</span></small>
+                        <span class="g-cand-line">
+                          <ng-container *ngFor="let a of c.accounts; let last = last">{{ a.platform }} &#64;{{ a.handle }}<span *ngIf="a.tier"> ({{ a.tier }}<span *ngIf="a.verified">, verified</span>)</span><span *ngIf="!last"> · </span></ng-container>
+                        </span>
+                        <span class="g-cand-line">
+                          <span *ngIf="c.rate">{{ c.rate.name }} ₹{{ c.rate.price | number }}</span><span *ngIf="!c.rate">No rate set</span>
+                          · {{ c.lastActiveAt ? 'active ' + (c.lastActiveAt | date: 'd MMM') : 'never logged in' }}
+                          <span *ngIf="!c.inNiche" class="g-other"> · other niche ({{ c.mainCategory || c.categories?.[0] }})</span>
+                        </span>
+                        <span class="g-reasons">{{ c.reasons.join(' · ') }}</span>
+                        <a *ngIf="c.username" [routerLink]="['/influencer', c.username]" target="_blank" (click)="$event.stopPropagation()">Open profile</a>
+                      </span>
+                    </label>
+                  </div>
+                  <label class="form-label mt-2" [for]="'g-msg-' + r._id">Message ({{ building!.selected.size }} picked). You can edit it before sending.</label>
+                  <textarea class="form-control form-control-sm g-msg" [id]="'g-msg-' + r._id" rows="10" [(ngModel)]="building!.message"></textarea>
+                  <div class="g-actions mt-2">
+                    <a class="btn btn-sm btn-success" [href]="whatsAppWith(r, building!.message)" target="_blank" rel="noopener" (click)="markSent(r)" [class.disabled]="!building!.selected.size">
+                      <i class="bi bi-whatsapp"></i> Send on WhatsApp
+                    </a>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="copy(building!.message, 'msg-' + r._id); markSent(r)">
+                      {{ copied === 'msg-' + r._id ? 'Copied' : 'Copy message' }}
+                    </button>
+                    <small class="text-muted">Sending marks the request Contacted. It becomes Converted by itself when they sign up from the link.</small>
+                  </div>
+                </ng-container>
+              </div>
+            </td>
+          </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { buildOutreachLink, OUTREACH_PAGES, OUTREACH_SOURCES } from './outreach-link.util';
+import { shortlistMessage, signupMessage } from './shortlist-message.util';
 
 /**
  * Admin → Growth (growth plan 2026-11-16): the Monday scorecard, brand shortlist
@@ -45,6 +46,19 @@ export class AdminGrowthComponent implements OnInit {
   readonly pages = OUTREACH_PAGES;
   readonly sources = OUTREACH_SOURCES;
   link = { page: '/creator-shortlist', source: 'whatsapp', medium: '', campaign: '' };
+
+  /** "Build shortlist" panel under one request (2026-11-16). */
+  building: {
+    id: string;
+    loading: boolean;
+    error: string;
+    candidates: any[];
+    inNiche: number;
+    selected: Set<string>;
+    signupLink: string;
+    message: string;
+  } | null = null;
+  signupBusyId = '';
 
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
 
@@ -131,6 +145,88 @@ export class AdminGrowthComponent implements OnInit {
     const name = String(u.creatorName || '').split(' ')[0] || 'there';
     const text = `Hi ${name}, this is TrendStarZ. ${u.hostName || 'A brand'} invited you to "${u.campaignTitle}" and is waiting for your reply. Please accept or decline here: ${u.inviteLink}`;
     return `https://wa.me/91${String(u.creatorPhone || '').replace(/\D/g, '').slice(-10)}?text=${encodeURIComponent(text)}`;
+  }
+
+  buildShortlist(r: any): void {
+    if (this.building?.id === r._id) {
+      this.building = null;
+      return;
+    }
+    const b = { id: r._id, loading: true, error: '', candidates: [] as any[], inNiche: 0, selected: new Set<string>(), signupLink: '', message: '' };
+    this.building = b;
+    this.http.get<any>(`${this.base}/shortlist-requests/${r._id}/matches`).subscribe({
+      next: (res) => {
+        if (this.building !== b) return;
+        const data = this.unwrap(res) || {};
+        b.candidates = Array.isArray(data.candidates) ? data.candidates : [];
+        b.inNiche = Number(data.inNiche || 0);
+        b.candidates.slice(0, 5).forEach((c) => b.selected.add(c.id));
+        b.loading = false;
+        this.recompose(r);
+      },
+      error: (err) => {
+        b.loading = false;
+        b.error = err?.error?.message || 'Could not find creators.';
+        this.cdr.markForCheck();
+      },
+    });
+    this.withSignupLink(r, (link) => {
+      if (this.building !== b) return;
+      b.signupLink = link;
+      this.recompose(r);
+    });
+  }
+
+  toggleCandidate(r: any, c: any): void {
+    const b = this.building;
+    if (!b) return;
+    if (b.selected.has(c.id)) b.selected.delete(c.id);
+    else b.selected.add(c.id);
+    this.recompose(r);
+  }
+
+  private recompose(r: any): void {
+    const b = this.building;
+    if (!b) return;
+    const picked = b.candidates.filter((c) => b.selected.has(c.id));
+    b.message = shortlistMessage(r, picked, this.site, b.signupLink);
+    this.cdr.markForCheck();
+  }
+
+  private withSignupLink(r: any, done: (link: string) => void): void {
+    this.http.get<any>(`${this.base}/shortlist-requests/${r._id}/signup-link`).subscribe({
+      next: (res) => done(String(this.unwrap(res)?.link || '')),
+      error: () => done(''),
+    });
+  }
+
+  /** wa.me link to the brand carrying a whole message. */
+  whatsAppWith(r: any, text: string): string {
+    return `https://wa.me/91${String(r.phone || '').replace(/\D/g, '').slice(-10)}?text=${encodeURIComponent(text)}`;
+  }
+
+  /** After sending the shortlist, a new request becomes "contacted". */
+  markSent(r: any): void {
+    if (r.status === 'new') this.saveRequest(r, { status: 'contacted' });
+  }
+
+  /** "Signup link" button: open WhatsApp with just the signup link (details prefilled for them). */
+  sendSignupLink(r: any): void {
+    this.signupBusyId = r._id;
+    // Open the window now (inside the click) so pop-up blockers allow it, then point it at WhatsApp.
+    const win = window.open('', '_blank');
+    this.withSignupLink(r, (link) => {
+      this.signupBusyId = '';
+      if (!link) {
+        win?.close();
+        this.requestsError = 'Could not make the signup link.';
+      } else if (win) {
+        win.location.href = this.whatsAppWith(r, signupMessage(r, link));
+      } else {
+        this.copy(signupMessage(r, link), 'signup-' + r._id);
+      }
+      this.cdr.markForCheck();
+    });
   }
 
   waited(hours: number): string {
