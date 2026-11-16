@@ -97,6 +97,8 @@ export class InfluencerProfileComponent implements OnInit {
   verificationAdminNotesDisplay = '';
   commissionAccessTags: string[] = [];
   platformCommissionPercent: number = 0;
+  /** True once the server sent this account's own rate (Premium / discount), which wins over the Free rate (2026-11-16). */
+  commissionRateIsYours = false;
   firstRegisteredAt: string | null = null;
   lastLoginAt: string | null = null;
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
@@ -649,9 +651,15 @@ export class InfluencerProfileComponent implements OnInit {
       this.verificationCallNumber = s.verificationCallNumber || '';
       this.cd.markForCheck();
     });
+    this.configService.getHostCommissionPreview().subscribe((rate) => {
+      if (rate && typeof rate.commissionPercent === 'number') {
+        this.platformCommissionPercent = rate.commissionPercent;
+        this.commissionRateIsYours = true;
+      }
+    });
     this.configService.getAppSettings().subscribe(s => {
       this.otpVerificationEnabled = !!s.otpVerificationEnabled;
-      if (typeof s.influencerFeePercent === 'number') this.platformCommissionPercent = s.influencerFeePercent;
+      if (typeof s.influencerFeePercent === 'number' && !this.commissionRateIsYours) this.platformCommissionPercent = s.influencerFeePercent;
       this.cd.markForCheck();
     });
 

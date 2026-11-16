@@ -187,6 +187,8 @@ export class PhotographerProfileComponent implements OnInit {
   private originalPhotoshootImagesData: { url: string; public_id: string }[] = [];
   commissionAccessTags: string[] = [];
   platformCommissionPercent: number = 0;
+  /** True once the server sent this account's own rate (Premium / discount), which wins over the Free rate (2026-11-16). */
+  commissionRateIsYours = false;
   firstRegisteredAt: string | null = null;
   lastLoginAt: string | null = null;
   profileVerificationDashboard: ProfileVerificationDashboard | null = null;
@@ -579,9 +581,15 @@ export class PhotographerProfileComponent implements OnInit {
       this.youtubeChecks = checks;
       this.cdr.detectChanges();
     });
+    this.config.getHostCommissionPreview().subscribe((rate) => {
+      if (rate && typeof rate.commissionPercent === 'number') {
+        this.platformCommissionPercent = rate.commissionPercent;
+        this.commissionRateIsYours = true;
+      }
+    });
     this.config.getAppSettings().subscribe((settings) => {
       this.otpVerificationEnabled = !!settings.otpVerificationEnabled;
-      if (typeof settings.photographerFeePercent === 'number') this.platformCommissionPercent = settings.photographerFeePercent;
+      if (typeof settings.photographerFeePercent === 'number' && !this.commissionRateIsYours) this.platformCommissionPercent = settings.photographerFeePercent;
       this.cdr.detectChanges();
     });
     const userId = this.session.getUser()?.id;
