@@ -3112,7 +3112,7 @@ export class AdminUserTableComponent implements OnInit {
         ? { status, note, expectedHandle: sm?.handle ?? '' }
         : { status, note, expectedTier: sm?.tier ?? '' };
       this.http
-        .patch<ApiEnvelope<{ account: SocialAccountVerification }>>(
+        .patch<ApiEnvelope<{ account: SocialAccountVerification; pricesApproved?: number }>>(
           `${environment.apiBaseUrl}/admin/users/${userType}/${userId}/social-accounts/${encodeURIComponent(socialAccountId)}/${reviewType}-verification`,
           body,
           this.getAuthHeaders(),
@@ -3121,6 +3121,12 @@ export class AdminUserTableComponent implements OnInit {
           next: (res) => {
             this.socialVerificationSaving = null;
             const account = unwrapApiData(res)?.account;
+            // Verifying a tier approves waiting prices that fit inside it (2026-11-16).
+            const pricesApproved = Number(unwrapApiData(res)?.pricesApproved || 0);
+            if (pricesApproved) {
+              this.loadSelectedUserPriceChanges(userId);
+              alert(`${pricesApproved} waiting price${pricesApproved === 1 ? '' : 's'} inside the ${sm?.tier || ''} range ${pricesApproved === 1 ? 'was' : 'were'} approved and ${pricesApproved === 1 ? 'is' : 'are'} now live.`);
+            }
             if (account?.socialAccountId) {
               this.socialVerificationByAccount = {
                 ...this.socialVerificationByAccount,

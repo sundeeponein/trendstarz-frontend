@@ -97,6 +97,12 @@ interface DecisionDraft {
   note: string;
 }
 
+/** "2 waiting prices approved" — verifying a tier approves prices inside its range (2026-11-16). */
+function pricesNote(res: any): string {
+  const n = Number((res?.data ?? res)?.pricesApproved || 0);
+  return n ? ` ${n} waiting price${n === 1 ? '' : 's'} inside the range approved.` : '';
+}
+
 @Component({
   selector: 'app-tier-review',
   standalone: true,
@@ -278,11 +284,11 @@ export class TierReviewComponent implements OnInit {
         evidenceBasis: this.draft.basis,
       })
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.saving = false;
           this.lastDone = `${item.creatorName || item.username} · ${item.platform}: tier ${
             this.draft.status === 'verified' ? 'verified' : 'rejected'
-          }.`;
+          }.${pricesNote(res)}`;
           this.deciding = null;
           this.load();
         },
@@ -357,7 +363,7 @@ export class TierReviewComponent implements OnInit {
               note: `Changed from ${from} to the observed tier (${tier}).`,
             })
             .subscribe({
-              next: () => this.moveDone(item, `tier changed ${from} → ${tier} and verified.`),
+              next: (res) => this.moveDone(item, `tier changed ${from} → ${tier} and verified.${pricesNote(res)}`),
               error: (err) =>
                 this.moveDone(
                   item,
