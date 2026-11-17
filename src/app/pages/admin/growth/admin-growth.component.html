@@ -53,7 +53,7 @@
         </select>
       </div>
     </div>
-    <p class="g-help">Brands that filled in <a routerLink="/creator-shortlist" target="_blank">the shortlist form</a>. We promise 5 creators on WhatsApp within 24 hours. Mark each one Contacted once sent, and Converted when they post a campaign.</p>
+    <p class="g-help">Brands that filled in <a routerLink="/creator-shortlist" target="_blank">the shortlist form</a>. We promise 5 creators on WhatsApp within 24 hours. Use <strong>Build shortlist</strong> to pick them and send the message; the request then shows Contacted, and Converted by itself when the brand signs up from the link in it.</p>
     <p class="g-error" *ngIf="requestsError">{{ requestsError }}</p>
     <p class="g-empty" *ngIf="!requests.length && !requestsError">Nothing here.</p>
     <div class="g-table" *ngIf="requests.length">
