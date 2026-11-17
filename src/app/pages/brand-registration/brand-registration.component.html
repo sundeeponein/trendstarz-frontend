@@ -42,9 +42,6 @@
         [showActivationNotice]="preApproveActive"
         [showModerationWarning]="preApproveActive">
       </app-registration-notice>
-      <div class="alert alert-success py-2 small" *ngIf="shortlistPrefilled" role="status">
-        <i class="bi bi-check-circle me-1"></i> We filled in the details from your creator shortlist request. Check them and add the rest.
-      </div>
       <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
         <!-- ═══ STEP 1: BRAND INFO ═══ -->
         <section class="form-card" *ngIf="currentStep === 1">

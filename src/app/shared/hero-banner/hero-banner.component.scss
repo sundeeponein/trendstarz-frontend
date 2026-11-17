@@ -328,14 +328,3 @@
   from { background-position: 200% 0; }
   to { background-position: -200% 0; }
 }
-
-/* "Get a free creator shortlist" under the audience cards (2026-11-16). */
-.shortlist-link {
-  font-size: 0.95rem;
-  color: #475569;
-  margin-bottom: 0;
-  .bi { color: #15803d; margin-right: 4px; }
-  a { color: #c2410c; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
-  a:hover { color: #9a3412; }
-}
-:host-context([data-theme='dark']) .shortlist-link { color: #cbd5e1; a { color: #fdba74; } }

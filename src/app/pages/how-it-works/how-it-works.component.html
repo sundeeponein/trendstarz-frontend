@@ -108,9 +108,6 @@
 
       <div class="journey-actions">
         <a routerLink="/register-brand" [queryParams]="brandSignupParams" class="cta brand-cta">Start Your First Campaign</a>
-        <a routerLink="/creator-shortlist" class="cta-flow-link" *ngIf="role === 'guest'">
-          <i class="bi bi-whatsapp"></i> Or get a free creator shortlist on WhatsApp
-        </a>
         <button type="button" class="cta-flow-link" (click)="flowHelp.openCampaignFlowDiagram()">
           <i class="bi bi-diagram-3"></i> View Success Stories
         </button>

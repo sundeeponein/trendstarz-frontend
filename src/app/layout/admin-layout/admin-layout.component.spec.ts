@@ -32,7 +32,7 @@ describe('AdminLayoutComponent — grouped admin menu', () => {
   });
 
   it('shows the grouped menu in order', () => {
-    expect(topLevel()).toEqual(['Users', 'Review', 'Payments', 'Disputes', 'Link Analytics', 'Reviews', 'Growth', 'Data health']);
+    expect(topLevel()).toEqual(['Users', 'Review', 'Payments', 'Disputes', 'Link Analytics', 'Reviews', 'Data health']);
   });
 
   it('Users opens Users list, Deleted users, Matching Evidence, Tier Review and Campaign records; Review opens Campaigns and Creator Campaigns', () => {

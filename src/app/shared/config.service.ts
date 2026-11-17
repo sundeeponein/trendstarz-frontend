@@ -607,31 +607,6 @@ export class ConfigService {
     );
   }
 
-  /** Public: how many approved creators match a state + niche (null when too few to show). */
-  getShortlistCreatorCount(state: string, category: string): Observable<number | null> {
-    const qs = `state=${encodeURIComponent(state || '')}&category=${encodeURIComponent(category || '')}`;
-    return this.http.get<any>(`${this.apiUrl}/shortlist-requests/creator-count?${qs}`).pipe(
-      map((res) => {
-        const n = (this.extractData<any>(res) || res)?.count;
-        return typeof n === 'number' ? n : null;
-      }),
-      catchError(() => of(null)),
-    );
-  }
-
-  /** Public: the brand's details from their shortlist signup link (null when expired/used). */
-  getShortlistPrefill(ref: string): Observable<{ name: string; businessName: string; phone: string; state: string; city: string; category: string } | null> {
-    return this.http.get<any>(`${this.apiUrl}/shortlist-requests/prefill?ref=${encodeURIComponent(ref)}`).pipe(
-      map((res) => this.extractData<any>(res) || res || null),
-      catchError(() => of(null)),
-    );
-  }
-
-  /** Public: "Get a creator shortlist" form (2026-11-16). */
-  sendShortlistRequest(body: Record<string, any>): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/shortlist-requests`, body);
-  }
-
   getStates(): Observable<any[]> {
     return this.http.get<any>(`${this.apiUrl}/states`).pipe(
       map((res) => this.filterVisible(this.extractData<any[]>(res) || []))
