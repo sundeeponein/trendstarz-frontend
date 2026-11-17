@@ -2615,13 +2615,13 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     return this.inviteListRows.slice(start, start + this.invitePageSize);
   }
 
-  /** "11–20 of 137 · Page 2 of 14". */
+  /** "11–20 of 137" (the page buttons show the page count). */
   get invitePageLabel(): string {
     const total = this.inviteListRows.length;
     if (!total) return '';
     const start = this.inviteCurrentPage * this.invitePageSize + 1;
     const end = Math.min(total, start + this.invitePageSize - 1);
-    return `${start}–${end} of ${total} · Page ${this.inviteCurrentPage + 1} of ${this.invitePageCount}`;
+    return `${start}–${end} of ${total}`;
   }
 
   /** Page buttons: first, last, and the 3 around the current page; -1 = "…". */

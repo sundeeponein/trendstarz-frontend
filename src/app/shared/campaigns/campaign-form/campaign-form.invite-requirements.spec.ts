@@ -100,11 +100,11 @@ describe('CampaignFormComponent — step 3 respects the campaign requirements', 
     setup();
     enterStep3();
     expect(component.invitePageRows.length).toBe(10);
-    expect(component.invitePageLabel).toBe('1–10 of 25 · Page 1 of 3');
+    expect(component.invitePageLabel).toBe('1–10 of 25');
     expect(component.invitePageCount).toBe(3);
     component.goToInvitePage(2);
     expect(component.invitePageRows.length).toBe(5);
-    expect(component.invitePageLabel).toBe('21–25 of 25 · Page 3 of 3');
+    expect(component.invitePageLabel).toBe('21–25 of 25');
     expect(component.inviteCanGoNext).toBeFalse();
 
     component.goToInvitePage(1);
@@ -116,7 +116,7 @@ describe('CampaignFormComponent — step 3 respects the campaign requirements', 
     // 20 per page: creator 11 (first on page 2 of 10) is now on page 1.
     component.setInvitePageSize(20);
     expect(component.inviteCurrentPage).toBe(0);
-    expect(component.invitePageLabel).toBe('1–20 of 25 · Page 1 of 2');
+    expect(component.invitePageLabel).toBe('1–20 of 25');
     component.setInvitePageSize(50);
     expect(component.invitePageCount).toBe(1);
   });
@@ -131,12 +131,12 @@ describe('CampaignFormComponent — step 3 respects the campaign requirements', 
     expect(config['getInfluencers'].calls.count()).toBe(2);
     expect(lastInfluencerQuery()).toEqual(jasmine.objectContaining({ page: 2, limit: 150 }));
     expect(component.inviteListHasMore).toBeFalse();
-    expect(component.invitePageLabel).toBe('1–10 of 157 · Page 1 of 16');
+    expect(component.invitePageLabel).toBe('1–10 of 157');
     expect(component.invitePageNumbers).toEqual([0, 1, 2, 3, -1, 15]);
     component.goToInvitePage(8);
     expect(component.invitePageNumbers).toEqual([0, -1, 7, 8, 9, -1, 15]);
     component.goToInvitePage(15);
-    expect(component.invitePageLabel).toBe('151–157 of 157 · Page 16 of 16');
+    expect(component.invitePageLabel).toBe('151–157 of 157');
     expect(component.invitePageNumbers).toEqual([0, -1, 12, 13, 14, 15]);
   });
 
