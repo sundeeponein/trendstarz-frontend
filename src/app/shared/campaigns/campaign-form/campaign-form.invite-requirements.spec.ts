@@ -100,11 +100,11 @@ describe('CampaignFormComponent — step 3 respects the campaign requirements', 
     setup();
     enterStep3();
     expect(component.invitePageRows.length).toBe(10);
-    expect(component.invitePageLabel).toBe('1–10 of 25');
+    expect(component.invitePageLabel).toBe('1–10 of 25 · Page 1 of 3');
     expect(component.invitePageCount).toBe(3);
     component.goToInvitePage(2);
     expect(component.invitePageRows.length).toBe(5);
-    expect(component.invitePageLabel).toBe('21–25 of 25');
+    expect(component.invitePageLabel).toBe('21–25 of 25 · Page 3 of 3');
     expect(component.inviteCanGoNext).toBeFalse();
 
     component.goToInvitePage(1);
@@ -116,23 +116,28 @@ describe('CampaignFormComponent — step 3 respects the campaign requirements', 
     // 20 per page: creator 11 (first on page 2 of 10) is now on page 1.
     component.setInvitePageSize(20);
     expect(component.inviteCurrentPage).toBe(0);
-    expect(component.invitePageLabel).toBe('1–20 of 25');
+    expect(component.invitePageLabel).toBe('1–20 of 25 · Page 1 of 2');
     component.setInvitePageSize(50);
     expect(component.invitePageCount).toBe(1);
   });
 
-  it('Next on the last loaded page fetches the next server page and shows it', () => {
-    influencers = Array.from({ length: 40 }, (_, i) => creator(`a${String(i).padStart(2, '0')}`));
+  it('loads the whole list in the background, so the total and pages are exact', () => {
+    const first = Array.from({ length: 150 }, (_, i) => creator(`a${String(i).padStart(3, '0')}`));
+    const second = Array.from({ length: 7 }, (_, i) => creator(`b${i}`));
+    let call = 0;
+    config['getInfluencers'] = jasmine.createSpy('getInfluencers').and.callFake(() => of(call++ === 0 ? first : second));
     setup();
     enterStep3();
-    expect(component.inviteListHasMore).toBeTrue();
-    component.goToInvitePage(3);
-    expect(component.invitePageLabel).toBe('31–40 of 40+');
-    influencers = Array.from({ length: 5 }, (_, i) => creator(`b${i}`));
-    component.nextInvitePage();
-    expect(lastInfluencerQuery().page).toBe(2);
-    expect(component.inviteCurrentPage).toBe(4);
-    expect(component.invitePageLabel).toBe('41–45 of 45');
+    expect(config['getInfluencers'].calls.count()).toBe(2);
+    expect(lastInfluencerQuery()).toEqual(jasmine.objectContaining({ page: 2, limit: 150 }));
+    expect(component.inviteListHasMore).toBeFalse();
+    expect(component.invitePageLabel).toBe('1–10 of 157 · Page 1 of 16');
+    expect(component.invitePageNumbers).toEqual([0, 1, 2, 3, -1, 15]);
+    component.goToInvitePage(8);
+    expect(component.invitePageNumbers).toEqual([0, -1, 7, 8, 9, -1, 15]);
+    component.goToInvitePage(15);
+    expect(component.invitePageLabel).toBe('151–157 of 157 · Page 16 of 16');
+    expect(component.invitePageNumbers).toEqual([0, -1, 12, 13, 14, 15]);
   });
 
   it('pre-fills the location filter from the target location and fetches with it', () => {

@@ -157,7 +157,11 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   inviteFilterDistricts: any[] = [];
   quickViewRecipient: any | null = null;
   inviteListPage = 1;
-  inviteListLimit = 40;
+  /** Step 3 loads the whole list in the background, 150 per request (the server's maximum), so counts and pages are exact. */
+  inviteListLimit = 150;
+  /** At most this many requests (1,500 creators) per list. */
+  private readonly inviteListMaxPages = 10;
+  private inviteFetchSeq = 0;
   /** Step 3 shows 10 creators per page by default (host can pick 20 / 50); Next past the loaded ones fetches more (2026-11-17). */
   readonly invitePageSizes = [10, 20, 50];
   invitePageSize = 10;
@@ -2406,12 +2410,14 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
    */
   private fetchInfluencerInvitePage(reset: boolean) {
     if (reset) {
+      this.inviteFetchSeq++;
       this.inviteListPage = 1;
       this.allInfluencers = [];
       this.inviteListHasMore = false;
       this.invitePageIndex = 0;
       this.advanceAfterLoad = false;
     }
+    const seq = this.inviteFetchSeq;
     if (reset) this.influencersLoading = true;
     else this.loadingMoreInfluencers = true;
 
@@ -2428,27 +2434,32 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       campaignEligible: true,
     }).subscribe({
       next: (data: any[]) => {
+        // A newer search/filter started meanwhile: this answer is for the old list.
+        if (seq !== this.inviteFetchSeq) return;
         const rows = (Array.isArray(data) ? data : [])
           .map((p: any) => ({ ...p, _id: p?._id || p?.id || '' }))
           .filter((p: any) => !!String(p?._id || '').trim());
         const before = this.inviteListRows.length;
         this.allInfluencers = reset ? rows : [...this.allInfluencers, ...rows];
-        this.inviteListHasMore = rows.length >= this.inviteListLimit;
+        this.inviteListHasMore = rows.length >= this.inviteListLimit && this.inviteListPage < this.inviteListMaxPages;
         this.influencersLoading = false;
         this.loadingMoreInfluencers = false;
         // "Next" on the last loaded page: show the next page once it arrived.
-        if (this.advanceAfterLoad) {
+        if (this.advanceAfterLoad && this.inviteListRows.length > before) {
           this.advanceAfterLoad = false;
-          if (this.inviteListRows.length > before) this.goToInvitePage(this.invitePageIndex + 1);
-          else if (this.inviteListHasMore) {
-            // Every row of this server page was filtered out here (tier/platform): fetch the next one.
-            this.advanceAfterLoad = true;
-            this.loadMoreInviteRecipients();
-          }
+          this.goToInvitePage(this.invitePageIndex + 1);
+        }
+        // Keep loading the rest in the background, so the total and the pages are exact.
+        if (this.inviteListHasMore) {
+          this.inviteListPage++;
+          this.fetchInfluencerInvitePage(false);
+        } else {
+          this.advanceAfterLoad = false;
         }
         this.cd.detectChanges();
       },
       error: () => {
+        if (seq !== this.inviteFetchSeq) return;
         this.advanceAfterLoad = false;
         this.influencersLoading = false;
         this.loadingMoreInfluencers = false;
@@ -2604,20 +2615,28 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
     return this.inviteListRows.slice(start, start + this.invitePageSize);
   }
 
-  /** "11–20 of 40" (+ when more can still be loaded). */
+  /** "11–20 of 137 · Page 2 of 14". */
   get invitePageLabel(): string {
     const total = this.inviteListRows.length;
     if (!total) return '';
     const start = this.inviteCurrentPage * this.invitePageSize + 1;
     const end = Math.min(total, start + this.invitePageSize - 1);
-    return `${start}–${end} of ${total}${this.inviteListHasMore ? '+' : ''}`;
+    return `${start}–${end} of ${total} · Page ${this.inviteCurrentPage + 1} of ${this.invitePageCount}`;
   }
 
-  /** Up to 5 page numbers around the current one. */
+  /** Page buttons: first, last, and the 3 around the current page; -1 = "…". */
   get invitePageNumbers(): number[] {
     const count = this.invitePageCount;
-    const first = Math.max(0, Math.min(this.inviteCurrentPage - 2, count - 5));
-    return Array.from({ length: Math.min(5, count) }, (_, i) => first + i);
+    if (count <= 7) return Array.from({ length: count }, (_, i) => i);
+    const cur = this.inviteCurrentPage;
+    const from = Math.max(1, Math.min(cur - 1, count - 4));
+    const to = Math.min(count - 2, Math.max(cur + 1, 3));
+    const out: number[] = [0];
+    if (from > 1) out.push(-1);
+    for (let p = from; p <= to; p++) out.push(p);
+    if (to < count - 2) out.push(-1);
+    out.push(count - 1);
+    return out;
   }
 
   get inviteCanGoNext(): boolean {

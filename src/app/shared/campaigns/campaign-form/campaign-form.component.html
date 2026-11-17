@@ -1464,7 +1464,7 @@
 
             <nav class="cf-pager" *ngIf="inviteListRows.length > invitePageSize || inviteListHasMore" [attr.aria-label]="'Pages of ' + inviteRecipientLabelPlural.toLowerCase()">
               <span class="cf-pager__label">
-                {{ invitePageLabel }}
+                {{ invitePageLabel }}<span *ngIf="loadingMoreInfluencers" class="cf-pager__loading"> · loading more…</span>
                 <label class="cf-pager__size" for="cf-page-size">
                   Show
                   <select id="cf-page-size" [ngModel]="invitePageSize" [ngModelOptions]="{ standalone: true }" (ngModelChange)="setInvitePageSize($event)">
@@ -1477,9 +1477,13 @@
                 <button type="button" class="cf-pager__btn" [disabled]="inviteCurrentPage === 0" (click)="goToInvitePage(inviteCurrentPage - 1)" aria-label="Previous page">
                   <i class="bi bi-chevron-left"></i>
                 </button>
-                <button type="button" class="cf-pager__btn" *ngFor="let p of invitePageNumbers"
-                  [class.is-current]="p === inviteCurrentPage" [attr.aria-current]="p === inviteCurrentPage ? 'page' : null"
-                  (click)="goToInvitePage(p)">{{ p + 1 }}</button>
+                <ng-container *ngFor="let p of invitePageNumbers">
+                  <span class="cf-pager__gap" *ngIf="p < 0" aria-hidden="true">…</span>
+                  <button type="button" class="cf-pager__btn" *ngIf="p >= 0"
+                    [class.is-current]="p === inviteCurrentPage" [attr.aria-current]="p === inviteCurrentPage ? 'page' : null"
+                    [attr.aria-label]="'Page ' + (p + 1)"
+                    (click)="goToInvitePage(p)">{{ p + 1 }}</button>
+                </ng-container>
                 <button type="button" class="cf-pager__btn" [disabled]="!inviteCanGoNext || loadingMoreInfluencers" (click)="nextInvitePage()" aria-label="Next page">
                   <span *ngIf="loadingMoreInfluencers" class="spinner-border spinner-border-sm"></span>
                   <i *ngIf="!loadingMoreInfluencers" class="bi bi-chevron-right"></i>
