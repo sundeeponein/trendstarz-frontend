@@ -555,7 +555,7 @@ export class CampaignInviteCardComponent {
   get optionQuestion(): string { return String(this.invite?.shippingAddress?.optionQuestion || ''); }
   get optionAnswer(): string { return String(this.invite?.shippingAddress?.optionAnswer || ''); }
   get optionChoices(): string[] {
-    const list = this.invite?.campaignId?.productOptionChoices;
+    const list = this.campaign?.productOptionChoices;
     return Array.isArray(list) ? list : [];
   }
   get canChangeOption(): boolean {
