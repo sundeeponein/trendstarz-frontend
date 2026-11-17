@@ -8,6 +8,9 @@ import { environment } from '../../environments/environment';
  * 5 reports per page load, no repeats; fetch (not HttpClient) so a failing
  * report can never loop back into this handler.
  */
+/** Harmless messages that aren't our bugs (same list as the server's CLIENT_ERROR_NOISE). */
+const NOISE = [/Java object is gone/i, /^Script error\.?$/i];
+
 @Injectable()
 export class ClientErrorHandler extends ErrorHandler {
   private sent = new Set<string>();
@@ -20,7 +23,8 @@ export class ClientErrorHandler extends ErrorHandler {
       const message = String(err?.message || err || '').slice(0, 300);
       const name = String(err?.name || 'Error').slice(0, 60);
       const key = `${name}:${message}`;
-      if (!message || this.sent.has(key) || this.sent.size >= 5) return;
+      if (!message || NOISE.some((re) => re.test(message.trim()))) return;
+      if (this.sent.has(key) || this.sent.size >= 5) return;
       this.sent.add(key);
       void fetch(`${environment.apiBaseUrl}/client-errors`, {
         method: 'POST',

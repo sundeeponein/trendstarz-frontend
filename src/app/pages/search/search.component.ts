@@ -454,6 +454,11 @@ export class SearchComponent implements OnInit {
     if (urlCreatorType && this.activeTab === 'influencers') {
       this.infFilters.creatorType = urlCreatorType;
     }
+    // State from a link, e.g. the brand dashboard's "Search Influencers" box (2026-11-17).
+    const urlState = (this.route.snapshot.queryParamMap.get('state') || '').trim();
+    if (urlState && this.activeTab === 'influencers') {
+      this.infFilters.location = urlState;
+    }
     if (this.activeTab === 'influencers') {
       this.fetchInfluencers({ countSearch: false });
     } else if (this.activeTab === 'photographers') {

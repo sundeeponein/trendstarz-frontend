@@ -17,13 +17,6 @@ export class DashboardService {
     return this.http.get(`${this.api}/dashboard/brand`);
   }
 
-  searchInfluencers(filters: { category?: string; state?: string }): Observable<any[]> {
-    const params: any = {};
-    if (filters.category) params.category = filters.category;
-    if (filters.state) params.state = filters.state;
-    return this.http.get<any[]>(`${this.api}/users/influencers/search`, { params });
-  }
-
   respondToInvite(
     inviteId: string,
     status: 'accepted' | 'declined' | 'counter_sent',

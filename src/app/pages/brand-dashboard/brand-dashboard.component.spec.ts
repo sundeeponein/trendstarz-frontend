@@ -46,7 +46,6 @@ describe('BrandDashboardComponent usage summary', () => {
           recommendedInfluencers: [],
         },
       }),
-      searchInfluencers: () => of([]),
     };
 
     const monetizationStub = {

@@ -1139,12 +1139,12 @@ export class ConfigService {
 
   /** Photographer profile page loaded (counted like influencer views). */
   trackPhotographerProfileImpression(username: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/photographers/username/${encodeURIComponent(username)}/track-impression`, {});
+    return this.http.post(`${this.apiUrl}/users/photographers/username/${encodeURIComponent(username)}/track-impression`, {});
   }
 
   /** Photographer card clicked in Search / Welcome. */
   trackPhotographerProfileClick(username: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/photographers/username/${encodeURIComponent(username)}/track-click`, {});
+    return this.http.post(`${this.apiUrl}/users/photographers/username/${encodeURIComponent(username)}/track-click`, {});
   }
 
   // ── Campaign endpoints ──────────────────────

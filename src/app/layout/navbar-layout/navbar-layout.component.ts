@@ -57,15 +57,18 @@ export class NavbarLayoutComponent implements OnDestroy {
   };
 
   private loadAppLinkVisibility(): void {
-    this.config.getAppSettings().subscribe((settings: any) => {
+    // On pre-built pages the answer is already in the page, so it arrives while
+    // the navbar is still being set up; refreshing on the spot crashed there
+    // ("reading 'user'", 2026-11-17). Ask for a refresh instead.
+    this.subs.add(this.config.getAppSettings().subscribe((settings: any) => {
       this.appLinkVisibility = {
         showSearchLink: settings?.showSearchLink !== false,
         showRegisterInfluencerLink: settings?.showRegisterInfluencerLink !== false,
         showRegisterBrandLink: settings?.showRegisterBrandLink !== false,
         showRegisterPhotographerLink: settings?.showRegisterPhotographerLink !== false,
       };
-      this.cdr.detectChanges();
-    });
+      this.cdr.markForCheck();
+    }));
   }
 
   private setMobileMenuState(open: boolean) {
@@ -219,7 +222,7 @@ export class NavbarLayoutComponent implements OnDestroy {
         : user.role === 'photographer'
           ? this.config.getPhotographerProfileById()
           : this.config.getInfluencerProfileById();
-      profileCall.subscribe((profile: any) => {
+      this.subs.add(profileCall.subscribe((profile: any) => {
         if (profile) {
           const updated = {
             ...this.session.getUser(),
@@ -236,7 +239,7 @@ export class NavbarLayoutComponent implements OnDestroy {
           this.session.setUser(updated);
           this.cdr.detectChanges();
         }
-      });
+      }));
 
       this.refreshNotifications();
       this.refreshNotificationCount();

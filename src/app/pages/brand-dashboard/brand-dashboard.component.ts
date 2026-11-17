@@ -471,10 +471,18 @@ export class BrandDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * "Search Influencers" box: opens Search with the chosen category and state
+   * (2026-11-17). It used to call users/influencers/search, which doesn't
+   * exist, so every click failed and nothing was shown.
+   */
   searchInfluencers(): void {
-    this.dashboardService.searchInfluencers(this.filters).subscribe((res: any) => {
-      // The server returns { data, total, page, limit }.
-      this.recommendedInfluencers = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+    this.router.navigate(['/search'], {
+      queryParams: {
+        tab: 'influencers',
+        category: this.filters.category || null,
+        state: this.filters.state || null,
+      },
     });
   }
 
