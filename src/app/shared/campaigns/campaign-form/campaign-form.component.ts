@@ -158,8 +158,9 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   quickViewRecipient: any | null = null;
   inviteListPage = 1;
   inviteListLimit = 40;
-  /** Step 3 shows 10 creators per page (2026-11-17); Next past the loaded ones fetches more. */
-  readonly invitePageSize = 10;
+  /** Step 3 shows 10 creators per page by default (host can pick 20 / 50); Next past the loaded ones fetches more (2026-11-17). */
+  readonly invitePageSizes = [10, 20, 50];
+  invitePageSize = 10;
   invitePageIndex = 0;
   private advanceAfterLoad = false;
   inviteListHasMore = false;
@@ -2621,6 +2622,14 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
 
   get inviteCanGoNext(): boolean {
     return this.inviteCurrentPage < this.invitePageCount - 1 || (this.inviteRecipientRole === 'influencer' && this.inviteListHasMore);
+  }
+
+  /** New page size: stay on the page that holds the first creator now on screen. */
+  setInvitePageSize(size: number): void {
+    const firstShown = this.inviteCurrentPage * this.invitePageSize;
+    this.invitePageSize = this.invitePageSizes.includes(Number(size)) ? Number(size) : 10;
+    this.invitePageIndex = Math.floor(firstShown / this.invitePageSize);
+    this.cd.detectChanges();
   }
 
   goToInvitePage(index: number): void {

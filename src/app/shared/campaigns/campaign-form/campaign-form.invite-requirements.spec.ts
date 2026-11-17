@@ -112,6 +112,13 @@ describe('CampaignFormComponent — step 3 respects the campaign requirements', 
     component.selectedInfluencerIds.add(component.getRecipientId(picked));
     expect(component.invitePageRows[3]).toBe(picked);
     expect(component.selectedRecipientChips.map((c) => c.id)).toEqual([component.getRecipientId(picked)]);
+
+    // 20 per page: creator 11 (first on page 2 of 10) is now on page 1.
+    component.setInvitePageSize(20);
+    expect(component.inviteCurrentPage).toBe(0);
+    expect(component.invitePageLabel).toBe('1–20 of 25');
+    component.setInvitePageSize(50);
+    expect(component.invitePageCount).toBe(1);
   });
 
   it('Next on the last loaded page fetches the next server page and shows it', () => {

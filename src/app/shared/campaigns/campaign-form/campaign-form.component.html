@@ -1463,7 +1463,16 @@
             </div>
 
             <nav class="cf-pager" *ngIf="inviteListRows.length > invitePageSize || inviteListHasMore" [attr.aria-label]="'Pages of ' + inviteRecipientLabelPlural.toLowerCase()">
-              <span class="cf-pager__label">{{ invitePageLabel }}</span>
+              <span class="cf-pager__label">
+                {{ invitePageLabel }}
+                <label class="cf-pager__size" for="cf-page-size">
+                  Show
+                  <select id="cf-page-size" [ngModel]="invitePageSize" [ngModelOptions]="{ standalone: true }" (ngModelChange)="setInvitePageSize($event)">
+                    <option *ngFor="let n of invitePageSizes" [ngValue]="n">{{ n }}</option>
+                  </select>
+                  per page
+                </label>
+              </span>
               <div class="cf-pager__buttons">
                 <button type="button" class="cf-pager__btn" [disabled]="inviteCurrentPage === 0" (click)="goToInvitePage(inviteCurrentPage - 1)" aria-label="Previous page">
                   <i class="bi bi-chevron-left"></i>
