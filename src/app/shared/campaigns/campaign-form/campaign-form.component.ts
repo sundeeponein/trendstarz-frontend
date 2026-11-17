@@ -158,6 +158,10 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
   quickViewRecipient: any | null = null;
   inviteListPage = 1;
   inviteListLimit = 40;
+  /** Step 3 shows 10 creators per page (2026-11-17); Next past the loaded ones fetches more. */
+  readonly invitePageSize = 10;
+  invitePageIndex = 0;
+  private advanceAfterLoad = false;
   inviteListHasMore = false;
   loadingMoreInfluencers = false;
   private inviteSearchDebounce: any = null;
@@ -2404,6 +2408,8 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       this.inviteListPage = 1;
       this.allInfluencers = [];
       this.inviteListHasMore = false;
+      this.invitePageIndex = 0;
+      this.advanceAfterLoad = false;
     }
     if (reset) this.influencersLoading = true;
     else this.loadingMoreInfluencers = true;
@@ -2424,13 +2430,25 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
         const rows = (Array.isArray(data) ? data : [])
           .map((p: any) => ({ ...p, _id: p?._id || p?.id || '' }))
           .filter((p: any) => !!String(p?._id || '').trim());
+        const before = this.inviteListRows.length;
         this.allInfluencers = reset ? rows : [...this.allInfluencers, ...rows];
         this.inviteListHasMore = rows.length >= this.inviteListLimit;
         this.influencersLoading = false;
         this.loadingMoreInfluencers = false;
+        // "Next" on the last loaded page: show the next page once it arrived.
+        if (this.advanceAfterLoad) {
+          this.advanceAfterLoad = false;
+          if (this.inviteListRows.length > before) this.goToInvitePage(this.invitePageIndex + 1);
+          else if (this.inviteListHasMore) {
+            // Every row of this server page was filtered out here (tier/platform): fetch the next one.
+            this.advanceAfterLoad = true;
+            this.loadMoreInviteRecipients();
+          }
+        }
         this.cd.detectChanges();
       },
       error: () => {
+        this.advanceAfterLoad = false;
         this.influencersLoading = false;
         this.loadingMoreInfluencers = false;
         this.cd.detectChanges();
@@ -2558,11 +2576,78 @@ export class CampaignFormComponent implements OnInit, OnChanges, OnDestroy {
       .filter(Boolean);
   }
 
-  /** Step 3 list: selected recipients first, then the filtered/ranked candidates. */
+  /**
+   * Step 3 list in a stable order: selected recipients that aren't in the
+   * current results first (e.g. handed over from Search), then the results.
+   * Ticking someone no longer moves them, so the page doesn't jump
+   * (2026-11-17); the "Selected" strip above the list shows every pick.
+   */
   get inviteListRows(): any[] {
-    const pinned = this.pinnedSelectedRecipients;
-    if (!pinned.length) return this.filteredInfluencers;
-    return [...pinned, ...this.filteredInfluencers.filter((inf) => !this.selectedInfluencerIds.has(this.getRecipientId(inf)))];
+    const filtered = this.filteredInfluencers;
+    const shown = new Set(filtered.map((inf) => this.getRecipientId(inf)));
+    const outside = this.pinnedSelectedRecipients.filter((inf) => !shown.has(this.getRecipientId(inf)));
+    return outside.length ? [...outside, ...filtered] : filtered;
+  }
+
+  get invitePageCount(): number {
+    return Math.max(1, Math.ceil(this.inviteListRows.length / this.invitePageSize));
+  }
+
+  /** The page on screen (kept inside the list when filters shrink it). */
+  get inviteCurrentPage(): number {
+    return Math.min(this.invitePageIndex, this.invitePageCount - 1);
+  }
+
+  get invitePageRows(): any[] {
+    const start = this.inviteCurrentPage * this.invitePageSize;
+    return this.inviteListRows.slice(start, start + this.invitePageSize);
+  }
+
+  /** "11–20 of 40" (+ when more can still be loaded). */
+  get invitePageLabel(): string {
+    const total = this.inviteListRows.length;
+    if (!total) return '';
+    const start = this.inviteCurrentPage * this.invitePageSize + 1;
+    const end = Math.min(total, start + this.invitePageSize - 1);
+    return `${start}–${end} of ${total}${this.inviteListHasMore ? '+' : ''}`;
+  }
+
+  /** Up to 5 page numbers around the current one. */
+  get invitePageNumbers(): number[] {
+    const count = this.invitePageCount;
+    const first = Math.max(0, Math.min(this.inviteCurrentPage - 2, count - 5));
+    return Array.from({ length: Math.min(5, count) }, (_, i) => first + i);
+  }
+
+  get inviteCanGoNext(): boolean {
+    return this.inviteCurrentPage < this.invitePageCount - 1 || (this.inviteRecipientRole === 'influencer' && this.inviteListHasMore);
+  }
+
+  goToInvitePage(index: number): void {
+    this.invitePageIndex = Math.max(0, Math.min(index, this.invitePageCount - 1));
+    this.cd.detectChanges();
+    if (typeof document !== 'undefined') {
+      document.getElementById('cf-invite-list')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  nextInvitePage(): void {
+    if (this.inviteCurrentPage < this.invitePageCount - 1) {
+      this.goToInvitePage(this.inviteCurrentPage + 1);
+      return;
+    }
+    if (this.inviteRecipientRole !== 'influencer' || !this.inviteListHasMore || this.loadingMoreInfluencers) return;
+    this.invitePageIndex = this.inviteCurrentPage;
+    this.advanceAfterLoad = true;
+    this.loadMoreInviteRecipients();
+  }
+
+  /** Picks shown as chips above the list (every page). */
+  get selectedRecipientChips(): Array<{ id: string; name: string }> {
+    return this.pinnedSelectedRecipients.map((inf) => ({
+      id: this.getRecipientId(inf),
+      name: inf.fullName || inf.name || inf.username || 'Creator',
+    }));
   }
 
   get filteredInfluencers(): any[] {

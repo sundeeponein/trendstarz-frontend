@@ -95,6 +95,39 @@ describe('CampaignFormComponent — step 3 respects the campaign requirements', 
   const enterStep3 = () => component.goToStep(3);
   const lastInfluencerQuery = () => config['getInfluencers'].calls.mostRecent().args[0];
 
+  it('shows 10 creators per page; ticking one keeps it in place (2026-11-17)', () => {
+    influencers = Array.from({ length: 25 }, (_, i) => creator(`c${String(i).padStart(2, '0')}`));
+    setup();
+    enterStep3();
+    expect(component.invitePageRows.length).toBe(10);
+    expect(component.invitePageLabel).toBe('1–10 of 25');
+    expect(component.invitePageCount).toBe(3);
+    component.goToInvitePage(2);
+    expect(component.invitePageRows.length).toBe(5);
+    expect(component.invitePageLabel).toBe('21–25 of 25');
+    expect(component.inviteCanGoNext).toBeFalse();
+
+    component.goToInvitePage(1);
+    const picked = component.invitePageRows[3];
+    component.selectedInfluencerIds.add(component.getRecipientId(picked));
+    expect(component.invitePageRows[3]).toBe(picked);
+    expect(component.selectedRecipientChips.map((c) => c.id)).toEqual([component.getRecipientId(picked)]);
+  });
+
+  it('Next on the last loaded page fetches the next server page and shows it', () => {
+    influencers = Array.from({ length: 40 }, (_, i) => creator(`a${String(i).padStart(2, '0')}`));
+    setup();
+    enterStep3();
+    expect(component.inviteListHasMore).toBeTrue();
+    component.goToInvitePage(3);
+    expect(component.invitePageLabel).toBe('31–40 of 40+');
+    influencers = Array.from({ length: 5 }, (_, i) => creator(`b${i}`));
+    component.nextInvitePage();
+    expect(lastInfluencerQuery().page).toBe(2);
+    expect(component.inviteCurrentPage).toBe(4);
+    expect(component.invitePageLabel).toBe('41–45 of 45');
+  });
+
   it('pre-fills the location filter from the target location and fetches with it', () => {
     setup();
     component.form.patchValue({ targetState: 'Telangana', targetDistrict: 'Hyderabad' });

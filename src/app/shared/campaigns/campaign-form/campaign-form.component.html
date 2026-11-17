@@ -1359,9 +1359,17 @@
             <p class="mt-2" style="font-size:0.82rem;color:#7a7a8e">Loading {{ inviteRecipientLabelPlural.toLowerCase() }}…</p>
           </div>
 
-          <div class="inf-list" *ngIf="!influencersLoading && !photographersLoading">
+          <div class="cf-selected-strip" *ngIf="selectedRecipientChips.length && !influencersLoading && !photographersLoading">
+            <span class="cf-selected-strip__label">Selected ({{ selectedRecipientChips.length }}):</span>
+            <span class="cf-selected-chip" *ngFor="let c of selectedRecipientChips">
+              {{ c.name }}
+              <button type="button" class="cf-selected-chip__x" (click)="toggleInfluencerSelect(c.id)" [attr.aria-label]="'Remove ' + c.name"><i class="bi bi-x"></i></button>
+            </span>
+          </div>
+
+          <div class="inf-list" id="cf-invite-list" *ngIf="!influencersLoading && !photographersLoading">
             <div class="inf-row"
-              *ngFor="let inf of inviteListRows"
+              *ngFor="let inf of invitePageRows"
               [class.inf-row--selected]="selectedInfluencerIds.has(getRecipientId(inf))"
               [class.inf-row--invited]="isInfluencerInvited(inf)"
               [class.inf-row--disabled]="isInfluencerInvited(inf) || isInfluencerDeclined(inf) || (!selectedInfluencerIds.has(getRecipientId(inf)) && !canSelectMoreInfluencers())"
@@ -1454,11 +1462,21 @@
               </ul>
             </div>
 
-            <div class="text-center py-3" *ngIf="inviteRecipientRole === 'influencer' && inviteListHasMore">
-              <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="loadingMoreInfluencers" (click)="loadMoreInviteRecipients()">
-                {{ loadingMoreInfluencers ? 'Loading…' : 'Load more' }}
-              </button>
-            </div>
+            <nav class="cf-pager" *ngIf="inviteListRows.length > invitePageSize || inviteListHasMore" [attr.aria-label]="'Pages of ' + inviteRecipientLabelPlural.toLowerCase()">
+              <span class="cf-pager__label">{{ invitePageLabel }}</span>
+              <div class="cf-pager__buttons">
+                <button type="button" class="cf-pager__btn" [disabled]="inviteCurrentPage === 0" (click)="goToInvitePage(inviteCurrentPage - 1)" aria-label="Previous page">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                <button type="button" class="cf-pager__btn" *ngFor="let p of invitePageNumbers"
+                  [class.is-current]="p === inviteCurrentPage" [attr.aria-current]="p === inviteCurrentPage ? 'page' : null"
+                  (click)="goToInvitePage(p)">{{ p + 1 }}</button>
+                <button type="button" class="cf-pager__btn" [disabled]="!inviteCanGoNext || loadingMoreInfluencers" (click)="nextInvitePage()" aria-label="Next page">
+                  <span *ngIf="loadingMoreInfluencers" class="spinner-border spinner-border-sm"></span>
+                  <i *ngIf="!loadingMoreInfluencers" class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            </nav>
           </div>
 
           <div class="quick-view-backdrop" *ngIf="quickViewRecipient" (click)="closeRecipientQuickView()">
