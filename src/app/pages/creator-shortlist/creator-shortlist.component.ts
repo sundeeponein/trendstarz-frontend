@@ -108,7 +108,11 @@ import { captureSignupAttribution } from '../../shared/signup-attribution.util';
   `,
   styles: [
     `
+      /* The page sits on the layout's dark band (white text): set our own text colour. */
+      :host { display: block; color: #0f172a; }
       .cs { padding-block: 32px 56px; }
+      .cs h1, .cs h2, .cs .form-label { color: #0f172a; }
+      .cs .form-label { font-weight: 600; font-size: 0.9rem; }
       .cs-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 32px; align-items: start; }
       @media (max-width: 860px) { .cs-grid { grid-template-columns: minmax(0, 1fr); } }
       .cs-eyebrow { font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: #c2410c; font-weight: 700; }
@@ -125,6 +129,8 @@ import { captureSignupAttribution } from '../../shared/signup-attribution.util';
       .cs-done { text-align: center; display: grid; gap: 8px; justify-items: center; }
       .cs-done .bi { font-size: 2.4rem; color: #15803d; }
       .cs-done h2 { font-size: 1.4rem; font-weight: 800; margin: 0; }
+      :host-context([data-theme='dark']) { color: #e2e8f0; }
+      :host-context([data-theme='dark']) .cs h1, :host-context([data-theme='dark']) .cs h2, :host-context([data-theme='dark']) .cs .form-label { color: #f1f5f9; }
       :host-context([data-theme='dark']) .cs-card { background: #111827; border-color: #1f2937; }
       :host-context([data-theme='dark']) .cs-lede, :host-context([data-theme='dark']) .cs-steps { color: #cbd5e1; }
       :host-context([data-theme='dark']) .cs-count { background: rgba(194, 65, 12, 0.15); border-color: rgba(194, 65, 12, 0.4); color: #fdba74; }

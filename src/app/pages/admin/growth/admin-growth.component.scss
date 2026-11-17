@@ -1,3 +1,7 @@
+/* The admin layout gives white text by default: set our own colours. */
+:host { display: block; color: #0f172a; }
+.growth h1, .growth h2, .g-tile b, .g-link-form .form-label, .g-build .form-label { color: #0f172a; }
+.g-link-form .form-label { font-weight: 600; font-size: 0.85rem; }
 .growth { padding-block: 20px 48px; display: grid; gap: 28px; max-width: 1200px; }
 .g-head h1 { font-size: 1.6rem; font-weight: 800; margin: 0 0 4px; }
 .g-head p { color: #64748b; margin: 0; max-width: 70ch; }
@@ -44,6 +48,8 @@ tr.g-late td:first-child { box-shadow: inset 3px 0 0 #c2410c; }
 .g-msg { font-family: inherit; white-space: pre-wrap; }
 
 :host-context([data-theme='dark']) {
+  color: #e2e8f0;
+  .growth h1, .growth h2, .g-tile b, .g-link-form .form-label, .g-build .form-label { color: #f1f5f9; }
   .g-build-row > td { background: #0f172a; }
   .g-cand { background: #111827; border-color: #1f2937; }
   .g-cand-line { color: #cbd5e1; }
