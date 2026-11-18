@@ -160,6 +160,9 @@
       <p class="dh-help">
         {{ fbRecon.accounts }} live accounts · {{ fbRecon.firebaseUsers }} Firebase logins ·
         {{ fbRecon.noFirebaseLogin.length }} without a Firebase login yet (normal — created on their first password reset).
+        <ng-container *ngIf="fbRecon.deletedAwaitingCleanup?.length">
+          · {{ fbRecon.deletedAwaitingCleanup!.length }} deleted but still restorable (login kept on purpose; removed automatically on the day shown).
+        </ng-container>
       </p>
       <ng-container *ngFor="let g of fbProblems">
         <div class="dh-config" *ngFor="let r of g.rows">
@@ -168,6 +171,11 @@
           <span class="dh-help">{{ r.problem }}<ng-container *ngIf="r.accountId"> · {{ r.accountId }}</ng-container></span>
         </div>
       </ng-container>
+      <div class="dh-config" *ngFor="let r of fbRecon.deletedAwaitingCleanup || []">
+        <span class="dh-config__status dh-config__status--off">Deleted, restorable</span>
+        <strong>{{ r.email }}<ng-container *ngIf="r.role"> · {{ r.role }}</ng-container></strong>
+        <span class="dh-help">{{ r.problem }} · login removed on {{ r.removeOn | date: 'd MMM y' }} · {{ r.accountId }}</span>
+      </div>
     </ng-container>
   </div>
 

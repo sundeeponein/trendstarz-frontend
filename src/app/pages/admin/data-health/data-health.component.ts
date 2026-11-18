@@ -63,6 +63,7 @@ export class DataHealthComponent implements OnInit {
     noFirebaseLogin: any[];
     linkedToOtherLogin: any[];
     deletedButLoginKept: any[];
+    deletedAwaitingCleanup?: any[];
     loginWithoutAccount: any[];
     verifiedOnlyInFirebase: any[];
   } | null = null;
