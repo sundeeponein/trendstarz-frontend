@@ -134,6 +134,9 @@
       <div class="dh-config" *ngFor="let r of emailBlocks.accounts">
         <span class="dh-config__status dh-config__status--failing">Blocked</span>
         <strong>{{ r.email }} · {{ r.role }}</strong>
+        <span class="dh-config__status dh-config__status--failing" *ngIf="r.openMoney">Money open</span>
+        <span class="dh-config__status dh-config__status--failing" *ngIf="r.openWork">Campaign open</span>
+        <span class="dh-help" *ngIf="r.openMoney || r.openWork"><strong>Unblock in Brevo now</strong> — their payment and campaign emails aren't arriving.</span>
         <span class="dh-help">{{ r.reason }}<ng-container *ngIf="r.blockedAt"> · since {{ r.blockedAt | date: 'd MMM y' }}</ng-container> · {{ r.accountId }}</span>
       </div>
     </ng-container>
