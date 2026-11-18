@@ -1,0 +1,57 @@
+.referral-link-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.referral-link-card__header h2 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 4px;
+}
+
+.referral-link-card__header p {
+  font-size: 0.82rem;
+  color: #7a7a8e;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.referral-link-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.referral-link-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  color: #333;
+  background: #f9f9f9;
+}
+
+.referral-link-copy-btn {
+  background: #e8612d;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.referral-link-copy-btn:hover {
+  background: #d4551f;
+}

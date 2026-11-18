@@ -1,18 +1,31 @@
-<section class="built-for-strip py-4" aria-label="Built For Audiences">
+<section class="built-for-strip py-5" aria-labelledby="built-for-heading">
   <div class="container">
-    <h2 class="built-for-title mb-1 text-center">{{ heading }}</h2>
-    <p class="built-for-subtitle mb-4 text-center">{{ subheading }}</p>
-
-    <div class="built-for-grid">
-      <div class="built-for-item" *ngFor="let item of items">
-        <article class="built-for-card">
-          <div class="built-for-tile">
-            <i class="bi" [ngClass]="item.icon"></i>
-          </div>
-          <h5>{{ item.title }}</h5>
-          <p>{{ item.subtitle }}</p>
-        </article>
+    <div class="built-for-head">
+      <div>
+        <p class="built-for-kicker">{{ kicker }}</p>
+        <h2 id="built-for-heading" class="built-for-title">{{ heading }}</h2>
+        <p class="built-for-subtitle">{{ subheading }}</p>
       </div>
+      <a class="built-for-all" routerLink="/search" [queryParams]="searchParams()">
+        {{ exploreAllLabel }} <i class="bi bi-arrow-right" aria-hidden="true"></i>
+      </a>
     </div>
+
+    <ul class="built-for-grid">
+      <li *ngFor="let item of items; let i = index">
+        <a class="built-for-card" routerLink="/search" [queryParams]="searchParams(item)">
+          <span class="built-for-tile" [ngClass]="'tile-' + tintFor(item, i)">
+            <i class="bi" [ngClass]="item.icon" aria-hidden="true"></i>
+          </span>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.subtitle }}</p>
+          <span class="built-for-count">
+            <ng-container *ngIf="item.countLabel; else noCount">{{ item.countLabel }} Creators</ng-container>
+            <ng-template #noCount>Explore<span class="count-wide"> creators</span></ng-template>
+            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </span>
+        </a>
+      </li>
+    </ul>
   </div>
 </section>

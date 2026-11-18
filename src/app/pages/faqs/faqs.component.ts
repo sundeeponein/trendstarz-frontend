@@ -17,8 +17,8 @@ export class FaqsComponent {
   readonly searchTerm = signal('');
   readonly ctaButtons: FaqCtaButton[] = [
     { label: 'Join as Influencer', route: '/register-influencer', className: 'btn btn-primary' },
-    { label: 'Join as Brand', route: '/register-brand', className: 'btn btn-outline-white' },
-    { label: 'Explore Opportunities', route: '/search', className: 'btn btn-outline-white' },
+    { label: 'Join as Brand', route: '/register-brand', className: 'btn btn-outline-dark' },
+    { label: 'Explore Opportunities', route: '/search', className: 'btn btn-outline-dark' },
   ];
 
   readonly filteredFaqs = computed(() => {

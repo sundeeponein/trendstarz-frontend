@@ -11,7 +11,7 @@ export class SessionService {
   private static readonly TOKEN_KEY = 'token';
   private static readonly LOGIN_TIME_KEY = 'loginTimestamp';
   private static readonly SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in ms
-  private static readonly REMEMBER_ME_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
+  private static readonly REMEMBER_ME_DURATION = 90 * 24 * 60 * 60 * 1000; // 90 days in ms
 
   private static readonly USER_KEY = 'user';
   private userSubject = new BehaviorSubject<any | null>(null);
@@ -44,17 +44,16 @@ export class SessionService {
     localStorage.removeItem(SessionService.LOGIN_TIME_KEY);
   }
 
-  setToken(token: string, rememberMe = false) {
+  setToken(token: string, remember = this.prefersPersistentSession()) {
     if (!this.isBrowser()) return;
-    const shouldPersist = rememberMe || this.prefersPersistentSession();
-    if (shouldPersist) {
+    if (remember) {
       localStorage.setItem(SessionService.TOKEN_KEY, token);
       localStorage.setItem(SessionService.LOGIN_TIME_KEY, String(Date.now()));
       sessionStorage.removeItem(SessionService.TOKEN_KEY);
-    } else {
-      this.clearRememberedSession();
-      sessionStorage.setItem(SessionService.TOKEN_KEY, token);
+      return;
     }
+    sessionStorage.setItem(SessionService.TOKEN_KEY, token);
+    this.clearRememberedSession();
   }
 
   getToken(): string | null {

@@ -13,7 +13,7 @@ describe('AdminPaymentsUiUtilsService', () => {
   });
 
   it('returns paid collab label', () => {
-    expect(service.getTransactionLabel('paid_collab')).toBe('Paid Collab');
+    expect(service.getTransactionLabel('paid_collab')).toBe('Paid Campaign');
   });
 
   it('returns fallback deleted user name when user is missing', () => {

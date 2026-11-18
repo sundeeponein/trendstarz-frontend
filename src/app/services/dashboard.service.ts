@@ -17,29 +17,46 @@ export class DashboardService {
     return this.http.get(`${this.api}/dashboard/brand`);
   }
 
-  searchInfluencers(filters: { category?: string; state?: string }): Observable<any[]> {
-    const params: any = {};
-    if (filters.category) params.category = filters.category;
-    if (filters.state) params.state = filters.state;
-    return this.http.get<any[]>(`${this.api}/users/influencers/search`, { params });
-  }
-
   respondToInvite(
     inviteId: string,
-    status: 'accepted' | 'declined',
+    status: 'accepted' | 'declined' | 'counter_sent',
     selectedPostDate?: string,
     selectedPlatform?: string,
     selectedContentType?: string,
+    counterAmount?: number,
+    counterMessage?: string,
     payout?: { upiId?: string; mobile?: string; accountHolderName?: string },
+    shippingAddress?: {
+      contactName?: string; contactMobile?: string;
+      line1?: string; line2?: string;
+      city?: string; state?: string; pincode?: string; landmark?: string;
+    },
   ): Observable<any> {
     const body: any = { status };
     if (selectedPostDate) body.selectedPostDate = selectedPostDate;
     if (selectedPlatform) body.selectedPlatform = selectedPlatform;
     if (selectedContentType) body.selectedContentType = selectedContentType;
+    if (counterAmount && counterAmount > 0) body.counterAmount = counterAmount;
+    if (counterMessage) body.counterMessage = counterMessage;
     if (payout && (payout.upiId || payout.mobile || payout.accountHolderName)) {
       body.payout = payout;
     }
+    if (shippingAddress && (shippingAddress.line1 || shippingAddress.pincode)) {
+      body.shippingAddress = shippingAddress;
+    }
     return this.http.patch(`${this.api}/campaign-invites/${inviteId}/respond`, body);
+  }
+
+  respondToCounterOffer(
+    inviteId: string,
+    action: 'accept' | 'decline' | 'counter',
+    counterAmount?: number,
+    note?: string,
+  ): Observable<any> {
+    const body: any = { action };
+    if (counterAmount && counterAmount > 0) body.counterAmount = counterAmount;
+    if (note) body.note = note;
+    return this.http.patch(`${this.api}/campaign-invites/${inviteId}/counter/respond`, body);
   }
 
   getMyInvites(): Observable<any[]> {

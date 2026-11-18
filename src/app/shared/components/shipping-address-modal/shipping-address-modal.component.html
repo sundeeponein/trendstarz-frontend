@@ -1,0 +1,97 @@
+<ng-container *ngIf="visible">
+  <div class="sam-backdrop" (click)="cancel()"></div>
+  <div class="sam-modal" role="dialog" aria-modal="true" aria-labelledby="sam-title">
+    <div class="sam-header">
+      <div>
+        <h3 id="sam-title" class="sam-title">
+          <i class="bi bi-truck"></i> Shipping address for product campaign
+        </h3>
+        <p class="sam-subtitle" *ngIf="modal.options.campaignTitle">
+          {{ modal.options.campaignTitle }}
+          <span *ngIf="modal.options.productLabel"> · {{ modal.options.productLabel }}</span>
+        </p>
+        <p class="sam-subtitle">
+          The brand will ship the product to this address after you accept.
+        </p>
+      </div>
+      <button type="button" class="sam-close" aria-label="Cancel" (click)="cancel()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <form class="sam-body" [formGroup]="form" (ngSubmit)="submit()">
+      <!-- The host's product question (size etc.), only when they asked one -->
+      <label class="sam-field sam-option" *ngIf="optionQuestion">
+        <span>{{ optionQuestion }} <span class="req">*</span></span>
+        <select *ngIf="optionChoices.length; else optionText" formControlName="optionAnswer">
+          <option value="" disabled>Choose…</option>
+          <option *ngFor="let c of optionChoices" [value]="c">{{ c }}</option>
+        </select>
+        <ng-template #optionText>
+          <input type="text" formControlName="optionAnswer" maxlength="60" placeholder="Your answer" />
+        </ng-template>
+        <small class="err" *ngIf="form.controls.optionAnswer.touched && form.controls.optionAnswer.invalid">
+          Please answer: {{ optionQuestion }}.
+        </small>
+      </label>
+
+      <!-- Registered name + mobile (read-only): the host sees these with the address -->
+      <div class="sam-contact">
+        <div class="sam-contact__title"><i class="bi bi-person-check"></i> Contact (from your registration)</div>
+        <div *ngIf="contactLoading" class="sam-contact__muted">Loading…</div>
+        <ng-container *ngIf="!contactLoading">
+          <div class="sam-contact__row"><span>Name</span><strong>{{ registeredName || '—' }}</strong></div>
+          <div class="sam-contact__row"><span>Mobile</span><strong>{{ registeredMobile || '—' }}</strong>
+            <span class="sam-contact__ok" *ngIf="registeredMobile && registeredMobileVerified"><i class="bi bi-check-circle-fill"></i> Verified</span></div>
+          <small class="sam-contact__muted" *ngIf="contactReady">The host will see this name and mobile with your address.</small>
+          <small class="err" *ngIf="!contactReady">Add your name and mobile number in your profile before accepting.</small>
+        </ng-container>
+      </div>
+
+      <label class="sam-field">
+        <span>Address line 1 <span class="req">*</span></span>
+        <input type="text" formControlName="line1" autocomplete="address-line1" placeholder="House / Flat / Building" />
+        <small class="err" *ngIf="form.controls.line1.touched && form.controls.line1.invalid">
+          Address line 1 is required.
+        </small>
+      </label>
+
+      <label class="sam-field">
+        <span>Address line 2</span>
+        <input type="text" formControlName="line2" autocomplete="address-line2" placeholder="Street / Area (optional)" />
+      </label>
+
+      <div class="sam-row">
+        <label class="sam-field">
+          <span>City <span class="req">*</span></span>
+          <input type="text" formControlName="city" autocomplete="address-level2" />
+          <small class="err" *ngIf="form.controls.city.touched && form.controls.city.invalid">City is required.</small>
+        </label>
+        <label class="sam-field">
+          <span>State <span class="req">*</span></span>
+          <input type="text" formControlName="state" autocomplete="address-level1" />
+          <small class="err" *ngIf="form.controls.state.touched && form.controls.state.invalid">State is required.</small>
+        </label>
+        <label class="sam-field">
+          <span>Pincode <span class="req">*</span></span>
+          <input type="text" formControlName="pincode" autocomplete="postal-code" inputmode="numeric" placeholder="6-digit" />
+          <small class="err" *ngIf="form.controls.pincode.touched && form.controls.pincode.invalid">
+            Enter a valid pincode.
+          </small>
+        </label>
+      </div>
+
+      <label class="sam-field">
+        <span>Landmark</span>
+        <input type="text" formControlName="landmark" placeholder="Optional landmark to help delivery" />
+      </label>
+
+      <div class="sam-actions">
+        <button type="button" class="btn btn-outline" (click)="cancel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid || !contactReady">
+          <i class="bi bi-check2-circle"></i> {{ modal.options.submitLabel || 'Save & accept' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</ng-container>

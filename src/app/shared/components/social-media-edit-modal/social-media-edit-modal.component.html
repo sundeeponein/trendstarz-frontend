@@ -1,0 +1,106 @@
+<div class="smem-overlay" (click)="onOverlayClick($event)">
+  <div class="smem-modal" role="dialog" aria-modal="true">
+    <div class="smem-header">
+      <span class="smem-platform-title">
+        <i class="bi" [ngClass]="platformIcon"></i>
+        {{ platformLabel }}
+      </span>
+      <button class="smem-close" (click)="onCancel()" type="button" aria-label="Close">&times;</button>
+    </div>
+
+    <!-- Edit view -->
+    <ng-container *ngIf="!confirmMode">
+      <div class="smem-body">
+        <!-- Handle -->
+        <div class="smem-field">
+          <label class="smem-label">HANDLE</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text smem-at">@</span>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="editHandle"
+              placeholder="username"
+              [disabled]="saving"
+            />
+          </div>
+        </div>
+
+        <!-- Tier -->
+        <div class="smem-field">
+          <label class="smem-label">TIER</label>
+          <select class="form-select" [(ngModel)]="editTier" [disabled]="saving">
+            <option value="">-- Select Tier --</option>
+            <option *ngFor="let t of tierOptions" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+
+        <!-- Changed By — auto-populated from logged-in admin -->
+        <div class="smem-field">
+          <label class="smem-label">CHANGED BY</label>
+          <div class="smem-readonly-admin">
+            <i class="bi bi-person-fill smem-admin-icon"></i>
+            {{ adminDisplayName }}
+          </div>
+        </div>
+
+        <!-- Date -->
+        <div class="smem-field">
+          <label class="smem-label">DATE</label>
+          <input type="text" class="form-control" [value]="todayLabel" readonly />
+        </div>
+
+        <!-- Error -->
+        <div class="smem-error" *ngIf="error">{{ error }}</div>
+      </div>
+
+      <div class="smem-footer">
+        <button class="btn btn-primary smem-btn-save" (click)="requestConfirm()" [disabled]="saving">
+          {{ saving ? 'Saving...' : 'Save Changes' }}
+        </button>
+        <button class="btn btn-outline-secondary smem-btn-cancel" (click)="onCancel()" [disabled]="saving">
+          Cancel
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- Confirmation view -->
+    <ng-container *ngIf="confirmMode">
+      <div class="smem-body smem-confirm-body">
+        <div class="smem-confirm-icon">
+          <i class="bi bi-exclamation-circle-fill text-warning"></i>
+        </div>
+        <div class="smem-confirm-title">Confirm Changes</div>
+        <div class="smem-confirm-desc">
+          You are about to update this user's {{ platformLabel }} details:
+        </div>
+        <div class="smem-confirm-diff">
+          <div class="smem-diff-row" *ngIf="editHandle.trim().replace('@','') !== handle">
+            <span class="smem-diff-label">Handle</span>
+            <span class="smem-diff-old">@{{ handle || '—' }}</span>
+            <i class="bi bi-arrow-right smem-diff-arrow"></i>
+            <span class="smem-diff-new">@{{ editHandle.trim().replace('@','') || '—' }}</span>
+          </div>
+          <div class="smem-diff-row" *ngIf="editTier !== tier">
+            <span class="smem-diff-label">Tier</span>
+            <span class="smem-diff-old">{{ getTierLabel(tier) || '—' }}</span>
+            <i class="bi bi-arrow-right smem-diff-arrow"></i>
+            <span class="smem-diff-new">{{ getTierLabel(editTier) || '—' }}</span>
+          </div>
+        </div>
+        <div class="smem-confirm-note">
+          <i class="bi bi-bell-fill"></i> The user will be notified of this change on their dashboard.
+        </div>
+      </div>
+
+      <div class="smem-footer">
+        <button class="btn btn-primary smem-btn-save" (click)="onSave()" [disabled]="saving">
+          {{ saving ? 'Saving...' : 'Yes, Update' }}
+        </button>
+        <button class="btn btn-outline-secondary smem-btn-cancel" (click)="confirmMode = false" [disabled]="saving">
+          Go Back
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>

@@ -15,9 +15,11 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'features', renderMode: RenderMode.Prerender },
   { path: 'features/influencers', renderMode: RenderMode.Prerender },
   { path: 'features/brands', renderMode: RenderMode.Prerender },
+  { path: 'features/photographers', renderMode: RenderMode.Prerender },
   { path: 'how-it-works', renderMode: RenderMode.Prerender },
   { path: 'how-it-works/influencers', renderMode: RenderMode.Prerender },
   { path: 'how-it-works/brands', renderMode: RenderMode.Prerender },
+  { path: 'how-it-works/photographers', renderMode: RenderMode.Prerender },
   { path: 'login', renderMode: RenderMode.Prerender },
   { path: 'auth/login', renderMode: RenderMode.Prerender },
   { path: 'register-influencer', renderMode: RenderMode.Client },
@@ -27,6 +29,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'campaign-payment/:campaignId', renderMode: RenderMode.Client },
   { path: 'payment-history', renderMode: RenderMode.Client },
   { path: 'transactions', renderMode: RenderMode.Client },
+  { path: 'settings', renderMode: RenderMode.Client },
   { path: 'influencer-profile', renderMode: RenderMode.Client },
   { path: 'brand-profile', renderMode: RenderMode.Client },
   { path: 'campaigns', renderMode: RenderMode.Client },
@@ -45,6 +48,7 @@ export const serverRoutes: ServerRoute[] = [
 
   // Dashboard routes — must be Client (need localStorage token)
   { path: 'influencer-dashboard', renderMode: RenderMode.Client },
+  { path: 'campaign-submission/:inviteId/:slug', renderMode: RenderMode.Client },
   { path: 'campaign-submission/:inviteId', renderMode: RenderMode.Client },
   { path: 'brand-dashboard', renderMode: RenderMode.Client },
   { path: 'logout', renderMode: RenderMode.Client },
@@ -59,6 +63,7 @@ export const serverRoutes: ServerRoute[] = [
   // Dynamic profiles
   { path: 'influencer/:username', renderMode: RenderMode.Server },
   { path: 'brand/:brandName', renderMode: RenderMode.Server },
+  { path: 'photographer/:username', renderMode: RenderMode.Server },
 
   // Fallback
   { path: '**', renderMode: RenderMode.Client },

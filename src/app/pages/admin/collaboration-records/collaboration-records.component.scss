@@ -1,0 +1,95 @@
+.crs-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 16px;
+  color: #1f2937;
+}
+
+.crs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+
+  h2 { margin: 0 0 4px; font-weight: 800; color: #1a1a2e; }
+}
+
+.crs-muted { color: #6b7280; font-size: 0.9rem; margin: 0; }
+.crs-muted.small { font-size: 0.78rem; }
+.crs-error { color: #b91c1c; }
+
+.crs-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+
+  button {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #374151;
+
+    &.active { background: #1a1a2e; border-color: #1a1a2e; color: #fff; }
+  }
+}
+
+.crs-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+
+  input[type='search'],
+  select {
+    padding: 7px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    max-width: 100%;
+  }
+  input[type='search'] { min-width: 220px; }
+}
+
+.crs-check { font-size: 0.86rem; display: inline-flex; gap: 6px; align-items: center; }
+
+.crs-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+
+  .bad strong { color: #b91c1c; }
+  .warn strong { color: #b45309; }
+}
+
+.crs-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.crs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+
+  th, td { padding: 9px 10px; border-bottom: 1px solid #f1f2f4; white-space: nowrap; vertical-align: middle; }
+  th { background: #f9fafb; font-weight: 700; color: #374151; text-align: left; }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: #4f46e5; }
+  .num { text-align: right; }
+  td.good { color: #15803d; font-weight: 700; }
+  td.warn { color: #b45309; font-weight: 700; }
+  td.bad { color: #b91c1c; font-weight: 700; }
+}
+
+.crs-name { font-weight: 600; }
+.crs-removed { color: #9ca3af; font-weight: 400; }

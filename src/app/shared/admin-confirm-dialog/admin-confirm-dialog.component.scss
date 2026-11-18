@@ -26,6 +26,10 @@
     font-size: 1.1rem;
     margin-bottom: 1.5rem;
     text-align: center;
+    // Some callers (e.g. the pending-payment warning on decline/delete)
+    // pass a multi-line message with embedded \n — respect those breaks
+    // instead of collapsing them into one dense line.
+    white-space: pre-line;
   }
 
   .dialog-actions {

@@ -1,0 +1,2024 @@
+{
+  "config": {
+    "configFile": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/playwright.config.ts",
+    "rootDir": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile-chrome",
+        "name": "mobile-chrome",
+        "testDir": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run start:e2e",
+      "port": 4200,
+      "timeout": 120000,
+      "reuseExistingServer": true
+    }
+  },
+  "suites": [
+    {
+      "title": "accepted-flow-complete.spec.ts",
+      "file": "accepted-flow-complete.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Accepted flow — complete lifecycle",
+          "file": "accepted-flow-complete.spec.ts",
+          "line": 227,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Journey 1 — Influencer accepts Brand Campaign till complete",
+              "file": "accepted-flow-complete.spec.ts",
+              "line": 230,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "1a. Influencer has pending invite, accepts it via the inbox",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 4962,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:56:54.719Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-6b682c4568b4e14e48a8",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 231,
+                  "column": 5
+                },
+                {
+                  "title": "1b. Influencer navigates to submission page and submits post",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2207,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:01.251Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-8ad2c1b45e95031ed9de",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 359,
+                  "column": 5
+                },
+                {
+                  "title": "1c. Brand reviews and approves the submission (review endpoint called)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2660,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:03.475Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-6ac6260af91f8529b34d",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 388,
+                  "column": 5
+                },
+                {
+                  "title": "1a. Influencer has pending invite, accepts it via the inbox",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 4840,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:46.978Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-6d87493edbbeb0450112",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 231,
+                  "column": 5
+                },
+                {
+                  "title": "1b. Influencer navigates to submission page and submits post",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2157,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:52.887Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-eebd344047430e03755f",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 359,
+                  "column": 5
+                },
+                {
+                  "title": "1c. Brand reviews and approves the submission (review endpoint called)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 4118,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:55.060Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-efcb7aac46e2ba2de09b",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 388,
+                  "column": 5
+                },
+                {
+                  "title": "1a. Influencer has pending invite, accepts it via the inbox",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 8264,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:59:11.441Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-4c3bacffb08aeb5e9cca",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 231,
+                  "column": 5
+                },
+                {
+                  "title": "1b. Influencer navigates to submission page and submits post",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 6690,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:59:20.605Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-8c8a07a99b575514311f",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 359,
+                  "column": 5
+                },
+                {
+                  "title": "1c. Brand reviews and approves the submission (review endpoint called)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 4510,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:59:27.327Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-6a01529aa9ddd1f79ece",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 388,
+                  "column": 5
+                },
+                {
+                  "title": "1a. Influencer has pending invite, accepts it via the inbox",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "mobile-chrome",
+                      "projectName": "mobile-chrome",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 3440,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:00:28.458Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-4a570fbf88656842a0ed",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 231,
+                  "column": 5
+                },
+                {
+                  "title": "1b. Influencer navigates to submission page and submits post",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "mobile-chrome",
+                      "projectName": "mobile-chrome",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1468,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:00:33.080Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-d6cb783e733736fcf591",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 359,
+                  "column": 5
+                },
+                {
+                  "title": "1c. Brand reviews and approves the submission (review endpoint called)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "mobile-chrome",
+                      "projectName": "mobile-chrome",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1982,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:00:34.555Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-77932582c04bfe4e0684",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 388,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Journey 2 — Photographer accepts Brand Campaign till complete",
+              "file": "accepted-flow-complete.spec.ts",
+              "line": 531,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "2a. Photographer sees brand invite on dashboard (Brand Invites section)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2849,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:06.146Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-8e579a6db6cc8dad6de8",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 532,
+                  "column": 5
+                },
+                {
+                  "title": "2b. Photographer navigates to submission page and submits work",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2125,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:09.005Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-96fb04a75602b1852e66",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 597,
+                  "column": 5
+                },
+                {
+                  "title": "2c. Photographer submission page shows read-only view when invite is completed",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1383,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:11.140Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-6b97db7b4b6a510a7949",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 626,
+                  "column": 5
+                },
+                {
+                  "title": "2a. Photographer sees brand invite on dashboard (Brand Invites section)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 3279,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:59.194Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-a11099699b62c63ea4d4",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 532,
+                  "column": 5
+                },
+                {
+                  "title": "2b. Photographer navigates to submission page and submits work",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 3935,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:58:02.496Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-7f4dc2bb514410170d47",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 597,
+                  "column": 5
+                },
+                {
+                  "title": "2c. Photographer submission page shows read-only view when invite is completed",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1884,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:58:06.453Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-d8e5d276986b3ec3a752",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 626,
+                  "column": 5
+                },
+                {
+                  "title": "2a. Photographer sees brand invite on dashboard (Brand Invites section)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 4423,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:59:31.871Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-849f338e1815e44d9889",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 532,
+                  "column": 5
+                },
+                {
+                  "title": "2b. Photographer navigates to submission page and submits work",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 4173,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:59:36.317Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-dc8b72c4260c2681adfe",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 597,
+                  "column": 5
+                },
+                {
+                  "title": "2c. Photographer submission page shows read-only view when invite is completed",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 3241,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:59:40.544Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-41dc9b0971352ed3c57e",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 626,
+                  "column": 5
+                },
+                {
+                  "title": "2a. Photographer sees brand invite on dashboard (Brand Invites section)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "mobile-chrome",
+                      "projectName": "mobile-chrome",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1923,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:00:36.545Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-064a1d7409c46f7f4f88",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 532,
+                  "column": 5
+                },
+                {
+                  "title": "2b. Photographer navigates to submission page and submits work",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "mobile-chrome",
+                      "projectName": "mobile-chrome",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2429,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:00:38.478Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-bdb2f951b8ba3e16bb2e",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 597,
+                  "column": 5
+                },
+                {
+                  "title": "2c. Photographer submission page shows read-only view when invite is completed",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "mobile-chrome",
+                      "projectName": "mobile-chrome",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 1778,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:00:40.920Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-9bd46acf7cdfe9232f3c",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 626,
+                  "column": 5
+                }
+              ]
+            },
+            {
+              "title": "Journey 3 — Influencer accepts Collaboration from Photographer till complete",
+              "file": "accepted-flow-complete.spec.ts",
+              "line": 694,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "3a. Influencer sees collaboration invite with collab type filter chip",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 0,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 10099,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:745:9",
+                            "location": {
+                              "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                              "column": 9,
+                              "line": 745
+                            },
+                            "snippet": "  743 |       await expect(\n  744 |         page.locator('.inbox-type-chip', { hasText: 'Collaborations' }),\n> 745 |       ).toBeVisible({ timeout: 8_000 });\n      |         ^\n  746 |\n  747 |       // Click the Collaborations chip to filter\n  748 |       await page.locator('.inbox-type-chip', { hasText: 'Collaborations' }).click();"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                                "column": 9,
+                                "line": 745
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n\n\n  743 |       await expect(\n  744 |         page.locator('.inbox-type-chip', { hasText: 'Collaborations' }),\n> 745 |       ).toBeVisible({ timeout: 8_000 });\n      |         ^\n  746 |\n  747 |       // Click the Collaborations chip to filter\n  748 |       await page.locator('.inbox-type-chip', { hasText: 'Collaborations' }).click();\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:745:9"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:12.533Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-chromium/error-context.md"
+                            },
+                            {
+                              "name": "trace",
+                              "contentType": "application/zip",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-chromium/trace.zip"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                            "column": 9,
+                            "line": 745
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-99490fde2bb650ae1b49",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 695,
+                  "column": 5
+                },
+                {
+                  "title": "3b. Influencer accepts collaboration invite via component state + accept click",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 1,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 12775,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:814:50",
+                            "location": {
+                              "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                              "column": 50,
+                              "line": 814
+                            },
+                            "snippet": "  812 |\n  813 |       await expect(page.locator('.my-invites-section')).toBeVisible({ timeout: 12_000 });\n> 814 |       await expect(page.locator('.invite-list')).toContainText('Studio Collab Session', { timeout: 10_000 });\n      |                                                  ^\n  815 |\n  816 |       // Seed parent component with post date and payout so accept fires without validation errors\n  817 |       await page.evaluate(() => {"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                                "column": 50,
+                                "line": 814
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n\n\n  812 |\n  813 |       await expect(page.locator('.my-invites-section')).toBeVisible({ timeout: 12_000 });\n> 814 |       await expect(page.locator('.invite-list')).toContainText('Studio Collab Session', { timeout: 10_000 });\n      |                                                  ^\n  815 |\n  816 |       // Seed parent component with post date and payout so accept fires without validation errors\n  817 |       await page.evaluate(() => {\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:814:50"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:24.128Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-chromium/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-chromium/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-chromium/error-context.md"
+                            },
+                            {
+                              "name": "trace",
+                              "contentType": "application/zip",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-chromium/trace.zip"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                            "column": 50,
+                            "line": 814
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-4a93050dc08329c9d606",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 759,
+                  "column": 5
+                },
+                {
+                  "title": "3c. Influencer submits post for collaboration and sees success screen",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2315,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:39.328Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-841ced7a67f3f06e15cb",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 870,
+                  "column": 5
+                },
+                {
+                  "title": "3d. Completed collab invite shows summary view (read-only, no edit)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [
+                        {
+                          "workerIndex": 2,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2384,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:57:42.452Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-b59fab42281ac6132ebe",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 902,
+                  "column": 5
+                },
+                {
+                  "title": "3a. Influencer sees collaboration invite with collab type filter chip",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 3,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 10944,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:745:9",
+                            "location": {
+                              "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                              "column": 9,
+                              "line": 745
+                            },
+                            "snippet": "  743 |       await expect(\n  744 |         page.locator('.inbox-type-chip', { hasText: 'Collaborations' }),\n> 745 |       ).toBeVisible({ timeout: 8_000 });\n      |         ^\n  746 |\n  747 |       // Click the Collaborations chip to filter\n  748 |       await page.locator('.inbox-type-chip', { hasText: 'Collaborations' }).click();"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                                "column": 9,
+                                "line": 745
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n\n\n  743 |       await expect(\n  744 |         page.locator('.inbox-type-chip', { hasText: 'Collaborations' }),\n> 745 |       ).toBeVisible({ timeout: 8_000 });\n      |         ^\n  746 |\n  747 |       // Click the Collaborations chip to filter\n  748 |       await page.locator('.inbox-type-chip', { hasText: 'Collaborations' }).click();\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:745:9"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:58:08.354Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-firefox/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-firefox/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-firefox/error-context.md"
+                            },
+                            {
+                              "name": "trace",
+                              "contentType": "application/zip",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-firefox/trace.zip"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                            "column": 9,
+                            "line": 745
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-63d3274a18772ebff5e6",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 695,
+                  "column": 5
+                },
+                {
+                  "title": "3b. Influencer accepts collaboration invite via component state + accept click",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 4,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 16388,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:814:50",
+                            "location": {
+                              "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                              "column": 50,
+                              "line": 814
+                            },
+                            "snippet": "  812 |\n  813 |       await expect(page.locator('.my-invites-section')).toBeVisible({ timeout: 12_000 });\n> 814 |       await expect(page.locator('.invite-list')).toContainText('Studio Collab Session', { timeout: 10_000 });\n      |                                                  ^\n  815 |\n  816 |       // Seed parent component with post date and payout so accept fires without validation errors\n  817 |       await page.evaluate(() => {"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                                "column": 50,
+                                "line": 814
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n\n\n  812 |\n  813 |       await expect(page.locator('.my-invites-section')).toBeVisible({ timeout: 12_000 });\n> 814 |       await expect(page.locator('.invite-list')).toContainText('Studio Collab Session', { timeout: 10_000 });\n      |                                                  ^\n  815 |\n  816 |       // Seed parent component with post date and payout so accept fires without validation errors\n  817 |       await page.evaluate(() => {\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:814:50"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:58:22.823Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-firefox/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-firefox/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-firefox/error-context.md"
+                            },
+                            {
+                              "name": "trace",
+                              "contentType": "application/zip",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-firefox/trace.zip"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                            "column": 50,
+                            "line": 814
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-47769339d4da81c1ac1b",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 759,
+                  "column": 5
+                },
+                {
+                  "title": "3c. Influencer submits post for collaboration and sees success screen",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 12455,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:58:42.867Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-8274c71e9b0c51ffc14a",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 870,
+                  "column": 5
+                },
+                {
+                  "title": "3d. Completed collab invite shows summary view (read-only, no edit)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "firefox",
+                      "projectName": "firefox",
+                      "results": [
+                        {
+                          "workerIndex": 5,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 6792,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:58:57.431Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-49d2414296b5abb175e3",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 902,
+                  "column": 5
+                },
+                {
+                  "title": "3a. Influencer sees collaboration invite with collab type filter chip",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 6,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 13076,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:745:9",
+                            "location": {
+                              "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                              "column": 9,
+                              "line": 745
+                            },
+                            "snippet": "  743 |       await expect(\n  744 |         page.locator('.inbox-type-chip', { hasText: 'Collaborations' }),\n> 745 |       ).toBeVisible({ timeout: 8_000 });\n      |         ^\n  746 |\n  747 |       // Click the Collaborations chip to filter\n  748 |       await page.locator('.inbox-type-chip', { hasText: 'Collaborations' }).click();"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                                "column": 9,
+                                "line": 745
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n\n\n  743 |       await expect(\n  744 |         page.locator('.inbox-type-chip', { hasText: 'Collaborations' }),\n> 745 |       ).toBeVisible({ timeout: 8_000 });\n      |         ^\n  746 |\n  747 |       // Click the Collaborations chip to filter\n  748 |       await page.locator('.inbox-type-chip', { hasText: 'Collaborations' }).click();\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:745:9"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:59:43.803Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-webkit/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-webkit/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-webkit/error-context.md"
+                            },
+                            {
+                              "name": "trace",
+                              "contentType": "application/zip",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-webkit/trace.zip"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                            "column": 9,
+                            "line": 745
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-fcd871b3f4c7dc84e08a",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 695,
+                  "column": 5
+                },
+                {
+                  "title": "3b. Influencer accepts collaboration invite via component state + accept click",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 7,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 15452,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:814:50",
+                            "location": {
+                              "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                              "column": 50,
+                              "line": 814
+                            },
+                            "snippet": "  812 |\n  813 |       await expect(page.locator('.my-invites-section')).toBeVisible({ timeout: 12_000 });\n> 814 |       await expect(page.locator('.invite-list')).toContainText('Studio Collab Session', { timeout: 10_000 });\n      |                                                  ^\n  815 |\n  816 |       // Seed parent component with post date and payout so accept fires without validation errors\n  817 |       await page.evaluate(() => {"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                                "column": 50,
+                                "line": 814
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n\n\n  812 |\n  813 |       await expect(page.locator('.my-invites-section')).toBeVisible({ timeout: 12_000 });\n> 814 |       await expect(page.locator('.invite-list')).toContainText('Studio Collab Session', { timeout: 10_000 });\n      |                                                  ^\n  815 |\n  816 |       // Seed parent component with post date and payout so accept fires without validation errors\n  817 |       await page.evaluate(() => {\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:814:50"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T15:59:59.372Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-webkit/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-webkit/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-webkit/error-context.md"
+                            },
+                            {
+                              "name": "trace",
+                              "contentType": "application/zip",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-webkit/trace.zip"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                            "column": 50,
+                            "line": 814
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-b346621b43f56cde1493",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 759,
+                  "column": 5
+                },
+                {
+                  "title": "3c. Influencer submits post for collaboration and sees success screen",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 8,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2782,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:00:16.878Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-47daf1eb4be1eec0a1a5",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 870,
+                  "column": 5
+                },
+                {
+                  "title": "3d. Completed collab invite shows summary view (read-only, no edit)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "webkit",
+                      "projectName": "webkit",
+                      "results": [
+                        {
+                          "workerIndex": 8,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 3353,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:00:20.099Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-4977f0223d7d56578d10",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 902,
+                  "column": 5
+                },
+                {
+                  "title": "3a. Influencer sees collaboration invite with collab type filter chip",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "mobile-chrome",
+                      "projectName": "mobile-chrome",
+                      "results": [
+                        {
+                          "workerIndex": 9,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 10989,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:745:9",
+                            "location": {
+                              "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                              "column": 9,
+                              "line": 745
+                            },
+                            "snippet": "  743 |       await expect(\n  744 |         page.locator('.inbox-type-chip', { hasText: 'Collaborations' }),\n> 745 |       ).toBeVisible({ timeout: 8_000 });\n      |         ^\n  746 |\n  747 |       // Click the Collaborations chip to filter\n  748 |       await page.locator('.inbox-type-chip', { hasText: 'Collaborations' }).click();"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                                "column": 9,
+                                "line": 745
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\nExpected: visible\nTimeout: 8000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 8000ms\u001b[22m\n\u001b[2m  - waiting for locator('.inbox-type-chip').filter({ hasText: 'Collaborations' })\u001b[22m\n\n\n  743 |       await expect(\n  744 |         page.locator('.inbox-type-chip', { hasText: 'Collaborations' }),\n> 745 |       ).toBeVisible({ timeout: 8_000 });\n      |         ^\n  746 |\n  747 |       // Click the Collaborations chip to filter\n  748 |       await page.locator('.inbox-type-chip', { hasText: 'Collaborations' }).click();\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:745:9"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:00:42.711Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-mobile-chrome/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-mobile-chrome/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-mobile-chrome/error-context.md"
+                            },
+                            {
+                              "name": "trace",
+                              "contentType": "application/zip",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-4a680-ith-collab-type-filter-chip-mobile-chrome/trace.zip"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                            "column": 9,
+                            "line": 745
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-bf935958ccddf3436f90",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 695,
+                  "column": 5
+                },
+                {
+                  "title": "3b. Influencer accepts collaboration invite via component state + accept click",
+                  "ok": false,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "mobile-chrome",
+                      "projectName": "mobile-chrome",
+                      "results": [
+                        {
+                          "workerIndex": 10,
+                          "parallelIndex": 0,
+                          "status": "failed",
+                          "duration": 13218,
+                          "error": {
+                            "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n",
+                            "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:814:50",
+                            "location": {
+                              "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                              "column": 50,
+                              "line": 814
+                            },
+                            "snippet": "  812 |\n  813 |       await expect(page.locator('.my-invites-section')).toBeVisible({ timeout: 12_000 });\n> 814 |       await expect(page.locator('.invite-list')).toContainText('Studio Collab Session', { timeout: 10_000 });\n      |                                                  ^\n  815 |\n  816 |       // Seed parent component with post date and payout so accept fires without validation errors\n  817 |       await page.evaluate(() => {"
+                          },
+                          "errors": [
+                            {
+                              "location": {
+                                "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                                "column": 50,
+                                "line": 814
+                              },
+                              "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.invite-list')\nExpected substring: \u001b[32m\"Studio Collab Session\"\u001b[39m\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('.invite-list')\u001b[22m\n\n\n  812 |\n  813 |       await expect(page.locator('.my-invites-section')).toBeVisible({ timeout: 12_000 });\n> 814 |       await expect(page.locator('.invite-list')).toContainText('Studio Collab Session', { timeout: 10_000 });\n      |                                                  ^\n  815 |\n  816 |       // Seed parent component with post date and payout so accept fires without validation errors\n  817 |       await page.evaluate(() => {\n    at /Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts:814:50"
+                            }
+                          ],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:00:56.013Z",
+                          "annotations": [],
+                          "attachments": [
+                            {
+                              "name": "screenshot",
+                              "contentType": "image/png",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-mobile-chrome/test-failed-1.png"
+                            },
+                            {
+                              "name": "video",
+                              "contentType": "video/webm",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-mobile-chrome/video.webm"
+                            },
+                            {
+                              "name": "error-context",
+                              "contentType": "text/markdown",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-mobile-chrome/error-context.md"
+                            },
+                            {
+                              "name": "trace",
+                              "contentType": "application/zip",
+                              "path": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/test-results/accepted-flow-complete-Acc-cbf31-omponent-state-accept-click-mobile-chrome/trace.zip"
+                            }
+                          ],
+                          "errorLocation": {
+                            "file": "/Users/iamsundeep/sundeep_/trendstarz/trendstarz-frontend/e2e/accepted-flow-complete.spec.ts",
+                            "column": 50,
+                            "line": 814
+                          }
+                        }
+                      ],
+                      "status": "unexpected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-a911b660b87a06375a1e",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 759,
+                  "column": 5
+                },
+                {
+                  "title": "3c. Influencer submits post for collaboration and sees success screen",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "mobile-chrome",
+                      "projectName": "mobile-chrome",
+                      "results": [
+                        {
+                          "workerIndex": 11,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2485,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:01:12.389Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-9383d186c1aa12c132ec",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 870,
+                  "column": 5
+                },
+                {
+                  "title": "3d. Completed collab invite shows summary view (read-only, no edit)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 60000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "mobile-chrome",
+                      "projectName": "mobile-chrome",
+                      "results": [
+                        {
+                          "workerIndex": 11,
+                          "parallelIndex": 0,
+                          "status": "passed",
+                          "duration": 2887,
+                          "errors": [],
+                          "stdout": [],
+                          "stderr": [],
+                          "retry": 0,
+                          "startTime": "2026-05-26T16:01:15.719Z",
+                          "annotations": [],
+                          "attachments": []
+                        }
+                      ],
+                      "status": "expected"
+                    }
+                  ],
+                  "id": "eb802915b4f1968a66dd-cd6edc439d8d29f07965",
+                  "file": "accepted-flow-complete.spec.ts",
+                  "line": 902,
+                  "column": 5
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "campaign-actions.spec.ts",
+      "file": "campaign-actions.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "opens fulfillment modal and saves shipping info",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1206,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-05-26T15:57:44.861Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "444e4b5f53a68ebae082-ba2f8fc7b5ee32c2a729",
+          "file": "campaign-actions.spec.ts",
+          "line": 239,
+          "column": 1
+        },
+        {
+          "title": "opens fulfillment modal and saves shipping info",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4925,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-05-26T15:59:04.270Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "444e4b5f53a68ebae082-5addaa338d69e34674ab",
+          "file": "campaign-actions.spec.ts",
+          "line": 239,
+          "column": 1
+        },
+        {
+          "title": "opens fulfillment modal and saves shipping info",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3115,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-05-26T16:00:23.494Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "444e4b5f53a68ebae082-daed1a8efed0b142537c",
+          "file": "campaign-actions.spec.ts",
+          "line": 239,
+          "column": 1
+        },
+        {
+          "title": "opens fulfillment modal and saves shipping info",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "mobile-chrome",
+              "projectName": "mobile-chrome",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1996,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-05-26T16:01:18.632Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "444e4b5f53a68ebae082-1e5bbf25d3010972cc20",
+          "file": "campaign-actions.spec.ts",
+          "line": 239,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-05-26T15:56:52.720Z",
+    "duration": 267991.884,
+    "expected": 36,
+    "skipped": 0,
+    "unexpected": 8,
+    "flaky": 0
+  }
+}
