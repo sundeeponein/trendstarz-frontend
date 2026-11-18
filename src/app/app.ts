@@ -15,11 +15,12 @@ import { FlowHelpModalComponent } from './shared/components/flow-help-modal/flow
 import { FlowHelpModalService } from './shared/components/flow-help-modal/flow-help-modal.service';
 import { PwaInstallBannerComponent } from './shared/pwa-install-banner/pwa-install-banner.component';
 import { ResetPasswordModalComponent } from './shared/components/reset-password-modal/reset-password-modal.component';
+import { TermsConsentModalComponent } from './shared/components/terms-consent-modal/terms-consent-modal.component';
 import { ToastService } from './shared/toast/toast.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastHostComponent, TierInfoModalComponent, FlowHelpModalComponent, PwaInstallBannerComponent, ResetPasswordModalComponent],
+  imports: [RouterOutlet, ToastHostComponent, TierInfoModalComponent, FlowHelpModalComponent, PwaInstallBannerComponent, ResetPasswordModalComponent, TermsConsentModalComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -33,6 +34,8 @@ export class App implements OnInit {
   protected readonly flowHelp = inject(FlowHelpModalService);
   /** Logged in with an admin-issued temporary password → must choose a new one before using the app. */
   mustChangePassword = false;
+  /** Account made before the sign-up consent checkbox → asked once to agree (server decides). */
+  consentNeeded = false;
 
   constructor(
     private session: SessionService,
@@ -47,6 +50,18 @@ export class App implements OnInit {
     @Inject(DOCUMENT) private document: Document,
     @Inject(PLATFORM_ID) private platformId: object,
   ) {}
+
+  onConsentAccepted(): void {
+    this.consentNeeded = false;
+    this.toast.success('Thanks — you can carry on.');
+  }
+
+  async onConsentLogout(): Promise<void> {
+    this.consentNeeded = false;
+    try { await this.pushService.detachFromAccount(); } catch { /* optional */ }
+    this.session.clearSession();
+    this.router.navigate(['/']);
+  }
 
   onTemporaryPasswordChanged(): void {
     const user = this.session.getUser();
@@ -68,6 +83,7 @@ export class App implements OnInit {
         this.mustChangePassword = !!(user as any)?.mustChangePassword;
         if (!user) {
           this.lastPushSubscriptionKey = null;
+          this.consentNeeded = false;
           return;
         }
 
@@ -102,6 +118,7 @@ export class App implements OnInit {
     this.config.markSessionOpened().subscribe({
       next: (res) => {
         const user = this.session.getUser();
+        if (user && res?.consentNeeded === true) this.consentNeeded = true;
         if (!user || !res?.lastOpenedAt) return;
         this.session.setUser({ ...user, lastOpenedAt: res.lastOpenedAt });
       },

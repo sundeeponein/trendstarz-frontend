@@ -1271,11 +1271,18 @@ export class ConfigService {
     return this.http.post(`${this.apiUrl}/notifications/mark-all-read`, {});
   }
 
-  markSessionOpened(): Observable<{ success: boolean; lastOpenedAt: string }> {
-    return this.http.post<{ success: boolean; lastOpenedAt: string }>(
+  markSessionOpened(): Observable<{ success: boolean; lastOpenedAt: string; consentNeeded?: boolean }> {
+    return this.http.post<{ success: boolean; lastOpenedAt: string; consentNeeded?: boolean }>(
       `${this.apiUrl}/auth/session/opened`,
       {},
     );
+  }
+
+  /** One-time "I agree" for accounts made before the sign-up consent checkbox. */
+  acceptLegalConsent(): Observable<{ success: boolean }> {
+    return this.http.post<{ success: boolean }>(`${this.apiUrl}/auth/consent/accept`, {
+      acceptedTerms: true,
+    });
   }
 
   markFounderOfferSeen(): Observable<{ success: boolean; founderOfferSeenAt: string }> {

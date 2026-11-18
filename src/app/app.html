@@ -8,6 +8,12 @@
   <app-flow-help-modal></app-flow-help-modal>
 }
 <app-pwa-install-banner></app-pwa-install-banner>
+@if (consentNeeded && !mustChangePassword) {
+  <app-terms-consent-modal
+    (accepted)="onConsentAccepted()"
+    (logout)="onConsentLogout()"
+  ></app-terms-consent-modal>
+}
 @if (mustChangePassword) {
   @defer (on immediate) {
     <app-reset-password-modal

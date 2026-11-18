@@ -42,3 +42,47 @@ export class ClientErrorHandler extends ErrorHandler {
     }
   }
 }
+
+/** Same name the server counts in its own "would block" check (CSP_REPORT_NAME). */
+export const CSP_REPORT_NAME = 'CSPReportOnly';
+
+/** "script-src would block https://x.com" — origin only, never the full address. */
+export function describeCspViolation(e: { effectiveDirective?: string; violatedDirective?: string; blockedURI?: string; disposition?: string }): string {
+  const directive = String(e.effectiveDirective || e.violatedDirective || 'unknown').split(' ')[0];
+  const raw = String(e.blockedURI || '');
+  let target = raw || 'unknown';
+  try {
+    if (/^https?:/i.test(raw)) target = new URL(raw).origin;
+  } catch { /* keep raw */ }
+  const verb = e.disposition === 'enforce' ? 'blocked' : 'would block';
+  return `${directive} ${verb} ${target}`.slice(0, 300);
+}
+
+/**
+ * The website's full security policy runs report-only first (vercel.json).
+ * Browsers fire this event for each thing it would block; report each distinct
+ * one (at most 10 per page load) so Data health shows what to allow.
+ */
+export function reportCspViolations(win: Window = window): void {
+  const sent = new Set<string>();
+  win.document.addEventListener('securitypolicyviolation', (e: SecurityPolicyViolationEvent) => {
+    try {
+      const message = describeCspViolation(e);
+      if (sent.has(message) || sent.size >= 10) return;
+      sent.add(message);
+      void fetch(`${environment.apiBaseUrl}/client-errors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          page: win.location.pathname,
+          name: CSP_REPORT_NAME,
+          message,
+          browser: navigator.userAgent.slice(0, 120),
+        }),
+      }).catch(() => {});
+    } catch {
+      // Reporting must never throw.
+    }
+  });
+}
