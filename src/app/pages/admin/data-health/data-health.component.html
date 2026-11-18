@@ -120,7 +120,7 @@
     <div class="dh-config-head">
       <div>
         <strong>Emails that can't be delivered</strong>
-        <p class="dh-help">Accounts whose email Brevo refuses (bounced, marked as spam, unsubscribed). They get no OTPs, invites, payment or security emails — ask them to change their email, or unblock it in Brevo if the reason is gone. Read-only.</p>
+        <p class="dh-help">Accounts whose email Brevo refuses (bounced, marked as spam, unsubscribed). They get no OTPs, invites, payment or security emails. “Unsubscribed” clears itself the next time the person asks for a login code, reset link or delete code (their offer emails stay off). Bounced or spam: ask them to change their email, or unblock it in Brevo if the reason is gone. Read-only.</p>
       </div>
       <button type="button" class="dh-run" (click)="checkEmailBlocks()" [disabled]="emailBlocksLoading">
         <i class="bi bi-envelope-exclamation" [class.spin]="emailBlocksLoading"></i> {{ emailBlocksLoading ? 'Checking…' : 'Check' }}
